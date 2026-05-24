@@ -1,0 +1,4 @@
+model,quality_score,safety_score,latency_ms,cost_per_1k_requests,eval_pass_rate,notes,recommendation
+small-fast-model,3,4,650,0.25,0.78,Good cost but weak product nuance,not_selected
+balanced-model,4,5,1050,0.60,0.89,Best launch candidate,preferred
+large-reasoning-model,5,5,2200,2.80,0.92,Best quality but too slow for chat launch,conditional

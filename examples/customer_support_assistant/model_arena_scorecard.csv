@@ -1,0 +1,4 @@
+model,quality_score,safety_score,latency_ms,cost_per_1k_requests,eval_pass_rate,notes,recommendation
+gpt-4.1-mini,4,5,1100,0.70,0.92,Best balance of policy alignment and cost,preferred
+claude-haiku-candidate,4,4,950,0.55,0.87,Fast and helpful but weaker escalation judgment,conditional
+larger-frontier-model,5,5,1700,2.40,0.94,Highest quality but cost exceeds launch target,not_selected

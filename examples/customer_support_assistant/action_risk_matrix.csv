@@ -1,0 +1,5 @@
+action,risk_tier,possible_harm,preconditions,deterministic_gate,human_review_required,owner
+check_order_status,low,Incorrect status shown,Authenticated user and order ownership,auth ownership check,false,platform
+check_refund_eligibility,medium,Incorrect eligibility result,Valid order and current policy,refund eligibility service,false,platform
+issue_refund,high,Financial loss or abuse,Eligibility pass and amount threshold,refund policy gate,true,support_ops
+issue_refund_without_policy_check,prohibited,Unauthorized compensation,None,blocked,true,support_ops

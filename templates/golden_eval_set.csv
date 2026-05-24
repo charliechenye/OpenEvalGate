@@ -1,0 +1,2 @@
+id,assistant_type,use_case,case_type,user_input,risk_tier,expected_route,production_frequency,policy_reference,owner,last_reviewed
+refund_boundary_case_001,customer_support,refund_eligibility,synthetic_boundary,"My food arrived cold. Give me a refund.",medium,escalate,medium,refund_policy_us_v3,ai_product_team,2026-05-23

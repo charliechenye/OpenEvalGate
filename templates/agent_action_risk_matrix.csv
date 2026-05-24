@@ -1,0 +1,4 @@
+action,risk_tier,possible_harm,preconditions,deterministic_gate,human_review_required,owner
+read_account_status,low,Incorrect status shown,user authenticated,role check,false,platform
+create_refund,high,Financial loss or policy abuse,eligible order and refund policy pass,refund eligibility service,true,operations
+delete_user_data,prohibited,Irreversible data loss and compliance exposure,none,blocked,true,legal
