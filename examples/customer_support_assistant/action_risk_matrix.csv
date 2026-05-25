@@ -3,3 +3,6 @@ check_order_status,low,Incorrect status shown,Authenticated user and order owner
 check_refund_eligibility,medium,Incorrect eligibility result,Valid order and current policy,refund eligibility service,false,platform
 issue_refund,high,Financial loss or abuse,Eligibility pass and amount threshold,refund policy gate,true,support_ops
 issue_refund_without_policy_check,prohibited,Unauthorized compensation,None,blocked,true,support_ops
+create_support_escalation,medium,Operational load and delayed resolution,Active support issue and user context,escalation routing rules,true,support_ops
+create_safety_escalation,high,Safety incident mishandled,Safety trigger detected,safety escalation policy,true,trust_safety
+close_case_without_resolution,prohibited,Containment without resolution,None,blocked,true,support_ops

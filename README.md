@@ -2,47 +2,55 @@
 
 Launch gates, not vibe checks, for production GenAI.
 
-OpenEvalGate is an open-source launch-readiness framework for GenAI assistants and agents. It helps teams define expected behavior, build golden eval sets, feed back candidate eval results, compare models, classify action risk, design output critics, and generate launch-readiness reports.
+OpenEvalGate is an open-source launch-readiness and trust-preservation framework for GenAI assistants and agents. It helps teams define expected behavior, build golden eval sets, feed back candidate eval results, compare models, classify action risk, design output critics, define automation boundaries, and generate launch-readiness reports.
 
 Most GenAI demos answer: “Can the model do this once?”
 
-Production teams need to answer: “Can this system do this reliably, safely, cost-effectively, and observably across real users?”
+Production teams need to answer: “Can this system do this reliably, safely, cost-effectively, observably, and trustworthily across real users?”
 
-OpenEvalGate provides practical templates and lightweight tooling for that second question.
+## Why Trust Preservation?
 
-## What problem this solves
+Production GenAI is ultimately a trust-preservation problem.
 
-Teams often adopt eval, tracing, and observability tools before they have agreed on the launch gates those tools should support. OpenEvalGate sits one layer above tools such as LangSmith, Braintrust, Arize Phoenix, Langfuse, Promptfoo, DeepEval, and Guardrails AI.
+User trust is easier to break than earn. Containment is not resolution. Average performance is not launch readiness. The assistant is part of the platform relationship, not just a support surface.
 
-Those tools help run evals, observe traces, compare prompts, monitor production, or enforce runtime checks. OpenEvalGate helps teams decide what must be true before launch.
+Production AI should optimize for durable resolution, bounded downside, graceful escalation, and long-term user trust, not short-term dashboard wins.
 
-## Who it is for
+## What OpenEvalGate Is
 
-- AI product managers turning product scope into testable behavior.
-- ML and AI engineers building assistant and agent eval suites.
-- GenAI platform teams standardizing launch review across teams.
-- Trust, safety, legal, and compliance teams reviewing product risk.
-- Startup founders who need a practical launch checklist before real users arrive.
+- A launch-readiness framework.
+- A trust-preservation framework.
+- A cross-functional review system.
+- A template library.
+- A lightweight local CLI.
+- A way to generate launch-readiness reports.
 
-## What it is not
+## What OpenEvalGate Is Not
 
-OpenEvalGate is not a full eval platform, tracing system, agent framework, model benchmark, prompt library, or guardrails runtime. It does not call LLM APIs. It does not send telemetry. It does not require cloud services.
+OpenEvalGate is not a full eval platform, tracing system, monitoring platform, agent framework, model benchmark, prompt library, guardrails runtime, or replacement for existing LLMOps tools. It does not call LLM APIs. It does not send telemetry. It does not require cloud services.
 
-## Core concepts
+You can use OpenEvalGate alongside LangSmith, Braintrust, Phoenix, Promptfoo, DeepEval, Guardrails AI, Langfuse, Helicone, or your internal LLMOps stack. OpenEvalGate defines launch-readiness evidence; your tool stack can execute, trace, monitor, or automate parts of that process.
 
-- **Golden eval set as behavioral PRD:** The golden eval set is the clearest executable description of expected assistant behavior.
-- **Historical production cases:** Real user cases that represent recurring demand and known failure modes.
-- **Synthetic boundary cases:** Designed cases that test policy edges, escalation thresholds, and unsafe shortcuts.
-- **Fresh drift samples:** Recently observed cases that keep launch readiness honest as users, products, and policies change.
-- **Model garden and internal arena:** Compare candidate models on your product behavior, not only public benchmarks.
-- **Reasoning vs deterministic enforcement:** Use LLMs for reasoning; use deterministic systems for enforcement.
-- **SOP/context compilation:** Compile the policy context the model needs instead of dumping the whole SOP into the prompt.
-- **Input filter:** Decide what the assistant should accept, refuse, route, or escalate before generation.
-- **Output critic:** Review proposed responses for grounding, policy alignment, safety, helpfulness, and escalation judgment.
-- **Response admission gate:** The main LLM proposes; the output critic decides whether to show, revise, escalate, or block.
-- **Eval result feedback:** Candidate assistant outputs and grading results are saved in `eval_results.csv` and optional `eval_runs/` files.
-- **Action risk taxonomy:** Classify tool and agent actions by harm potential before allowing execution.
-- **Launch readiness report:** Convert evidence into a launch recommendation, score, mitigations, and owner signoff.
+## Who It Is For
+
+- AI Product Managers.
+- ML / AI Engineers.
+- GenAI Platform Teams.
+- Trust, Safety, Legal, and Compliance Teams.
+- Business / Operations / Policy Owners.
+- Startup founders building AI assistants or agents.
+
+## Core Concepts
+
+- **Golden eval set as behavioral PRD:** The clearest executable description of expected assistant behavior.
+- **Agent behavior as business contract:** Golden evals are the operating contract between business intent and agent execution.
+- **Trust preservation:** The system should help users complete the task now while preserving future trust.
+- **Tail-risk/P0 evaluation:** Rare does not mean acceptable; tail failures define trust.
+- **Automation boundary:** Define where automation is appropriate and where it becomes risky.
+- **Human escalation as control surface:** Escalation protects users, business operations, and platform trust.
+- **Domain-owner feedback loop:** Domain owners review traces, propose evals, flag policy nuance, and approve high-risk behavior changes.
+- **Metric stack beyond containment:** Track efficiency, quality, journey resolution, and business/trust outcomes.
+- **Eval result feedback:** Candidate outputs and grading results are saved in `eval_results.csv` and optional `eval_runs/` files.
 
 ## Quickstart
 
@@ -53,29 +61,102 @@ openevalgate check examples/customer_support_assistant/
 openevalgate report examples/customer_support_assistant/ --output examples/customer_support_assistant/generated_launch_report.md
 ```
 
-## Example workflow
+## Example Workflow
 
-1. Start from `templates/ai_assistant_prd.md` and define supported and unsupported behavior.
-2. Build `eval_cases.yaml` from historical production cases, synthetic boundary cases, adversarial cases, and regression cases.
-3. Run the candidate assistant externally using Braintrust, Promptfoo, DeepEval, LangSmith, an internal harness, or manual review.
-4. Save result rows in `eval_results.csv` and optional observed outputs under `eval_runs/`.
-5. Use the model arena scorecard to compare candidate models on product-specific behavior.
-6. Use the action risk matrix to classify tool calls and agent actions.
-7. Define output critic criteria and human escalation thresholds.
-8. Fill out the launch gate review.
-9. Run the CLI to generate a launch readiness report.
+1. Define assistant scope and unsupported use cases.
+2. Complete the business behavior contract and trust-preservation review.
+3. Build golden eval cases from historical, boundary, adversarial, tail-risk, regression, and drift samples.
+4. Define automation boundaries, tool/action safety, output critic criteria, and human escalation design.
+5. Run the candidate assistant externally using your eval or LLMOps stack.
+6. Save results in `eval_results.csv` and observed outputs in `eval_runs/`.
+7. Fill out the launch gate review.
+8. Generate the launch readiness report.
 
-## Repo structure
+## Launch Gates
+
+1. Scope gate
+2. Trust preservation gate
+3. Business behavior contract gate
+4. Golden eval gate
+5. Tail-risk / P0 failure mode gate
+6. Model selection gate
+7. Model arena gate
+8. Grounding gate
+9. SOP/policy compilation gate
+10. Tool/action safety gate
+11. Automation boundary gate
+12. Human escalation gate
+13. Input filter gate
+14. Output critic gate
+15. Domain-owner feedback loop gate
+16. Observability gate
+17. Cost/latency gate
+18. Journey metric / durable resolution gate
+19. Business trust metric gate
+20. Drift monitoring gate
+21. Rollback gate
+22. Owner signoff gate
+
+## Readiness Scoring
+
+OpenEvalGate uses a 100-point trust-weighted score:
+
+- Scope readiness: 5
+- Trust preservation readiness: 8
+- Business behavior contract readiness: 7
+- Golden eval readiness: 10
+- Tail-risk / P0 failure readiness: 10
+- Model selection / arena readiness: 7
+- Grounding readiness: 6
+- SOP/policy compilation readiness: 5
+- Tool/action safety readiness: 8
+- Automation boundary readiness: 6
+- Human escalation readiness: 5
+- Input/output perimeter readiness: 6
+- Domain-owner feedback loop readiness: 4
+- Observability readiness: 5
+- Cost/latency readiness: 3
+- Journey/business metrics readiness: 5
+
+Recommendation bands:
+
+- 85-100: Ready for controlled launch
+- 70-84: Conditional launch
+- 50-69: Shadow launch only
+- Below 50: Not ready
+
+## Hard Blockers
+
+Regardless of score, OpenEvalGate recommends `Not ready` when:
+
+- Scope is missing or failed.
+- Golden eval set is missing or invalid.
+- Tail-risk/P0 review is missing or failed for high-impact workflows.
+- A high-risk action lacks deterministic enforcement or human approval.
+- High-risk or low-confidence cases lack an escalation path.
+- Rollback is missing or not passing.
+- Owner signoff is missing or not passing.
+- Observability/monitoring is missing or failed.
+
+## Templates
+
+The repo includes templates for assistant PRDs, golden eval cases, eval results, business behavior contracts, domain-owner feedback, behavior change requests, P0 failure modes, automation boundaries, human escalation design, chatbot metric stacks, trust-preservation reviews, launch gates, and launch readiness reports.
+
+## Repo Structure
 
 ```text
 docs/       Opinionated guides for production GenAI launch readiness.
 templates/  Copyable Markdown, YAML, and CSV launch review templates.
 examples/   Example assistant projects users can adapt.
 openevalgate/  Small local Python CLI.
-tests/      Schema, project check, scoring, and report tests.
+tests/      Schema, project check, scoring, hard-blocker, and report tests.
 ```
 
-## CLI usage
+## Business Owner Participation
+
+Business and domain owners often know the ground truth better than the central AI team. They should review eval cases, define unacceptable behavior, approve risky behavior changes, own escalation thresholds, and monitor drift through controlled self-service workflows.
+
+## CLI Usage
 
 Validate a golden eval YAML file:
 
@@ -97,16 +178,6 @@ openevalgate report examples/customer_support_assistant/ --output examples/custo
 
 OpenEvalGate does not execute candidate LLM systems in V1. It ingests outputs and grades from external eval runners through `eval_results.csv`.
 
-## How to contribute
+## How To Contribute
 
 Start with templates, examples, and docs. The best contributions make the framework more useful in a real launch review meeting. Keep the CLI small, deterministic, local-first, and dependency-light.
-
-See `CONTRIBUTING.md` for development setup and project boundaries.
-
-## Roadmap
-
-- More assistant examples across regulated and operational domains.
-- Stronger CSV and Markdown validation.
-- Optional export formats for launch review artifacts.
-- Mappings to common eval and observability tools without becoming one.
-- Versioned readiness schemas for teams that need stricter governance.

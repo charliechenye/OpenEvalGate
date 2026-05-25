@@ -12,14 +12,24 @@ from openevalgate.schema import ValidationIssue, validate_eval_cases
 REQUIRED_PROJECT_FILES = [
     "assistant_prd.md",
     "eval_cases.yaml",
+    "action_risk_matrix.csv",
     "output_critic_rubric.csv",
     "launch_gate_review.md",
+    "business_behavior_contract.md",
+    "automation_boundary_matrix.md",
+    "human_escalation_design.md",
+    "chatbot_success_metric_stack.md",
+    "trust_preservation_review.md",
 ]
 
 OPTIONAL_PROJECT_FILES = [
     "model_arena_scorecard.csv",
-    "action_risk_matrix.csv",
     "eval_results.csv",
+    "domain_owner_feedback_loop.md",
+    "agent_behavior_change_request.md",
+    "p0_failure_mode_checklist.md",
+    "tail_risk_eval_cases.yaml",
+    "purpose_built_assistant_scope.md",
 ]
 
 

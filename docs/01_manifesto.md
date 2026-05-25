@@ -6,6 +6,8 @@ Production launch review has to answer a harder question: can this system do thi
 
 OpenEvalGate exists for the second question.
 
+Production GenAI is ultimately a trust-preservation problem. The goal is not maximum automation. The goal is trustworthy automation.
+
 ## Launch gates, not vibe checks
 
 A launch gate is a concrete condition that must be true before a GenAI assistant or agent is exposed to users. It has evidence, an owner, and a mitigation path. It is not a subjective demo review.
@@ -15,6 +17,11 @@ Good teams can still use LangSmith, Braintrust, Phoenix, Langfuse, Promptfoo, De
 ## Practical beliefs
 
 - The golden eval set is the behavioral PRD for a GenAI system.
+- Agent behavior is a business contract, not an engineering guess.
+- Average performance is not launch readiness.
+- Tail failures define trust.
+- Containment is not resolution.
+- Human escalation is not failure; it is a control surface.
 - The best model in production is not always the biggest model.
 - Public benchmarks do not tell you if a model is right for your product.
 - Use LLMs for reasoning; use deterministic systems for enforcement.

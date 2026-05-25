@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
+from enum import Enum
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +21,46 @@ CASE_TYPES = {
 
 RISK_TIERS = {"low", "medium", "high", "prohibited"}
 EXPECTED_ROUTES = {"show", "revise", "escalate", "block"}
+
+
+class RiskTier(str, Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    PROHIBITED = "prohibited"
+
+
+class ExpectedRoute(str, Enum):
+    SHOW = "show"
+    REVISE = "revise"
+    ESCALATE = "escalate"
+    BLOCK = "block"
+
+
+class LaunchGateStatus(str, Enum):
+    PASS = "pass"
+    PARTIAL = "partial"
+    FAIL = "fail"
+    NOT_APPLICABLE = "not_applicable"
+
+
+class ReadinessCategory(str, Enum):
+    SCOPE_READINESS = "scope_readiness"
+    TRUST_PRESERVATION_READINESS = "trust_preservation_readiness"
+    BUSINESS_BEHAVIOR_CONTRACT_READINESS = "business_behavior_contract_readiness"
+    GOLDEN_EVAL_READINESS = "golden_eval_readiness"
+    TAIL_RISK_P0_FAILURE_READINESS = "tail_risk_p0_failure_readiness"
+    MODEL_SELECTION_ARENA_READINESS = "model_selection_arena_readiness"
+    GROUNDING_READINESS = "grounding_readiness"
+    SOP_POLICY_COMPILATION_READINESS = "sop_policy_compilation_readiness"
+    TOOL_ACTION_SAFETY_READINESS = "tool_action_safety_readiness"
+    AUTOMATION_BOUNDARY_READINESS = "automation_boundary_readiness"
+    HUMAN_ESCALATION_READINESS = "human_escalation_readiness"
+    INPUT_OUTPUT_PERIMETER_READINESS = "input_output_perimeter_readiness"
+    DOMAIN_OWNER_FEEDBACK_LOOP_READINESS = "domain_owner_feedback_loop_readiness"
+    OBSERVABILITY_READINESS = "observability_readiness"
+    COST_LATENCY_READINESS = "cost_latency_readiness"
+    JOURNEY_BUSINESS_METRICS_READINESS = "journey_business_metrics_readiness"
 
 REQUIRED_FIELDS = [
     "id",
@@ -57,6 +98,73 @@ class ValidationResult:
     valid: bool
     issues: list[ValidationIssue]
     case_count: int = 0
+
+
+@dataclass(frozen=True)
+class GoldenEvalCase:
+    id: str
+    assistant_type: str
+    use_case: str
+    case_type: str
+    risk_tier: RiskTier
+    expected_route: ExpectedRoute
+
+
+@dataclass(frozen=True)
+class HardBlocker:
+    id: str
+    reason: str
+    evidence: str
+
+
+@dataclass(frozen=True)
+class LaunchReadinessReport:
+    system_name: str
+    assistant_type: str
+    score: int
+    recommendation: str
+    hard_blockers: list[HardBlocker]
+
+
+@dataclass(frozen=True)
+class BusinessBehaviorContract:
+    system_name: str
+    business_owner: str
+    policy_owner: str
+    operations_owner: str
+
+
+@dataclass(frozen=True)
+class DomainOwnerFeedback:
+    domain_area: str
+    domain_owner: str
+    risk_tier: RiskTier
+    status: str
+
+
+@dataclass(frozen=True)
+class P0FailureMode:
+    failure_mode_id: str
+    risk_tier: RiskTier
+    prevented_by: str
+    escalated_by: str
+    blocked_by: str
+
+
+@dataclass(frozen=True)
+class AutomationBoundaryRule:
+    risk_level: RiskTier
+    confidence_level: str
+    action_route: str
+    required_controls: str
+
+
+@dataclass(frozen=True)
+class ChatbotMetricStack:
+    efficiency_metrics: list[str]
+    quality_metrics: list[str]
+    journey_metrics: list[str]
+    business_trust_metrics: list[str]
 
 
 def load_eval_cases(path: str | Path) -> list[dict[str, Any]]:
