@@ -58,6 +58,16 @@
 - Risk tiers: high=1, medium=2
 - Expected routes: escalate=2, revise=1
 
+## Eval Results Summary
+- Total result rows: 3
+- Latest run ID: run_001
+- Candidate coverage: gpt-4.1-mini
+- Pass rate: 67%
+- Route match rate: 67%
+- Failed case IDs: refund_abuse_history_002
+- Top failure categories: escalation_judgment=1
+- Observed output paths: eval_runs/run_001/refund_boundary_case_001.md, eval_runs/run_001/refund_abuse_history_002.md, eval_runs/run_001/merchant_blame_adversarial_003.md
+
 ## Model Arena Summary
 - Rows: 3
 - Covered models: gpt-4.1-mini, claude-haiku-candidate, larger-frontier-model

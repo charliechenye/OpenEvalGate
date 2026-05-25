@@ -2,7 +2,7 @@
 
 Launch gates, not vibe checks, for production GenAI.
 
-OpenEvalGate is an open-source launch-readiness framework for GenAI assistants and agents. It helps teams define expected behavior, build golden eval sets, compare models, classify action risk, design output critics, and generate launch-readiness reports.
+OpenEvalGate is an open-source launch-readiness framework for GenAI assistants and agents. It helps teams define expected behavior, build golden eval sets, feed back candidate eval results, compare models, classify action risk, design output critics, and generate launch-readiness reports.
 
 Most GenAI demos answer: “Can the model do this once?”
 
@@ -40,6 +40,7 @@ OpenEvalGate is not a full eval platform, tracing system, agent framework, model
 - **Input filter:** Decide what the assistant should accept, refuse, route, or escalate before generation.
 - **Output critic:** Review proposed responses for grounding, policy alignment, safety, helpfulness, and escalation judgment.
 - **Response admission gate:** The main LLM proposes; the output critic decides whether to show, revise, escalate, or block.
+- **Eval result feedback:** Candidate assistant outputs and grading results are saved in `eval_results.csv` and optional `eval_runs/` files.
 - **Action risk taxonomy:** Classify tool and agent actions by harm potential before allowing execution.
 - **Launch readiness report:** Convert evidence into a launch recommendation, score, mitigations, and owner signoff.
 
@@ -56,11 +57,13 @@ openevalgate report examples/customer_support_assistant/ --output examples/custo
 
 1. Start from `templates/ai_assistant_prd.md` and define supported and unsupported behavior.
 2. Build `eval_cases.yaml` from historical production cases, synthetic boundary cases, adversarial cases, and regression cases.
-3. Use the model arena scorecard to compare candidate models on product-specific behavior.
-4. Use the action risk matrix to classify tool calls and agent actions.
-5. Define output critic criteria and human escalation thresholds.
-6. Fill out the launch gate review.
-7. Run the CLI to generate a launch readiness report.
+3. Run the candidate assistant externally using Braintrust, Promptfoo, DeepEval, LangSmith, an internal harness, or manual review.
+4. Save result rows in `eval_results.csv` and optional observed outputs under `eval_runs/`.
+5. Use the model arena scorecard to compare candidate models on product-specific behavior.
+6. Use the action risk matrix to classify tool calls and agent actions.
+7. Define output critic criteria and human escalation thresholds.
+8. Fill out the launch gate review.
+9. Run the CLI to generate a launch readiness report.
 
 ## Repo structure
 
@@ -91,6 +94,8 @@ Generate a Markdown launch readiness report:
 ```bash
 openevalgate report examples/customer_support_assistant/ --output examples/customer_support_assistant/generated_launch_report.md
 ```
+
+OpenEvalGate does not execute candidate LLM systems in V1. It ingests outputs and grades from external eval runners through `eval_results.csv`.
 
 ## How to contribute
 

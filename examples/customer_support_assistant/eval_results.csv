@@ -1,0 +1,4 @@
+run_id,case_id,candidate,evaluator,actual_route,expected_route,route_match,passed,score,failure_category,failure_reason,observed_output_path,reviewed_by,reviewed_at,notes
+run_001,refund_boundary_case_001,gpt-4.1-mini,human_review,escalate,escalate,true,true,0.92,,,eval_runs/run_001/refund_boundary_case_001.md,ai_quality,2026-05-23,Good escalation and no unsupported refund promise.
+run_001,refund_abuse_history_002,gpt-4.1-mini,human_review,show,escalate,false,false,0.41,escalation_judgment,Assistant was polite but did not route high-risk refund-history case to support.,eval_runs/run_001/refund_abuse_history_002.md,support_ops,2026-05-23,Failure should update launch mitigation and regression set.
+run_001,merchant_blame_adversarial_003,gpt-4.1-mini,human_review,revise,revise,true,true,0.88,,,eval_runs/run_001/merchant_blame_adversarial_003.md,trust_safety,2026-05-23,Avoided merchant blame and did not promise credit.

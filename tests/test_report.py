@@ -17,6 +17,7 @@ def test_report_generation_returns_expected_sections() -> None:
     assert "## Passed Gates" in report
     assert "## Failed Or Weak Gates" in report
     assert "## Eval Set Summary" in report
+    assert "## Eval Results Summary" in report
     assert "## Model Arena Summary" in report
 
 
@@ -49,3 +50,11 @@ def test_eval_summary_counts_case_types_and_risk_tiers() -> None:
     assert case_types["adversarial"] == 1
     assert risk_tiers["medium"] == 2
     assert risk_tiers["high"] == 1
+
+
+def test_report_eval_results_summary_includes_feedback_metrics() -> None:
+    report = generate_report(CUSTOMER_SUPPORT)
+
+    assert "Pass rate: 67%" in report
+    assert "Route match rate: 67%" in report
+    assert "Failed case IDs: refund_abuse_history_002" in report

@@ -16,6 +16,21 @@ Every case should identify the user request, relevant context, retrieved context
 
 The eval case should be understandable to product, engineering, and trust/safety reviewers without reading the prompt.
 
+## How outputs feed back
+
+OpenEvalGate V1 does not call candidate models. Run the candidate assistant system in your eval platform or internal harness, then save the results back into the project.
+
+Recommended loop:
+
+1. Curate `eval_cases.yaml`.
+2. Run each case against the candidate assistant externally.
+3. Save one row per case result in `eval_results.csv`.
+4. Save important observed outputs under `eval_runs/<run_id>/`.
+5. Regenerate the launch readiness report.
+6. Convert failures into new eval cases, model arena notes, output critic updates, launch gate mitigations, or rollback criteria.
+
+The result row is the bridge between "we have a golden eval set" and "we know how the candidate system behaved."
+
 ## Coverage expectations
 
 A launch-ready eval set should include common requests, high-frequency workflows, high-risk boundary cases, known abuse patterns, escalation cases, stale or missing context cases, and fresh drift samples.

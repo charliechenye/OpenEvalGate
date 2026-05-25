@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from openevalgate.eval_results import validate_eval_results
 from openevalgate.schema import ValidationIssue, validate_eval_cases
 
 
@@ -18,6 +19,7 @@ REQUIRED_PROJECT_FILES = [
 OPTIONAL_PROJECT_FILES = [
     "model_arena_scorecard.csv",
     "action_risk_matrix.csv",
+    "eval_results.csv",
 ]
 
 
@@ -46,6 +48,10 @@ def check_project(project_dir: str | Path) -> ProjectCheckResult:
     if eval_path.is_file():
         eval_result = validate_eval_cases(eval_path)
         issues.extend(eval_result.issues)
+
+    if (root / "eval_results.csv").is_file():
+        results_validation = validate_eval_results(root)
+        issues.extend(results_validation.issues)
 
     valid = not missing and not issues
     return ProjectCheckResult(valid, root, missing, present_optional, issues)

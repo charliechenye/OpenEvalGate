@@ -15,6 +15,7 @@ def test_complete_example_project_passes() -> None:
     assert result.missing_required == []
     assert "model_arena_scorecard.csv" in result.present_optional
     assert "action_risk_matrix.csv" in result.present_optional
+    assert "eval_results.csv" in result.present_optional
 
 
 def test_missing_required_launch_file_fails(tmp_path: Path) -> None:
@@ -33,6 +34,7 @@ def test_optional_files_do_not_fail_project_check(tmp_path: Path) -> None:
     copytree(CUSTOMER_SUPPORT, project)
     (project / "model_arena_scorecard.csv").unlink()
     (project / "action_risk_matrix.csv").unlink()
+    (project / "eval_results.csv").unlink()
 
     result = check_project(project)
 

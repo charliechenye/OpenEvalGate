@@ -8,6 +8,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
+from openevalgate.eval_results import summarize_eval_results
 from openevalgate.schema import load_eval_cases
 from openevalgate.scorer import GateRow, score_gates
 from openevalgate.validator import check_project
@@ -51,6 +52,9 @@ def generate_report(project_dir: str | Path) -> str:
         "",
         "## Eval Set Summary",
         _eval_summary(cases),
+        "",
+        "## Eval Results Summary",
+        _eval_results_summary(root),
         "",
         "## Model Arena Summary",
         _csv_summary(root / "model_arena_scorecard.csv", "model", "No model arena scorecard found."),
@@ -187,6 +191,27 @@ def _eval_summary(cases: list[dict[str, Any]]) -> str:
     )
 
 
+def _eval_results_summary(root: Path) -> str:
+    summary = summarize_eval_results(root)
+    if summary is None:
+        return "No eval results found. Candidate assistant execution results have not been fed back into this project yet."
+    if summary.row_count == 0:
+        return "eval_results.csv exists but has no result rows."
+
+    lines = [
+        f"- Total result rows: {summary.row_count}",
+        f"- Latest run ID: {summary.latest_run_id or 'unknown'}",
+        "- Candidate coverage: " + (", ".join(summary.candidates) if summary.candidates else "unknown"),
+        f"- Pass rate: {_format_rate(summary.pass_rate)}",
+        f"- Route match rate: {_format_rate(summary.route_match_rate)}",
+        "- Failed case IDs: " + (", ".join(summary.failed_case_ids) if summary.failed_case_ids else "none"),
+        "- Top failure categories: " + (_counter_summary(summary.failure_categories) if summary.failure_categories else "none"),
+    ]
+    if summary.observed_output_paths:
+        lines.append("- Observed output paths: " + ", ".join(summary.observed_output_paths[:8]))
+    return "\n".join(lines)
+
+
 def _boundary_coverage_status(cases: list[dict[str, Any]]) -> str:
     case_types = {str(case.get("case_type", "")) for case in cases}
     has_boundary = "synthetic_boundary" in case_types
@@ -218,3 +243,9 @@ def _read_csv(path: Path) -> list[dict[str, str]]:
 
 def _counter_summary(counter: Counter[str]) -> str:
     return ", ".join(f"{name}={count}" for name, count in sorted(counter.items()))
+
+
+def _format_rate(value: float | None) -> str:
+    if value is None:
+        return "unknown"
+    return f"{value:.0%}"

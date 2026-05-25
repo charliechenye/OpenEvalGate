@@ -35,6 +35,10 @@ Summarize pass, partial, fail, and not applicable gates.
 
 Summarize eval case count, case types, risk tiers, and expected routes.
 
+## Eval Results Summary
+
+Summarize externally generated candidate outputs and grading feedback from `eval_results.csv`.
+
 ## Model Arena Summary
 
 Summarize candidate model results if available.
