@@ -54,6 +54,8 @@ You can use OpenEvalGate alongside LangSmith, Braintrust, Phoenix, Promptfoo, De
 
 ## Quickstart
 
+New to the repo? Start with `docs/00_getting_started_for_practitioners.md`.
+
 ```bash
 python -m pip install -e ".[dev]"
 openevalgate validate examples/customer_support_assistant/eval_cases.yaml
