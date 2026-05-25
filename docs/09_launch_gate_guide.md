@@ -2,6 +2,8 @@
 
 OpenEvalGate uses launch gates to convert product, engineering, safety, and operations concerns into evidence-based launch decisions.
 
+This gate-based approach is aligned with AI risk-management and governance frameworks such as the [NIST AI Risk Management Framework](https://www.nist.gov/itl/ai-risk-management-framework), [NIST AI RMF Generative AI Profile](https://www.nist.gov/itl/ai-risk-management-framework/ai-rmf-generative-ai-profile), and [ISO/IEC 42001](https://www.iso.org/standard/81230.html).
+
 ## Required gates
 
 1. Scope gate

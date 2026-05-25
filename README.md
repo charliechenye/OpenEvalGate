@@ -16,6 +16,8 @@ User trust is easier to break than earn. Containment is not resolution. Average 
 
 Production AI should optimize for durable resolution, bounded downside, graceful escalation, and long-term user trust, not short-term dashboard wins.
 
+See [Research Evidence And Competitive Landscape](docs/16_research_evidence_and_competitive_landscape.md) for supporting standards, guidance, and adjacent projects.
+
 ## What OpenEvalGate Is
 
 - A launch-readiness framework.
@@ -30,6 +32,8 @@ Production AI should optimize for durable resolution, bounded downside, graceful
 OpenEvalGate is not a full eval platform, tracing system, monitoring platform, agent framework, model benchmark, prompt library, guardrails runtime, or replacement for existing LLMOps tools. It does not call LLM APIs. It does not send telemetry. It does not require cloud services.
 
 You can use OpenEvalGate alongside LangSmith, Braintrust, Phoenix, Promptfoo, DeepEval, Guardrails AI, Langfuse, Helicone, or your internal LLMOps stack. OpenEvalGate defines launch-readiness evidence; your tool stack can execute, trace, monitor, or automate parts of that process.
+
+For a detailed comparison, see [Research Evidence And Competitive Landscape](docs/16_research_evidence_and_competitive_landscape.md).
 
 ## Who It Is For
 

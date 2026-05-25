@@ -6,6 +6,8 @@ The right question is not "how much can we automate?" The better question is "wh
 
 Human intervention is not failure; it is a control surface.
 
+This is especially important for high-impact or high-agency systems. The [OWASP Top 10 for LLM Applications](https://owasp.org/www-project-top-10-for-large-language-model-applications/) calls attention to excessive agency and related risks, while AI governance frameworks emphasize oversight and accountable operation.
+
 ## Workflow Routes
 
 For each workflow, define whether the assistant should:

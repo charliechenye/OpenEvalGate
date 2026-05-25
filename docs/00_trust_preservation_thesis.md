@@ -6,6 +6,8 @@ The goal is not maximum automation. The goal is trustworthy automation.
 
 A production GenAI system should help users complete the task now while preserving enough trust for users to rely on the system again later. User trust is easier to break than earn.
 
+This framing is consistent with broader trustworthy AI and AI risk-management guidance such as the [NIST AI Risk Management Framework](https://www.nist.gov/itl/ai-risk-management-framework), [OECD AI Principles](https://oecd.ai/en/ai-principles), and [ISO/IEC 42001](https://www.iso.org/standard/81230.html).
+
 ## Why This Matters
 
 Short-term automation wins can become long-term platform damage if the system overpromises, blocks escalation, mishandles edge cases, violates policy, or creates expectations the business cannot honor.

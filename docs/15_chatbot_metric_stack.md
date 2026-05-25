@@ -6,6 +6,8 @@ A chatbot can improve containment while hurting customer trust. Single-session s
 
 Containment tells you whether the bot absorbed the session. Resolution tells you whether the customer's problem was solved. Trust tells you whether the platform relationship survived.
 
+This metric stack complements evaluation and observability tools such as [LangSmith](https://docs.smith.langchain.com/), [Braintrust](https://www.braintrust.dev/docs), [Arize Phoenix](https://github.com/Arize-ai/phoenix), [Langfuse](https://github.com/langfuse/langfuse), and [Helicone](https://github.com/Helicone/helicone), which can provide the traces and production evidence that feed launch review.
+
 ## Metric Layers
 
 ### Efficiency Metrics

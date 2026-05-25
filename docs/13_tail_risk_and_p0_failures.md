@@ -4,6 +4,8 @@ Average performance is not launch readiness. Tail failures define trust.
 
 A GenAI agent can look great on average and still be unsafe to launch. Mean performance tells one story; tail risk tells the story that gets escalated. Rare does not mean acceptable.
 
+For GenAI systems, this is reinforced by risk guidance such as the [NIST AI RMF Generative AI Profile](https://www.nist.gov/itl/ai-risk-management-framework/ai-rmf-generative-ai-profile) and application security risks captured in the [OWASP Top 10 for LLM Applications](https://owasp.org/www-project-top-10-for-large-language-model-applications/).
+
 ## What Launch Gates Must Evaluate
 
 - Average-case evals.
