@@ -2,6 +2,8 @@
 
 The golden eval set is the behavioral PRD for a GenAI system. It defines what the assistant must do, must not do, when it should use tools, and when it should escalate.
 
+For a step-by-step practitioner workflow, see the [Golden Eval Set Playbook](playbooks/golden-eval-set-playbook/README.md).
+
 ## Case types
 
 - **Historical production:** Real cases from support logs, sales chats, tickets, reviews, or pilot traffic.

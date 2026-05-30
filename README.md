@@ -148,6 +148,10 @@ Regardless of score, OpenEvalGate recommends `Not ready` when:
 
 The repo includes templates for assistant PRDs, golden eval cases, eval results, business behavior contracts, domain-owner feedback, behavior change requests, P0 failure modes, automation boundaries, human escalation design, chatbot metric stacks, trust-preservation reviews, launch gates, and launch readiness reports.
 
+## Playbooks
+
+- [Golden Eval Set Playbook](docs/playbooks/golden-eval-set-playbook/README.md): a practitioner guide for PMs and domain owners turning expected behavior into golden eval cases, release gates, and incident feedback loops.
+
 ## Repo Structure
 
 ```text
