@@ -1,0 +1,80 @@
+# Use one routing decision card per scenario or specialist workflow.
+routing_decision_card:
+  id: routing_decision_001
+  status: draft
+  owner: product
+  reviewers:
+    - platform
+    - operations
+    - trust_safety
+
+  user_scenario:
+    name: ""
+    description: ""
+    supported: true
+    user_goal: ""
+    examples:
+      - ""
+
+  specialist_workflow:
+    name: ""
+    workflow_owner: ""
+    required_context:
+      - ""
+    required_tools:
+      - ""
+    unsupported_cases:
+      - ""
+
+  default_route:
+    route_type: deterministic | retrieval_small_model | smaller_model | stronger_model | human_review
+    model_or_system: ""
+    reason: ""
+    expected_user_experience: ""
+
+  escalation_conditions:
+    use_stronger_reasoning_when:
+      - ""
+    use_fallback_when:
+      - ""
+    clarify_when:
+      - ""
+    escalate_to_human_when:
+      - ""
+    block_when:
+      - ""
+
+  risk:
+    risk_tier: low | medium | high | prohibited
+    allowed_action_route: return | confirm | recommend | execute | review | escalate | block
+    mandatory_controls:
+      - ""
+    deterministic_overrides:
+      - ""
+    audit_requirements:
+      - ""
+
+  success_metrics:
+    resolution:
+      - ""
+    user_friction:
+      - ""
+    safety_and_policy:
+      - ""
+    cost_and_latency:
+      - ""
+
+  launch_evidence:
+    eval_cases:
+      - ""
+    model_arena_rows:
+      - ""
+    observability_fields_confirmed: false
+    human_review_required: false
+    owner_signoff_required: true
+
+  rollback:
+    rollback_owner: ""
+    rollback_triggers:
+      - ""
+    fallback_route: ""

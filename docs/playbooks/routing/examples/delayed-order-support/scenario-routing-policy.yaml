@@ -1,0 +1,165 @@
+# Example routing policy for delayed-order support.
+routing_policy:
+  id: delayed_order_support_v1
+  status: example
+  owner: support_product
+  router_version: delayed-order-router-2026-05
+
+  scenario_taxonomy:
+    - id: check_eta
+      description: User asks when a delayed order will arrive.
+      workflow: delivery_status_lookup
+      risk_tier: low
+    - id: reconcile_conflicting_records
+      description: Carrier, warehouse, and order records disagree.
+      workflow: logistics_reconciliation
+      risk_tier: medium
+    - id: request_refund
+      description: User asks for refund or cancellation because the order is late.
+      workflow: refund_eligibility
+      risk_tier: medium
+    - id: report_fraud
+      description: User alleges fraud, unauthorized purchase, or account compromise.
+      workflow: fraud_escalation
+      risk_tier: high
+    - id: request_high_value_exception
+      description: User requests compensation outside standard policy.
+      workflow: exception_review
+      risk_tier: high
+
+  routes:
+    - scenario_id: check_eta
+      default_route:
+        route_type: retrieval_small_model
+        model_or_system: fast-support-model
+        reason: Clear delivery status can be answered from carrier and order records.
+      required_context:
+        - order record
+        - carrier tracking event
+        - delivery promise policy
+      controls:
+        - verify account ownership
+        - cite latest known carrier event
+      escalation_conditions:
+        - missing order ownership
+        - no carrier event available
+        - user asks for refund, fraud review, or compensation
+      allowed_action_route: return
+      success_metrics:
+        - eta_answer_resolution_rate
+        - p95_time_to_first_token
+        - repeat_contact_7d
+
+    - scenario_id: reconcile_conflicting_records
+      default_route:
+        route_type: stronger_model
+        model_or_system: reasoning-support-model
+        reason: Conflicting logistics records require synthesis and uncertainty handling.
+      required_context:
+        - order record
+        - warehouse status
+        - carrier tracking history
+        - delivery promise policy
+      controls:
+        - verify account ownership
+        - disclose uncertainty
+        - avoid unsupported promises
+      escalation_conditions:
+        - unresolved record conflict after retrieval refresh
+        - user requests financial remedy
+        - safety, fraud, or legal language appears
+      allowed_action_route: return
+      success_metrics:
+        - conflicting_record_resolution_rate
+        - clarification_count
+        - downstream_correction_rate
+
+    - scenario_id: request_refund
+      default_route:
+        route_type: deterministic
+        model_or_system: refund_eligibility_service
+        reason: Refund eligibility must be checked outside the model.
+      required_context:
+        - order record
+        - refund policy version
+        - customer refund history
+      controls:
+        - verify account ownership
+        - run refund eligibility service
+        - log policy version
+      escalation_conditions:
+        - eligibility service unavailable
+        - high-value refund
+        - abuse signal or policy ambiguity
+      allowed_action_route: recommend
+      success_metrics:
+        - refund_policy_compliance
+        - human_review_acceptance_rate
+        - repeat_contact_7d
+
+    - scenario_id: report_fraud
+      default_route:
+        route_type: human_review
+        model_or_system: fraud_escalation_queue
+        reason: Fraud allegations require restricted automation and specialist handling.
+      required_context:
+        - order record
+        - account security state
+        - fraud escalation policy
+      controls:
+        - verify account ownership
+        - restrict account mutation
+        - create audit event
+        - escalate to fraud queue
+      escalation_conditions:
+        - always escalate
+      allowed_action_route: escalate
+      success_metrics:
+        - fraud_escalation_accuracy
+        - unsafe_automation_count
+        - time_to_human_review
+
+    - scenario_id: request_high_value_exception
+      default_route:
+        route_type: stronger_model
+        model_or_system: reasoning-support-model
+        reason: Exception requests need reasoning support, deterministic checks, and approval.
+      required_context:
+        - order record
+        - customer history
+        - compensation policy
+        - exception approval policy
+      controls:
+        - verify account ownership
+        - run eligibility checks
+        - require human approval
+        - create audit event
+      escalation_conditions:
+        - compensation above standard threshold
+        - ambiguous policy
+        - user threatens legal, regulatory, or public complaint
+      allowed_action_route: review
+      success_metrics:
+        - exception_review_acceptance_rate
+        - compensation_policy_compliance
+        - complaint_rate
+
+  deterministic_overrides:
+    - condition: account_ownership_not_verified
+      action: block
+    - condition: fraud_allegation_detected
+      action: escalate_to_fraud_queue
+    - condition: refund_eligibility_check_missing
+      action: block_refund_recommendation
+    - condition: compensation_above_threshold
+      action: require_human_approval
+
+  rollback:
+    owner: support_platform
+    fallback_route: baseline_support_workflow
+    triggers:
+      - p0_failure
+      - unsafe_action
+      - refund_policy_violation
+      - repeat_contact_rate_increase
+      - p95_latency_breach
