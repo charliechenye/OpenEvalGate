@@ -23,19 +23,19 @@ No hard blockers detected.
 - Business behavior contract is present.
 
 ## Golden Eval Summary
-- Total cases: 8
-- Case types: adversarial=2, fresh_drift_sample=1, historical_production=2, synthetic_boundary=3
-- Risk tiers: high=1, medium=6, prohibited=1
-- Expected routes: block=1, escalate=5, revise=2
+- Total cases: 11
+- Case types: adversarial=2, fresh_drift_sample=1, historical_production=2, regression=1, synthetic_boundary=5
+- Risk tiers: high=2, low=1, medium=7, prohibited=1
+- Expected routes: block=1, escalate=7, revise=2, show=1
 
 ## Tail-Risk / P0 Failure Mode Summary
 - P0 failure mode checklist is present.
 
 ## Automation Boundary Summary
-- Automation boundary matrix is present with 7 row(s).
+- Automation boundary matrix is present with 10 row(s).
 
 ## Human Escalation Summary
-- Human escalation design is present with 4 row(s).
+- Human escalation design is present with 24 row(s).
 
 ## Tool/Action Safety Summary
 - Rows: 7

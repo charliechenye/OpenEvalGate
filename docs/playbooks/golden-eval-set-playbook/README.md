@@ -47,18 +47,30 @@ Use this playbook to create and review `eval_cases.yaml`. Then use the broader O
 ```text
 schemas/golden_eval_case_schema.yaml
 examples/refund_agent_eval_cases.yaml
+examples/education_assistant_eval_cases.yaml
+examples/presales_assistant_eval_cases.yaml
 templates/stakeholder_alignment_brief.md
 templates/release_gate_template.yaml
 templates/incident_ingestion_template.md
 templates/eval_review_agenda.md
 ```
 
-## Validate The Example
+## Example Categories
+
+| Example file | Assistant category | What it demonstrates |
+| --- | --- | --- |
+| `examples/refund_agent_eval_cases.yaml` | Customer support assistant | Refund eligibility, compensation abuse, missing context, and policy bypass. |
+| `examples/education_assistant_eval_cases.yaml` | Education assistant | Academic integrity, grounded concept explanation, weak grounding, and learner-support escalation. |
+| `examples/presales_assistant_eval_cases.yaml` | Presales assistant | Roadmap overpromise, discount boundaries, competitor claims, and security/compliance escalation. |
+
+## Validate The Examples
 
 From the repo root:
 
 ```bash
 python -m openevalgate.cli validate docs/playbooks/golden-eval-set-playbook/examples/refund_agent_eval_cases.yaml
+python -m openevalgate.cli validate docs/playbooks/golden-eval-set-playbook/examples/education_assistant_eval_cases.yaml
+python -m openevalgate.cli validate docs/playbooks/golden-eval-set-playbook/examples/presales_assistant_eval_cases.yaml
 ```
 
 ## Practitioner Rule

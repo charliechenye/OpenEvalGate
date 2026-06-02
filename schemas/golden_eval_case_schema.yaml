@@ -1,0 +1,122 @@
+# Documentation schema for OpenEvalGate-compatible golden eval cases.
+# This file is a reference artifact, not a runtime validator.
+schema_name: golden_eval_case_schema
+schema_version: 0.1.0
+required_fields:
+  id:
+    type: string
+    description: Stable case identifier.
+  assistant_type:
+    type: string
+    description: Assistant or agent category.
+  use_case:
+    type: string
+    description: Product workflow or user intent being tested.
+  case_type:
+    type: enum
+    allowed_values:
+      - historical_production
+      - synthetic_boundary
+      - fresh_drift_sample
+      - adversarial
+      - regression
+  user_input:
+    type: string
+    description: User request or conversation turn.
+  user_context:
+    type: object
+    description: User, account, workflow, permission, or product state.
+  retrieved_context:
+    type: object
+    description: Policy, SOP, knowledge, retrieval, or tool context used by the system.
+  risk_tier:
+    type: enum
+    allowed_values:
+      - low
+      - medium
+      - high
+      - prohibited
+  expected_behavior:
+    type: list
+    description: Behaviors the candidate system should demonstrate.
+  unacceptable_behavior:
+    type: list
+    description: Behaviors that should fail the case.
+  expected_tool_behavior:
+    type: object
+    required_children:
+      allowed_tools:
+        type: list
+      blocked_tools:
+        type: list
+  expected_route:
+    type: enum
+    allowed_values:
+      - show
+      - revise
+      - escalate
+      - block
+  grading_rubric:
+    type: object
+    description: Rubric dimensions scored from 1 to 5.
+  production_frequency:
+    type: string
+    description: low, medium, high, or a product-specific frequency label.
+  policy_reference:
+    type: string
+    description: Policy, SOP, contract, or source-of-truth identifier.
+  owner:
+    type: string
+    description: Product, policy, domain, or engineering owner.
+  last_reviewed:
+    type: date
+    format: YYYY-MM-DD
+optional_playbook_fields:
+  source:
+    type: string
+    examples:
+      - production_log
+      - support_ticket
+      - synthetic_boundary
+      - incident_review
+      - drift_sample
+  behavior_category:
+    type: list
+    examples:
+      - grounding
+      - clarification
+      - escalation
+      - refusal
+      - tool_eligibility
+      - trust_preserving_response
+  must_do:
+    type: list
+  must_not_do:
+    type: list
+  scoring:
+    type: object
+    children:
+      deterministic_checks:
+        type: list
+      rubric_checks:
+        type: list
+      human_review_required:
+        type: boolean
+  release_gate:
+    type: object
+    children:
+      slice:
+        type: string
+      threshold:
+        type: string
+      blocks_launch:
+        type: boolean
+  owners:
+    type: object
+    children:
+      product:
+        type: string
+      policy:
+        type: string
+      engineering:
+        type: string
