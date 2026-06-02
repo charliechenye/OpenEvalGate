@@ -11,7 +11,7 @@
 | Tool/action safety gate | pass | Answer-key tool is blocked. | None | platform |
 | Input filter gate | partial | Graded-answer requests are defined. | Add jailbreak and answer-leakage examples. | trust_safety |
 | Output critic gate | pass | Rubric covers integrity, grounding, and helpfulness. | None | ai_quality |
-| Human escalation gate | partial | Instructor review path exists. | Define SLA for academic integrity disputes. | operations |
+| Human escalation gate | partial | Instructor, learner safety, and accessibility review paths exist. | Finalize timeout and fallback ownership. | operations |
 | Observability gate | partial | Feedback and escalation metrics proposed. | Add drift sampling owner. | platform |
 | Cost/latency gate | partial | No launch load test yet. | Measure p95 latency. | engineering |
 | Drift monitoring gate | fail | No fresh sample process. | Add weekly learner request review. | ai_quality |

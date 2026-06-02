@@ -50,12 +50,14 @@ def test_eval_summary_counts_case_types_and_risk_tiers() -> None:
     case_types = Counter(case["case_type"] for case in cases)
     risk_tiers = Counter(case["risk_tier"] for case in cases)
 
-    assert case_types["synthetic_boundary"] == 3
+    assert case_types["synthetic_boundary"] == 5
     assert case_types["historical_production"] == 2
     assert case_types["adversarial"] == 2
     assert case_types["fresh_drift_sample"] == 1
-    assert risk_tiers["medium"] == 6
-    assert risk_tiers["high"] == 1
+    assert case_types["regression"] == 1
+    assert risk_tiers["low"] == 1
+    assert risk_tiers["medium"] == 7
+    assert risk_tiers["high"] == 2
     assert risk_tiers["prohibited"] == 1
 
 

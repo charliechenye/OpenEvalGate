@@ -1,0 +1,156 @@
+escalation_contract:
+  workflow:
+    id: refund_request
+    name: Customer support refund request
+    owner: support_ops
+    version: "1.0.0"
+    risk_tier: medium
+    policy_version: refund_policy_us_v3
+
+  autonomous_scope:
+    permitted_actions:
+      - retrieve_order
+      - check_refund_eligibility
+      - create_support_followup
+    prohibited_actions:
+      - issue_refund_without_policy_check
+      - override_fraud_hold
+      - close_case_without_resolution
+    authorization_limits:
+      autonomous_refund_usd: 25
+
+  clarification:
+    enabled: true
+    max_attempts: 2
+    duplicate_question_detection: true
+    frustration_override: true
+
+  boundaries:
+    resolve_when:
+      - order ownership is verified
+      - order state is consistent
+      - eligibility service returns routine in-policy result
+      - requested action is within autonomous limits
+    clarify_when:
+      - order identifier is missing
+      - user request could mean refund, cancellation, delivery update, or charge dispute
+    escalate_when:
+      - refund history or abuse signal requires judgment
+      - policy or order state is contradictory
+      - user explicitly asks for a person
+      - repeat contact indicates false containment
+      - refund service is unavailable
+    approval_required_when:
+      - proposed compensation exceeds autonomous_refund_usd
+    refuse_or_block_when:
+      - user asks to bypass refund rules or audit
+      - requested action would override fraud hold
+
+  triggers:
+    - id: explicit_human_request
+      condition: user asks for a person or reports bot loop
+      path: escalate
+      destination: live_support_or_callback
+      risk_tier: medium
+    - id: repeated_refund_history
+      condition: prior_refunds_30d >= 4
+      path: approval
+      destination: senior_refund_review
+      risk_tier: high
+    - id: conflicting_order_state
+      condition: order_status == conflicting
+      path: escalate
+      destination: policy_support_review
+      risk_tier: medium
+    - id: repeated_contact
+      condition: prior_contacts_7d >= 3
+      path: escalate
+      destination: live_support_or_callback
+      risk_tier: medium
+    - id: refund_api_failure
+      condition: refund_eligibility_service_unavailable
+      path: escalate
+      destination: async_case_queue
+      risk_tier: medium
+    - id: policy_bypass_request
+      condition: user asks to ignore rules or avoid audit
+      path: refuse
+      destination: ""
+      risk_tier: prohibited
+
+  handoff:
+    payload_schema: refund_handoff_v1
+    minimum_sufficient_context: true
+    required_fields:
+      - conversation_summary
+      - user_goal
+      - authentication_state
+      - order_context
+      - refund_history
+      - policy_check_results
+      - actions_attempted
+      - risk_flags
+      - escalation_reason
+      - recommended_next_step
+      - workflow_version
+      - policy_version
+
+  routing:
+    destinations:
+      - id: live_support_or_callback
+        response_model: live
+        sla_minutes: 15
+        fallback: async_case_queue
+        owner: support_ops
+      - id: senior_refund_review
+        response_model: approval_queue
+        sla_minutes: 30
+        fallback: hold_action_and_notify_user
+        owner: support_policy
+      - id: policy_support_review
+        response_model: specialist_review
+        sla_minutes: 60
+        fallback: senior_refund_review
+        owner: customer_policy
+      - id: async_case_queue
+        response_model: async_case
+        sla_minutes: 240
+        fallback: retry_queue
+        owner: support_ops
+
+  resume_behavior:
+    checkpoint_required: true
+    idempotency_key_required: true
+    approval_timeout_minutes: 60
+    on_timeout: preserve_state_and_open_case
+    revalidate_before_execution: true
+
+  audit:
+    emit_events:
+      - escalation_triggered
+      - handoff_payload_created
+      - destination_selected
+      - human_review_started
+      - human_decision_recorded
+      - workflow_resumed
+      - workflow_closed
+
+  evaluation:
+    required_eval_slices:
+      - refund_boundary_case_001
+      - refund_abuse_history_002
+      - angry_user_escalation_004
+      - policy_ambiguity_005
+      - bypass_rules_006
+      - repeat_contact_010
+      - dependency_failure_escalation_011
+      - wrong_destination_fraud_012
+      - routine_status_no_escalation_013
+
+  recertification:
+    cadence_days: 90
+    required_reviewers:
+      - ai_product_team
+      - support_ops
+      - customer_policy
+      - trust_safety

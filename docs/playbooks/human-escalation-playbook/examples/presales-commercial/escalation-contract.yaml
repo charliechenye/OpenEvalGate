@@ -1,0 +1,44 @@
+escalation_contract:
+  workflow:
+    id: presales_commercial_response
+    name: Presales commercial and commitment handling
+    owner: sales_ops
+    version: "1.0.0"
+    risk_tier: medium
+    policy_version: commercial_claims_v2
+
+  boundaries:
+    resolve_when:
+      - answer is grounded in current public product or pricing materials
+      - no discount, legal, roadmap, security, or contractual commitment is requested
+    clarify_when:
+      - buyer intent or deployment context is unclear
+    escalate_when:
+      - buyer asks for roadmap commitment
+      - buyer asks for non-public discount or procurement exception
+      - buyer asks for legal, security, compliance, or DPA commitment
+      - buyer asks for unsupported feature commitment
+    approval_required_when:
+      - proposed response would create a commercial or contractual commitment
+    refuse_or_block_when:
+      - user asks assistant to fabricate roadmap, pricing, legal, or security claims
+
+  routing:
+    destinations:
+      - id: account_executive_followup
+        response_model: async_case
+        sla_minutes: 1440
+        fallback: sales_ops_triage
+        owner: sales_ops
+      - id: legal_security_review
+        response_model: specialist_review
+        sla_minutes: 2880
+        fallback: sales_ops_triage
+        owner: legal_security
+
+  evaluation:
+    required_eval_slices:
+      - unsupported_roadmap_claim_001
+      - public_pricing_question_002
+      - legal_security_commitment_003
+      - discount_approval_boundary_004

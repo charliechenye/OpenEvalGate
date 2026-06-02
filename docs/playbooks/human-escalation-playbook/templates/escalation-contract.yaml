@@ -1,0 +1,101 @@
+# Copy one escalation contract per workflow into the assistant project or policy repo.
+escalation_contract:
+  workflow:
+    id: ""
+    name: ""
+    owner: ""
+    version: "1.0.0"
+    risk_tier: low | medium | high | prohibited
+    policy_version: ""
+
+  autonomous_scope:
+    permitted_actions:
+      - ""
+    prohibited_actions:
+      - ""
+    authorization_limits:
+      example_threshold: ""
+
+  clarification:
+    enabled: true
+    max_attempts: 2
+    duplicate_question_detection: true
+    frustration_override: true
+
+  boundaries:
+    resolve_when:
+      - ""
+    clarify_when:
+      - ""
+    escalate_when:
+      - ""
+    approval_required_when:
+      - ""
+    refuse_or_block_when:
+      - ""
+
+  triggers:
+    - id: ""
+      condition: ""
+      path: resolve | clarify | escalate | approval | refuse
+      destination: ""
+      risk_tier: low | medium | high | prohibited
+
+  handoff:
+    payload_schema: ""
+    minimum_sufficient_context: true
+    required_fields:
+      - user_goal
+      - workflow_state
+      - evidence_collected
+      - actions_attempted
+      - policy_check_results
+      - escalation_reason
+      - recommended_next_step
+      - workflow_version
+      - policy_version
+
+  routing:
+    destinations:
+      - id: ""
+        response_model: live | async_case | approval_queue | specialist_review | callback
+        sla_minutes: 0
+        fallback: ""
+        owner: ""
+
+  resume_behavior:
+    checkpoint_required: true
+    idempotency_key_required: true
+    approval_timeout_minutes: 0
+    on_timeout: ""
+    revalidate_before_execution: true
+
+  audit:
+    emit_events:
+      - escalation_triggered
+      - handoff_payload_created
+      - destination_selected
+      - human_review_started
+      - human_decision_recorded
+      - workflow_resumed
+      - workflow_closed
+
+  evaluation:
+    required_eval_slices:
+      - routine_resolution
+      - missing_context
+      - explicit_human_request
+      - repeated_failure
+      - approval_required_action
+      - prohibited_action
+      - dependency_failure
+      - wrong_destination
+      - over_escalation
+
+  recertification:
+    cadence_days: 90
+    required_reviewers:
+      - product_owner
+      - engineering_owner
+      - operations_owner
+      - risk_owner

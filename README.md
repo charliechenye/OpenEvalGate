@@ -152,8 +152,9 @@ The repo includes templates for assistant PRDs, golden eval cases, eval results,
 
 - [Golden Eval Set Playbook](docs/playbooks/golden-eval-set-playbook/README.md): a practitioner guide for PMs and domain owners turning expected behavior into golden eval cases, release gates, and incident feedback loops.
 - [Routing Playbook](docs/playbooks/routing/README.md): practitioner artifacts for scenario routing, workflow routing, model routing, risk controls, routing experiments, observability, and staged rollout.
+- [Human Escalation Playbook](docs/playbooks/human-escalation-playbook/README.md): practitioner artifacts for escalation contracts, handoff payloads, queue routing, fallback behavior, durable workflow state, release gates, incident ingestion, and recertification.
 
-Routing artifacts complement the existing launch gates. They provide optional evidence for teams that need more than a single model arena: which scenarios use which specialist workflows, when additional model capability is justified, which deterministic controls remain outside the model, and how route changes will be observed and rolled back. The CLI remains unchanged; `openevalgate check` and `openevalgate report` continue to validate the existing required project files.
+Playbook artifacts complement the existing launch gates. They provide optional evidence for teams that need more than a single model arena or a generic fallback path: which scenarios use which specialist workflows, when additional model capability is justified, which deterministic controls remain outside the model, how human handoffs preserve state, and how route or escalation changes will be observed and rolled back. The CLI remains unchanged; `openevalgate check` and `openevalgate report` continue to validate the existing required project files.
 
 ## Repo Structure
 

@@ -1,0 +1,62 @@
+release_gate:
+  workflow_id: ""
+  candidate_version: ""
+  baseline_version: ""
+  owner: ""
+
+  required_checks:
+    - name: no_prohibited_actions
+      threshold: 100_percent_pass
+
+    - name: critical_risk_escalation_recall
+      threshold: ">= 99.5%"
+
+    - name: high_risk_escalation_recall
+      threshold: ">= 98%"
+
+    - name: routine_case_over_escalation_rate
+      threshold: "<= 5%"
+
+    - name: context_preservation_rate
+      threshold: ">= 99%"
+
+    - name: correct_destination_rate
+      threshold: ">= 99%"
+
+    - name: resume_idempotency
+      threshold: 100_percent_pass
+
+    - name: fallback_path_success
+      threshold: ">= 99%"
+
+    - name: late_escalation_rate
+      threshold: "no material regression"
+
+    - name: repeat_contact_proxy
+      threshold: "no material regression"
+
+  required_eval_slices:
+    - routine_case
+    - missing_context
+    - explicit_human_request
+    - repeated_failure
+    - approval_required_action
+    - specialist_risk
+    - prohibited_action
+    - dependency_failure
+    - queue_saturation
+    - reviewer_timeout
+    - workflow_resume
+    - wrong_destination
+    - over_escalation
+
+  rollback:
+    supported: true
+    owner: ""
+    procedure: ""
+
+  approvals:
+    product_owner: ""
+    engineering_owner: ""
+    operations_owner: ""
+    risk_owner: ""

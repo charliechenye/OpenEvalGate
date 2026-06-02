@@ -11,7 +11,7 @@
 | Tool/action safety gate | partial | Discount and contract actions blocked in rubric. | Add explicit action risk matrix before launch. | platform |
 | Input filter gate | partial | Commercial commitment asks identified. | Add competitor and jailbreak cases. | trust_safety |
 | Output critic gate | pass | Rubric covers claims, pricing, and commitments. | None | ai_quality |
-| Human escalation gate | pass | Sales follow-up path exists. | None | sales_ops |
+| Human escalation gate | pass | Sales follow-up, legal/security review, and discount approval paths exist. | None | sales_ops |
 | Observability gate | partial | Feedback and handoff metrics proposed. | Add dashboard owner. | platform |
 | Cost/latency gate | pass | Candidate latency and cost are inside target. | None | engineering |
 | Drift monitoring gate | partial | Sales chat sample review proposed. | Schedule weekly drift review. | ai_quality |

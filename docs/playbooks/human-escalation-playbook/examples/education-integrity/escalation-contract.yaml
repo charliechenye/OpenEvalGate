@@ -1,0 +1,51 @@
+escalation_contract:
+  workflow:
+    id: education_integrity_support
+    name: Education assistant integrity and learner support
+    owner: learning_product
+    version: "1.0.0"
+    risk_tier: medium
+    policy_version: academic_integrity_v1
+
+  boundaries:
+    resolve_when:
+      - request is for supported concept explanation or practice help
+      - response can be grounded in course material
+    clarify_when:
+      - assessment status is ambiguous
+      - learner asks for help but it is unclear whether the task is graded
+    escalate_when:
+      - learner disputes grading or policy application
+      - learner raises safety, crisis, harassment, or accessibility concern
+      - accommodation or policy exception requires staff judgment
+      - repeated refusal creates a learner-support issue
+    approval_required_when:
+      - instructor or staff must approve a hint, extension, or exception
+    refuse_or_block_when:
+      - learner asks for answer key, direct graded answer, or cheating assistance
+
+  routing:
+    destinations:
+      - id: instructor_review
+        response_model: async_case
+        sla_minutes: 1440
+        fallback: course_staff_triage
+        owner: course_staff
+      - id: learner_safety_review
+        response_model: specialist_review
+        sla_minutes: 30
+        fallback: campus_support_protocol
+        owner: learner_safety
+      - id: accessibility_policy_review
+        response_model: specialist_review
+        sla_minutes: 2880
+        fallback: course_staff_triage
+        owner: accessibility_services
+
+  evaluation:
+    required_eval_slices:
+      - graded_answer_request_001
+      - explain_photosynthesis_002
+      - graded_dispute_escalation_003
+      - learner_safety_escalation_004
+      - accommodation_policy_ambiguity_005

@@ -1,0 +1,74 @@
+# Minimum-sufficient-context schema for human handoff.
+handoff_payload:
+  schema_version: "1.0"
+
+  workflow:
+    workflow_id: ""
+    workflow_version: ""
+    policy_version: ""
+    checkpoint_id: ""
+    correlation_id: ""
+
+  user_request:
+    user_goal: ""
+    unresolved_question: ""
+    explicit_human_request: false
+    clarification_attempts: 0
+
+  conversation:
+    structured_summary: ""
+    relevant_turns: []
+    full_transcript_reference: ""
+
+  identity_and_auth:
+    authenticated: false
+    auth_level: ""
+    verification_steps_completed: []
+
+  business_context:
+    entity_type: ""
+    entity_id: ""
+    relevant_attributes: {}
+
+  evidence:
+    collected_items: []
+    missing_items: []
+    contradictory_items: []
+
+  actions:
+    attempted: []
+    completed: []
+    failed: []
+    proposed_action: ""
+
+  policy_checks:
+    passed: []
+    failed: []
+    ambiguous: []
+
+  risk:
+    risk_tier: low | medium | high | prohibited
+    flags: []
+    specialist_route_required: false
+
+  escalation:
+    trigger_id: ""
+    reason: ""
+    destination: ""
+    sla_minutes: 0
+    fallback_destination: ""
+
+  recommendation:
+    next_step: ""
+    reviewer_decision_required: false
+
+  audit:
+    created_at: ""
+    created_by: ""
+    model_version: ""
+    prompt_version: ""
+    tool_versions: []
+
+  privacy:
+    minimum_sufficient_context_reviewed: false
+    unrelated_personal_data_excluded: false

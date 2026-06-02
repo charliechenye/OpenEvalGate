@@ -1,0 +1,79 @@
+handoff_payload:
+  schema_version: "1.0"
+  workflow:
+    workflow_id: refund_request
+    workflow_version: "1.0.0"
+    policy_version: refund_policy_us_v3
+    checkpoint_id: "checkpoint_123"
+    correlation_id: "case_abc"
+  user_request:
+    user_goal: "Resolve refund request for delayed or incorrect order."
+    unresolved_question: "Eligibility requires human review because order state or refund history is risky."
+    explicit_human_request: false
+    clarification_attempts: 1
+  conversation:
+    structured_summary: "User reports a refund problem after prior attempts. Assistant checked order context and found escalation trigger."
+    relevant_turns:
+      - "User requested refund."
+      - "Assistant checked eligibility and found manual-review condition."
+    full_transcript_reference: "trace://case_abc"
+  identity_and_auth:
+    authenticated: true
+    auth_level: account_owner
+    verification_steps_completed:
+      - account_session_verified
+  business_context:
+    entity_type: order
+    entity_id: "order_456"
+    relevant_attributes:
+      order_status: conflicting
+      delivery_time_minutes: 120
+      prior_refunds_30d: 4
+      prior_contacts_7d: 3
+  evidence:
+    collected_items:
+      - order_status
+      - refund_history
+      - policy_version
+    missing_items:
+      - reviewer_decision
+    contradictory_items:
+      - carrier_status_vs_order_status
+  actions:
+    attempted:
+      - check_order_status
+      - check_refund_eligibility
+    completed: []
+    failed: []
+    proposed_action: "senior refund review"
+  policy_checks:
+    passed:
+      - account_ownership_verified
+    failed: []
+    ambiguous:
+      - conflicting_order_state
+  risk:
+    risk_tier: high
+    flags:
+      - repeated_refund_history
+      - repeat_contact
+    specialist_route_required: true
+  escalation:
+    trigger_id: repeated_refund_history
+    reason: "Refund request requires human judgment before compensation."
+    destination: senior_refund_review
+    sla_minutes: 30
+    fallback_destination: hold_action_and_notify_user
+  recommendation:
+    next_step: "Review eligibility, decide refund or deny with policy reason, then resume from checkpoint."
+    reviewer_decision_required: true
+  audit:
+    created_at: "2026-06-02T00:00:00Z"
+    created_by: support_refund_agent
+    model_version: candidate_model
+    prompt_version: refund_prompt_v4
+    tool_versions:
+      - refund_eligibility_service_v3
+  privacy:
+    minimum_sufficient_context_reviewed: true
+    unrelated_personal_data_excluded: true
