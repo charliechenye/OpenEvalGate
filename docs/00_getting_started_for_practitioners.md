@@ -1,6 +1,6 @@
 # Getting Started For Practitioners
 
-OpenEvalGate is not an app to deploy. It is a launch-readiness operating kit for production GenAI assistants and agents.
+OpenEvalGate is not an app to deploy. It is a GenAI governance and launch-readiness operating kit for production AI assistants and agents.
 
 Use it to answer:
 

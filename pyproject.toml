@@ -5,14 +5,28 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "openevalgate"
 version = "0.1.0"
-description = "Launch-readiness templates and local CLI for production GenAI assistants and agents."
+description = "GenAI governance, AI agent evaluation, and launch-readiness templates for production assistants and agents."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [
   { name = "OpenEvalGate contributors" }
 ]
-keywords = ["genai", "evals", "llm", "agents", "launch-readiness", "ai-governance"]
+keywords = [
+  "genai",
+  "genai-governance",
+  "evals",
+  "llm",
+  "llm-evaluation",
+  "agents",
+  "ai-agent-evaluation",
+  "agent-safety",
+  "golden-evals",
+  "launch-readiness",
+  "ai-governance",
+  "ai-risk-management",
+  "llmops",
+]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",

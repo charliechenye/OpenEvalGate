@@ -1,12 +1,20 @@
 # OpenEvalGate
 
-Launch gates, not vibe checks, for production GenAI.
+GenAI governance and AI agent launch readiness, not vibe checks.
 
-OpenEvalGate is an open-source launch-readiness and trust-preservation framework for GenAI assistants and agents. It helps teams define expected behavior, build golden eval sets, feed back candidate eval results, compare models, classify action risk, design output critics, define automation boundaries, and generate launch-readiness reports.
+OpenEvalGate is an open-source GenAI governance framework for production AI assistants and agents. It helps teams turn AI agent evaluation into launch-readiness evidence: golden evals, LLM launch readiness reviews, agent safety checks, automation boundaries, human escalation, output critics, action risk gates, model comparison evidence, and local readiness reports.
 
-Most GenAI demos answer: “Can the model do this once?”
+Use OpenEvalGate when a demo, prompt test, or model benchmark is not enough. It helps product, engineering, platform, trust/safety, legal, compliance, and business owners answer: can this GenAI system operate reliably, safely, cost-effectively, observably, and trustworthily across real users?
 
-Production teams need to answer: “Can this system do this reliably, safely, cost-effectively, observably, and trustworthily across real users?”
+Most GenAI demos answer: "Can the model do this once?"
+
+Production teams need to answer: "Can this system do this repeatedly without breaking user trust, business policy, or operational control?"
+
+## What Is OpenEvalGate?
+
+OpenEvalGate is a local, template-driven framework for GenAI governance, AI agent evaluation, and production launch readiness. It defines the evidence teams should collect before an LLM assistant or agent reaches users, including expected behavior, unacceptable behavior, tool/action risk, escalation paths, observability, hard blockers, and owner signoff.
+
+OpenEvalGate does not replace eval runners, observability platforms, guardrails, or LLMOps tools. It sits above them as the launch gate layer: your tools generate traces, eval results, and policy signals; OpenEvalGate organizes that evidence into a launch-readiness decision.
 
 ## Why Trust Preservation?
 
@@ -31,7 +39,7 @@ See [Research Evidence And Competitive Landscape](docs/16_research_evidence_and_
 
 OpenEvalGate is not a full eval platform, tracing system, monitoring platform, agent framework, model benchmark, prompt library, guardrails runtime, or replacement for existing LLMOps tools. It does not call LLM APIs. It does not send telemetry. It does not require cloud services.
 
-You can use OpenEvalGate alongside LangSmith, Braintrust, Phoenix, Promptfoo, DeepEval, Guardrails AI, Langfuse, Helicone, or your internal LLMOps stack. OpenEvalGate defines launch-readiness evidence; your tool stack can execute, trace, monitor, or automate parts of that process.
+You can use OpenEvalGate alongside LangSmith, Braintrust, Phoenix, Promptfoo, DeepEval, Guardrails AI, Langfuse, Helicone, [SkillGate](https://github.com/charliechenye/SkillGate), or your internal LLMOps and security stack. OpenEvalGate defines launch-readiness evidence; your tool stack can execute, trace, monitor, secure, or automate parts of that process.
 
 For a detailed comparison, see [Research Evidence And Competitive Landscape](docs/16_research_evidence_and_competitive_landscape.md).
 
@@ -43,6 +51,17 @@ For a detailed comparison, see [Research Evidence And Competitive Landscape](doc
 - Trust, Safety, Legal, and Compliance Teams.
 - Business / Operations / Policy Owners.
 - Startup founders building AI assistants or agents.
+
+## Use Cases
+
+- **Production AI launch review:** Turn model behavior, risk controls, ownership, observability, and rollback evidence into a launch recommendation.
+- **AI assistant governance:** Define supported use cases, unacceptable behavior, owner signoff, business policy, and trust-preservation requirements.
+- **AI agent safety review:** Classify tool/action risk, require deterministic controls, and identify actions that need human approval.
+- **Golden eval set design:** Convert product expectations, policy boundaries, incidents, and edge cases into reusable golden evals.
+- **Automation boundary review:** Decide where autonomy is appropriate, where the system should ask for clarification, and where it must escalate or block.
+- **Human escalation design:** Define when a human should review, approve, take over, or resolve a high-risk workflow.
+- **Model comparison evidence:** Compare candidate models against product-specific eval cases, cost, latency, safety, and business criteria.
+- **Launch-readiness reporting:** Generate a local report that summarizes score, blockers, mitigations, and next actions.
 
 ## Core Concepts
 
@@ -191,6 +210,32 @@ openevalgate report examples/customer_support_assistant/ --output examples/custo
 ```
 
 OpenEvalGate does not execute candidate LLM systems in V1. It ingests outputs and grades from external eval runners through `eval_results.csv`.
+
+## FAQ
+
+### What is OpenEvalGate?
+
+OpenEvalGate is a GenAI governance and AI agent launch-readiness framework. It helps teams define golden evals, risk gates, automation boundaries, human escalation, observability evidence, and launch-readiness reports before a production LLM assistant or agent reaches users.
+
+### Is OpenEvalGate an LLM evaluation framework?
+
+OpenEvalGate is not an eval runner. It defines what should be evaluated, what evidence must exist, and what blockers prevent launch. Teams can run LLM evaluation in Promptfoo, DeepEval, OpenAI Evals, Braintrust, LangSmith, Phoenix, Langfuse, Helicone, internal harnesses, or manual review, then feed the results back into OpenEvalGate.
+
+### How is OpenEvalGate different from Promptfoo, DeepEval, LangSmith, and Guardrails AI?
+
+Promptfoo, DeepEval, and OpenAI Evals execute or structure eval tests. LangSmith, Braintrust, Phoenix, Langfuse, and Helicone help trace, observe, and debug LLM systems. Guardrails AI and internal policy services help validate or enforce runtime behavior. OpenEvalGate sits above those tools as the GenAI governance and launch gate layer: it organizes eval results, risk evidence, human escalation, hard blockers, and owner signoff into a launch-readiness decision. See [Research Evidence And Competitive Landscape](docs/16_research_evidence_and_competitive_landscape.md) for a detailed comparison.
+
+### Who should use OpenEvalGate?
+
+OpenEvalGate is for teams launching production AI assistants or agents: AI product managers, ML/AI engineers, GenAI platform teams, trust and safety reviewers, legal and compliance teams, business operations owners, and startup founders who need more than a model-quality score.
+
+### Does OpenEvalGate call LLM APIs?
+
+No. OpenEvalGate does not call LLM APIs, execute candidate models, send telemetry, or require cloud services. It is local-first and ingests outputs from your existing eval, tracing, observability, guardrails, or LLMOps stack.
+
+### How does OpenEvalGate support GenAI governance?
+
+OpenEvalGate makes governance concrete through launch gates, ownership, evidence, mitigations, hard blockers, golden eval coverage, tool/action safety review, automation boundaries, human escalation paths, observability checks, rollback expectations, and launch-readiness reporting.
 
 ## How To Contribute
 

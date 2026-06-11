@@ -42,6 +42,7 @@ These projects are relevant and valuable. OpenEvalGate should work alongside the
 | Eval runners / test frameworks | [Promptfoo](https://github.com/promptfoo/promptfoo), [DeepEval](https://github.com/confident-ai/deepeval), [OpenAI Evals](https://github.com/openai/evals), [Ragas](https://docs.ragas.io/) | Execute, grade, or structure LLM and RAG evaluations. | OpenEvalGate defines launch-readiness evidence, business behavior contracts, gates, hard blockers, and reports. |
 | Observability / LLMOps platforms | [LangSmith](https://docs.smith.langchain.com/), [Braintrust](https://www.braintrust.dev/docs), [Arize Phoenix](https://github.com/Arize-ai/phoenix), [Langfuse](https://github.com/langfuse/langfuse), [Helicone](https://github.com/Helicone/helicone) | Trace, observe, evaluate, experiment, monitor, and debug LLM applications. | OpenEvalGate sits above these tools and can consume their outputs through `eval_results.csv` and launch review artifacts. |
 | Guardrails / runtime validation | [Guardrails AI](https://github.com/guardrails-ai/guardrails) | Validate or constrain LLM outputs and runtime behavior. | OpenEvalGate defines when guardrails, output critics, action gates, and human approvals are required before launch. |
+| Agent skill / MCP security scanning | [SkillGate](https://github.com/charliechenye/SkillGate) | Performs static trust checks for AI-agent skills, Codex and Claude skills, MCP configs, risky capabilities, policy enforcement, baseline drift, and SARIF output. | SkillGate helps review third-party skills and MCP configurations before installation or merge; OpenEvalGate evaluates whether the resulting assistant or agent has enough launch-readiness and operational trust evidence. |
 | Agent governance / runtime control | [Microsoft Agent Governance Toolkit](https://github.com/microsoft/agent-governance-toolkit), [EGAProtocol](https://github.com/egaprotocol/egaprotocol) | Provide agent governance, runtime controls, or protocol-level accountability patterns. | OpenEvalGate focuses on cross-functional launch readiness, trust preservation, eval coverage, business ownership, and launch reports. |
 | Broader AI governance frameworks | [NIST AI RMF](https://www.nist.gov/itl/ai-risk-management-framework), [ISO/IEC 42001](https://www.iso.org/standard/81230.html), [OECD AI Principles](https://oecd.ai/en/ai-principles), enterprise risk frameworks | Define broad AI governance, management, and accountability expectations. | OpenEvalGate is a concrete repo of assistant/agent templates plus a local CLI for launch readiness. |
 
@@ -80,6 +81,7 @@ Examples:
 - Use Promptfoo, DeepEval, OpenAI Evals, or Ragas to execute golden eval cases.
 - Use LangSmith, Braintrust, Phoenix, Langfuse, or Helicone to inspect traces, experiments, and production behavior.
 - Use Guardrails AI or internal policy services for runtime validation and enforcement.
+- Use SkillGate to scan third-party agent skills and MCP configurations before installing or approving them.
 - Use OpenEvalGate to collect the evidence, identify blockers, and generate the launch readiness report.
 
 The intended workflow is:
