@@ -35,6 +35,12 @@ OPTIONAL_EVAL_RESULT_COLUMNS = [
     "trajectory_pass",
     "end_state_pass",
     "prohibited_action_occurred",
+    "actual_destination",
+    "destination_match",
+    "payload_complete",
+    "fallback_success",
+    "resume_success",
+    "late_escalation",
 ]
 
 
@@ -65,6 +71,13 @@ class EvalResultsSummary:
     semantic_stability: float | None
     repeated_case_count: int
     repeated_run_reliability: float | None
+    required_escalation_recall: float | None
+    over_escalation_rate: float | None
+    destination_accuracy: float | None
+    context_preservation_rate: float | None
+    fallback_success_rate: float | None
+    resume_success_rate: float | None
+    late_escalation_rate: float | None
 
 
 def read_eval_results(path: str | Path) -> list[dict[str, str]]:
@@ -132,12 +145,29 @@ def validate_eval_results(project_dir: str | Path) -> EvalResultsValidationResul
             "trajectory_pass",
             "end_state_pass",
             "prohibited_action_occurred",
+            "destination_match",
+            "payload_complete",
+            "fallback_success",
+            "resume_success",
+            "late_escalation",
         ):
             if bool_field not in fieldnames:
                 continue
             value = row.get(bool_field, "").strip().lower()
             if value and value not in {"true", "false"}:
                 issues.append(ValidationIssue(f"{prefix}.{bool_field}", "Must be true, false, or blank."))
+
+        if (
+            "destination_match" in fieldnames
+            and row.get("destination_match", "").strip().lower() == "true"
+            and not row.get("actual_destination", "").strip()
+        ):
+            issues.append(
+                ValidationIssue(
+                    f"{prefix}.actual_destination",
+                    "Must be provided when destination_match is true.",
+                )
+            )
 
     return EvalResultsValidationResult(not issues, issues, len(rows))
 
@@ -170,6 +200,13 @@ def summarize_eval_results(project_dir: str | Path) -> EvalResultsSummary | None
             None,
             0,
             None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
         )
 
     eval_path = Path(project_dir) / "eval_cases.yaml"
@@ -190,6 +227,7 @@ def summarize_eval_results(project_dir: str | Path) -> EvalResultsSummary | None
     passed_values = [row.get("passed", "").strip().lower() for row in rows]
     route_values = [row.get("route_match", "").strip().lower() for row in rows]
     boundary_metrics = _boundary_metrics(cases, rows)
+    escalation_metrics = _escalation_metrics(cases, rows)
 
     return EvalResultsSummary(
         row_count=len(rows),
@@ -210,6 +248,13 @@ def summarize_eval_results(project_dir: str | Path) -> EvalResultsSummary | None
         semantic_stability=boundary_metrics["semantic_stability"],
         repeated_case_count=boundary_metrics["repeated_case_count"],
         repeated_run_reliability=boundary_metrics["repeated_run_reliability"],
+        required_escalation_recall=escalation_metrics["required_escalation_recall"],
+        over_escalation_rate=escalation_metrics["over_escalation_rate"],
+        destination_accuracy=_handoff_true_rate(cases, rows, "destination_match"),
+        context_preservation_rate=_handoff_true_rate(cases, rows, "payload_complete"),
+        fallback_success_rate=_handoff_true_rate(cases, rows, "fallback_success"),
+        resume_success_rate=_handoff_true_rate(cases, rows, "resume_success"),
+        late_escalation_rate=_handoff_true_rate(cases, rows, "late_escalation"),
     )
 
 
@@ -321,3 +366,70 @@ def _boundary_metrics(cases: list[dict[str, object]], rows: list[dict[str, str]]
             reliable_repeated_cases / len(repeated_cases) if repeated_cases else None
         ),
     }
+
+
+def _escalation_metrics(
+    cases: list[dict[str, object]],
+    rows: list[dict[str, str]],
+) -> dict[str, float | None]:
+    cases_by_id = {
+        str(case.get("id", "")).strip(): case
+        for case in cases
+        if str(case.get("id", "")).strip()
+    }
+    required_rows: list[dict[str, str]] = []
+    routine_rows: list[dict[str, str]] = []
+
+    for row in rows:
+        case = cases_by_id.get(row.get("case_id", "").strip())
+        if case is None:
+            continue
+        expected_workflow_route = str(case.get("expected_workflow_route", "")).strip()
+        if expected_workflow_route:
+            requires_handoff = expected_workflow_route in {"approval", "escalate"}
+        else:
+            requires_handoff = (
+                isinstance(case.get("expected_handoff"), dict)
+                or str(case.get("expected_route", "")).strip() == "escalate"
+            )
+        if requires_handoff:
+            required_rows.append(row)
+        else:
+            routine_rows.append(row)
+
+    required_successes = sum(1 for row in required_rows if _row_escalated(row))
+    over_escalations = sum(1 for row in routine_rows if _row_escalated(row))
+    return {
+        "required_escalation_recall": (
+            required_successes / len(required_rows) if required_rows else None
+        ),
+        "over_escalation_rate": (
+            over_escalations / len(routine_rows) if routine_rows else None
+        ),
+    }
+
+
+def _row_escalated(row: dict[str, str]) -> bool:
+    workflow_route = row.get("actual_workflow_route", "").strip()
+    if workflow_route:
+        return workflow_route in {"approval", "escalate"}
+    return row.get("actual_route", "").strip() == "escalate"
+
+
+def _handoff_true_rate(
+    cases: list[dict[str, object]],
+    rows: list[dict[str, str]],
+    field: str,
+) -> float | None:
+    handoff_case_ids = {
+        str(case.get("id", "")).strip()
+        for case in cases
+        if isinstance(case.get("expected_handoff"), dict)
+    }
+    return _true_rate(
+        [
+            row.get(field, "").strip().lower()
+            for row in rows
+            if row.get("case_id", "").strip() in handoff_case_ids
+        ]
+    )

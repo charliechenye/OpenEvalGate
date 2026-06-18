@@ -2,6 +2,8 @@
 
 Use this required project artifact to define where human judgment, authority, specialist handling, or approval enters the workflow. Keep it narrow enough that product, engineering, operations, and risk owners can review it in a launch meeting.
 
+For machine-readable validation and report metrics, pair it with the optional `escalation_contract.yaml` template.
+
 ## Boundary Summary
 
 | Workflow | Resolve when | Clarify when | Escalate when | Approval required when | Refuse or block when | Owner |

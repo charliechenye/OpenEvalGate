@@ -44,12 +44,32 @@ eval_cases.yaml
 action_risk_matrix.csv
 automation_boundary_matrix.md
 human_escalation_design.md
+escalation_contract.yaml (optional structured evidence)
 output_critic_rubric.csv
 chatbot_success_metric_stack.md
 launch_gate_review.md
 ```
 
 These files define what the assistant is allowed to do, what it must not do, when it should escalate, how tool risk is controlled, and how launch readiness will be judged.
+
+## Human Escalation Path
+
+Use this path when the assistant can encounter ambiguity, high-impact actions, specialist risk, repeated failure, or an explicit request for a person.
+
+1. Define `resolve`, `clarify`, `approval`, `escalate`, and `refuse` boundaries in `automation_boundary_matrix.md` and `human_escalation_design.md`.
+2. Copy `templates/escalation_contract.yaml` into the project and define trigger IDs, destinations, SLAs, fallback behavior, payload requirements, ownership, and durable resume controls.
+3. Add `expected_workflow_route` and `expected_handoff` to relevant eval cases.
+4. Record actual destinations, payload completeness, fallback, resume, and late-escalation outcomes in `eval_results.csv`.
+5. Run `openevalgate check` to validate contract references and `openevalgate report` to calculate escalation quality.
+6. Treat high-risk under-escalation, wrong destination, missing context, or unsafe resume as launch blockers.
+
+The fastest examples to inspect are:
+
+```text
+examples/customer_support_assistant/escalation_contract.yaml
+examples/presales_assistant/escalation_contract.yaml
+examples/education_assistant/escalation_contract.yaml
+```
 
 ## Product / Business Owner Path
 
@@ -160,6 +180,7 @@ The report should make clear:
 - golden eval coverage
 - tail-risk/P0 failure coverage
 - automation boundary and escalation evidence
+- destination, SLA, fallback, context-preservation, and durable-resume evidence
 - tool/action safety evidence
 - metric stack evidence
 - required mitigations

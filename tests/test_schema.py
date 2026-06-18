@@ -150,3 +150,40 @@ def test_invalid_optional_boundary_contract_fails(tmp_path: Path) -> None:
     assert any("expected_workflow_route" in issue.path for issue in result.issues)
     assert any("prohibited_events" in issue.path for issue in result.issues)
     assert any("expected_end_state.assertions" in issue.path for issue in result.issues)
+
+
+def test_valid_expected_handoff_passes(tmp_path: Path) -> None:
+    case = deepcopy(VALID_CASE)
+    case["expected_workflow_route"] = "escalate"
+    case["expected_handoff"] = {
+        "trigger_id": "policy_ambiguity",
+        "handoff_type": "specialist_routing",
+        "destination": "policy_review",
+        "required_payload_fields": ["user_goal", "policy_version"],
+        "fallback": "senior_review",
+        "resume_behavior": "Resume after the policy decision is recorded.",
+    }
+    path = write_yaml(tmp_path / "eval_cases.yaml", [case])
+
+    result = validate_eval_cases(path)
+
+    assert result.valid
+
+
+def test_expected_handoff_requires_escalation_workflow_route(tmp_path: Path) -> None:
+    case = deepcopy(VALID_CASE)
+    case["expected_workflow_route"] = "answer"
+    case["expected_handoff"] = {
+        "trigger_id": "policy_ambiguity",
+        "handoff_type": "specialist_routing",
+        "destination": "policy_review",
+        "required_payload_fields": [],
+        "fallback": "senior_review",
+        "resume_behavior": "Resume after review.",
+    }
+    path = write_yaml(tmp_path / "eval_cases.yaml", [case])
+
+    result = validate_eval_cases(path)
+
+    assert not result.valid
+    assert any("Expected handoff requires" in issue.message for issue in result.issues)

@@ -64,19 +64,36 @@ def test_eval_summary_counts_case_types_and_risk_tiers() -> None:
 def test_report_eval_results_summary_includes_feedback_metrics() -> None:
     report = generate_report(CUSTOMER_SUPPORT)
 
-    assert "Pass rate: 67%" in report
+    assert "Pass rate: 50%" in report
     assert "Route match rate: 67%" in report
-    assert "Failed case IDs: refund_abuse_history_002" in report
-    assert "Workflow-route accuracy: unknown" in report
+    assert "Failed case IDs: refund_abuse_history_002, routine_status_no_escalation_013, wrong_destination_fraud_012" in report
+    assert "Workflow-route accuracy: 67%" in report
     assert "Contrast-family reliability: unknown" in report
+    assert "Required-escalation recall: 67%" in report
+    assert "Over-escalation rate: 33%" in report
+    assert "Destination accuracy: 33%" in report
+    assert "Context-preservation rate: 67%" in report
 
 
-def test_complete_customer_support_report_has_no_hard_blockers() -> None:
+def test_high_risk_escalation_regression_is_hard_blocker() -> None:
     report = generate_report(CUSTOMER_SUPPORT)
 
-    assert "No hard blockers detected." in report
+    assert "critical_escalation_regression" in report
+    assert "refund_abuse_history_002" in report
+    assert "wrong_destination_fraud_012" in report
     assert "## Final Launch Recommendation" in report
-    assert "Ready for controlled launch" in report
+    assert "Not ready" in report
+
+
+def test_report_summarizes_structured_escalation_contract() -> None:
+    report = generate_report(CUSTOMER_SUPPORT)
+
+    assert "Structured escalation contract: valid." in report
+    assert "Destinations: 5" in report
+    assert "Handoff types: approval, async_case, conversation_handoff, specialist_routing" in report
+    assert "Destination SLA coverage: 100%" in report
+    assert "Checkpoint required: yes" in report
+    assert "Eval handoff coverage: 6/6 required-handoff cases" in report
 
 
 def test_missing_files_report_shows_gaps_and_not_ready(tmp_path: Path) -> None:

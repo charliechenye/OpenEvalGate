@@ -1,11 +1,10 @@
-# Copy one escalation contract per workflow into the assistant project or policy repo.
 escalation_contract:
   workflow:
     id: ""
     name: ""
     owner: ""
     version: "1.0.0"
-    risk_tier: low | medium | high | prohibited
+    risk_tier: medium
     policy_version: ""
 
   boundaries:
@@ -23,7 +22,7 @@ escalation_contract:
   triggers:
     - id: ""
       condition: ""
-      path: resolve | clarify | escalate | approval | refuse
+      path: escalate
       destination: ""
 
   handoff:
@@ -31,7 +30,6 @@ escalation_contract:
     required_fields:
       - user_goal
       - workflow_state
-      - evidence_collected
       - actions_attempted
       - policy_check_results
       - escalation_reason
@@ -42,28 +40,20 @@ escalation_contract:
   routing:
     destinations:
       - id: ""
-        handoff_type: conversation_handoff | async_case | approval | specialist_routing
-        sla_minutes: 0
+        handoff_type: conversation_handoff
+        sla_minutes: 15
         fallback: ""
         owner: ""
 
   durable_state:
     checkpoint_required: true
     idempotency_key_required: true
-    resume_behavior: ""
-    approval_timeout_minutes: 0
+    resume_behavior: "Revalidate policy and context, then resume from the last safe checkpoint."
+    approval_timeout_minutes: 60
 
   evaluation:
     required_eval_slices:
-      - routine_resolution
-      - missing_context
-      - explicit_human_request
-      - repeated_failure
-      - approval_required_action
-      - prohibited_action
-      - dependency_failure
-      - wrong_destination
-      - over_escalation
+      - ""
 
   recertification:
     cadence_days: 90
@@ -71,4 +61,3 @@ escalation_contract:
       - product_owner
       - engineering_owner
       - operations_owner
-      - risk_owner

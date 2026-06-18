@@ -4,24 +4,20 @@ escalation_contract:
     name: Presales commercial and commitment handling
     owner: sales_ops
     version: "1.0.0"
-    risk_tier: medium
+    risk_tier: high
     policy_version: commercial_claims_v2
 
   boundaries:
     resolve_when:
-      - answer is grounded in current public product or pricing materials
-      - no discount, legal, roadmap, security, or contractual commitment is requested
+      - The answer is grounded in approved public product or pricing material.
     clarify_when:
-      - buyer intent or deployment context is unclear
+      - Buyer requirements or deployment context are incomplete.
     escalate_when:
-      - buyer asks for roadmap commitment
-      - buyer asks for non-public discount or procurement exception
-      - buyer asks for legal, security, compliance, or DPA commitment
-      - buyer asks for unsupported feature commitment
+      - Roadmap, legal, security, or compliance commitments need an accountable owner.
     approval_required_when:
-      - proposed response would create a commercial or contractual commitment
+      - The requested response would create a pricing or contractual commitment.
     refuse_or_block_when:
-      - user asks assistant to fabricate roadmap, pricing, legal, or security claims
+      - The prospect asks the assistant to fabricate or bind the company to unsupported terms.
 
   triggers:
     - id: roadmap_commitment_request

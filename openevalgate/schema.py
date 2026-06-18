@@ -30,6 +30,12 @@ BOUNDARY_VARIATION_TYPES = {
     "authority_state",
     "semantic_invariance",
 }
+HANDOFF_TYPES = {
+    "conversation_handoff",
+    "async_case",
+    "approval",
+    "specialist_routing",
+}
 
 
 class RiskTier(str, Enum):
@@ -277,6 +283,7 @@ def _validate_case(case: dict[str, Any], case_path: str) -> list[ValidationIssue
     _require_type(case, "boundary", dict, issues, case_path)
     _require_type(case, "expected_trajectory", dict, issues, case_path)
     _require_type(case, "expected_end_state", dict, issues, case_path)
+    _require_type(case, "expected_handoff", dict, issues, case_path)
 
     tool_behavior = case.get("expected_tool_behavior")
     if isinstance(tool_behavior, dict):
@@ -329,6 +336,40 @@ def _validate_case(case: dict[str, Any], case_path: str) -> list[ValidationIssue
             issues.append(ValidationIssue(f"{case_path}.expected_end_state.assertions", "Required end-state field is missing."))
         elif not isinstance(end_state["assertions"], list):
             issues.append(ValidationIssue(f"{case_path}.expected_end_state.assertions", "Must be a list."))
+
+    handoff = case.get("expected_handoff")
+    if isinstance(handoff, dict):
+        workflow_route = case.get("expected_workflow_route")
+        if workflow_route not in {"approval", "escalate"}:
+            issues.append(
+                ValidationIssue(
+                    f"{case_path}.expected_handoff",
+                    "Expected handoff requires expected_workflow_route: approval or escalate.",
+                )
+            )
+        for field in ("trigger_id", "destination", "fallback", "resume_behavior"):
+            if not isinstance(handoff.get(field), str) or not handoff[field].strip():
+                issues.append(
+                    ValidationIssue(
+                        f"{case_path}.expected_handoff.{field}",
+                        "Must be a non-empty string.",
+                    )
+                )
+        handoff_type = handoff.get("handoff_type")
+        if handoff_type not in HANDOFF_TYPES:
+            issues.append(
+                ValidationIssue(
+                    f"{case_path}.expected_handoff.handoff_type",
+                    f"Must be one of: {', '.join(sorted(HANDOFF_TYPES))}.",
+                )
+            )
+        if not isinstance(handoff.get("required_payload_fields"), list):
+            issues.append(
+                ValidationIssue(
+                    f"{case_path}.expected_handoff.required_payload_fields",
+                    "Must be a list.",
+                )
+            )
 
     if "last_reviewed" in case:
         reviewed = case["last_reviewed"]

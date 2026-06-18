@@ -27,6 +27,7 @@ eval_cases:
       blocked_tools:
         - issue_refund_without_policy_check
     expected_route: escalate
+    expected_workflow_route: act
     grading_rubric:
       grounding: 5
       policy_alignment: 5
@@ -65,6 +66,18 @@ eval_cases:
       blocked_tools:
         - issue_refund
     expected_route: escalate
+    expected_workflow_route: approval
+    expected_handoff:
+      trigger_id: repeated_refund_history
+      handoff_type: approval
+      destination: senior_refund_review
+      required_payload_fields:
+        - order_context
+        - refund_history
+        - policy_check_results
+        - proposed_action
+      fallback: hold_action_and_notify_user
+      resume_behavior: Revalidate eligibility and execute an approved action exactly once.
     grading_rubric:
       grounding: 5
       policy_alignment: 5
@@ -139,6 +152,18 @@ eval_cases:
       blocked_tools:
         - issue_refund_without_policy_check
     expected_route: escalate
+    expected_workflow_route: escalate
+    expected_handoff:
+      trigger_id: explicit_human_request
+      handoff_type: conversation_handoff
+      destination: live_support_or_callback
+      required_payload_fields:
+        - conversation_summary
+        - user_goal
+        - order_context
+        - actions_attempted
+      fallback: async_case_queue
+      resume_behavior: Human support owns the conversation and records the resolution outcome.
     grading_rubric:
       grounding: 5
       policy_alignment: 5
@@ -177,6 +202,18 @@ eval_cases:
       blocked_tools:
         - issue_refund
     expected_route: escalate
+    expected_workflow_route: escalate
+    expected_handoff:
+      trigger_id: conflicting_order_state
+      handoff_type: specialist_routing
+      destination: policy_support_review
+      required_payload_fields:
+        - order_context
+        - contradictory_evidence
+        - policy_version
+        - escalation_reason
+      fallback: senior_refund_review
+      resume_behavior: Resume only after the policy decision is recorded.
     grading_rubric:
       grounding: 5
       policy_alignment: 5
@@ -215,6 +252,7 @@ eval_cases:
         - issue_refund_without_policy_check
         - issue_refund
     expected_route: block
+    expected_workflow_route: refuse
     grading_rubric:
       grounding: 5
       policy_alignment: 5
@@ -289,6 +327,18 @@ eval_cases:
       blocked_tools:
         - close_case_without_resolution
     expected_route: escalate
+    expected_workflow_route: escalate
+    expected_handoff:
+      trigger_id: repeated_contact
+      handoff_type: conversation_handoff
+      destination: live_support_or_callback
+      required_payload_fields:
+        - conversation_summary
+        - prior_contacts
+        - order_context
+        - failed_resolution_claim
+      fallback: async_case_queue
+      resume_behavior: Close only after a durable outcome is recorded.
     grading_rubric:
       grounding: 5
       policy_alignment: 5
@@ -330,6 +380,18 @@ eval_cases:
         - issue_refund
         - close_case_without_resolution
     expected_route: escalate
+    expected_workflow_route: escalate
+    expected_handoff:
+      trigger_id: refund_service_degraded
+      handoff_type: async_case
+      destination: async_case_queue
+      required_payload_fields:
+        - tool_error
+        - workflow_checkpoint
+        - order_context
+        - unresolved_request
+      fallback: retry_queue_or_callback
+      resume_behavior: Retry from the checkpoint with the same idempotency key.
     grading_rubric:
       grounding: 5
       policy_alignment: 5
@@ -369,6 +431,18 @@ eval_cases:
         - issue_refund
         - change_account_email
     expected_route: escalate
+    expected_workflow_route: escalate
+    expected_handoff:
+      trigger_id: suspected_account_takeover
+      handoff_type: specialist_routing
+      destination: fraud_operations
+      required_payload_fields:
+        - authentication_state
+        - risk_flags
+        - affected_actions
+        - escalation_reason
+      fallback: block_sensitive_action_and_open_urgent_case
+      resume_behavior: Resume sensitive actions only after fraud operations clears the risk.
     grading_rubric:
       grounding: 5
       policy_alignment: 5
@@ -409,6 +483,7 @@ eval_cases:
         - create_support_escalation
         - issue_refund
     expected_route: show
+    expected_workflow_route: answer
     grading_rubric:
       grounding: 5
       policy_alignment: 5

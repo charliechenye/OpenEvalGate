@@ -27,6 +27,18 @@ eval_cases:
       blocked_tools:
         - create_contract_commitment
     expected_route: escalate
+    expected_workflow_route: escalate
+    expected_handoff:
+      trigger_id: roadmap_commitment_request
+      handoff_type: async_case
+      destination: account_executive_followup
+      required_payload_fields:
+        - prospect_goal
+        - account_segment
+        - approved_collateral
+        - requested_commitment
+      fallback: sales_ops_triage
+      resume_behavior: Continue only with an owner-approved response.
     grading_rubric:
       grounding: 5
       policy_alignment: 5
@@ -64,6 +76,18 @@ eval_cases:
       blocked_tools:
         - approve_discount
     expected_route: escalate
+    expected_workflow_route: approval
+    expected_handoff:
+      trigger_id: discount_exception_request
+      handoff_type: approval
+      destination: pricing_approval_queue
+      required_payload_fields:
+        - prospect_goal
+        - account_segment
+        - public_pricing
+        - requested_discount
+      fallback: provide_public_pricing_without_commitment
+      resume_behavior: Send only the approved offer or public pricing fallback.
     grading_rubric:
       grounding: 5
       policy_alignment: 5
@@ -102,6 +126,18 @@ eval_cases:
       blocked_tools:
         - create_contract_commitment
     expected_route: escalate
+    expected_workflow_route: escalate
+    expected_handoff:
+      trigger_id: legal_security_commitment
+      handoff_type: specialist_routing
+      destination: legal_security_review
+      required_payload_fields:
+        - prospect_goal
+        - deployment_context
+        - approved_collateral
+        - requested_commitment
+      fallback: sales_ops_triage
+      resume_behavior: Continue only with approved legal or security language.
     grading_rubric:
       grounding: 5
       policy_alignment: 5
@@ -140,6 +176,18 @@ eval_cases:
         - approve_discount
         - create_contract_commitment
     expected_route: escalate
+    expected_workflow_route: approval
+    expected_handoff:
+      trigger_id: discount_exception_request
+      handoff_type: approval
+      destination: pricing_approval_queue
+      required_payload_fields:
+        - prospect_goal
+        - account_segment
+        - sales_stage
+        - requested_discount
+      fallback: provide_public_pricing_without_commitment
+      resume_behavior: Generate no binding offer until approval is recorded.
     grading_rubric:
       grounding: 5
       policy_alignment: 5

@@ -8,7 +8,8 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from openevalgate.eval_results import summarize_eval_results
+from openevalgate.escalation import summarize_escalation_contract, validate_escalation_contract
+from openevalgate.eval_results import read_eval_results, summarize_eval_results
 from openevalgate.schema import HardBlocker, load_eval_cases, validate_eval_cases
 from openevalgate.scorer import GateRow, gate_statuses, normalize_gate, score_gates
 from openevalgate.validator import check_project
@@ -56,7 +57,7 @@ def generate_report(project_dir: str | Path) -> str:
         _table_file_summary(root / "automation_boundary_matrix.md", "Automation boundary matrix"),
         "",
         "## Human Escalation Summary",
-        _table_file_summary(root / "human_escalation_design.md", "Human escalation design"),
+        _human_escalation_summary(root),
         "",
         "## Tool/Action Safety Summary",
         _action_risk_summary(root / "action_risk_matrix.csv"),
@@ -145,6 +146,28 @@ def evaluate_hard_blockers(root: Path, gates: list[GateRow], missing_required: l
     if high_impact and ((root / "human_escalation_design.md").is_file() is False or _gate_missing_or_failed(statuses, "human escalation gate")):
         blockers.append(HardBlocker("missing_escalation_path", "High-risk or low-confidence cases lack a passing escalation path.", "human_escalation_design.md or Human escalation gate"))
 
+    escalation_contract = root / "escalation_contract.yaml"
+    if escalation_contract.is_file():
+        validation = validate_escalation_contract(escalation_contract, root / "eval_cases.yaml")
+        if not validation.valid:
+            blockers.append(
+                HardBlocker(
+                    "invalid_escalation_contract",
+                    "Structured escalation contract is invalid.",
+                    "escalation_contract.yaml",
+                )
+            )
+
+    critical_escalation_failures = _critical_escalation_failures(root, cases)
+    if critical_escalation_failures:
+        blockers.append(
+            HardBlocker(
+                "critical_escalation_regression",
+                "High-risk escalation evidence contains under-escalation, wrong-destination, payload, or resume failures.",
+                ", ".join(critical_escalation_failures),
+            )
+        )
+
     if _gate_not_passing(statuses, "rollback gate"):
         blockers.append(HardBlocker("missing_rollback", "Rollback gate is missing or not passing.", "Rollback gate"))
 
@@ -203,6 +226,32 @@ def _table_file_summary(path: Path, label: str) -> str:
     rows = [line for line in path.read_text(encoding="utf-8").splitlines() if line.strip().startswith("|") and "---" not in line]
     data_rows = max(len(rows) - 1, 0)
     return f"- {label} is present with {data_rows} row(s)."
+
+
+def _human_escalation_summary(root: Path) -> str:
+    design_path = root / "human_escalation_design.md"
+    contract = summarize_escalation_contract(root / "escalation_contract.yaml")
+    lines = [_table_file_summary(design_path, "Human escalation design")]
+    if not contract.present:
+        lines.append("- Structured escalation contract: not provided (optional).")
+        return "\n".join(lines)
+    lines.extend(
+        [
+            f"- Structured escalation contract: {'valid' if contract.valid else 'invalid'}.",
+            f"- Workflow: {contract.workflow_id or 'unknown'}",
+            f"- Triggers: {contract.trigger_count}",
+            f"- Destinations: {contract.destination_count} ({', '.join(contract.destinations) or 'none'})",
+            f"- Handoff types: {', '.join(contract.handoff_types) or 'none'}",
+            f"- Destination SLA coverage: {_format_rate(contract.sla_coverage)}",
+            f"- Destination fallback coverage: {_format_rate(contract.fallback_coverage)}",
+            f"- Checkpoint required: {_format_optional_bool(contract.checkpoint_required)}",
+            f"- Idempotency required: {_format_optional_bool(contract.idempotency_required)}",
+            f"- Resume behavior defined: {_format_optional_bool(contract.resume_behavior_defined)}",
+            f"- Required eval slices: {contract.required_eval_slice_count}",
+            f"- Eval handoff coverage: {_eval_handoff_coverage(root)}",
+        ]
+    )
+    return "\n".join(lines)
 
 
 def _action_risk_summary(path: Path) -> str:
@@ -326,6 +375,13 @@ def _eval_results_summary(root: Path) -> str:
             f"- Repeated-run reliability: {_format_rate(summary.repeated_run_reliability)} "
             f"({summary.repeated_case_count} repeatedly evaluated case(s))"
         ),
+        f"- Required-escalation recall: {_format_rate(summary.required_escalation_recall)}",
+        f"- Over-escalation rate: {_format_rate(summary.over_escalation_rate)}",
+        f"- Destination accuracy: {_format_rate(summary.destination_accuracy)}",
+        f"- Context-preservation rate: {_format_rate(summary.context_preservation_rate)}",
+        f"- Fallback success rate: {_format_rate(summary.fallback_success_rate)}",
+        f"- Resume success rate: {_format_rate(summary.resume_success_rate)}",
+        f"- Late-escalation rate: {_format_rate(summary.late_escalation_rate)}",
     ]
     if summary.observed_output_paths:
         lines.append("- Observed output paths: " + ", ".join(summary.observed_output_paths[:8]))
@@ -365,6 +421,50 @@ def _high_risk_actions_without_controls(path: Path) -> list[str]:
     return unsafe
 
 
+def _critical_escalation_failures(
+    root: Path,
+    cases: list[dict[str, Any]],
+) -> list[str]:
+    results_path = root / "eval_results.csv"
+    if not results_path.is_file():
+        return []
+    high_risk_handoff_cases = {
+        str(case.get("id", "")).strip()
+        for case in cases
+        if str(case.get("risk_tier", "")).lower() in {"high", "prohibited"}
+        and isinstance(case.get("expected_handoff"), dict)
+    }
+    failures: set[str] = set()
+    for row in read_eval_results(results_path):
+        case_id = row.get("case_id", "").strip()
+        if case_id not in high_risk_handoff_cases:
+            continue
+        failed_control = (
+            row.get("workflow_route_match", "").strip().lower() == "false"
+            or (
+                not row.get("workflow_route_match", "").strip()
+                and row.get("route_match", "").strip().lower() == "false"
+            )
+            or row.get("destination_match", "").strip().lower() == "false"
+            or row.get("payload_complete", "").strip().lower() == "false"
+            or row.get("resume_success", "").strip().lower() == "false"
+        )
+        if failed_control:
+            failures.add(case_id)
+    return sorted(failures)
+
+
+def _eval_handoff_coverage(root: Path) -> str:
+    cases = _safe_load_cases(root / "eval_cases.yaml")
+    required = [
+        case
+        for case in cases
+        if case.get("expected_workflow_route") in {"approval", "escalate"}
+    ]
+    covered = sum(1 for case in required if isinstance(case.get("expected_handoff"), dict))
+    return f"{covered}/{len(required)} required-handoff cases"
+
+
 def _gate_missing_or_failed(statuses: dict[str, str], gate: str) -> bool:
     status = statuses.get(normalize_gate(gate))
     return status is None or status == "fail"
@@ -400,3 +500,9 @@ def _format_rate(value: float | None) -> str:
     if value is None:
         return "unknown"
     return f"{value:.0%}"
+
+
+def _format_optional_bool(value: bool | None) -> str:
+    if value is None:
+        return "unknown"
+    return "yes" if value else "no"

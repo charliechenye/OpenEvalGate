@@ -35,7 +35,7 @@ Summarize automate, clarify, recommend, human approval, escalate, and block rout
 
 ## Human Escalation Summary
 
-Summarize escalation triggers, handoff payloads, SLA, and feedback loop.
+Summarize escalation-contract validity, triggers, destinations, handoff types, SLA/fallback coverage, payload requirements, checkpoint/idempotency controls, and eval-slice coverage.
 
 ## Tool/Action Safety Summary
 
@@ -63,7 +63,7 @@ Summarize monitoring, drift review, incident response, and rollback evidence.
 
 ## Eval Results Summary
 
-Summarize externally generated candidate outputs and grading feedback from `eval_results.csv`.
+Summarize externally generated candidate outputs and grading feedback from `eval_results.csv`, including required-escalation recall, over-escalation, destination accuracy, context preservation, fallback success, resume success, and late escalation.
 
 ## Required Mitigations
 

@@ -2,13 +2,41 @@
 
 GenAI governance and AI agent launch readiness, not vibe checks.
 
-OpenEvalGate is an open-source GenAI governance framework for production AI assistants and agents. It helps teams turn AI agent evaluation into launch-readiness evidence: golden evals, LLM launch readiness reviews, agent safety checks, automation boundaries, human escalation, output critics, action risk gates, model comparison evidence, and local readiness reports.
+OpenEvalGate is an open-source GenAI governance framework for production AI assistants and agents. It helps teams prove three things before launch:
 
-Use OpenEvalGate when a demo, prompt test, or model benchmark is not enough. It helps product, engineering, platform, trust/safety, legal, compliance, and business owners answer: can this GenAI system operate reliably, safely, cost-effectively, observably, and trustworthily across real users?
+1. **Expected behavior:** the system resolves, clarifies, acts, escalates, or refuses according to a business-owned contract.
+2. **Safe stopping boundaries:** the system knows when autonomy should end, which human destination should take over, and what context must transfer.
+3. **Launch evidence:** eval results, hard blockers, mitigations, owners, and rollback evidence support a real launch decision.
+
+Use OpenEvalGate when a demo, prompt test, or model benchmark is not enough. It turns golden evals, action-risk controls, automation boundaries, human escalation contracts, model evidence, and operational ownership into a local launch-readiness report.
 
 Most GenAI demos answer: "Can the model do this once?"
 
 Production teams need to answer: "Can this system do this repeatedly without breaking user trust, business policy, or operational control?"
+
+```text
+Intent + context + policy + risk + user-friction signals
+                          |
+                          v
+              Escalation Control Surface
+                          |
+                          v
+      Resolve | Clarify | Act | Approval | Escalate | Refuse
+                               |
+                               v
+        Live handoff | async case | specialist review
+              approval queue | safe fallback
+```
+
+OpenEvalGate evaluates both sides of this boundary: under-escalation that creates unsafe autonomy or false containment, and over-escalation that wastes human capacity and increases user effort.
+
+## Cross-Domain Proof
+
+| Domain | Safe stopping boundary | Human path evidence | Failure OpenEvalGate exposes |
+| --- | --- | --- | --- |
+| [Customer support](examples/customer_support_assistant/generated_launch_report.md) | Refund approval, repeated failure, fraud signal, dependency outage | Live handoff, approval queue, async case, fraud operations | Under-escalation, wrong destination, false containment |
+| [Presales](examples/presales_assistant/generated_launch_report.md) | Discount authority, roadmap claims, legal/security commitments | Account-owner follow-up, pricing approval, specialist review | Unsupported commitment, late escalation |
+| [Education](examples/education_assistant/generated_launch_report.md) | Graded work, learner safety, accommodation exception | Instructor review, safety route, accessibility approval | Missing handoff context, unnecessary escalation, failed resume |
 
 ## What Is OpenEvalGate?
 
@@ -77,7 +105,7 @@ For a detailed comparison, see [Research Evidence And Competitive Landscape](doc
 
 ## Quickstart
 
-New to the repo? Start with `docs/00_getting_started_for_practitioners.md`.
+New to the repo? Start with [Getting Started for Practitioners](docs/00_getting_started_for_practitioners.md).
 
 ```bash
 python -m pip install -e ".[dev]"
@@ -85,6 +113,21 @@ openevalgate validate examples/customer_support_assistant/eval_cases.yaml
 openevalgate check examples/customer_support_assistant/
 openevalgate report examples/customer_support_assistant/ --output examples/customer_support_assistant/generated_launch_report.md
 ```
+
+The generated report does not merely confirm that an escalation worksheet exists. It summarizes structured operational evidence:
+
+```text
+Structured escalation contract: valid
+Destination SLA coverage: 100%
+Required-escalation recall: 67%
+Over-escalation rate: 33%
+Destination accuracy: 33%
+Context-preservation rate: 67%
+Hard blocker: critical_escalation_regression
+Recommendation: Not ready
+```
+
+That is the point of OpenEvalGate: a high aggregate readiness score cannot hide a high-risk case that failed to stop or reached the wrong human destination.
 
 ## Example Workflow
 
@@ -165,7 +208,7 @@ Regardless of score, OpenEvalGate recommends `Not ready` when:
 
 ## Templates
 
-The repo includes templates for assistant PRDs, golden eval cases, eval results, business behavior contracts, domain-owner feedback, behavior change requests, P0 failure modes, automation boundaries, human escalation design, chatbot metric stacks, trust-preservation reviews, launch gates, and launch readiness reports. Some playbooks include additional local templates for specialized workflows, such as routing decisions, routing experiments, and staged rollouts.
+The repo includes templates for assistant PRDs, golden eval cases, eval results, business behavior contracts, domain-owner feedback, behavior change requests, P0 failure modes, automation boundaries, human escalation design, machine-readable escalation contracts, chatbot metric stacks, trust-preservation reviews, launch gates, and launch readiness reports. Some playbooks include additional local templates for specialized workflows, such as routing decisions, routing experiments, and staged rollouts.
 
 ## Playbooks
 
@@ -240,4 +283,4 @@ OpenEvalGate makes governance concrete through launch gates, ownership, evidence
 
 ## How To Contribute
 
-Start with templates, examples, and docs. The best contributions make the framework more useful in a real launch review meeting. Keep the CLI small, deterministic, local-first, and dependency-light.
+Start with templates, examples, and docs. High-value contributions include domain-specific escalation contracts, incident-derived eval cases, queue and fallback patterns, handoff payload examples, and evidence from finance, HR, healthcare administration, developer tooling, and other enterprise workflows. Keep the CLI small, deterministic, local-first, and dependency-light.

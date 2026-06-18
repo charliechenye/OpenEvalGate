@@ -17,7 +17,7 @@ def test_valid_eval_results_pass() -> None:
     result = validate_eval_results(CUSTOMER_SUPPORT)
 
     assert result.valid
-    assert result.row_count == 3
+    assert result.row_count == 6
 
 
 def test_invalid_eval_results_fail(tmp_path: Path) -> None:
@@ -120,6 +120,19 @@ def test_enriched_eval_results_validate_and_calculate_boundary_metrics(tmp_path:
     assert "Repeated-run reliability: 50%" in report
 
 
+def test_escalation_metrics_are_calculated_from_enriched_results() -> None:
+    summary = summarize_eval_results(CUSTOMER_SUPPORT)
+
+    assert summary is not None
+    assert summary.required_escalation_recall == 2 / 3
+    assert summary.over_escalation_rate == 1 / 3
+    assert summary.destination_accuracy == 1 / 3
+    assert summary.context_preservation_rate == 2 / 3
+    assert summary.fallback_success_rate == 1.0
+    assert summary.resume_success_rate == 1 / 3
+    assert summary.late_escalation_rate == 1 / 3
+
+
 def test_invalid_enriched_result_values_fail(tmp_path: Path) -> None:
     project = tmp_path / "project"
     copytree(CUSTOMER_SUPPORT, project)
@@ -127,8 +140,8 @@ def test_invalid_enriched_result_values_fail(tmp_path: Path) -> None:
     path.write_text(
         "\n".join(
             [
-                "run_id,case_id,candidate,evaluator,actual_route,expected_route,route_match,passed,score,failure_category,failure_reason,observed_output_path,reviewed_by,reviewed_at,notes,trial_id,actual_workflow_route,workflow_route_match,trajectory_pass,end_state_pass,prohibited_action_occurred",
-                "run_1,refund_boundary_case_001,candidate,harness,escalate,escalate,true,true,1,,,,qa,2026-06-18,,trial_1,execute,maybe,true,true,false",
+                "run_id,case_id,candidate,evaluator,actual_route,expected_route,route_match,passed,score,failure_category,failure_reason,observed_output_path,reviewed_by,reviewed_at,notes,trial_id,actual_workflow_route,workflow_route_match,trajectory_pass,end_state_pass,prohibited_action_occurred,destination_match,payload_complete",
+                "run_1,refund_boundary_case_001,candidate,harness,escalate,escalate,true,true,1,,,,qa,2026-06-18,,trial_1,execute,maybe,true,true,false,maybe,nope",
             ]
         ),
         encoding="utf-8",
@@ -139,3 +152,5 @@ def test_invalid_enriched_result_values_fail(tmp_path: Path) -> None:
     assert not result.valid
     assert any("actual_workflow_route" in issue.path for issue in result.issues)
     assert any("workflow_route_match" in issue.path for issue in result.issues)
+    assert any("destination_match" in issue.path for issue in result.issues)
+    assert any("payload_complete" in issue.path for issue in result.issues)

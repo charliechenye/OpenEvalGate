@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from openevalgate.escalation import validate_escalation_contract
 from openevalgate.eval_results import validate_eval_results
 from openevalgate.schema import ValidationIssue, validate_eval_cases
 
@@ -30,6 +31,7 @@ OPTIONAL_PROJECT_FILES = [
     "p0_failure_mode_checklist.md",
     "tail_risk_eval_cases.yaml",
     "purpose_built_assistant_scope.md",
+    "escalation_contract.yaml",
 ]
 
 
@@ -62,6 +64,11 @@ def check_project(project_dir: str | Path) -> ProjectCheckResult:
     if (root / "eval_results.csv").is_file():
         results_validation = validate_eval_results(root)
         issues.extend(results_validation.issues)
+
+    escalation_path = root / "escalation_contract.yaml"
+    if escalation_path.is_file():
+        escalation_validation = validate_escalation_contract(escalation_path, eval_path)
+        issues.extend(escalation_validation.issues)
 
     valid = not missing and not issues
     return ProjectCheckResult(valid, root, missing, present_optional, issues)

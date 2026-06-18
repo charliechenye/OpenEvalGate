@@ -24,11 +24,12 @@ Use this playbook alongside the required project artifacts:
 
 - `automation_boundary_matrix.md` defines where automation is appropriate.
 - `human_escalation_design.md` defines where human paths begin and how they work.
+- `escalation_contract.yaml` provides optional machine-readable triggers, destinations, SLAs, fallbacks, payload requirements, and durable-state controls.
 - `eval_cases.yaml` proves the expected route for routine, ambiguous, risky, and prohibited cases.
 - `launch_gate_review.md` records whether the human escalation gate is ready.
 - `chatbot_success_metric_stack.md` and observability artifacts track whether escalation preserves durable resolution and trust.
 
-The templates in this playbook are optional support artifacts. They do not change the V1 CLI contract.
+`human_escalation_design.md` remains the required human-readable review artifact. `escalation_contract.yaml` is optional, but `openevalgate check` validates it and its eval-case references when present. Existing projects without the structured contract remain compatible.
 
 ## Practitioner Workflow
 
@@ -41,6 +42,18 @@ The templates in this playbook are optional support artifacts. They do not chang
 7. Add eval cases for under-escalation, over-escalation, late escalation, missing context, wrong destination, approval resume, and prohibited actions.
 8. Apply a slice-based release gate and feed incidents back into the eval set.
 9. Recertify high-risk escalation contracts as policies, tools, queues, and user behavior change.
+
+## Validate The Evidence
+
+From the repo root:
+
+```bash
+openevalgate validate examples/customer_support_assistant/eval_cases.yaml
+openevalgate check examples/customer_support_assistant/
+openevalgate report examples/customer_support_assistant/
+```
+
+The generated report summarizes required-escalation recall, over-escalation, destination accuracy, context preservation, fallback success, resume success, and late escalation. High-risk failures can become hard blockers even when an aggregate readiness score appears healthy.
 
 ## Files
 

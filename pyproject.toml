@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "openevalgate"
 version = "0.1.1"
-description = "GenAI governance, AI agent evaluation, and launch-readiness templates for production assistants and agents."
+description = "GenAI governance and launch-readiness evidence for agent behavior, human escalation, oversight, and safe production deployment."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
@@ -25,6 +25,11 @@ keywords = [
   "launch-readiness",
   "ai-governance",
   "ai-risk-management",
+  "human-in-the-loop",
+  "human-escalation",
+  "ai-oversight",
+  "agent-handoffs",
+  "escalation-contracts",
   "llmops",
 ]
 classifiers = [

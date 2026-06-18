@@ -95,7 +95,7 @@ Containment is useful only when true resolution, customer effort, safety, and do
 
 Use the required project artifact `human_escalation_design.md` to document the production escalation path. Use `automation_boundary_matrix.md` to define when autonomy is appropriate. Use `eval_cases.yaml` to test the expected route for routine, ambiguous, risky, prohibited, approval-required, and dependency-failure cases.
 
-For deeper workflow design, copy the optional templates from [Human Escalation Playbook](playbooks/human-escalation-playbook/README.md):
+For deeper workflow design, copy the optional templates from [Human Escalation Playbook](playbooks/human-escalation-playbook/README.md). A project-level `escalation_contract.yaml` is validated by `openevalgate check` when present and summarized by `openevalgate report`:
 
 - Escalation contract.
 - Handoff payload schema.

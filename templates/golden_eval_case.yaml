@@ -37,6 +37,17 @@ boundary:
   before_value: 49.99
   after_value: 49.99
 expected_workflow_route: act
+# For expected_workflow_route values of approval or escalate, add:
+# expected_handoff:
+#   trigger_id: high_value_refund
+#   handoff_type: approval
+#   destination: senior_refund_review
+#   required_payload_fields:
+#     - user_goal
+#     - policy_check_results
+#     - proposed_action
+#   fallback: hold_action_and_notify_user
+#   resume_behavior: Revalidate policy and execute an approved action exactly once.
 expected_trajectory:
   required_events:
     - check_refund_eligibility
