@@ -21,6 +21,15 @@ CASE_TYPES = {
 
 RISK_TIERS = {"low", "medium", "high", "prohibited"}
 EXPECTED_ROUTES = {"show", "revise", "escalate", "block"}
+WORKFLOW_ROUTES = {"answer", "clarify", "act", "approval", "escalate", "refuse"}
+BOUNDARY_VARIATION_TYPES = {
+    "anchor",
+    "threshold_neighbor",
+    "missing_fact",
+    "conflicting_evidence",
+    "authority_state",
+    "semantic_invariance",
+}
 
 
 class RiskTier(str, Enum):
@@ -35,6 +44,15 @@ class ExpectedRoute(str, Enum):
     REVISE = "revise"
     ESCALATE = "escalate"
     BLOCK = "block"
+
+
+class WorkflowRoute(str, Enum):
+    ANSWER = "answer"
+    CLARIFY = "clarify"
+    ACT = "act"
+    APPROVAL = "approval"
+    ESCALATE = "escalate"
+    REFUSE = "refuse"
 
 
 class LaunchGateStatus(str, Enum):
@@ -207,6 +225,7 @@ def validate_eval_cases(path: str | Path) -> ValidationResult:
             continue
         issues.extend(_validate_case(case, case_path))
 
+    issues.extend(_validate_case_relationships(cases))
     return ValidationResult(not issues, issues, len(cases))
 
 
@@ -241,12 +260,23 @@ def _validate_case(case: dict[str, Any], case_path: str) -> list[ValidationIssue
             )
         )
 
+    if "expected_workflow_route" in case and case["expected_workflow_route"] not in WORKFLOW_ROUTES:
+        issues.append(
+            ValidationIssue(
+                f"{case_path}.expected_workflow_route",
+                f"Must be one of: {', '.join(sorted(WORKFLOW_ROUTES))}.",
+            )
+        )
+
     _require_type(case, "expected_behavior", list, issues, case_path)
     _require_type(case, "unacceptable_behavior", list, issues, case_path)
     _require_type(case, "user_context", dict, issues, case_path)
     _require_type(case, "retrieved_context", dict, issues, case_path)
     _require_type(case, "expected_tool_behavior", dict, issues, case_path)
     _require_type(case, "grading_rubric", dict, issues, case_path)
+    _require_type(case, "boundary", dict, issues, case_path)
+    _require_type(case, "expected_trajectory", dict, issues, case_path)
+    _require_type(case, "expected_end_state", dict, issues, case_path)
 
     tool_behavior = case.get("expected_tool_behavior")
     if isinstance(tool_behavior, dict):
@@ -260,6 +290,46 @@ def _validate_case(case: dict[str, Any], case_path: str) -> list[ValidationIssue
             if not isinstance(value, int) or not 1 <= value <= 5:
                 issues.append(ValidationIssue(f"{case_path}.grading_rubric.{name}", "Must be an integer from 1 to 5."))
 
+    boundary = case.get("boundary")
+    if isinstance(boundary, dict):
+        required_boundary_fields = (
+            "family_id",
+            "anchor_case_id",
+            "controlling_fact",
+            "variation_type",
+            "before_value",
+            "after_value",
+        )
+        for field in required_boundary_fields:
+            if field not in boundary:
+                issues.append(ValidationIssue(f"{case_path}.boundary.{field}", "Required boundary field is missing."))
+        for field in ("family_id", "anchor_case_id", "controlling_fact"):
+            if field in boundary and (not isinstance(boundary[field], str) or not boundary[field].strip()):
+                issues.append(ValidationIssue(f"{case_path}.boundary.{field}", "Must be a non-empty string."))
+        variation_type = boundary.get("variation_type")
+        if variation_type is not None and variation_type not in BOUNDARY_VARIATION_TYPES:
+            issues.append(
+                ValidationIssue(
+                    f"{case_path}.boundary.variation_type",
+                    f"Must be one of: {', '.join(sorted(BOUNDARY_VARIATION_TYPES))}.",
+                )
+            )
+
+    trajectory = case.get("expected_trajectory")
+    if isinstance(trajectory, dict):
+        for field in ("required_events", "prohibited_events"):
+            if field not in trajectory:
+                issues.append(ValidationIssue(f"{case_path}.expected_trajectory.{field}", "Required trajectory field is missing."))
+            elif not isinstance(trajectory[field], list):
+                issues.append(ValidationIssue(f"{case_path}.expected_trajectory.{field}", "Must be a list."))
+
+    end_state = case.get("expected_end_state")
+    if isinstance(end_state, dict):
+        if "assertions" not in end_state:
+            issues.append(ValidationIssue(f"{case_path}.expected_end_state.assertions", "Required end-state field is missing."))
+        elif not isinstance(end_state["assertions"], list):
+            issues.append(ValidationIssue(f"{case_path}.expected_end_state.assertions", "Must be a list."))
+
     if "last_reviewed" in case:
         reviewed = case["last_reviewed"]
         if isinstance(reviewed, date):
@@ -271,6 +341,74 @@ def _validate_case(case: dict[str, Any], case_path: str) -> list[ValidationIssue
                 issues.append(ValidationIssue(f"{case_path}.last_reviewed", "Must use YYYY-MM-DD format."))
         else:
             issues.append(ValidationIssue(f"{case_path}.last_reviewed", "Must use YYYY-MM-DD format."))
+
+    return issues
+
+
+def _validate_case_relationships(cases: list[dict[str, Any]]) -> list[ValidationIssue]:
+    issues: list[ValidationIssue] = []
+    case_by_id: dict[str, tuple[int, dict[str, Any]]] = {}
+
+    for index, case in enumerate(cases):
+        if not isinstance(case, dict):
+            continue
+        case_id = case.get("id")
+        if not isinstance(case_id, str) or not case_id.strip():
+            continue
+        if case_id in case_by_id:
+            issues.append(ValidationIssue(f"case[{index}].id", f"Duplicate eval case id: {case_id}."))
+        else:
+            case_by_id[case_id] = (index, case)
+
+    for index, case in enumerate(cases):
+        if not isinstance(case, dict) or not isinstance(case.get("boundary"), dict):
+            continue
+        boundary = case["boundary"]
+        case_id = case.get("id")
+        anchor_case_id = boundary.get("anchor_case_id")
+        family_id = boundary.get("family_id")
+        if not isinstance(anchor_case_id, str) or not anchor_case_id.strip():
+            continue
+        anchor_entry = case_by_id.get(anchor_case_id)
+        if anchor_entry is None:
+            issues.append(
+                ValidationIssue(
+                    f"case[{index}].boundary.anchor_case_id",
+                    f"Unknown boundary anchor case id: {anchor_case_id}.",
+                )
+            )
+            continue
+        _, anchor_case = anchor_entry
+        anchor_boundary = anchor_case.get("boundary")
+        if not isinstance(anchor_boundary, dict):
+            issues.append(
+                ValidationIssue(
+                    f"case[{index}].boundary.anchor_case_id",
+                    f"Boundary anchor {anchor_case_id} must also define boundary metadata.",
+                )
+            )
+            continue
+        if family_id and anchor_boundary.get("family_id") != family_id:
+            issues.append(
+                ValidationIssue(
+                    f"case[{index}].boundary.family_id",
+                    f"Boundary anchor {anchor_case_id} belongs to a different family.",
+                )
+            )
+        if anchor_boundary.get("variation_type") != "anchor":
+            issues.append(
+                ValidationIssue(
+                    f"case[{index}].boundary.anchor_case_id",
+                    f"Boundary anchor {anchor_case_id} must use variation_type: anchor.",
+                )
+            )
+        if boundary.get("variation_type") == "anchor" and anchor_case_id != case_id:
+            issues.append(
+                ValidationIssue(
+                    f"case[{index}].boundary.anchor_case_id",
+                    "An anchor case must reference its own case id.",
+                )
+            )
 
     return issues
 

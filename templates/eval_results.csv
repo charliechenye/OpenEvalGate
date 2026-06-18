@@ -1,2 +1,2 @@
-run_id,case_id,candidate,evaluator,actual_route,expected_route,route_match,passed,score,failure_category,failure_reason,observed_output_path,reviewed_by,reviewed_at,notes
-run_001,refund_boundary_case_001,candidate_assistant_v1,human_review,escalate,escalate,true,true,0.92,,,eval_runs/run_001/refund_boundary_case_001.md,ai_quality,2026-05-23,Good escalation and policy alignment.
+run_id,case_id,candidate,evaluator,actual_route,expected_route,route_match,passed,score,failure_category,failure_reason,observed_output_path,reviewed_by,reviewed_at,notes,trial_id,actual_workflow_route,workflow_route_match,trajectory_pass,end_state_pass,prohibited_action_occurred
+run_001,refund_boundary_case_001,candidate_assistant_v1,human_review,escalate,escalate,true,true,0.92,,,eval_runs/run_001/refund_boundary_case_001.md,ai_quality,2026-05-23,Good escalation and policy alignment.,trial_001,escalate,true,true,true,false

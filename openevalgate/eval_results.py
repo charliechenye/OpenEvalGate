@@ -7,7 +7,7 @@ from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 
-from openevalgate.schema import EXPECTED_ROUTES, ValidationIssue, load_eval_cases
+from openevalgate.schema import EXPECTED_ROUTES, WORKFLOW_ROUTES, ValidationIssue, load_eval_cases
 
 
 REQUIRED_EVAL_RESULT_COLUMNS = [
@@ -28,6 +28,15 @@ REQUIRED_EVAL_RESULT_COLUMNS = [
     "notes",
 ]
 
+OPTIONAL_EVAL_RESULT_COLUMNS = [
+    "trial_id",
+    "actual_workflow_route",
+    "workflow_route_match",
+    "trajectory_pass",
+    "end_state_pass",
+    "prohibited_action_occurred",
+]
+
 
 @dataclass(frozen=True)
 class EvalResultsValidationResult:
@@ -46,6 +55,16 @@ class EvalResultsSummary:
     failed_case_ids: list[str]
     failure_categories: Counter[str]
     observed_output_paths: list[str]
+    workflow_route_accuracy: float | None
+    trajectory_pass_rate: float | None
+    end_state_pass_rate: float | None
+    prohibited_action_rate: float | None
+    boundary_family_count: int
+    complete_boundary_family_count: int
+    contrast_family_reliability: float | None
+    semantic_stability: float | None
+    repeated_case_count: int
+    repeated_run_reliability: float | None
 
 
 def read_eval_results(path: str | Path) -> list[dict[str, str]]:
@@ -99,6 +118,27 @@ def validate_eval_results(project_dir: str | Path) -> EvalResultsValidationResul
             if numeric_score < 0 or numeric_score > 1:
                 issues.append(ValidationIssue(f"{prefix}.score", "Must be numeric from 0 to 1."))
 
+        workflow_route = row.get("actual_workflow_route", "").strip()
+        if workflow_route and workflow_route not in WORKFLOW_ROUTES:
+            issues.append(
+                ValidationIssue(
+                    f"{prefix}.actual_workflow_route",
+                    f"Must be one of: {', '.join(sorted(WORKFLOW_ROUTES))}.",
+                )
+            )
+
+        for bool_field in (
+            "workflow_route_match",
+            "trajectory_pass",
+            "end_state_pass",
+            "prohibited_action_occurred",
+        ):
+            if bool_field not in fieldnames:
+                continue
+            value = row.get(bool_field, "").strip().lower()
+            if value and value not in {"true", "false"}:
+                issues.append(ValidationIssue(f"{prefix}.{bool_field}", "Must be true, false, or blank."))
+
     return EvalResultsValidationResult(not issues, issues, len(rows))
 
 
@@ -111,8 +151,29 @@ def summarize_eval_results(project_dir: str | Path) -> EvalResultsSummary | None
 
     rows = read_eval_results(path)
     if not rows:
-        return EvalResultsSummary(0, None, [], None, None, [], Counter(), [])
+        return EvalResultsSummary(
+            0,
+            None,
+            [],
+            None,
+            None,
+            [],
+            Counter(),
+            [],
+            None,
+            None,
+            None,
+            None,
+            0,
+            0,
+            None,
+            None,
+            0,
+            None,
+        )
 
+    eval_path = Path(project_dir) / "eval_cases.yaml"
+    cases = load_eval_cases(eval_path) if eval_path.is_file() else []
     candidates = sorted({row.get("candidate", "").strip() for row in rows if row.get("candidate", "").strip()})
     failed_case_ids = sorted({row.get("case_id", "").strip() for row in rows if row.get("passed", "").strip().lower() == "false" and row.get("case_id", "").strip()})
     failure_categories = Counter(
@@ -128,6 +189,7 @@ def summarize_eval_results(project_dir: str | Path) -> EvalResultsSummary | None
 
     passed_values = [row.get("passed", "").strip().lower() for row in rows]
     route_values = [row.get("route_match", "").strip().lower() for row in rows]
+    boundary_metrics = _boundary_metrics(cases, rows)
 
     return EvalResultsSummary(
         row_count=len(rows),
@@ -138,6 +200,16 @@ def summarize_eval_results(project_dir: str | Path) -> EvalResultsSummary | None
         failed_case_ids=failed_case_ids,
         failure_categories=failure_categories,
         observed_output_paths=observed_output_paths,
+        workflow_route_accuracy=_optional_true_rate(rows, "workflow_route_match"),
+        trajectory_pass_rate=_optional_true_rate(rows, "trajectory_pass"),
+        end_state_pass_rate=_optional_true_rate(rows, "end_state_pass"),
+        prohibited_action_rate=_optional_true_rate(rows, "prohibited_action_occurred"),
+        boundary_family_count=boundary_metrics["family_count"],
+        complete_boundary_family_count=boundary_metrics["complete_family_count"],
+        contrast_family_reliability=boundary_metrics["contrast_family_reliability"],
+        semantic_stability=boundary_metrics["semantic_stability"],
+        repeated_case_count=boundary_metrics["repeated_case_count"],
+        repeated_run_reliability=boundary_metrics["repeated_run_reliability"],
     )
 
 
@@ -157,3 +229,95 @@ def _true_rate(values: list[str]) -> float | None:
     if not normalized:
         return None
     return sum(1 for value in normalized if value == "true") / len(normalized)
+
+
+def _optional_true_rate(rows: list[dict[str, str]], field: str) -> float | None:
+    return _true_rate([row.get(field, "").strip().lower() for row in rows])
+
+
+def _boundary_metrics(cases: list[dict[str, object]], rows: list[dict[str, str]]) -> dict[str, object]:
+    boundary_cases = {
+        str(case.get("id", "")): case
+        for case in cases
+        if isinstance(case.get("boundary"), dict) and str(case.get("id", "")).strip()
+    }
+    families: dict[str, set[str]] = {}
+    for case_id, case in boundary_cases.items():
+        boundary = case["boundary"]
+        assert isinstance(boundary, dict)
+        family_id = str(boundary.get("family_id", "")).strip()
+        if family_id:
+            families.setdefault(family_id, set()).add(case_id)
+
+    result_case_ids = {row.get("case_id", "").strip() for row in rows}
+    complete_families = {
+        family_id: members
+        for family_id, members in families.items()
+        if members and members.issubset(result_case_ids)
+    }
+    passing_families = 0
+    for members in complete_families.values():
+        family_rows = [row for row in rows if row.get("case_id", "").strip() in members]
+        if family_rows and all(row.get("passed", "").strip().lower() == "true" for row in family_rows):
+            passing_families += 1
+
+    semantic_comparisons: list[bool] = []
+    grouped_rows: dict[tuple[str, str, str], dict[str, dict[str, str]]] = {}
+    for row in rows:
+        key = (
+            row.get("run_id", "").strip(),
+            row.get("candidate", "").strip(),
+            row.get("trial_id", "").strip(),
+        )
+        grouped_rows.setdefault(key, {})[row.get("case_id", "").strip()] = row
+    for case_id, case in boundary_cases.items():
+        boundary = case["boundary"]
+        assert isinstance(boundary, dict)
+        if boundary.get("variation_type") != "semantic_invariance":
+            continue
+        anchor_case_id = str(boundary.get("anchor_case_id", "")).strip()
+        for grouped in grouped_rows.values():
+            variant_row = grouped.get(case_id)
+            anchor_row = grouped.get(anchor_case_id)
+            if not variant_row or not anchor_row:
+                continue
+            variant_route = variant_row.get("actual_workflow_route", "").strip()
+            anchor_route = anchor_row.get("actual_workflow_route", "").strip()
+            if variant_route and anchor_route:
+                semantic_comparisons.append(variant_route == anchor_route)
+
+    rows_by_case_run: dict[tuple[str, str, str], list[dict[str, str]]] = {}
+    for row in rows:
+        case_id = row.get("case_id", "").strip()
+        if case_id:
+            key = (
+                case_id,
+                row.get("run_id", "").strip(),
+                row.get("candidate", "").strip(),
+            )
+            rows_by_case_run.setdefault(key, []).append(row)
+    repeated_cases = {
+        key: case_rows
+        for key, case_rows in rows_by_case_run.items()
+        if len({row.get("trial_id", "").strip() for row in case_rows if row.get("trial_id", "").strip()}) >= 2
+    }
+    reliable_repeated_cases = sum(
+        1
+        for case_rows in repeated_cases.values()
+        if all(row.get("passed", "").strip().lower() == "true" for row in case_rows)
+    )
+
+    return {
+        "family_count": len(families),
+        "complete_family_count": len(complete_families),
+        "contrast_family_reliability": (
+            passing_families / len(complete_families) if complete_families else None
+        ),
+        "semantic_stability": (
+            sum(semantic_comparisons) / len(semantic_comparisons) if semantic_comparisons else None
+        ),
+        "repeated_case_count": len(repeated_cases),
+        "repeated_run_reliability": (
+            reliable_repeated_cases / len(repeated_cases) if repeated_cases else None
+        ),
+    }

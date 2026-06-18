@@ -80,3 +80,73 @@ def test_supported_yaml_shapes_are_accepted(tmp_path: Path) -> None:
     assert len(load_eval_cases(single)) == 1
     assert len(load_eval_cases(list_shape)) == 1
     assert len(load_eval_cases(wrapped)) == 1
+
+
+def test_valid_boundary_family_passes(tmp_path: Path) -> None:
+    anchor = deepcopy(VALID_CASE)
+    anchor["id"] = "refund_anchor"
+    anchor["expected_workflow_route"] = "act"
+    anchor["boundary"] = {
+        "family_id": "refund_limit",
+        "anchor_case_id": "refund_anchor",
+        "controlling_fact": "requested_refund",
+        "variation_type": "anchor",
+        "before_value": 49.99,
+        "after_value": 49.99,
+    }
+    anchor["expected_trajectory"] = {
+        "required_events": ["issue_refund"],
+        "prohibited_events": ["create_review_case"],
+    }
+    anchor["expected_end_state"] = {"assertions": ["refund_issued"]}
+
+    variant = deepcopy(anchor)
+    variant["id"] = "refund_above_limit"
+    variant["expected_workflow_route"] = "approval"
+    variant["boundary"] = {
+        "family_id": "refund_limit",
+        "anchor_case_id": "refund_anchor",
+        "controlling_fact": "requested_refund",
+        "variation_type": "threshold_neighbor",
+        "before_value": 49.99,
+        "after_value": 50.01,
+    }
+
+    path = write_yaml(tmp_path / "eval_cases.yaml", {"eval_cases": [anchor, variant]})
+
+    result = validate_eval_cases(path)
+
+    assert result.valid
+
+
+def test_boundary_anchor_must_exist_and_be_anchor(tmp_path: Path) -> None:
+    case = deepcopy(VALID_CASE)
+    case["boundary"] = {
+        "family_id": "refund_limit",
+        "anchor_case_id": "missing_anchor",
+        "controlling_fact": "requested_refund",
+        "variation_type": "threshold_neighbor",
+        "before_value": 49.99,
+        "after_value": 50.01,
+    }
+    path = write_yaml(tmp_path / "eval_cases.yaml", [case])
+
+    result = validate_eval_cases(path)
+
+    assert not result.valid
+    assert any("Unknown boundary anchor" in issue.message for issue in result.issues)
+
+
+def test_invalid_optional_boundary_contract_fails(tmp_path: Path) -> None:
+    case = deepcopy(VALID_CASE)
+    case["expected_workflow_route"] = "execute"
+    case["expected_trajectory"] = {"required_events": "issue_refund"}
+    case["expected_end_state"] = {"assertions": "refund_issued"}
+    path = write_yaml(tmp_path / "eval_cases.yaml", [case])
+
+    result = validate_eval_cases(path)
+
+    assert not result.valid
+    assert any("expected_workflow_route" in issue.path for issue in result.issues)
+    assert any("prohibited_events" in issue.path for issue in result.issues)
+    assert any("expected_end_state.assertions" in issue.path for issue in result.issues)

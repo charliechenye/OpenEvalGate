@@ -170,6 +170,7 @@ The repo includes templates for assistant PRDs, golden eval cases, eval results,
 ## Playbooks
 
 - [Golden Eval Set Playbook](docs/playbooks/golden-eval-set-playbook/README.md): a practitioner guide for PMs and domain owners turning expected behavior into golden eval cases, release gates, and incident feedback loops.
+- [Synthetic Boundary Case Guide](docs/17_synthetic_boundary_case_guide.md): a method for turning policy thresholds into contrast families, execution assertions, reliability evidence, and release controls.
 - [Routing Playbook](docs/playbooks/routing/README.md): practitioner artifacts for scenario routing, workflow routing, model routing, risk controls, routing experiments, observability, and staged rollout.
 - [Human Escalation Playbook](docs/playbooks/human-escalation-playbook/README.md): practitioner artifacts for escalation contracts, handoff payloads, queue routing, fallback behavior, durable workflow state, release gates, incident ingestion, and recertification.
 

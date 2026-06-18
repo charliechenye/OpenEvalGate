@@ -50,7 +50,8 @@ Describe whether the miss came from scoring, threshold, stale context, missing t
 | Expected behavior |  |
 | Unacceptable behavior |  |
 | Expected tool behavior |  |
-| Expected route | show / revise / escalate / block |
+| Expected admission route | show / revise / escalate / block |
+| Expected workflow route | answer / clarify / act / approval / escalate / refuse |
 | Risk tier | low / medium / high / prohibited |
 | Policy reference |  |
 | Owner |  |

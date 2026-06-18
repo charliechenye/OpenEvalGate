@@ -67,6 +67,8 @@ def test_report_eval_results_summary_includes_feedback_metrics() -> None:
     assert "Pass rate: 67%" in report
     assert "Route match rate: 67%" in report
     assert "Failed case IDs: refund_abuse_history_002" in report
+    assert "Workflow-route accuracy: unknown" in report
+    assert "Contrast-family reliability: unknown" in report
 
 
 def test_complete_customer_support_report_has_no_hard_blockers() -> None:

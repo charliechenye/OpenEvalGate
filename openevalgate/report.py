@@ -275,14 +275,27 @@ def _eval_summary(cases: list[dict[str, Any]]) -> str:
     case_types = Counter(str(case.get("case_type", "unknown")) for case in cases)
     risk_tiers = Counter(str(case.get("risk_tier", "unknown")) for case in cases)
     routes = Counter(str(case.get("expected_route", "unknown")) for case in cases)
-    return "\n".join(
-        [
-            f"- Total cases: {len(cases)}",
-            "- Case types: " + _counter_summary(case_types),
-            "- Risk tiers: " + _counter_summary(risk_tiers),
-            "- Expected routes: " + _counter_summary(routes),
-        ]
+    workflow_routes = Counter(
+        str(case.get("expected_workflow_route"))
+        for case in cases
+        if case.get("expected_workflow_route")
     )
+    boundary_cases = [case for case in cases if isinstance(case.get("boundary"), dict)]
+    boundary_families = {
+        str(case["boundary"].get("family_id"))
+        for case in boundary_cases
+        if case["boundary"].get("family_id")
+    }
+    lines = [
+        f"- Total cases: {len(cases)}",
+        "- Case types: " + _counter_summary(case_types),
+        "- Risk tiers: " + _counter_summary(risk_tiers),
+        "- Expected admission routes: " + _counter_summary(routes),
+        f"- Boundary metadata coverage: {len(boundary_cases)}/{len(cases)} cases across {len(boundary_families)} contrast family/families",
+    ]
+    if workflow_routes:
+        lines.append("- Expected workflow routes: " + _counter_summary(workflow_routes))
+    return "\n".join(lines)
 
 
 def _eval_results_summary(root: Path) -> str:
@@ -300,6 +313,19 @@ def _eval_results_summary(root: Path) -> str:
         f"- Route match rate: {_format_rate(summary.route_match_rate)}",
         "- Failed case IDs: " + (", ".join(summary.failed_case_ids) if summary.failed_case_ids else "none"),
         "- Top failure categories: " + (_counter_summary(summary.failure_categories) if summary.failure_categories else "none"),
+        f"- Workflow-route accuracy: {_format_rate(summary.workflow_route_accuracy)}",
+        f"- Trajectory pass rate: {_format_rate(summary.trajectory_pass_rate)}",
+        f"- End-state pass rate: {_format_rate(summary.end_state_pass_rate)}",
+        f"- Prohibited-action rate: {_format_rate(summary.prohibited_action_rate)}",
+        (
+            f"- Contrast-family reliability: {_format_rate(summary.contrast_family_reliability)} "
+            f"({summary.complete_boundary_family_count}/{summary.boundary_family_count} families have complete result coverage)"
+        ),
+        f"- Semantic stability: {_format_rate(summary.semantic_stability)}",
+        (
+            f"- Repeated-run reliability: {_format_rate(summary.repeated_run_reliability)} "
+            f"({summary.repeated_case_count} repeatedly evaluated case(s))"
+        ),
     ]
     if summary.observed_output_paths:
         lines.append("- Observed output paths: " + ", ".join(summary.observed_output_paths[:8]))

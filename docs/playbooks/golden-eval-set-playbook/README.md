@@ -42,6 +42,8 @@ Use this playbook to create and review `eval_cases.yaml`. Then use the broader O
 7. Review the eval set with product, engineering, operations, policy, and domain owners.
 8. Feed production incidents and drift samples back into the set.
 
+For consequence-weighted coverage, group synthetic cases into contrast families and grade workflow route, execution trajectory, and final state. See the [Synthetic Boundary Case Guide](../../17_synthetic_boundary_case_guide.md).
+
 ## Files In This Playbook
 
 ```text

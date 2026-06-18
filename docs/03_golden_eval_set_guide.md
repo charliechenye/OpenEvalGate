@@ -36,3 +36,5 @@ The result row is the bridge between "we have a golden eval set" and "we know ho
 ## Coverage expectations
 
 A launch-ready eval set should include common requests, high-frequency workflows, high-risk boundary cases, known abuse patterns, escalation cases, stale or missing context cases, and fresh drift samples.
+
+For the contrast-family method, workflow/admission route distinction, and route/trajectory/end-state grading contract, see the [Synthetic Boundary Case Guide](17_synthetic_boundary_case_guide.md).

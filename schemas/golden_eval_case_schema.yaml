@@ -1,7 +1,7 @@
 # Documentation schema for OpenEvalGate-compatible golden eval cases.
 # This file is a reference artifact, not a runtime validator.
 schema_name: golden_eval_case_schema
-schema_version: 0.1.0
+schema_version: 0.1.1
 required_fields:
   id:
     type: string
@@ -72,6 +72,51 @@ required_fields:
     type: date
     format: YYYY-MM-DD
 optional_playbook_fields:
+  boundary:
+    type: object
+    description: Contrast-family metadata for a synthetic boundary case.
+    required_children:
+      family_id:
+        type: string
+      anchor_case_id:
+        type: string
+      controlling_fact:
+        type: string
+      variation_type:
+        type: enum
+        allowed_values:
+          - anchor
+          - threshold_neighbor
+          - missing_fact
+          - conflicting_evidence
+          - authority_state
+          - semantic_invariance
+      before_value:
+        type: any
+      after_value:
+        type: any
+  expected_workflow_route:
+    type: enum
+    description: Product workflow decision, separate from response admission.
+    allowed_values:
+      - answer
+      - clarify
+      - act
+      - approval
+      - escalate
+      - refuse
+  expected_trajectory:
+    type: object
+    required_children:
+      required_events:
+        type: list
+      prohibited_events:
+        type: list
+  expected_end_state:
+    type: object
+    required_children:
+      assertions:
+        type: list
   source:
     type: string
     examples:
