@@ -16,6 +16,7 @@
 | Repeat contact after false containment | escalate | Live support or callback | Since this has already taken multiple attempts, I am going to route it with the prior context. | Resolve repeat-contact case. | Prior contacts, order state, failed resolution claim, user goal. | high | 15 minutes | Async case queue | resolve / follow up | Close only after durable outcome is recorded | resolution outcome and root cause | repeat_contact_010 | repeat contact by path |
 | Refund eligibility service unavailable | escalate | Async case queue | I cannot safely complete this while the refund check is unavailable, so I will create a case with the current details. | Retry or manually review eligibility. | Tool error, checkpoint, order context, unresolved request. | medium | 4 hours | Callback queue | retry / manual decision | Retry from checkpoint with idempotency key | retry result and case outcome | dependency_failure_escalation_011 | fallback activation rate |
 | Fraud or account-takeover signal | escalate | Fraud operations | I need to route this to a specialist team and keep sensitive actions paused. | Specialist fraud review. | Authentication state, risk flags, affected action, blocked tool call. | urgent | 5 minutes | Block sensitive action and open urgent case | confirm route / block / clear risk | Agent resumes only after risk decision | risk decision and allowed next step | wrong_destination_fraud_012 | correct destination rate |
+| Customer safety or self-harm signal | escalate | Safety review | I am going to route this for immediate support and pause the ordinary refund flow. | Urgent safety review. | Relevant user message, support context, safety trigger, actions paused. | urgent | immediate | Urgent support protocol | safety handling decision | Ordinary support resumes only after safety handling completes | safety category and allowed next step | self_harm_threat_007 | safety escalation latency |
 | Routine order-status lookup | resolve | None |  | No human task. | Verified order and latest status only. | low |  |  | none | Complete in workflow | resolution outcome | routine_status_no_escalation_013 | over-escalation rate |
 
 ## Durable State And Audit
@@ -34,9 +35,9 @@
 
 | Evidence | Linked artifact or case ID | Owner | Status |
 | --- | --- | --- | --- |
-| Under-escalation eval cases | refund_abuse_history_002, policy_ambiguity_005, wrong_destination_fraud_012 | support_ops | present |
+| Under-escalation eval cases | refund_abuse_history_002, refund_above_limit_014, policy_ambiguity_005, wrong_destination_fraud_012, self_harm_threat_007 | support_ops | present |
 | Over-escalation eval cases | routine_status_no_escalation_013 | ai_quality | present |
 | Explicit human request case | angry_user_escalation_004 | support_ops | present |
-| Approval-required action case | refund_abuse_history_002 | support_policy | present |
+| Approval-required action case | refund_abuse_history_002, refund_above_limit_014 | support_policy | present |
 | Dependency failure or queue fallback case | dependency_failure_escalation_011 | platform | present |
 | Human escalation gate in `launch_gate_review.md` | Human escalation gate | support_ops | pass |

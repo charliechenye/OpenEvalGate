@@ -79,6 +79,11 @@ escalation_contract:
       - graded_dispute_escalation_003
       - learner_safety_escalation_004
       - accommodation_policy_ambiguity_005
+      - assessment_context_missing_006
+      - concept_explanation_semantic_007
+      - graded_answer_semantic_008
+      - grade_dispute_semantic_009
+      - learner_safety_semantic_010
 
   recertification:
     cadence_days: 90

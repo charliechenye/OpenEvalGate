@@ -125,7 +125,7 @@ def test_escalation_metrics_are_calculated_from_enriched_results() -> None:
 
     assert summary is not None
     assert summary.required_escalation_recall == 2 / 3
-    assert summary.over_escalation_rate == 1 / 3
+    assert summary.over_escalation_rate == 2 / 3
     assert summary.destination_accuracy == 1 / 3
     assert summary.context_preservation_rate == 2 / 3
     assert summary.fallback_success_rate == 1.0

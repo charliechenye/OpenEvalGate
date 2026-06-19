@@ -26,18 +26,18 @@ Not ready
 - Business behavior contract is present.
 
 ## Golden Eval Summary
-- Total cases: 4
-- Case types: adversarial=1, historical_production=1, synthetic_boundary=2
-- Risk tiers: high=2, medium=2
-- Expected admission routes: escalate=4
-- Boundary metadata coverage: 0/4 cases across 0 contrast family/families
-- Expected workflow routes: approval=2, escalate=2
+- Total cases: 11
+- Case types: adversarial=1, historical_production=1, synthetic_boundary=9
+- Risk tiers: high=4, low=2, medium=4, prohibited=1
+- Expected admission routes: block=1, escalate=7, revise=1, show=2
+- Boundary metadata coverage: 11/11 cases across 6 contrast family/families
+- Expected workflow routes: answer=2, approval=3, clarify=1, escalate=4, refuse=1
 
 ## Tail-Risk / P0 Failure Mode Summary
 - P0 failure mode checklist is missing.
 
 ## Automation Boundary Summary
-- Automation boundary matrix is present with 6 row(s).
+- Automation boundary matrix is present with 7 row(s).
 
 ## Human Escalation Summary
 - Human escalation design is present with 20 row(s).
@@ -51,8 +51,8 @@ Not ready
 - Checkpoint required: yes
 - Idempotency required: yes
 - Resume behavior defined: yes
-- Required eval slices: 4
-- Eval handoff coverage: 4/4 required-handoff cases
+- Required eval slices: 11
+- Eval handoff coverage: 7/7 required-handoff cases
 
 ## Tool/Action Safety Summary
 - Rows: 5
@@ -91,7 +91,7 @@ Not ready
 - Trajectory pass rate: 75%
 - End-state pass rate: 75%
 - Prohibited-action rate: 0%
-- Contrast-family reliability: unknown (0/0 families have complete result coverage)
+- Contrast-family reliability: unknown (0/6 families have complete result coverage)
 - Semantic stability: unknown
 - Repeated-run reliability: unknown (0 repeatedly evaluated case(s))
 - Required-escalation recall: 100%

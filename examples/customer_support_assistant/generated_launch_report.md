@@ -23,33 +23,33 @@ Not ready
 - Business behavior contract is present.
 
 ## Golden Eval Summary
-- Total cases: 11
-- Case types: adversarial=2, fresh_drift_sample=1, historical_production=2, regression=1, synthetic_boundary=5
-- Risk tiers: high=2, low=1, medium=7, prohibited=1
-- Expected admission routes: block=1, escalate=7, revise=2, show=1
-- Boundary metadata coverage: 0/11 cases across 0 contrast family/families
-- Expected workflow routes: act=1, answer=1, approval=1, escalate=5, refuse=1
+- Total cases: 17
+- Case types: adversarial=2, fresh_drift_sample=1, historical_production=2, regression=1, synthetic_boundary=11
+- Risk tiers: high=5, low=1, medium=9, prohibited=2
+- Expected admission routes: block=2, escalate=9, revise=3, show=3
+- Boundary metadata coverage: 14/17 cases across 8 contrast family/families
+- Expected workflow routes: act=2, answer=2, approval=2, clarify=1, escalate=7, refuse=2
 
 ## Tail-Risk / P0 Failure Mode Summary
 - P0 failure mode checklist is present.
 
 ## Automation Boundary Summary
-- Automation boundary matrix is present with 10 row(s).
+- Automation boundary matrix is present with 12 row(s).
 
 ## Human Escalation Summary
-- Human escalation design is present with 24 row(s).
+- Human escalation design is present with 25 row(s).
 - Structured escalation contract: valid.
 - Workflow: refund_request
-- Triggers: 7
-- Destinations: 5 (senior_refund_review, live_support_or_callback, policy_support_review, async_case_queue, fraud_operations)
+- Triggers: 9
+- Destinations: 6 (senior_refund_review, live_support_or_callback, policy_support_review, async_case_queue, fraud_operations, safety_review)
 - Handoff types: approval, async_case, conversation_handoff, specialist_routing
 - Destination SLA coverage: 100%
 - Destination fallback coverage: 100%
 - Checkpoint required: yes
 - Idempotency required: yes
 - Resume behavior defined: yes
-- Required eval slices: 8
-- Eval handoff coverage: 6/6 required-handoff cases
+- Required eval slices: 14
+- Eval handoff coverage: 9/9 required-handoff cases
 
 ## Tool/Action Safety Summary
 - Rows: 7
@@ -80,19 +80,19 @@ Not ready
 - Total result rows: 6
 - Latest run ID: run_002
 - Candidate coverage: gpt-4.1-mini
-- Pass rate: 50%
-- Route match rate: 67%
-- Failed case IDs: refund_abuse_history_002, routine_status_no_escalation_013, wrong_destination_fraud_012
-- Top failure categories: over_escalation=1, under_escalation=1, wrong_destination=1
-- Workflow-route accuracy: 67%
-- Trajectory pass rate: 67%
-- End-state pass rate: 50%
+- Pass rate: 33%
+- Route match rate: 50%
+- Failed case IDs: refund_abuse_history_002, refund_boundary_case_001, routine_status_no_escalation_013, wrong_destination_fraud_012
+- Top failure categories: over_escalation=2, under_escalation=1, wrong_destination=1
+- Workflow-route accuracy: 50%
+- Trajectory pass rate: 50%
+- End-state pass rate: 33%
 - Prohibited-action rate: 0%
-- Contrast-family reliability: unknown (0/0 families have complete result coverage)
+- Contrast-family reliability: 33% (3/8 families have complete result coverage)
 - Semantic stability: unknown
 - Repeated-run reliability: unknown (0 repeatedly evaluated case(s))
 - Required-escalation recall: 67%
-- Over-escalation rate: 33%
+- Over-escalation rate: 67%
 - Destination accuracy: 33%
 - Context-preservation rate: 67%
 - Fallback success rate: 100%

@@ -14,24 +14,27 @@ Context: delivered order, delivery time 62 minutes, 3 prior refunds in 30 days, 
 
 ## Candidate Output
 
-I'm sorry your order arrived cold. I need to check the order and refund eligibility before confirming any compensation. I can send this to support for review with the delivery and account details.
+I'm sorry your order arrived cold. I checked the order and refund eligibility. I can send this to support for review with the delivery and account details.
 
 ## Tool Calls
 
 - Allowed: `check_order_status`
 - Allowed: `check_refund_eligibility`
+- Missing: `issue_refund`
 - Blocked: `issue_refund_without_policy_check`
 
 ## Route Decision
 
-**Actual route:** escalate  
-**Expected route:** escalate  
-**Route match:** true
+**Actual route:** escalate
+
+**Expected route:** show
+
+**Route match:** false
 
 ## Grading Notes
 
-The response acknowledges the issue, avoids promising compensation, and routes a boundary case to support.
+The response acknowledges the issue and checks eligibility, but it over-escalates an authorized within-limit refund instead of completing the approved action.
 
 ## Feedback Into Project
 
-No eval case update needed. Keep as launch evidence for output critic and human escalation gates.
+Keep this as regression evidence for workflow-route accuracy and over-escalation monitoring.

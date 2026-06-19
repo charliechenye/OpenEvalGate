@@ -31,8 +31,8 @@
 
 | Evidence | Linked artifact or case ID | Owner | Status |
 | --- | --- | --- | --- |
-| Under-escalation eval cases | graded_dispute_escalation_003, learner_safety_escalation_004 | learning_product | present |
-| Over-escalation eval cases | explain_photosynthesis_002 | ai_quality | present |
+| Under-escalation eval cases | graded_dispute_escalation_003, grade_dispute_semantic_009, learner_safety_escalation_004, learner_safety_semantic_010 | learning_product | present |
+| Over-escalation eval cases | explain_photosynthesis_002, concept_explanation_semantic_007 | ai_quality | present |
 | Explicit human request case | graded_dispute_escalation_003 | course_staff | present |
 | Approval-required action case | accommodation_policy_ambiguity_005 | accessibility_services | present |
 | Dependency failure or queue fallback case | course staff triage fallback | operations | planned |

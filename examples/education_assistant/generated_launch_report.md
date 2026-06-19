@@ -25,18 +25,18 @@ Not ready
 - Business behavior contract is present.
 
 ## Golden Eval Summary
-- Total cases: 5
-- Case types: historical_production=1, regression=1, synthetic_boundary=3
-- Risk tiers: high=2, low=1, medium=2
-- Expected admission routes: escalate=3, revise=1, show=1
-- Boundary metadata coverage: 0/5 cases across 0 contrast family/families
-- Expected workflow routes: answer=1, approval=1, escalate=2, refuse=1
+- Total cases: 10
+- Case types: historical_production=1, regression=1, synthetic_boundary=8
+- Risk tiers: high=4, low=2, medium=4
+- Expected admission routes: escalate=5, revise=3, show=2
+- Boundary metadata coverage: 10/10 cases across 5 contrast family/families
+- Expected workflow routes: answer=2, approval=1, clarify=1, escalate=4, refuse=2
 
 ## Tail-Risk / P0 Failure Mode Summary
 - P0 failure mode checklist is missing.
 
 ## Automation Boundary Summary
-- Automation boundary matrix is present with 5 row(s).
+- Automation boundary matrix is present with 7 row(s).
 
 ## Human Escalation Summary
 - Human escalation design is present with 21 row(s).
@@ -50,8 +50,8 @@ Not ready
 - Checkpoint required: yes
 - Idempotency required: yes
 - Resume behavior defined: yes
-- Required eval slices: 5
-- Eval handoff coverage: 3/3 required-handoff cases
+- Required eval slices: 10
+- Eval handoff coverage: 5/5 required-handoff cases
 
 ## Tool/Action Safety Summary
 - Rows: 3
@@ -89,7 +89,7 @@ No model arena scorecard found.
 - Trajectory pass rate: 80%
 - End-state pass rate: 40%
 - Prohibited-action rate: 0%
-- Contrast-family reliability: unknown (0/0 families have complete result coverage)
+- Contrast-family reliability: 0% (1/5 families have complete result coverage)
 - Semantic stability: unknown
 - Repeated-run reliability: unknown (0 repeatedly evaluated case(s))
 - Required-escalation recall: 100%

@@ -26,6 +26,10 @@ escalation_contract:
       condition: prior_refunds_30d >= 4
       path: approval
       destination: senior_refund_review
+    - id: refund_amount_threshold
+      condition: requested_refund > automated_refund_limit
+      path: approval
+      destination: senior_refund_review
     - id: explicit_human_request
       condition: user requests a person or reports a bot loop
       path: escalate
@@ -50,6 +54,10 @@ escalation_contract:
       condition: user requests policy or audit bypass
       path: refuse
       destination: ""
+    - id: customer_safety_signal
+      condition: user expresses self-harm, violence, or immediate safety concern
+      path: escalate
+      destination: safety_review
 
   handoff:
     minimum_sufficient_context: true
@@ -94,6 +102,11 @@ escalation_contract:
         sla_minutes: 5
         fallback: block_sensitive_action_and_open_urgent_case
         owner: trust_safety
+      - id: safety_review
+        handoff_type: specialist_routing
+        sla_minutes: 1
+        fallback: urgent_support_protocol
+        owner: trust_safety
 
   durable_state:
     checkpoint_required: true
@@ -111,6 +124,12 @@ escalation_contract:
       - dependency_failure_escalation_011
       - wrong_destination_fraud_012
       - routine_status_no_escalation_013
+      - refund_above_limit_014
+      - refund_missing_authentication_015
+      - refund_semantic_invariance_016
+      - explicit_human_request_semantic_017
+      - policy_bypass_semantic_018
+      - self_harm_threat_007
 
   recertification:
     cadence_days: 90

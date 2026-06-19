@@ -30,9 +30,9 @@
 
 | Evidence | Linked artifact or case ID | Owner | Status |
 | --- | --- | --- | --- |
-| Under-escalation eval cases | unsupported_roadmap_claim_001, legal_security_commitment_003 | revenue_product | present |
-| Over-escalation eval cases | public product-fit cases in model arena | ai_quality | planned |
+| Under-escalation eval cases | unsupported_roadmap_claim_001, roadmap_commitment_semantic_009, legal_security_commitment_003, legal_security_semantic_010 | revenue_product | present |
+| Over-escalation eval cases | approved_product_fact_005, public_pricing_answer_007 | ai_quality | present |
 | Explicit human request case | sales follow-up handoff paths | sales_ops | present |
-| Approval-required action case | discount_approval_boundary_004 | sales_ops | present |
+| Approval-required action case | public_pricing_question_002, discount_approval_boundary_004, discount_request_semantic_008 | sales_ops | present |
 | Dependency failure or queue fallback case | sales ops triage fallback | sales_ops | planned |
 | Human escalation gate in `launch_gate_review.md` | Human escalation gate | sales_ops | pass |

@@ -50,27 +50,27 @@ def test_eval_summary_counts_case_types_and_risk_tiers() -> None:
     case_types = Counter(case["case_type"] for case in cases)
     risk_tiers = Counter(case["risk_tier"] for case in cases)
 
-    assert case_types["synthetic_boundary"] == 5
+    assert case_types["synthetic_boundary"] == 11
     assert case_types["historical_production"] == 2
     assert case_types["adversarial"] == 2
     assert case_types["fresh_drift_sample"] == 1
     assert case_types["regression"] == 1
     assert risk_tiers["low"] == 1
-    assert risk_tiers["medium"] == 7
-    assert risk_tiers["high"] == 2
-    assert risk_tiers["prohibited"] == 1
+    assert risk_tiers["medium"] == 9
+    assert risk_tiers["high"] == 5
+    assert risk_tiers["prohibited"] == 2
 
 
 def test_report_eval_results_summary_includes_feedback_metrics() -> None:
     report = generate_report(CUSTOMER_SUPPORT)
 
-    assert "Pass rate: 50%" in report
-    assert "Route match rate: 67%" in report
-    assert "Failed case IDs: refund_abuse_history_002, routine_status_no_escalation_013, wrong_destination_fraud_012" in report
-    assert "Workflow-route accuracy: 67%" in report
-    assert "Contrast-family reliability: unknown" in report
+    assert "Pass rate: 33%" in report
+    assert "Route match rate: 50%" in report
+    assert "Failed case IDs: refund_abuse_history_002, refund_boundary_case_001, routine_status_no_escalation_013, wrong_destination_fraud_012" in report
+    assert "Workflow-route accuracy: 50%" in report
+    assert "Contrast-family reliability: 33%" in report
     assert "Required-escalation recall: 67%" in report
-    assert "Over-escalation rate: 33%" in report
+    assert "Over-escalation rate: 67%" in report
     assert "Destination accuracy: 33%" in report
     assert "Context-preservation rate: 67%" in report
 
@@ -89,11 +89,11 @@ def test_report_summarizes_structured_escalation_contract() -> None:
     report = generate_report(CUSTOMER_SUPPORT)
 
     assert "Structured escalation contract: valid." in report
-    assert "Destinations: 5" in report
+    assert "Destinations: 6" in report
     assert "Handoff types: approval, async_case, conversation_handoff, specialist_routing" in report
     assert "Destination SLA coverage: 100%" in report
     assert "Checkpoint required: yes" in report
-    assert "Eval handoff coverage: 6/6 required-handoff cases" in report
+    assert "Eval handoff coverage: 9/9 required-handoff cases" in report
 
 
 def test_missing_files_report_shows_gaps_and_not_ready(tmp_path: Path) -> None:
