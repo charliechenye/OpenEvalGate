@@ -1,0 +1,103 @@
+routing_policy:
+  metadata:
+    id: education_capability_allocation
+    version: "1.0.0"
+    owner: learning_product
+    last_reviewed: "2026-06-18"
+
+  models:
+    - id: provisional-platform-default
+      provider: approved_platform
+      model_version: current-pinned-default
+      capability_tier: balanced
+
+  workflows:
+    - id: concept_tutor
+      name: Grounded concept tutor
+      kind: subagent
+      owner: learning_product
+      risk_tier: low
+      scenarios: [concept_explanation]
+      mandatory_controls: [course_material_grounding, learner_level_context]
+      fallback_workflow_id: instructor_review
+      eval_cases: [explain_photosynthesis_002, concept_explanation_semantic_007]
+      model_assignment:
+        mode: fixed
+        approved_models: [provisional-platform-default]
+        default_model: provisional-platform-default
+        reasoning_level: low
+
+    - id: integrity_guard
+      name: Academic integrity support
+      kind: subagent
+      owner: learning_product
+      risk_tier: high
+      scenarios: [academic_integrity, assessment_clarification]
+      mandatory_controls: [academic_integrity_policy, answer_key_block, output_critic]
+      fallback_workflow_id: instructor_review
+      eval_cases:
+        - graded_answer_request_001
+        - assessment_context_missing_006
+        - graded_answer_semantic_008
+      model_assignment:
+        mode: fixed
+        approved_models: [provisional-platform-default]
+        default_model: provisional-platform-default
+        reasoning_level: medium
+
+    - id: instructor_review
+      name: Instructor review
+      kind: human
+      owner: course_staff
+      risk_tier: medium
+      scenarios: [graded_dispute]
+      mandatory_controls: [assessment_context_handoff, policy_version, durable_state]
+      fallback_workflow_id: integrity_guard
+      eval_cases: [graded_dispute_escalation_003, grade_dispute_semantic_009]
+      model_assignment:
+        mode: none
+        approved_models: []
+        default_model: ""
+        reasoning_level: none
+
+    - id: accessibility_review
+      name: Accessibility policy review
+      kind: human
+      owner: accessibility_services
+      risk_tier: medium
+      scenarios: [accommodation_policy]
+      mandatory_controls: [minimum_necessary_context, policy_owner_review]
+      fallback_workflow_id: instructor_review
+      eval_cases: [accommodation_policy_ambiguity_005]
+      model_assignment:
+        mode: none
+        approved_models: []
+        default_model: ""
+        reasoning_level: none
+
+    - id: learner_safety_review
+      name: Learner safety review
+      kind: human
+      owner: learner_safety
+      risk_tier: high
+      scenarios: [learner_safety]
+      mandatory_controls: [urgent_specialist_route, minimized_context, ordinary_flow_pause]
+      fallback_workflow_id: instructor_review
+      eval_cases: [learner_safety_escalation_004, learner_safety_semantic_010]
+      model_assignment:
+        mode: none
+        approved_models: []
+        default_model: ""
+        reasoning_level: none
+
+  observability:
+    required_fields: [workflow_id, model_id, routing_policy_version, routing_reason]
+
+  rollback:
+    owner: learning_platform
+    fallback_workflow_id: instructor_review
+    triggers: [answer_leakage, safety_route_miss, policy_violation, routing_regression]
+
+  recertification:
+    cadence_days: 90
+    required_reviewers: [product_owner, engineering_owner, course_staff, risk_owner]

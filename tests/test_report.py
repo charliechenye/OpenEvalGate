@@ -4,7 +4,7 @@ from shutil import copytree
 
 from openevalgate.report import generate_report
 from openevalgate.schema import load_eval_cases
-from openevalgate.scorer import readiness_recommendation, score_gates, GateRow
+from openevalgate.scorer import WEIGHTS, readiness_recommendation, score_gates, GateRow
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -24,6 +24,7 @@ def test_report_generation_returns_expected_sections() -> None:
     assert "## Golden Eval Summary" in report
     assert "## Eval Results Summary" in report
     assert "## Model Arena Summary" in report
+    assert "## Routing / Capability Allocation Summary" in report
 
 
 def test_recommendation_bands_match_thresholds() -> None:
@@ -43,6 +44,24 @@ def test_score_gates_uses_partial_half_credit() -> None:
 
     assert result.score == 10
     assert result.recommendation == "Not ready"
+
+
+def test_routing_gate_shares_model_selection_weight() -> None:
+    gates = [
+        GateRow("Model selection gate", "pass", "evidence", "None", "ml"),
+        GateRow(
+            "Routing / capability allocation gate",
+            "partial",
+            "evidence",
+            "Fix routing",
+            "ml",
+        ),
+    ]
+
+    result = score_gates(gates)
+
+    assert sum(WEIGHTS.values()) == 100
+    assert result.score == 4
 
 
 def test_eval_summary_counts_case_types_and_risk_tiers() -> None:
@@ -94,6 +113,17 @@ def test_report_summarizes_structured_escalation_contract() -> None:
     assert "Destination SLA coverage: 100%" in report
     assert "Checkpoint required: yes" in report
     assert "Eval handoff coverage: 9/9 required-handoff cases" in report
+
+
+def test_report_summarizes_structured_routing_policy() -> None:
+    report = generate_report(CUSTOMER_SUPPORT)
+
+    assert "Structured routing policy: valid." in report
+    assert "Policy: customer_support_capability_allocation" in report
+    assert "Workflow kinds: subagent=3, deterministic=1, human=2" in report
+    assert "Assignment modes: fixed=2, adaptive=1, none=3" in report
+    assert "Workflow fallback coverage: 100%" in report
+    assert "High-risk control coverage: 100%" in report
 
 
 def test_missing_files_report_shows_gaps_and_not_ready(tmp_path: Path) -> None:

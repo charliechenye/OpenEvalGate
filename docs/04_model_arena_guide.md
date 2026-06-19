@@ -4,6 +4,8 @@ Public benchmarks are useful background information. They do not tell you which 
 
 An internal model arena compares candidate models against your golden eval set, your latency target, your cost target, and your safety requirements.
 
+For a multi-agent or specialist-workflow system, do not force one arena winner onto every subagent. Evaluate each bounded workflow against the slices, tools, latency target, and failure severity that belong to its job. Record the resulting assignments in `routing_policy.yaml`.
+
 ## What to compare
 
 - Golden eval pass rate.
@@ -20,4 +22,4 @@ A model garden is the set of models your team can realistically operate. It shou
 
 ## Decision rule
 
-Do not select a model because it wins a generic benchmark. Select it because it passes your launch gates with acceptable cost and latency.
+Do not select a model because it wins a generic benchmark. Assign a model to a workflow because it passes that workflow's launch evidence with acceptable quality, latency, friction, cost, and risk. A stronger model does not replace deterministic controls or human authority.

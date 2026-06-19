@@ -7,6 +7,7 @@ from pathlib import Path
 
 from openevalgate.escalation import validate_escalation_contract
 from openevalgate.eval_results import validate_eval_results
+from openevalgate.routing import validate_routing_policy
 from openevalgate.schema import ValidationIssue, validate_eval_cases
 
 
@@ -32,6 +33,7 @@ OPTIONAL_PROJECT_FILES = [
     "tail_risk_eval_cases.yaml",
     "purpose_built_assistant_scope.md",
     "escalation_contract.yaml",
+    "routing_policy.yaml",
 ]
 
 
@@ -69,6 +71,11 @@ def check_project(project_dir: str | Path) -> ProjectCheckResult:
     if escalation_path.is_file():
         escalation_validation = validate_escalation_contract(escalation_path, eval_path)
         issues.extend(escalation_validation.issues)
+
+    routing_path = root / "routing_policy.yaml"
+    if routing_path.is_file():
+        routing_validation = validate_routing_policy(routing_path, eval_path)
+        issues.extend(routing_validation.issues)
 
     valid = not missing and not issues
     return ProjectCheckResult(valid, root, missing, present_optional, issues)

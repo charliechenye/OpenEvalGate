@@ -7,6 +7,7 @@ from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 
+from openevalgate.routing import load_routing_policy, routing_expectations
 from openevalgate.schema import EXPECTED_ROUTES, WORKFLOW_ROUTES, ValidationIssue, load_eval_cases
 
 
@@ -41,6 +42,10 @@ OPTIONAL_EVAL_RESULT_COLUMNS = [
     "fallback_success",
     "resume_success",
     "late_escalation",
+    "actual_workflow_id",
+    "actual_model_id",
+    "routing_policy_version",
+    "routing_reason",
 ]
 
 
@@ -78,6 +83,10 @@ class EvalResultsSummary:
     fallback_success_rate: float | None
     resume_success_rate: float | None
     late_escalation_rate: float | None
+    workflow_assignment_accuracy: float | None = None
+    model_policy_compliance: float | None = None
+    routing_policy_version_match_rate: float | None = None
+    deterministic_path_compliance: float | None = None
 
 
 def read_eval_results(path: str | Path) -> list[dict[str, str]]:
@@ -106,6 +115,20 @@ def validate_eval_results(project_dir: str | Path) -> EvalResultsValidationResul
         rows = list(reader)
 
     case_ids = _case_ids(root / "eval_cases.yaml")
+    policy_path = root / "routing_policy.yaml"
+    policy_workflows: dict[str, dict[str, object]] = {}
+    policy_models: set[str] = set()
+    if policy_path.is_file():
+        try:
+            _, policy_workflows, _ = routing_expectations(policy_path)
+            policy_models = {
+                str(model.get("id", "")).strip()
+                for model in load_routing_policy(policy_path).get("models", [])
+                if isinstance(model, dict) and str(model.get("id", "")).strip()
+            }
+        except Exception:  # noqa: BLE001 - routing policy validation reports the source error.
+            policy_workflows = {}
+            policy_models = set()
     for index, row in enumerate(rows, start=2):
         prefix = f"{results_path}:row[{index}]"
         case_id = row.get("case_id", "").strip()
@@ -169,6 +192,23 @@ def validate_eval_results(project_dir: str | Path) -> EvalResultsValidationResul
                 )
             )
 
+        actual_workflow_id = row.get("actual_workflow_id", "").strip()
+        if actual_workflow_id and policy_workflows and actual_workflow_id not in policy_workflows:
+            issues.append(
+                ValidationIssue(
+                    f"{prefix}.actual_workflow_id",
+                    f"Unknown routing workflow id: {actual_workflow_id}.",
+                )
+            )
+        actual_model_id = row.get("actual_model_id", "").strip()
+        if actual_model_id and policy_models and actual_model_id not in policy_models:
+            issues.append(
+                ValidationIssue(
+                    f"{prefix}.actual_model_id",
+                    f"Unknown routing model id: {actual_model_id}.",
+                )
+            )
+
     return EvalResultsValidationResult(not issues, issues, len(rows))
 
 
@@ -228,6 +268,7 @@ def summarize_eval_results(project_dir: str | Path) -> EvalResultsSummary | None
     route_values = [row.get("route_match", "").strip().lower() for row in rows]
     boundary_metrics = _boundary_metrics(cases, rows)
     escalation_metrics = _escalation_metrics(cases, rows)
+    routing_metrics = _routing_metrics(Path(project_dir), rows)
 
     return EvalResultsSummary(
         row_count=len(rows),
@@ -255,6 +296,10 @@ def summarize_eval_results(project_dir: str | Path) -> EvalResultsSummary | None
         fallback_success_rate=_handoff_true_rate(cases, rows, "fallback_success"),
         resume_success_rate=_handoff_true_rate(cases, rows, "resume_success"),
         late_escalation_rate=_handoff_true_rate(cases, rows, "late_escalation"),
+        workflow_assignment_accuracy=routing_metrics["workflow_assignment_accuracy"],
+        model_policy_compliance=routing_metrics["model_policy_compliance"],
+        routing_policy_version_match_rate=routing_metrics["routing_policy_version_match_rate"],
+        deterministic_path_compliance=routing_metrics["deterministic_path_compliance"],
     )
 
 
@@ -433,3 +478,79 @@ def _handoff_true_rate(
             if row.get("case_id", "").strip() in handoff_case_ids
         ]
     )
+
+
+def _routing_metrics(
+    project_dir: Path,
+    rows: list[dict[str, str]],
+) -> dict[str, float | None]:
+    policy_path = project_dir / "routing_policy.yaml"
+    if not policy_path.is_file():
+        return {
+            "workflow_assignment_accuracy": None,
+            "model_policy_compliance": None,
+            "routing_policy_version_match_rate": None,
+            "deterministic_path_compliance": None,
+        }
+    try:
+        version, workflows, case_workflows = routing_expectations(policy_path)
+    except Exception:  # noqa: BLE001 - invalid policies are reported by project validation.
+        return {
+            "workflow_assignment_accuracy": None,
+            "model_policy_compliance": None,
+            "routing_policy_version_match_rate": None,
+            "deterministic_path_compliance": None,
+        }
+
+    assignment_matches: list[bool] = []
+    model_compliance: list[bool] = []
+    version_matches: list[bool] = []
+    deterministic_compliance: list[bool] = []
+
+    for row in rows:
+        case_id = row.get("case_id", "").strip()
+        expected_workflow_id = case_workflows.get(case_id)
+        if not expected_workflow_id:
+            continue
+        workflow = workflows.get(expected_workflow_id, {})
+        actual_workflow_id = row.get("actual_workflow_id", "").strip()
+        if "actual_workflow_id" in row:
+            assignment_matches.append(actual_workflow_id == expected_workflow_id)
+
+        assignment = workflow.get("model_assignment", {})
+        if not isinstance(assignment, dict):
+            continue
+        mode = assignment.get("mode")
+        actual_model_id = row.get("actual_model_id", "").strip()
+        if "actual_model_id" in row:
+            if mode == "none":
+                model_compliance.append(not actual_model_id)
+            else:
+                approved = {
+                    str(model_id).strip()
+                    for model_id in assignment.get("approved_models", [])
+                    if isinstance(model_id, str) and model_id.strip()
+                }
+                model_compliance.append(bool(actual_model_id) and actual_model_id in approved)
+
+        observed_version = row.get("routing_policy_version", "").strip()
+        if "routing_policy_version" in row and version:
+            version_matches.append(bool(observed_version) and observed_version == version)
+
+        if workflow.get("kind") in {"deterministic", "human"} and "actual_model_id" in row:
+            deterministic_compliance.append(
+                actual_workflow_id == expected_workflow_id and not actual_model_id
+            )
+
+    return {
+        "workflow_assignment_accuracy": _bool_rate(assignment_matches),
+        "model_policy_compliance": _bool_rate(model_compliance),
+        "routing_policy_version_match_rate": _bool_rate(version_matches),
+        "deterministic_path_compliance": _bool_rate(deterministic_compliance),
+    }
+
+
+def _bool_rate(values: list[bool]) -> float | None:
+    if not values:
+        return None
+    return sum(values) / len(values)

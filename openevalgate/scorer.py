@@ -37,6 +37,8 @@ GATE_TO_CATEGORY = {
     "tail-risk/p0 failure mode gate": "tail_risk_p0_failure_readiness",
     "model selection gate": "model_selection_arena_readiness",
     "model arena gate": "model_selection_arena_readiness",
+    "routing / capability allocation gate": "model_selection_arena_readiness",
+    "routing/capability allocation gate": "model_selection_arena_readiness",
     "grounding gate": "grounding_readiness",
     "sop/policy compilation gate": "sop_policy_compilation_readiness",
     "tool/action safety gate": "tool_action_safety_readiness",

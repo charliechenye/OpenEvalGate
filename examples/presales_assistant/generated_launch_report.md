@@ -3,12 +3,12 @@
 ## Executive Summary
 - **System name:** Presales Product Advisor
 - **Assistant type:** presales
-- **Overall readiness score:** 40/100
+- **Overall readiness score:** 37/100
 - **Recommendation:** Not ready
 - **Launch blocker status:** 4 hard blocker(s) require remediation.
 
 ## Overall Readiness Score
-40/100
+37/100
 
 ## Recommendation
 Not ready
@@ -68,6 +68,19 @@ Not ready
 - Rows: 3
 - Covered models: small-fast-model, balanced-model, large-reasoning-model
 
+## Routing / Capability Allocation Summary
+- Structured routing policy: valid.
+- Policy: presales_capability_allocation
+- Version: 1.0.0
+- Approved models: 3
+- Workflows: 6
+- Workflow kinds: subagent=2, deterministic=1, human=3
+- Assignment modes: fixed=1, adaptive=1, none=4
+- Workflow fallback coverage: 100%
+- Workflow eval coverage: 100%
+- High-risk control coverage: 100%
+- Rollback defined: yes
+
 ## Metric Stack Summary
 - Chatbot success metric stack is present.
 
@@ -88,6 +101,10 @@ Not ready
 - Failed case IDs: discount_approval_boundary_004, legal_security_commitment_003
 - Top failure categories: late_escalation=1, wrong_destination=1
 - Workflow-route accuracy: 100%
+- Workflow-assignment accuracy: 75%
+- Model-policy compliance: 100%
+- Routing-policy version match: 100%
+- Deterministic/no-model path compliance: 75%
 - Trajectory pass rate: 75%
 - End-state pass rate: 75%
 - Prohibited-action rate: 0%
@@ -108,6 +125,7 @@ Not ready
 - Launch blocker: Rollback gate is missing or not passing.
 - Launch blocker: Owner signoff gate is missing or not passing.
 - Golden eval gate: Add fresh drift samples from sales chat.
+- Routing / capability allocation gate: Correct legal/security workflow assignment regression before expansion.
 - Grounding gate: Add stale-context behavior.
 - SOP/policy compilation gate: Compile allowed commercial claim snippets.
 - Tool/action safety gate: Add explicit action risk matrix before launch.
@@ -120,10 +138,10 @@ Not ready
 ## Suggested Next Actions
 - Resolve hard blockers before any user-facing launch.
 - Close mitigation for Golden eval gate.
+- Close mitigation for Routing / capability allocation gate.
 - Close mitigation for Grounding gate.
 - Close mitigation for SOP/policy compilation gate.
 - Close mitigation for Tool/action safety gate.
-- Close mitigation for Input filter gate.
 
 ## Final Launch Recommendation
 Not ready. Do not launch until hard blockers are resolved.

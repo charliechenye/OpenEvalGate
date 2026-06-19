@@ -23,8 +23,10 @@ Good teams can still use LangSmith, Braintrust, Phoenix, Langfuse, Promptfoo, De
 - Containment is not resolution.
 - Human escalation is not failure; it is a control surface.
 - The best model in production is not always the biggest model.
+- In multi-workflow systems, model selection is a per-subagent capability assignment, not one universal winner for the product.
 - Public benchmarks do not tell you if a model is right for your product.
 - Use LLMs for reasoning; use deterministic systems for enforcement.
+- Stronger reasoning never substitutes for authorization, approval, escalation, or blocking.
 - Do not make the LLM read your whole SOP; compile deterministic policy/context before the model sees it.
 - Purpose-built AI assistants need input filters and output critics.
 - The main LLM proposes; the output critic decides whether to show, revise, escalate, or block.

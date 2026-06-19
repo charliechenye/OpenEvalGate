@@ -19,6 +19,7 @@ def test_complete_example_project_passes() -> None:
     assert "eval_results.csv" in result.present_optional
     assert "domain_owner_feedback_loop.md" in result.present_optional
     assert "escalation_contract.yaml" in result.present_optional
+    assert "routing_policy.yaml" in result.present_optional
 
 
 def test_missing_required_launch_file_fails(tmp_path: Path) -> None:
@@ -43,6 +44,7 @@ def test_optional_files_do_not_fail_project_check(tmp_path: Path) -> None:
     (project / "tail_risk_eval_cases.yaml").unlink()
     (project / "purpose_built_assistant_scope.md").unlink()
     (project / "escalation_contract.yaml").unlink()
+    (project / "routing_policy.yaml").unlink()
 
     result = check_project(project)
 

@@ -1,0 +1,127 @@
+routing_policy:
+  metadata:
+    id: presales_capability_allocation
+    version: "1.0.0"
+    owner: revenue_product
+    last_reviewed: "2026-06-18"
+
+  models:
+    - id: small-fast-model
+      provider: approved_provider
+      model_version: pinned-small-version
+      capability_tier: small
+    - id: balanced-model
+      provider: approved_provider
+      model_version: pinned-balanced-version
+      capability_tier: balanced
+    - id: large-reasoning-model
+      provider: approved_provider
+      model_version: pinned-reasoning-version
+      capability_tier: strong
+
+  workflows:
+    - id: product_fit_advisor
+      name: Product fit advisor
+      kind: subagent
+      owner: revenue_product
+      risk_tier: medium
+      scenarios: [product_fit, integration_fit]
+      mandatory_controls: [approved_product_catalog, integration_matrix, output_critic]
+      fallback_workflow_id: sales_followup
+      eval_cases: [approved_product_fact_005, product_fit_context_missing_006]
+      model_assignment:
+        mode: adaptive
+        approved_models: [small-fast-model, balanced-model, large-reasoning-model]
+        default_model: balanced-model
+        reasoning_level: medium
+        selection_rule: Use the reasoning model only for multi-constraint product-fit analysis.
+
+    - id: public_pricing
+      name: Public pricing specialist
+      kind: subagent
+      owner: sales_ops
+      risk_tier: medium
+      scenarios: [public_pricing]
+      mandatory_controls: [public_pricing_policy, no_discount_authority]
+      fallback_workflow_id: pricing_approval
+      eval_cases: [public_pricing_answer_007]
+      model_assignment:
+        mode: fixed
+        approved_models: [balanced-model]
+        default_model: balanced-model
+        reasoning_level: low
+
+    - id: sales_followup
+      name: Roadmap-sensitive sales follow-up
+      kind: human
+      owner: sales_ops
+      risk_tier: high
+      scenarios: [roadmap_commitment]
+      mandatory_controls: [no_unapproved_commitment, account_owner_review]
+      fallback_workflow_id: policy_block
+      eval_cases: [unsupported_roadmap_claim_001, roadmap_commitment_semantic_009]
+      model_assignment:
+        mode: none
+        approved_models: []
+        default_model: ""
+        reasoning_level: none
+
+    - id: pricing_approval
+      name: Discount approval
+      kind: human
+      owner: sales_ops
+      risk_tier: high
+      scenarios: [discount_request]
+      mandatory_controls: [pricing_policy, approval_checkpoint, audit_event]
+      fallback_workflow_id: policy_block
+      eval_cases:
+        - public_pricing_question_002
+        - discount_approval_boundary_004
+        - discount_request_semantic_008
+      model_assignment:
+        mode: none
+        approved_models: []
+        default_model: ""
+        reasoning_level: none
+
+    - id: legal_security_review
+      name: Legal and security specialist review
+      kind: human
+      owner: legal_security
+      risk_tier: high
+      scenarios: [commercial_commitment]
+      mandatory_controls: [approved_collateral_only, specialist_review, no_binding_commitment]
+      fallback_workflow_id: policy_block
+      eval_cases: [legal_security_commitment_003, legal_security_semantic_010]
+      model_assignment:
+        mode: none
+        approved_models: []
+        default_model: ""
+        reasoning_level: none
+
+    - id: policy_block
+      name: Binding commitment block
+      kind: deterministic
+      owner: legal_security
+      risk_tier: prohibited
+      scenarios: [fabricated_commitment]
+      mandatory_controls: [hard_block, audit_event]
+      fallback_workflow_id: sales_followup
+      eval_cases: [fabricated_binding_commitment_011]
+      model_assignment:
+        mode: none
+        approved_models: []
+        default_model: ""
+        reasoning_level: none
+
+  observability:
+    required_fields: [workflow_id, model_id, routing_policy_version, routing_reason]
+
+  rollback:
+    owner: revenue_platform
+    fallback_workflow_id: sales_followup
+    triggers: [unsupported_commitment, wrong_specialist_route, pricing_policy_violation, latency_breach]
+
+  recertification:
+    cadence_days: 90
+    required_reviewers: [product_owner, engineering_owner, sales_ops, legal_security]

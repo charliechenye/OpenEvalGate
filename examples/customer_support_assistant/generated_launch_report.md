@@ -65,6 +65,19 @@ Not ready
 - Rows: 3
 - Covered models: gpt-4.1-mini, claude-haiku-candidate, larger-frontier-model
 
+## Routing / Capability Allocation Summary
+- Structured routing policy: valid.
+- Policy: customer_support_capability_allocation
+- Version: 1.0.0
+- Approved models: 2
+- Workflows: 6
+- Workflow kinds: subagent=3, deterministic=1, human=2
+- Assignment modes: fixed=2, adaptive=1, none=3
+- Workflow fallback coverage: 100%
+- Workflow eval coverage: 100%
+- High-risk control coverage: 100%
+- Rollback defined: yes
+
 ## Metric Stack Summary
 - Chatbot success metric stack is present.
 
@@ -85,6 +98,10 @@ Not ready
 - Failed case IDs: refund_abuse_history_002, refund_boundary_case_001, routine_status_no_escalation_013, wrong_destination_fraud_012
 - Top failure categories: over_escalation=2, under_escalation=1, wrong_destination=1
 - Workflow-route accuracy: 50%
+- Workflow-assignment accuracy: 50%
+- Model-policy compliance: 67%
+- Routing-policy version match: 100%
+- Deterministic/no-model path compliance: 33%
 - Trajectory pass rate: 50%
 - End-state pass rate: 33%
 - Prohibited-action rate: 0%
@@ -103,6 +120,7 @@ Not ready
 ## Required Mitigations
 - Launch blocker: High-risk escalation evidence contains under-escalation, wrong-destination, payload, or resume failures.
 - Model arena gate: Add a final latency run before rollout.
+- Routing / capability allocation gate: Fix high-risk workflow assignment regressions and rerun routing slices.
 - Input filter gate: Add prompt injection cases to eval set.
 - Observability gate: Confirm dashboard owner and alert threshold.
 - Cost/latency gate: Validate p95 latency under launch traffic.
@@ -111,10 +129,10 @@ Not ready
 ## Suggested Next Actions
 - Resolve hard blockers before any user-facing launch.
 - Close mitigation for Model arena gate.
+- Close mitigation for Routing / capability allocation gate.
 - Close mitigation for Input filter gate.
 - Close mitigation for Observability gate.
 - Close mitigation for Cost/latency gate.
-- Close mitigation for Drift monitoring gate.
 
 ## Final Launch Recommendation
 Not ready. Do not launch until hard blockers are resolved.

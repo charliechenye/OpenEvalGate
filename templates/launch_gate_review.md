@@ -9,6 +9,7 @@
 | Tail-risk / P0 failure mode gate | fail | P0 checklist not complete. | Add tail-risk review and P0 eval cases. | trust_safety |
 | Model selection gate | partial | Candidate models identified. | Record selection rationale. | ml_engineering |
 | Model arena gate | partial | Arena scorecard started. | Run all candidates against golden eval set. | ml_engineering |
+| Routing / capability allocation gate | partial | Workflow and subagent assignments drafted. | Validate each assignment against workflow-specific eval slices and fallback paths. | ml_engineering |
 | Grounding gate | partial | Grounding sources listed. | Define freshness and missing-context behavior. | platform |
 | SOP/policy compilation gate | partial | Relevant policies identified. | Compile deterministic policy context before model prompt. | platform |
 | Tool/action safety gate | fail | Action risk matrix incomplete. | Add deterministic gates for medium and high-risk actions. | platform |

@@ -1,0 +1,134 @@
+routing_policy:
+  metadata:
+    id: customer_support_capability_allocation
+    version: "1.0.0"
+    owner: ai_product_team
+    last_reviewed: "2026-06-18"
+
+  models:
+    - id: gpt-4.1-mini
+      provider: openai
+      model_version: gpt-4.1-mini
+      capability_tier: balanced
+    - id: larger-frontier-model
+      provider: approved_provider
+      model_version: pinned-frontier-version
+      capability_tier: frontier
+
+  workflows:
+    - id: safe_support_response
+      name: Safe support response
+      kind: subagent
+      owner: support_ops
+      risk_tier: low
+      scenarios: [support_tone, wrong_promise_risk]
+      mandatory_controls: [grounded_order_context, output_critic]
+      fallback_workflow_id: human_support
+      eval_cases: [merchant_blame_adversarial_003, wrong_promise_008]
+      model_assignment:
+        mode: fixed
+        approved_models: [gpt-4.1-mini]
+        default_model: gpt-4.1-mini
+        reasoning_level: low
+
+    - id: order_status
+      name: Order status specialist
+      kind: subagent
+      owner: support_ops
+      risk_tier: low
+      scenarios: [order_status]
+      mandatory_controls: [authentication, order_ownership, carrier_event_grounding]
+      fallback_workflow_id: human_support
+      eval_cases: [routine_status_no_escalation_013]
+      model_assignment:
+        mode: fixed
+        approved_models: [gpt-4.1-mini]
+        default_model: gpt-4.1-mini
+        reasoning_level: low
+
+    - id: refund_resolution
+      name: Refund resolution specialist
+      kind: subagent
+      owner: support_ops
+      risk_tier: high
+      scenarios: [refund_eligibility]
+      mandatory_controls:
+        - authentication
+        - refund_eligibility_service
+        - policy_version
+        - idempotency
+      fallback_workflow_id: human_support
+      eval_cases:
+        - refund_boundary_case_001
+        - policy_ambiguity_005
+        - refund_missing_authentication_015
+        - refund_semantic_invariance_016
+      model_assignment:
+        mode: adaptive
+        approved_models: [gpt-4.1-mini, larger-frontier-model]
+        default_model: gpt-4.1-mini
+        reasoning_level: medium
+        selection_rule: Use stronger reasoning only for conflicting evidence or policy ambiguity.
+
+    - id: policy_refusal
+      name: Deterministic policy refusal
+      kind: deterministic
+      owner: trust_safety
+      risk_tier: prohibited
+      scenarios: [policy_bypass]
+      mandatory_controls: [hard_policy_block, audit_event]
+      fallback_workflow_id: human_support
+      eval_cases: [bypass_rules_006, policy_bypass_semantic_018]
+      model_assignment:
+        mode: none
+        approved_models: []
+        default_model: ""
+        reasoning_level: none
+
+    - id: human_support
+      name: Human support and approval
+      kind: human
+      owner: support_ops
+      risk_tier: high
+      scenarios: [approval, explicit_human_request, dependency_failure, durable_resolution]
+      mandatory_controls: [checkpoint, minimum_sufficient_handoff, approval_audit]
+      fallback_workflow_id: policy_refusal
+      eval_cases:
+        - refund_abuse_history_002
+        - angry_user_escalation_004
+        - repeat_contact_010
+        - dependency_failure_escalation_011
+        - refund_above_limit_014
+        - explicit_human_request_semantic_017
+      model_assignment:
+        mode: none
+        approved_models: []
+        default_model: ""
+        reasoning_level: none
+
+    - id: fraud_safety_review
+      name: Fraud and safety specialist review
+      kind: human
+      owner: trust_safety
+      risk_tier: high
+      scenarios: [fraud, customer_safety]
+      mandatory_controls: [sensitive_action_block, urgent_specialist_route, minimized_context]
+      fallback_workflow_id: human_support
+      eval_cases: [wrong_destination_fraud_012, self_harm_threat_007]
+      model_assignment:
+        mode: none
+        approved_models: []
+        default_model: ""
+        reasoning_level: none
+
+  observability:
+    required_fields: [workflow_id, model_id, routing_policy_version, routing_reason]
+
+  rollback:
+    owner: support_platform
+    fallback_workflow_id: human_support
+    triggers: [p0_failure, unsafe_action, policy_violation, routing_regression, latency_breach]
+
+  recertification:
+    cadence_days: 90
+    required_reviewers: [product_owner, engineering_owner, operations_owner, risk_owner]

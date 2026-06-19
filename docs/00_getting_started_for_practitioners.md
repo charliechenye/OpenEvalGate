@@ -113,6 +113,14 @@ eval_runs/
 launch_gate_review.md
 ```
 
+For multi-workflow or multi-agent systems, optionally add:
+
+```text
+routing_policy.yaml
+```
+
+Use it to record each bounded workflow or subagent, its approved fixed or adaptive model assignment, deterministic or human no-model paths, mandatory controls, eval evidence, fallbacks, observability, and rollback. `openevalgate check` validates the policy when present.
+
 Install locally:
 
 ```bash

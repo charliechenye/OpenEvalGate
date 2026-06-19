@@ -6,6 +6,7 @@
 | Golden eval gate | partial | Initial boundary and regression cases exist. | Add historical learner support cases. | learning_product |
 | Model selection gate | partial | Candidate model selected from prior platform default. | Record product-specific selection rationale. | ml_engineering |
 | Model arena gate | fail | No education-specific arena run yet. | Run candidate models on golden eval set. | ml_engineering |
+| Routing / capability allocation gate | partial | Valid provisional policy assigns tutoring, integrity, and human-review workflows. | Replace provisional assignments after the education-specific arena. | ml_engineering |
 | Grounding gate | pass | Course material and policy references are explicit. | None | platform |
 | SOP/policy compilation gate | partial | Academic integrity policy identified. | Compile per-course response rules. | platform |
 | Tool/action safety gate | pass | Answer-key tool is blocked. | None | platform |

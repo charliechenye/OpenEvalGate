@@ -102,6 +102,7 @@ For a detailed comparison, see [Research Evidence And Competitive Landscape](doc
 - **Domain-owner feedback loop:** Domain owners review traces, propose evals, flag policy nuance, and approve high-risk behavior changes.
 - **Metric stack beyond containment:** Track efficiency, quality, journey resolution, and business/trust outcomes.
 - **Eval result feedback:** Candidate outputs and grading results are saved in `eval_results.csv` and optional `eval_runs/` files.
+- **Per-workflow capability allocation:** Multi-agent systems assign approved model capability to each bounded subagent while preserving explicit deterministic and human no-model paths.
 
 ## Quickstart
 
@@ -149,21 +150,22 @@ That is the point of OpenEvalGate: a high aggregate readiness score cannot hide 
 5. Tail-risk / P0 failure mode gate
 6. Model selection gate
 7. Model arena gate
-8. Grounding gate
-9. SOP/policy compilation gate
-10. Tool/action safety gate
-11. Automation boundary gate
-12. Human escalation gate
-13. Input filter gate
-14. Output critic gate
-15. Domain-owner feedback loop gate
-16. Observability gate
-17. Cost/latency gate
-18. Journey metric / durable resolution gate
-19. Business trust metric gate
-20. Drift monitoring gate
-21. Rollback gate
-22. Owner signoff gate
+8. Routing / capability allocation gate
+9. Grounding gate
+10. SOP/policy compilation gate
+11. Tool/action safety gate
+12. Automation boundary gate
+13. Human escalation gate
+14. Input filter gate
+15. Output critic gate
+16. Domain-owner feedback loop gate
+17. Observability gate
+18. Cost/latency gate
+19. Journey metric / durable resolution gate
+20. Business trust metric gate
+21. Drift monitoring gate
+22. Rollback gate
+23. Owner signoff gate
 
 ## Readiness Scoring
 
@@ -208,7 +210,7 @@ Regardless of score, OpenEvalGate recommends `Not ready` when:
 
 ## Templates
 
-The repo includes templates for assistant PRDs, golden eval cases, eval results, business behavior contracts, domain-owner feedback, behavior change requests, P0 failure modes, automation boundaries, human escalation design, machine-readable escalation contracts, chatbot metric stacks, trust-preservation reviews, launch gates, and launch readiness reports. Some playbooks include additional local templates for specialized workflows, such as routing decisions, routing experiments, and staged rollouts.
+The repo includes templates for assistant PRDs, golden eval cases, eval results, business behavior contracts, domain-owner feedback, behavior change requests, P0 failure modes, automation boundaries, human escalation design, machine-readable escalation and routing policies, chatbot metric stacks, trust-preservation reviews, launch gates, and launch readiness reports. Some playbooks include additional local templates for specialized workflows, such as routing decisions, routing experiments, and staged rollouts.
 
 ## Playbooks
 
@@ -218,6 +220,8 @@ The repo includes templates for assistant PRDs, golden eval cases, eval results,
 - [Human Escalation Playbook](docs/playbooks/human-escalation-playbook/README.md): practitioner artifacts for escalation contracts, handoff payloads, queue routing, fallback behavior, durable workflow state, release gates, incident ingestion, and recertification.
 
 Playbook artifacts complement the existing launch gates. They provide optional evidence for teams that need more than a single model arena or a generic fallback path: which scenarios use which specialist workflows, when additional model capability is justified, which deterministic controls remain outside the model, how human handoffs preserve state, and how route or escalation changes will be observed and rolled back. The CLI remains unchanged; `openevalgate check` and `openevalgate report` continue to validate the existing required project files.
+
+For multi-agent systems, OpenEvalGate treats foundation-model choice as a per-workflow or per-subagent capability assignment. Optional `routing_policy.yaml` evidence records fixed, adaptive, deterministic, and human paths without treating a stronger model as an authorization or safety control.
 
 ## Repo Structure
 

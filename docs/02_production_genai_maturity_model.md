@@ -26,9 +26,9 @@ The system separates model reasoning from enforcement. High-impact actions are g
 
 ## Level 4 — Adaptive platform
 
-Model garden, internal arena, model routing, drift monitoring, cost controls.
+Model garden, internal arena, per-workflow capability allocation, model routing, drift monitoring, cost controls.
 
-The team can compare and route models based on actual product behavior, not public benchmark reputation. Fresh production samples continuously improve eval coverage.
+The team can assign and route models per bounded workflow or subagent based on actual product behavior, not public benchmark reputation. Deterministic and human workflows remain explicit no-model paths. Fresh production samples continuously improve eval coverage.
 
 ## Level 5 — Enterprise GenAI operating system
 

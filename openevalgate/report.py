@@ -10,6 +10,7 @@ from typing import Any
 
 from openevalgate.escalation import summarize_escalation_contract, validate_escalation_contract
 from openevalgate.eval_results import read_eval_results, summarize_eval_results
+from openevalgate.routing import summarize_routing_policy, validate_routing_policy
 from openevalgate.schema import HardBlocker, load_eval_cases, validate_eval_cases
 from openevalgate.scorer import GateRow, gate_statuses, normalize_gate, score_gates
 from openevalgate.validator import check_project
@@ -67,6 +68,9 @@ def generate_report(project_dir: str | Path) -> str:
         "",
         "## Model Arena Summary",
         _csv_summary(root / "model_arena_scorecard.csv", "model", "No model arena scorecard found."),
+        "",
+        "## Routing / Capability Allocation Summary",
+        _routing_policy_summary(root),
         "",
         "## Metric Stack Summary",
         _artifact_summary(root / "chatbot_success_metric_stack.md", "Chatbot success metric stack is present.", "Chatbot success metric stack is missing."),
@@ -168,6 +172,18 @@ def evaluate_hard_blockers(root: Path, gates: list[GateRow], missing_required: l
             )
         )
 
+    routing_policy = root / "routing_policy.yaml"
+    if routing_policy.is_file():
+        validation = validate_routing_policy(routing_policy, root / "eval_cases.yaml")
+        if not validation.valid:
+            blockers.append(
+                HardBlocker(
+                    "invalid_routing_policy",
+                    "Structured routing policy is invalid.",
+                    "routing_policy.yaml",
+                )
+            )
+
     if _gate_not_passing(statuses, "rollback gate"):
         blockers.append(HardBlocker("missing_rollback", "Rollback gate is missing or not passing.", "Rollback gate"))
 
@@ -252,6 +268,37 @@ def _human_escalation_summary(root: Path) -> str:
         ]
     )
     return "\n".join(lines)
+
+
+def _routing_policy_summary(root: Path) -> str:
+    summary = summarize_routing_policy(root / "routing_policy.yaml")
+    if not summary.present:
+        return "- Structured routing policy: not provided (optional)."
+    return "\n".join(
+        [
+            f"- Structured routing policy: {'valid' if summary.valid else 'invalid'}.",
+            f"- Policy: {summary.policy_id or 'unknown'}",
+            f"- Version: {summary.version or 'unknown'}",
+            f"- Approved models: {summary.model_count}",
+            f"- Workflows: {summary.workflow_count}",
+            (
+                "- Workflow kinds: "
+                f"subagent={summary.subagent_count}, "
+                f"deterministic={summary.deterministic_count}, "
+                f"human={summary.human_count}"
+            ),
+            (
+                "- Assignment modes: "
+                f"fixed={summary.fixed_count}, "
+                f"adaptive={summary.adaptive_count}, "
+                f"none={summary.no_model_count}"
+            ),
+            f"- Workflow fallback coverage: {_format_rate(summary.fallback_coverage)}",
+            f"- Workflow eval coverage: {_format_rate(summary.eval_coverage)}",
+            f"- High-risk control coverage: {_format_rate(summary.high_risk_control_coverage)}",
+            f"- Rollback defined: {_format_optional_bool(summary.rollback_defined)}",
+        ]
+    )
 
 
 def _action_risk_summary(path: Path) -> str:
@@ -363,6 +410,10 @@ def _eval_results_summary(root: Path) -> str:
         "- Failed case IDs: " + (", ".join(summary.failed_case_ids) if summary.failed_case_ids else "none"),
         "- Top failure categories: " + (_counter_summary(summary.failure_categories) if summary.failure_categories else "none"),
         f"- Workflow-route accuracy: {_format_rate(summary.workflow_route_accuracy)}",
+        f"- Workflow-assignment accuracy: {_format_rate(summary.workflow_assignment_accuracy)}",
+        f"- Model-policy compliance: {_format_rate(summary.model_policy_compliance)}",
+        f"- Routing-policy version match: {_format_rate(summary.routing_policy_version_match_rate)}",
+        f"- Deterministic/no-model path compliance: {_format_rate(summary.deterministic_path_compliance)}",
         f"- Trajectory pass rate: {_format_rate(summary.trajectory_pass_rate)}",
         f"- End-state pass rate: {_format_rate(summary.end_state_pass_rate)}",
         f"- Prohibited-action rate: {_format_rate(summary.prohibited_action_rate)}",

@@ -131,6 +131,10 @@ def test_escalation_metrics_are_calculated_from_enriched_results() -> None:
     assert summary.fallback_success_rate == 1.0
     assert summary.resume_success_rate == 1 / 3
     assert summary.late_escalation_rate == 1 / 3
+    assert summary.workflow_assignment_accuracy == 0.5
+    assert summary.model_policy_compliance == 2 / 3
+    assert summary.routing_policy_version_match_rate == 1.0
+    assert summary.deterministic_path_compliance == 1 / 3
 
 
 def test_invalid_enriched_result_values_fail(tmp_path: Path) -> None:

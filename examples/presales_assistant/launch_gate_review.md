@@ -6,6 +6,7 @@
 | Golden eval gate | partial | Historical and adversarial commercial cases exist. | Add fresh drift samples from sales chat. | revenue_product |
 | Model selection gate | pass | Balanced model chosen from scorecard. | None | ml_engineering |
 | Model arena gate | pass | Three candidates compared on product-fit and pricing cases. | None | ml_engineering |
+| Routing / capability allocation gate | partial | Routing policy assigns product, pricing, approval, and specialist workflows. | Correct legal/security workflow assignment regression before expansion. | ml_engineering |
 | Grounding gate | partial | Product catalog and pricing policy references defined. | Add stale-context behavior. | platform |
 | SOP/policy compilation gate | partial | Roadmap and pricing policies identified. | Compile allowed commercial claim snippets. | platform |
 | Tool/action safety gate | partial | Discount and contract actions blocked in rubric. | Add explicit action risk matrix before launch. | platform |

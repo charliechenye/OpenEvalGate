@@ -13,21 +13,22 @@ This gate-based approach is aligned with AI risk-management and governance frame
 5. Tail-risk / P0 failure mode gate
 6. Model selection gate
 7. Model arena gate
-8. Grounding gate
-9. SOP/policy compilation gate
-10. Tool/action safety gate
-11. Automation boundary gate
-12. Human escalation gate
-13. Input filter gate
-14. Output critic gate
-15. Domain-owner feedback loop gate
-16. Observability gate
-17. Cost/latency gate
-18. Journey metric / durable resolution gate
-19. Business trust metric gate
-20. Drift monitoring gate
-21. Rollback gate
-22. Owner signoff gate
+8. Routing / capability allocation gate
+9. Grounding gate
+10. SOP/policy compilation gate
+11. Tool/action safety gate
+12. Automation boundary gate
+13. Human escalation gate
+14. Input filter gate
+15. Output critic gate
+16. Domain-owner feedback loop gate
+17. Observability gate
+18. Cost/latency gate
+19. Journey metric / durable resolution gate
+20. Business trust metric gate
+21. Drift monitoring gate
+22. Rollback gate
+23. Owner signoff gate
 
 ## Status values
 
@@ -44,6 +45,8 @@ This gate-based approach is aligned with AI risk-management and governance frame
 - Below 50: Not ready.
 
 Owner signoff is a non-scored launch blocker. A high score does not replace accountable approval.
+
+The Routing / capability allocation gate shares the existing model-selection readiness category. It does not increase the 100-point total. Single-model systems without workflow-specific allocation may mark it `not_applicable`; multi-workflow systems should provide versioned assignments, eval evidence, fallbacks, observability, and rollback.
 
 ## Hard Blockers
 

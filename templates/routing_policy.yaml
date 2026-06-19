@@ -1,0 +1,54 @@
+# Optional structured capability-allocation policy.
+routing_policy:
+  metadata:
+    id: ""
+    version: "1.0.0"
+    owner: ""
+    last_reviewed: "YYYY-MM-DD"
+
+  models:
+    - id: ""
+      provider: ""
+      model_version: ""
+      capability_tier: small | balanced | strong | frontier | specialized
+
+  workflows:
+    - id: ""
+      name: ""
+      kind: subagent | deterministic | human
+      owner: ""
+      risk_tier: low | medium | high | prohibited
+      scenarios:
+        - ""
+      mandatory_controls:
+        - ""
+      fallback_workflow_id: ""
+      eval_cases:
+        - ""
+      model_assignment:
+        mode: fixed | adaptive | none
+        approved_models:
+          - ""
+        default_model: ""
+        reasoning_level: none | low | medium | high
+        selection_rule: ""
+
+  observability:
+    required_fields:
+      - workflow_id
+      - model_id
+      - routing_policy_version
+      - routing_reason
+
+  rollback:
+    owner: ""
+    fallback_workflow_id: ""
+    triggers:
+      - ""
+
+  recertification:
+    cadence_days: 90
+    required_reviewers:
+      - product_owner
+      - engineering_owner
+      - risk_owner

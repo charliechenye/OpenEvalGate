@@ -49,6 +49,14 @@ List the user, account, workflow, or entitlement fields required to answer safel
 
 Define when the assistant should automate, clarify, recommend for human approval, escalate, or block.
 
+## Workflow And Capability Allocation
+
+| Workflow or subagent | Job | Risk tier | Model assignment | Mandatory controls | Fallback | Owner |
+| --- | --- | --- | --- | --- | --- | --- |
+|  |  |  | fixed / adaptive / none |  |  |  |
+
+Model capability does not replace authorization, deterministic enforcement, approval, escalation, or blocking.
+
 ## Input Filter Requirements
 
 Define requests that should be accepted, refused, routed to human review, or blocked before generation.

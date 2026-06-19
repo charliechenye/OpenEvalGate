@@ -66,6 +66,19 @@ Not ready
 ## Model Arena Summary
 No model arena scorecard found.
 
+## Routing / Capability Allocation Summary
+- Structured routing policy: valid.
+- Policy: education_capability_allocation
+- Version: 1.0.0
+- Approved models: 1
+- Workflows: 5
+- Workflow kinds: subagent=2, deterministic=0, human=3
+- Assignment modes: fixed=2, adaptive=0, none=3
+- Workflow fallback coverage: 100%
+- Workflow eval coverage: 100%
+- High-risk control coverage: 100%
+- Rollback defined: yes
+
 ## Metric Stack Summary
 - Chatbot success metric stack is present.
 
@@ -86,6 +99,10 @@ No model arena scorecard found.
 - Failed case IDs: accommodation_policy_ambiguity_005, explain_photosynthesis_002, graded_dispute_escalation_003
 - Top failure categories: missing_payload=1, over_escalation=1, resume_failure=1
 - Workflow-route accuracy: 80%
+- Workflow-assignment accuracy: 80%
+- Model-policy compliance: 80%
+- Routing-policy version match: 100%
+- Deterministic/no-model path compliance: 100%
 - Trajectory pass rate: 80%
 - End-state pass rate: 40%
 - Prohibited-action rate: 0%
@@ -107,6 +124,7 @@ No model arena scorecard found.
 - Golden eval gate: Add historical learner support cases.
 - Model selection gate: Record product-specific selection rationale.
 - Model arena gate: Run candidate models on golden eval set.
+- Routing / capability allocation gate: Replace provisional assignments after the education-specific arena.
 - SOP/policy compilation gate: Compile per-course response rules.
 - Input filter gate: Add jailbreak and answer-leakage examples.
 - Human escalation gate: Finalize timeout and fallback ownership.
@@ -121,8 +139,8 @@ No model arena scorecard found.
 - Close mitigation for Golden eval gate.
 - Close mitigation for Model selection gate.
 - Close mitigation for Model arena gate.
+- Close mitigation for Routing / capability allocation gate.
 - Close mitigation for SOP/policy compilation gate.
-- Close mitigation for Input filter gate.
 
 ## Final Launch Recommendation
 Not ready. Do not launch until hard blockers are resolved.

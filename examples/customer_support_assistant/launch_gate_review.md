@@ -9,6 +9,7 @@
 | Tail-risk / P0 failure mode gate | pass | P0 checklist covers refund overpromise, unauthorized refund, safety escalation, and containment failure. | None | trust_safety |
 | Model selection gate | pass | Candidate model selected from internal arena results. | None | ml_engineering |
 | Model arena gate | partial | Three candidates compared on launch evals. | Add a final latency run before rollout. | ml_engineering |
+| Routing / capability allocation gate | partial | Versioned routing policy covers six workflows and two approved models. | Fix high-risk workflow assignment regressions and rerun routing slices. | ml_engineering |
 | Grounding gate | pass | Refund and support-tone policies are explicit retrieved context. | None | platform |
 | SOP/policy compilation gate | pass | Policy references are versioned and compiled before generation. | None | platform |
 | Tool/action safety gate | pass | Action risk matrix blocks prohibited actions and requires approval for high-risk refund and safety actions. | None | platform |
