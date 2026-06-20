@@ -185,12 +185,16 @@ def normalize_status(status: str) -> str:
     return status.strip().lower()
 
 
-def is_meaningful_evidence(value: str) -> bool:
+def is_meaningful_value(value: str) -> bool:
     return normalize_gate_name(value) not in NON_EVIDENCE_VALUES
+
+
+def is_meaningful_evidence(value: str) -> bool:
+    return is_meaningful_value(value)
 
 
 def is_meaningful_mitigation(value: str) -> bool:
-    return normalize_gate_name(value) not in NON_EVIDENCE_VALUES
+    return is_meaningful_value(value)
 
 
 def _is_separator_row(line: str) -> bool:

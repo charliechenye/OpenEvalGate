@@ -488,6 +488,7 @@ def test_report_renders_duplicate_gate_as_invalid(tmp_path: Path) -> None:
         "| rollback gate | Yes | pass | invalid: duplicate rows | Invalid |"
         in report
     )
+    assert "- Rollback gate: invalid: duplicate rows" in report
     assert "`missing_rollback`" in report
 
 
@@ -510,4 +511,119 @@ def test_report_renders_unsupported_gate_status_as_invalid(
     assert (
         "| rollback gate | Yes | pass | invalid: warning | Invalid |"
         in report
+    )
+    assert "- Rollback gate: invalid: warning" in report
+
+
+def test_report_renders_truly_missing_rollback_consistently(
+    tmp_path: Path,
+) -> None:
+    project = tmp_path / "project"
+    copytree(CUSTOMER_SUPPORT, project)
+    path = project / "launch_gate_review.md"
+    lines = [
+        line
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if not line.startswith("| Rollback gate |")
+    ]
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    report = generate_report(project)
+
+    assert "| rollback gate | Yes | pass | missing | Blocked |" in report
+    assert "- Rollback gate: missing" in report
+
+
+def test_invalid_duplicate_risk_header_summary_uses_unknown_counts(
+    tmp_path: Path,
+) -> None:
+    project = tmp_path / "project"
+    copytree(CUSTOMER_SUPPORT, project)
+    (project / "action_risk_matrix.csv").write_text(
+        "\n".join(
+            [
+                (
+                    "action,risk_tier,risk_tier,deterministic_gate,"
+                    "human_review_required"
+                ),
+                "refund,low,high,,false",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    report = generate_report(project)
+    inspection = inspect_project(project)
+    section = report.split("## Tool/Action Safety Summary\n", 1)[1].split(
+        "\n\n## Input/Output Perimeter Summary",
+        1,
+    )[0]
+
+    assert (
+        "Action-risk matrix: invalid; the following counts are diagnostic "
+        "only and were not used for policy decisions."
+    ) in section
+    assert "- Rows: 1" in section
+    assert "- Risk tiers: unknown=1" in section
+    assert "High/prohibited actions" not in section
+    assert not inspection.check.action_risk_review.valid
+    assert inspection.context.has_tool_actions is None
+    assert (
+        "risk_tier"
+        not in inspection.check.action_risk_review.rows[0].raw_values
+    )
+
+
+def test_invalid_unrelated_duplicate_header_preserves_unique_tier_counts(
+    tmp_path: Path,
+) -> None:
+    project = tmp_path / "project"
+    copytree(CUSTOMER_SUPPORT, project)
+    (project / "action_risk_matrix.csv").write_text(
+        "\n".join(
+            [
+                (
+                    "action,risk_tier,extra,extra,deterministic_gate,"
+                    "human_review_required"
+                ),
+                "refund,high,a,b,,false",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    report = generate_report(project)
+    inspection = inspect_project(project)
+    section = report.split("## Tool/Action Safety Summary\n", 1)[1].split(
+        "\n\n## Input/Output Perimeter Summary",
+        1,
+    )[0]
+
+    assert "- Risk tiers: high=1" in section
+    assert "High/prohibited actions" not in section
+    assert "ungated_high_risk_action" not in report
+    assert not inspection.check.action_risk_review.valid
+    assert inspection.context.has_tool_actions is None
+
+
+def test_missing_and_valid_action_risk_summaries_keep_existing_behavior(
+    tmp_path: Path,
+) -> None:
+    valid_report = generate_report(CUSTOMER_SUPPORT)
+    valid_section = valid_report.split(
+        "## Tool/Action Safety Summary\n",
+        1,
+    )[1].split("\n\n## Input/Output Perimeter Summary", 1)[0]
+    assert "- Rows: 7" in valid_section
+    assert "High/prohibited actions:" in valid_section
+
+    project = tmp_path / "project"
+    copytree(CUSTOMER_SUPPORT, project)
+    (project / "action_risk_matrix.csv").unlink()
+    missing_report = generate_report(project)
+    assert (
+        "## Tool/Action Safety Summary\nNo action risk matrix found."
+        in missing_report
     )

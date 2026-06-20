@@ -8,6 +8,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
+from openevalgate.action_risk import ActionRiskReview
 from openevalgate.assessment import assess_launch, behavioral_evidence_display
 from openevalgate.escalation import summarize_escalation_contract
 from openevalgate.eval_results import BehavioralEvidence, classify_behavioral_evidence
@@ -91,7 +92,7 @@ def generate_report(project_dir: str | Path) -> str:
         _human_escalation_summary(root),
         "",
         "## Tool/Action Safety Summary",
-        _action_risk_summary(root / "action_risk_matrix.csv"),
+        _action_risk_summary(check.action_risk_review),
         "",
         "## Input/Output Perimeter Summary",
         _input_output_summary(root),
@@ -109,7 +110,7 @@ def generate_report(project_dir: str | Path) -> str:
         _artifact_summary(root / "domain_owner_feedback_loop.md", "Domain-owner feedback loop evidence is present.", "No domain-owner feedback loop artifact found."),
         "",
         "## Observability / Rollback Summary",
-        _observability_rollback_summary(gates),
+        _observability_rollback_summary(gates, inspection.evaluations),
         "",
         "## Observed Behavioral Quality",
         _observed_behavioral_quality(behavioral_evidence),
@@ -287,10 +288,22 @@ def _routing_policy_summary(root: Path) -> str:
     )
 
 
-def _action_risk_summary(path: Path) -> str:
-    if not path.is_file():
+def _action_risk_summary(review: ActionRiskReview) -> str:
+    if not review.present:
         return "No action risk matrix found."
-    rows = _read_csv(path)
+    if not review.valid:
+        risk_counts = _diagnostic_action_risk_counts(review)
+        return "\n".join(
+            [
+                (
+                    "- Action-risk matrix: invalid; the following counts "
+                    "are diagnostic only and were not used for policy decisions."
+                ),
+                f"- Rows: {len(review.rows)}",
+                "- Risk tiers: " + _counter_summary(risk_counts),
+            ]
+        )
+    rows = review.rows
     risk_counts = Counter(row.get("risk_tier", "unknown").lower() for row in rows)
     high_actions = [row.get("action", "") for row in rows if row.get("risk_tier", "").lower() in {"high", "prohibited"}]
     lines = [
@@ -308,12 +321,47 @@ def _input_output_summary(root: Path) -> str:
     return f"- {input_filter}\n{critic}"
 
 
-def _observability_rollback_summary(gates: list[GateRow]) -> str:
+def _observability_rollback_summary(
+    gates: list[GateRow],
+    evaluations: list[HardGateEvaluation],
+) -> str:
     statuses = gate_statuses(gates)
-    observability = statuses.get("observability gate", "missing")
+    observability = _hard_gate_actual_status(
+        evaluations,
+        "observability gate",
+    )
     drift = statuses.get("drift monitoring gate", "missing")
-    rollback = statuses.get("rollback gate", "missing")
+    rollback = _hard_gate_actual_status(evaluations, "rollback gate")
     return f"- Observability gate: {observability}\n- Drift monitoring gate: {drift}\n- Rollback gate: {rollback}"
+
+
+def _hard_gate_actual_status(
+    evaluations: list[HardGateEvaluation],
+    gate: str,
+) -> str:
+    evaluation = next(
+        (item for item in evaluations if item.gate == gate),
+        None,
+    )
+    return evaluation.actual_status if evaluation else "missing"
+
+
+def _diagnostic_action_risk_counts(
+    review: ActionRiskReview,
+) -> Counter[str]:
+    positions = review.header_positions.get("risk_tier", ())
+    if len(positions) != 1:
+        return Counter({"unknown": len(review.rows)})
+    risk_index = positions[0]
+    counts: Counter[str] = Counter()
+    for row in review.rows:
+        value = (
+            row.raw_cells[risk_index].strip().lower()
+            if risk_index < len(row.raw_cells)
+            else ""
+        )
+        counts[value or "unknown"] += 1
+    return counts
 
 
 def _required_mitigations(weak_gates: list[GateRow], missing_required: list[str], blockers: list[HardBlocker]) -> str:

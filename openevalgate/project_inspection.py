@@ -19,7 +19,10 @@ from openevalgate.hard_gate_policy import (
     HardGateEvidence,
     evaluate_hard_gate_policy,
 )
-from openevalgate.launch_gate_review import LaunchGateReview
+from openevalgate.launch_gate_review import (
+    LaunchGateReview,
+    is_meaningful_value,
+)
 from openevalgate.routing import validate_routing_policy
 from openevalgate.schema import (
     HardBlocker,
@@ -235,15 +238,9 @@ def _high_risk_actions_without_controls(
             not in HIGH_IMPACT_ACTION_RISK_TIERS
         ):
             continue
-        deterministic_gate = row.get("deterministic_gate", "").lower()
+        deterministic_gate = row.get("deterministic_gate", "")
         human_review = row.get("human_review_required", "").lower()
-        has_gate = deterministic_gate not in {
-            "",
-            "-",
-            "none",
-            "n/a",
-            "na",
-        }
+        has_gate = is_meaningful_value(deterministic_gate)
         has_review = (
             human_review in ALLOWED_BOOLEAN_VALUES
             and human_review == "true"
