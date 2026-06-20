@@ -151,6 +151,17 @@ class LaunchReadinessReport:
 
 
 @dataclass(frozen=True)
+class LaunchAssessment:
+    """Independent evidence, behavior, control, and launch determinations."""
+
+    evidence_completeness_score: int
+    behavioral_evidence_status: str
+    critical_control_status: str
+    recommendation: str
+    hard_blockers: list[HardBlocker]
+
+
+@dataclass(frozen=True)
 class BusinessBehaviorContract:
     system_name: str
     business_owner: str

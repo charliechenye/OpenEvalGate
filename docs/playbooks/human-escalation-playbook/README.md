@@ -53,7 +53,7 @@ openevalgate check examples/customer_support_assistant/
 openevalgate report examples/customer_support_assistant/
 ```
 
-The generated report summarizes required-escalation recall, over-escalation, destination accuracy, context preservation, fallback success, resume success, and late escalation. High-risk failures can become hard blockers even when an aggregate readiness score appears healthy.
+The generated report summarizes required-escalation recall, over-escalation, destination accuracy, context preservation, fallback success, resume success, and late escalation. High-risk failures can become hard blockers even when evidence completeness appears healthy.
 
 ## Files
 

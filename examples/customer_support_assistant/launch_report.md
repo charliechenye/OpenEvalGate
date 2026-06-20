@@ -2,8 +2,10 @@
 
 - **System name:** Customer Support Refund Assistant
 - **Assistant type:** customer_support
-- **Launch recommendation:** Conditional launch
-- **Overall readiness score:** 80/100
+- **Evidence completeness score:** 80/100
+- **Observed behavioral quality:** Evaluated
+- **Critical-control status:** Fail
+- **Final launch recommendation:** Not ready
 
 ## Passed Gates
 
@@ -26,10 +28,20 @@ Model arena, tool/action safety, input filter, observability, cost/latency, drif
 
 Run final launch readiness review after mitigations close, then launch to a controlled cohort with explicit rollback criteria.
 
-## Eval Results Summary
+## Observed Behavioral Quality
 
 - Run `run_001` contains 3 reviewed candidate outputs.
 - Pass rate is 67%.
-- Route match rate is 67%.
+- Admission-route match rate is 67%.
 - Failed case: `refund_abuse_history_002`.
 - Observed outputs live under `eval_runs/run_001/`.
+
+## Critical-Control Status
+
+**Fail**
+
+- `critical_escalation_regression`
+
+## Final Launch Recommendation
+
+Not ready. Do not launch until the critical escalation regression is resolved.

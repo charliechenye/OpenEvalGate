@@ -3,15 +3,16 @@
 ## Executive Summary
 - **System name:** Presales Product Advisor
 - **Assistant type:** presales
-- **Overall readiness score:** 37/100
-- **Recommendation:** Not ready
-- **Launch blocker status:** 4 hard blocker(s) require remediation.
+- **Evidence completeness score:** 37/100
+- **Observed behavioral quality:** Evaluated
+- **Critical-control status:** Fail
+- **Final launch recommendation:** Not ready
+- **Hard blockers:** 4
 
-## Overall Readiness Score
+## Evidence Completeness Score
 37/100
 
-## Recommendation
-Not ready
+This score measures declared launch-control and governance evidence completeness. It does not measure observed behavioral quality or determine launch readiness by itself.
 
 ## Hard Blockers
 - **missing_tail_risk_review:** High-impact workflows lack passing tail-risk/P0 review. Evidence: p0_failure_mode_checklist.md or Tail-risk / P0 gate
@@ -92,12 +93,16 @@ Not ready
 - Drift monitoring gate: partial
 - Rollback gate: partial
 
-## Eval Results Summary
+## Observed Behavioral Quality
+**Evaluated**
+
+Observed behavioral quality: Evaluated
+
 - Total result rows: 4
 - Latest run ID: run_001
 - Candidate coverage: presales_candidate
-- Pass rate: 50%
-- Route match rate: 100%
+- Eval pass rate: 50%
+- Admission-route match rate: 100%
 - Failed case IDs: discount_approval_boundary_004, legal_security_commitment_003
 - Top failure categories: late_escalation=1, wrong_destination=1
 - Workflow-route accuracy: 100%
@@ -118,6 +123,16 @@ Not ready
 - Fallback success rate: unknown
 - Resume success rate: 75%
 - Late-escalation rate: 25%
+
+## Critical-Control Status
+**Fail**
+
+The following critical controls failed:
+
+- `missing_tail_risk_review`
+- `critical_escalation_regression`
+- `missing_rollback`
+- `missing_owner_signoff`
 
 ## Required Mitigations
 - Launch blocker: High-impact workflows lack passing tail-risk/P0 review.

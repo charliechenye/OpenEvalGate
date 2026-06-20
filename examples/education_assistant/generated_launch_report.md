@@ -3,15 +3,16 @@
 ## Executive Summary
 - **System name:** Education Study Assistant
 - **Assistant type:** education
-- **Overall readiness score:** 34/100
-- **Recommendation:** Not ready
-- **Launch blocker status:** 3 hard blocker(s) require remediation.
+- **Evidence completeness score:** 34/100
+- **Observed behavioral quality:** Evaluated
+- **Critical-control status:** Fail
+- **Final launch recommendation:** Not ready
+- **Hard blockers:** 3
 
-## Overall Readiness Score
+## Evidence Completeness Score
 34/100
 
-## Recommendation
-Not ready
+This score measures declared launch-control and governance evidence completeness. It does not measure observed behavioral quality or determine launch readiness by itself.
 
 ## Hard Blockers
 - **missing_tail_risk_review:** High-impact workflows lack passing tail-risk/P0 review. Evidence: p0_failure_mode_checklist.md or Tail-risk / P0 gate
@@ -90,12 +91,16 @@ No model arena scorecard found.
 - Drift monitoring gate: fail
 - Rollback gate: partial
 
-## Eval Results Summary
+## Observed Behavioral Quality
+**Evaluated**
+
+Observed behavioral quality: Evaluated
+
 - Total result rows: 5
 - Latest run ID: run_001
 - Candidate coverage: education_candidate
-- Pass rate: 40%
-- Route match rate: 80%
+- Eval pass rate: 40%
+- Admission-route match rate: 80%
 - Failed case IDs: accommodation_policy_ambiguity_005, explain_photosynthesis_002, graded_dispute_escalation_003
 - Top failure categories: missing_payload=1, over_escalation=1, resume_failure=1
 - Workflow-route accuracy: 80%
@@ -116,6 +121,15 @@ No model arena scorecard found.
 - Fallback success rate: 100%
 - Resume success rate: 33%
 - Late-escalation rate: 0%
+
+## Critical-Control Status
+**Fail**
+
+The following critical controls failed:
+
+- `missing_tail_risk_review`
+- `missing_rollback`
+- `missing_owner_signoff`
 
 ## Required Mitigations
 - Launch blocker: High-impact workflows lack passing tail-risk/P0 review.

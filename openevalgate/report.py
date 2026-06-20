@@ -9,10 +9,10 @@ from pathlib import Path
 from typing import Any
 
 from openevalgate.escalation import summarize_escalation_contract, validate_escalation_contract
-from openevalgate.eval_results import read_eval_results, summarize_eval_results
+from openevalgate.eval_results import EvalResultsSummary, read_eval_results, summarize_eval_results
 from openevalgate.routing import summarize_routing_policy, validate_routing_policy
-from openevalgate.schema import HardBlocker, load_eval_cases, validate_eval_cases
-from openevalgate.scorer import GateRow, gate_statuses, normalize_gate, score_gates
+from openevalgate.schema import HardBlocker, LaunchAssessment, load_eval_cases, validate_eval_cases
+from openevalgate.scorer import GateRow, gate_statuses, normalize_gate, readiness_recommendation, score_gates
 from openevalgate.validator import check_project
 
 
@@ -25,19 +25,23 @@ def generate_report(project_dir: str | Path) -> str:
     gates = parse_launch_gate_review(root / "launch_gate_review.md") if (root / "launch_gate_review.md").exists() else []
     blockers = evaluate_hard_blockers(root, gates, check.missing_required)
     score = score_gates(gates, hard_blockers=blockers)
+    eval_results = summarize_eval_results(root)
+    assessment = _launch_assessment(score.score, eval_results, blockers)
     system_name, assistant_type = _project_identity(root, cases)
 
     sections = [
         f"# Launch Readiness Report: {system_name}",
         "",
         "## Executive Summary",
-        _executive_summary(system_name, assistant_type, score.score, score.recommendation, blockers),
+        _executive_summary(system_name, assistant_type, assessment),
         "",
-        "## Overall Readiness Score",
-        f"{score.score}/100",
+        "## Evidence Completeness Score",
+        f"{assessment.evidence_completeness_score}/100",
         "",
-        "## Recommendation",
-        score.recommendation,
+        (
+            "This score measures declared launch-control and governance evidence completeness. "
+            "It does not measure observed behavioral quality or determine launch readiness by itself."
+        ),
         "",
         "## Hard Blockers",
         _hard_blocker_summary(blockers),
@@ -81,8 +85,11 @@ def generate_report(project_dir: str | Path) -> str:
         "## Observability / Rollback Summary",
         _observability_rollback_summary(gates),
         "",
-        "## Eval Results Summary",
-        _eval_results_summary(root),
+        "## Observed Behavioral Quality",
+        _observed_behavioral_quality(eval_results),
+        "",
+        "## Critical-Control Status",
+        _critical_control_summary(assessment),
         "",
         "## Required Mitigations",
         _required_mitigations(score.weak_gates, check.missing_required, blockers),
@@ -91,7 +98,7 @@ def generate_report(project_dir: str | Path) -> str:
         _next_actions(score.weak_gates, score.score, check.missing_required, blockers),
         "",
         "## Final Launch Recommendation",
-        _final_recommendation(score.recommendation, blockers),
+        _final_recommendation(assessment, eval_results),
         "",
     ]
 
@@ -125,7 +132,7 @@ def parse_launch_gate_review(path: str | Path) -> list[GateRow]:
 
 
 def evaluate_hard_blockers(root: Path, gates: list[GateRow], missing_required: list[str]) -> list[HardBlocker]:
-    """Evaluate launch blockers that override the numeric readiness score."""
+    """Evaluate launch blockers independently from evidence completeness."""
 
     blockers: list[HardBlocker] = []
     statuses = gate_statuses(gates)
@@ -213,15 +220,51 @@ def _project_identity(root: Path, cases: list[dict[str, Any]]) -> tuple[str, str
     return system_name, assistant_type
 
 
-def _executive_summary(system_name: str, assistant_type: str, score: int, recommendation: str, blockers: list[HardBlocker]) -> str:
-    blocker_text = "No hard blockers detected." if not blockers else f"{len(blockers)} hard blocker(s) require remediation."
+def _launch_assessment(
+    evidence_completeness_score: int,
+    eval_results: EvalResultsSummary | None,
+    blockers: list[HardBlocker],
+) -> LaunchAssessment:
+    evaluated = eval_results is not None and eval_results.row_count > 0
+    behavioral_evidence_status = "Evaluated" if evaluated else "Not evaluated"
+    if not evaluated:
+        critical_control_status = "Not evaluated"
+    elif blockers:
+        critical_control_status = "Fail"
+    else:
+        critical_control_status = "Pass"
+
+    score_band = readiness_recommendation(evidence_completeness_score)
+    if blockers:
+        recommendation = "Not ready"
+    elif not evaluated and score_band in {"Ready for controlled launch", "Conditional launch"}:
+        recommendation = "Shadow launch only"
+    else:
+        recommendation = score_band
+
+    return LaunchAssessment(
+        evidence_completeness_score=evidence_completeness_score,
+        behavioral_evidence_status=behavioral_evidence_status,
+        critical_control_status=critical_control_status,
+        recommendation=recommendation,
+        hard_blockers=blockers,
+    )
+
+
+def _executive_summary(
+    system_name: str,
+    assistant_type: str,
+    assessment: LaunchAssessment,
+) -> str:
     return "\n".join(
         [
             f"- **System name:** {system_name}",
             f"- **Assistant type:** {assistant_type}",
-            f"- **Overall readiness score:** {score}/100",
-            f"- **Recommendation:** {recommendation}",
-            f"- **Launch blocker status:** {blocker_text}",
+            f"- **Evidence completeness score:** {assessment.evidence_completeness_score}/100",
+            f"- **Observed behavioral quality:** {assessment.behavioral_evidence_status}",
+            f"- **Critical-control status:** {assessment.critical_control_status}",
+            f"- **Final launch recommendation:** {assessment.recommendation}",
+            f"- **Hard blockers:** {len(assessment.hard_blockers)}",
         ]
     )
 
@@ -359,10 +402,18 @@ def _next_actions(weak_gates: list[GateRow], score: int, missing_required: list[
     return "\n".join(actions)
 
 
-def _final_recommendation(recommendation: str, blockers: list[HardBlocker]) -> str:
-    if blockers:
-        return f"{recommendation}. Do not launch until hard blockers are resolved."
-    return f"{recommendation}. Continue monitoring trust, durable resolution, tail risk, and rollback criteria."
+def _final_recommendation(
+    assessment: LaunchAssessment,
+    eval_results: EvalResultsSummary | None,
+) -> str:
+    lines = [assessment.recommendation + "."]
+    if assessment.hard_blockers:
+        lines.append("Do not launch until hard blockers are resolved.")
+    elif assessment.recommendation != "Not ready":
+        lines.append("Continue monitoring trust, durable resolution, tail risk, and rollback criteria.")
+    if eval_results is None or eval_results.row_count == 0:
+        lines.append("Production launch is prohibited until empirical eval results are available.")
+    return " ".join(lines)
 
 
 def _eval_summary(cases: list[dict[str, Any]]) -> str:
@@ -394,19 +445,36 @@ def _eval_summary(cases: list[dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
-def _eval_results_summary(root: Path) -> str:
-    summary = summarize_eval_results(root)
+def _observed_behavioral_quality(summary: EvalResultsSummary | None) -> str:
     if summary is None:
-        return "No eval results found. Candidate assistant execution results have not been fed back into this project yet."
+        return "\n".join(
+            [
+                "**Not evaluated**",
+                "",
+                "Observed behavioral quality: Not evaluated",
+                "Reason: eval_results.csv was not provided.",
+            ]
+        )
     if summary.row_count == 0:
-        return "eval_results.csv exists but has no result rows."
+        return "\n".join(
+            [
+                "**Not evaluated**",
+                "",
+                "Observed behavioral quality: Not evaluated",
+                "Reason: eval_results.csv contains no result rows.",
+            ]
+        )
 
     lines = [
+        "**Evaluated**",
+        "",
+        "Observed behavioral quality: Evaluated",
+        "",
         f"- Total result rows: {summary.row_count}",
         f"- Latest run ID: {summary.latest_run_id or 'unknown'}",
         "- Candidate coverage: " + (", ".join(summary.candidates) if summary.candidates else "unknown"),
-        f"- Pass rate: {_format_rate(summary.pass_rate)}",
-        f"- Route match rate: {_format_rate(summary.route_match_rate)}",
+        f"- Eval pass rate: {_format_rate(summary.pass_rate)}",
+        f"- Admission-route match rate: {_format_rate(summary.route_match_rate)}",
         "- Failed case IDs: " + (", ".join(summary.failed_case_ids) if summary.failed_case_ids else "none"),
         "- Top failure categories: " + (_counter_summary(summary.failure_categories) if summary.failure_categories else "none"),
         f"- Workflow-route accuracy: {_format_rate(summary.workflow_route_accuracy)}",
@@ -437,6 +505,36 @@ def _eval_results_summary(root: Path) -> str:
     if summary.observed_output_paths:
         lines.append("- Observed output paths: " + ", ".join(summary.observed_output_paths[:8]))
     return "\n".join(lines)
+
+
+def _critical_control_summary(assessment: LaunchAssessment) -> str:
+    if assessment.critical_control_status == "Not evaluated":
+        lines = [
+            "**Not evaluated**",
+            "",
+            "Critical controls cannot be empirically evaluated without eval result rows.",
+        ]
+        if assessment.hard_blockers:
+            lines.extend(
+                [
+                    "",
+                    "The following independently detected hard blockers still require remediation:",
+                    "",
+                    *[f"- `{blocker.id}`" for blocker in assessment.hard_blockers],
+                ]
+            )
+        return "\n".join(lines)
+    if assessment.critical_control_status == "Pass":
+        return "**Pass**\n\nNo hard blockers detected in the available evidence."
+    return "\n".join(
+        [
+            "**Fail**",
+            "",
+            "The following critical controls failed:",
+            "",
+            *[f"- `{blocker.id}`" for blocker in assessment.hard_blockers],
+        ]
+    )
 
 
 def _safe_load_cases(path: Path) -> list[dict[str, Any]]:

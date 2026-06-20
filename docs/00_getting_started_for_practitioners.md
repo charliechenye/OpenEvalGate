@@ -180,8 +180,10 @@ generated_launch_report.md
 
 The report should make clear:
 
-- readiness score
-- launch recommendation
+- evidence completeness score
+- observed behavioral quality
+- critical-control status
+- final launch recommendation
 - hard blockers
 - trust preservation evidence
 - business behavior contract evidence

@@ -1,4 +1,4 @@
-"""Readiness scoring and hard-blocker evaluation."""
+"""Evidence-completeness scoring and hard-blocker evaluation."""
 
 from __future__ import annotations
 
@@ -79,7 +79,7 @@ def score_gates(
     boundary_coverage_status: str | None = None,
     hard_blockers: list[HardBlocker] | None = None,
 ) -> ScoreResult:
-    """Compute weighted launch readiness score and recommendation."""
+    """Compute the weighted evidence-completeness score and legacy score band."""
 
     blockers = hard_blockers or []
     category_statuses: dict[str, list[str]] = {category: [] for category in WEIGHTS}

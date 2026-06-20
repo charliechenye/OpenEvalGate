@@ -128,7 +128,7 @@ Hard blocker: critical_escalation_regression
 Recommendation: Not ready
 ```
 
-That is the point of OpenEvalGate: a high aggregate readiness score cannot hide a high-risk case that failed to stop or reached the wrong human destination.
+That is the point of OpenEvalGate: high evidence completeness cannot hide a high-risk case that failed to stop or reached the wrong human destination.
 
 ## Example Workflow
 
@@ -167,9 +167,9 @@ That is the point of OpenEvalGate: a high aggregate readiness score cannot hide 
 22. Rollback gate
 23. Owner signoff gate
 
-## Readiness Scoring
+## Evidence Completeness Scoring
 
-OpenEvalGate uses a 100-point trust-weighted score:
+OpenEvalGate uses a 100-point trust-weighted evidence completeness score. It measures how completely a project has documented and reviewed its declared launch controls and governance evidence. It is not a behavioral quality score and does not determine launch readiness by itself.
 
 - Scope readiness: 5
 - Trust preservation readiness: 8
@@ -188,12 +188,14 @@ OpenEvalGate uses a 100-point trust-weighted score:
 - Cost/latency readiness: 3
 - Journey/business metrics readiness: 5
 
-Recommendation bands:
+Baseline recommendation bands:
 
 - 85-100: Ready for controlled launch
 - 70-84: Conditional launch
 - 50-69: Shadow launch only
 - Below 50: Not ready
+
+These bands are only a baseline. Hard blockers override them, and a project without empirical result rows cannot receive a production-launch recommendation. Missing or empty `eval_results.csv` caps the recommendation at `Shadow launch only` and explicitly prohibits production launch.
 
 ## Hard Blockers
 

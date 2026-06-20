@@ -1,13 +1,19 @@
 # Launch Readiness Report
 
-**System name:**  
-**Assistant type:**  
-**Launch recommendation:**  
-**Overall readiness score:**  
+- **System name:**
+- **Assistant type:**
+- **Evidence completeness score:**
+- **Observed behavioral quality:**
+- **Critical-control status:**
+- **Final launch recommendation:**
 
 ## Executive Summary
 
 Summarize what is ready, what is blocked, and whether launch would preserve user trust.
+
+## Evidence Completeness Score
+
+Report completeness of declared launch-control and governance evidence. Do not present this score as observed behavioral quality or as the final launch determination.
 
 ## Hard Blockers
 
@@ -61,9 +67,15 @@ Summarize how domain owners review behavior, add eval cases, propose policy chan
 
 Summarize monitoring, drift review, incident response, and rollback evidence.
 
-## Eval Results Summary
+## Observed Behavioral Quality
 
 Summarize externally generated candidate outputs and grading feedback from `eval_results.csv`, including required-escalation recall, over-escalation, destination accuracy, context preservation, fallback success, resume success, and late escalation.
+
+When no empirical result rows are available, state `Observed behavioral quality: Not evaluated` and explain whether the file is missing or empty.
+
+## Critical-Control Status
+
+Report `Pass`, `Fail`, or `Not evaluated`. List failed critical controls when the status is `Fail`. Do not derive this status from the evidence completeness score.
 
 ## Required Mitigations
 
@@ -77,4 +89,4 @@ List the next concrete actions needed before launch.
 
 ## Final Launch Recommendation
 
-Make the final launch recommendation and state what must be fixed before launch.
+Make the final launch recommendation independently from the evidence completeness score and state what must be fixed before launch.
