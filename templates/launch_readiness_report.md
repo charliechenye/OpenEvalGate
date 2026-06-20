@@ -1,13 +1,27 @@
 # Launch Readiness Report
 
-**System name:**  
-**Assistant type:**  
-**Launch recommendation:**  
-**Overall readiness score:**  
+- **System name:**
+- **Assistant type:**
+- **Evidence completeness score:**
+- **Evidence package band:**
+- **Control evidence completeness threshold met:**
+- **Behavioral evidence status:**
+- **Critical-control status:**
+- **Maximum permitted stage:**
+- **Final launch recommendation:**
+- **Recommended next actions:**
 
 ## Executive Summary
 
 Summarize what is ready, what is blocked, and whether launch would preserve user trust.
+
+## Evidence Completeness Score
+
+Report completeness of declared launch-control and governance evidence. Do not present this score as observed behavioral quality or as the final launch determination.
+
+Use only these evidence package bands: `Substantially complete`, `Material gaps`, or `Incomplete`.
+
+State whether the control evidence completeness threshold is met. Explain that meeting it does not override hard blockers or grant permission to begin shadow evaluation.
 
 ## Hard Blockers
 
@@ -61,9 +75,19 @@ Summarize how domain owners review behavior, add eval cases, propose policy chan
 
 Summarize monitoring, drift review, incident response, and rollback evidence.
 
-## Eval Results Summary
+## Observed Behavioral Quality
 
 Summarize externally generated candidate outputs and grading feedback from `eval_results.csv`, including required-escalation recall, over-escalation, destination accuracy, context preservation, fallback success, resume success, and late escalation.
+
+Use the exact behavioral-evidence wording for missing, empty, invalid, and available results. Do not calculate metrics from invalid rows.
+
+## Critical-Control Status
+
+Report `Fail`, `Not evaluated`, or `No known blockers detected`. Do not use `Pass` until complete critical-control policy exists.
+
+## Maximum Permitted Stage
+
+State the highest permitted stage from the deterministic assessment. Do not permit controlled launch in this iteration.
 
 ## Required Mitigations
 
@@ -71,10 +95,10 @@ Summarize externally generated candidate outputs and grading feedback from `eval
 | --- | --- | --- | --- |
 |  |  |  |  |
 
-## Suggested Next Actions
+## Recommended Next Actions
 
-List the next concrete actions needed before launch.
+State the deterministic recommended next action.
 
 ## Final Launch Recommendation
 
-Make the final launch recommendation and state what must be fixed before launch.
+Make the final launch recommendation independently from the evidence completeness score and state what must be fixed before launch.

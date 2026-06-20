@@ -1,10 +1,10 @@
-"""Readiness scoring and hard-blocker evaluation."""
+"""Evidence-completeness scoring and hard-blocker evaluation."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 
-from openevalgate.schema import HardBlocker
+from openevalgate.assessment import evidence_completeness_band
 
 
 STATUS_VALUES = {"pass", "partial", "fail", "not_applicable"}
@@ -67,21 +67,18 @@ class GateRow:
 @dataclass(frozen=True)
 class ScoreResult:
     score: int
-    recommendation: str
+    evidence_band: str
     passed_gates: list[GateRow]
     weak_gates: list[GateRow]
     not_applicable_gates: list[GateRow]
-    hard_blockers: list[HardBlocker]
 
 
 def score_gates(
     gates: list[GateRow],
     boundary_coverage_status: str | None = None,
-    hard_blockers: list[HardBlocker] | None = None,
 ) -> ScoreResult:
-    """Compute weighted launch readiness score and recommendation."""
+    """Compute the weighted evidence-completeness score and band."""
 
-    blockers = hard_blockers or []
     category_statuses: dict[str, list[str]] = {category: [] for category in WEIGHTS}
     passed: list[GateRow] = []
     weak: list[GateRow] = []
@@ -113,18 +110,13 @@ def score_gates(
         raw_score += weight * _category_value(statuses)
 
     score = int(raw_score + 0.5)
-    recommendation = "Not ready" if blockers else readiness_recommendation(score)
-    return ScoreResult(score, recommendation, passed, weak, not_applicable, blockers)
-
-
-def readiness_recommendation(score: int) -> str:
-    if score >= 85:
-        return "Ready for controlled launch"
-    if score >= 70:
-        return "Conditional launch"
-    if score >= 50:
-        return "Shadow launch only"
-    return "Not ready"
+    return ScoreResult(
+        score,
+        evidence_completeness_band(score),
+        passed,
+        weak,
+        not_applicable,
+    )
 
 
 def gate_statuses(gates: list[GateRow]) -> dict[str, str]:

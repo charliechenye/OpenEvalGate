@@ -3,15 +3,22 @@
 ## Executive Summary
 - **System name:** Customer Support Refund Assistant
 - **Assistant type:** customer_support
-- **Overall readiness score:** 90/100
-- **Recommendation:** Not ready
-- **Launch blocker status:** 1 hard blocker(s) require remediation.
+- **Evidence completeness score:** 90/100
+- **Evidence package band:** Substantially complete
+- **Behavioral evidence status:** Evaluated — valid empirical rows are available.
+- **Critical-control status:** Fail
+- **Maximum permitted stage:** Shadow evaluation with remediation
+- **Final launch recommendation:** Not ready for controlled launch
+- **Recommended next actions:** Remediate known hard blockers.
+- **Hard blockers:** 1
 
-## Overall Readiness Score
+## Evidence Completeness Score
 90/100
+Evidence package band: Substantially complete
+Control evidence completeness threshold met: Yes
 
-## Recommendation
-Not ready
+This score measures declared launch-control and governance evidence completeness. It does not measure observed behavioral quality or determine launch readiness by itself.
+Meeting this threshold does not override hard blockers or grant permission to begin shadow evaluation.
 
 ## Hard Blockers
 - **critical_escalation_regression:** High-risk escalation evidence contains under-escalation, wrong-destination, payload, or resume failures. Evidence: refund_abuse_history_002, wrong_destination_fraud_012
@@ -89,12 +96,14 @@ Not ready
 - Drift monitoring gate: partial
 - Rollback gate: pass
 
-## Eval Results Summary
+## Observed Behavioral Quality
+**Evaluated — valid empirical rows are available.**
+
 - Total result rows: 6
 - Latest run ID: run_002
 - Candidate coverage: gpt-4.1-mini
-- Pass rate: 33%
-- Route match rate: 50%
+- Eval pass rate: 33%
+- Admission-route match rate: 50%
 - Failed case IDs: refund_abuse_history_002, refund_boundary_case_001, routine_status_no_escalation_013, wrong_destination_fraud_012
 - Top failure categories: over_escalation=2, under_escalation=1, wrong_destination=1
 - Workflow-route accuracy: 50%
@@ -117,6 +126,16 @@ Not ready
 - Late-escalation rate: 33%
 - Observed output paths: eval_runs/run_001/refund_boundary_case_001.md, eval_runs/run_001/refund_abuse_history_002.md, eval_runs/run_001/merchant_blame_adversarial_003.md, eval_runs/run_002/dependency_failure_escalation_011.md, eval_runs/run_002/wrong_destination_fraud_012.md, eval_runs/run_002/routine_status_no_escalation_013.md
 
+## Critical-Control Status
+**Fail**
+
+The following critical controls failed:
+
+- `critical_escalation_regression`
+
+## Maximum Permitted Stage
+Shadow evaluation with remediation
+
 ## Required Mitigations
 - Launch blocker: High-risk escalation evidence contains under-escalation, wrong-destination, payload, or resume failures.
 - Model arena gate: Add a final latency run before rollout.
@@ -126,13 +145,8 @@ Not ready
 - Cost/latency gate: Validate p95 latency under launch traffic.
 - Drift monitoring gate: Schedule weekly review and owner rotation.
 
-## Suggested Next Actions
-- Resolve hard blockers before any user-facing launch.
-- Close mitigation for Model arena gate.
-- Close mitigation for Routing / capability allocation gate.
-- Close mitigation for Input filter gate.
-- Close mitigation for Observability gate.
-- Close mitigation for Cost/latency gate.
+## Recommended Next Actions
+- Remediate known hard blockers.
 
 ## Final Launch Recommendation
-Not ready. Do not launch until hard blockers are resolved.
+Not ready for controlled launch

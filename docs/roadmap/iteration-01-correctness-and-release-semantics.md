@@ -8,11 +8,11 @@ The iteration is complete only when a project with strong documentation but weak
 
 ## P0.1 Separate Evidence Coverage from Behavioral Readiness
 
-- [ ] Rename the current `Overall Readiness Score` to `Evidence Completeness Score` or `Launch-Control Coverage Score`.
-- [ ] Add `Observed Behavioral Quality` as a separate report section.
-- [ ] Add `Critical-Control Status` as a separate pass/fail section.
-- [ ] Keep `Final Launch Recommendation` independent from the evidence-completeness score.
-- [ ] Update README, guides, templates, examples, and tests to use the new terminology.
+- [x] Rename the current weighted score to `Evidence Completeness Score`.
+- [x] Add `Observed Behavioral Quality` as a separate report section.
+- [x] Add a separate `Critical-Control Status` that distinguishes known failure, unevaluated behavior, and absence of currently detected blockers.
+- [x] Keep `Final Launch Recommendation` independent from the evidence-completeness score.
+- [x] Update README, guides, templates, examples, and tests to use the new terminology.
 
 ### Acceptance Criteria
 

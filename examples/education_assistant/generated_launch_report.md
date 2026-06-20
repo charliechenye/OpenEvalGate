@@ -3,15 +3,22 @@
 ## Executive Summary
 - **System name:** Education Study Assistant
 - **Assistant type:** education
-- **Overall readiness score:** 34/100
-- **Recommendation:** Not ready
-- **Launch blocker status:** 3 hard blocker(s) require remediation.
+- **Evidence completeness score:** 34/100
+- **Evidence package band:** Incomplete
+- **Behavioral evidence status:** Evaluated — valid empirical rows are available.
+- **Critical-control status:** Fail
+- **Maximum permitted stage:** Documentation remediation
+- **Final launch recommendation:** Not ready to advance beyond documentation remediation
+- **Recommended next actions:** Complete missing or invalid control-evidence requirements; Remediate known hard blockers.
+- **Hard blockers:** 3
 
-## Overall Readiness Score
+## Evidence Completeness Score
 34/100
+Evidence package band: Incomplete
+Control evidence completeness threshold met: No
 
-## Recommendation
-Not ready
+This score measures declared launch-control and governance evidence completeness. It does not measure observed behavioral quality or determine launch readiness by itself.
+Meeting this threshold does not override hard blockers or grant permission to begin shadow evaluation.
 
 ## Hard Blockers
 - **missing_tail_risk_review:** High-impact workflows lack passing tail-risk/P0 review. Evidence: p0_failure_mode_checklist.md or Tail-risk / P0 gate
@@ -90,12 +97,14 @@ No model arena scorecard found.
 - Drift monitoring gate: fail
 - Rollback gate: partial
 
-## Eval Results Summary
+## Observed Behavioral Quality
+**Evaluated — valid empirical rows are available.**
+
 - Total result rows: 5
 - Latest run ID: run_001
 - Candidate coverage: education_candidate
-- Pass rate: 40%
-- Route match rate: 80%
+- Eval pass rate: 40%
+- Admission-route match rate: 80%
 - Failed case IDs: accommodation_policy_ambiguity_005, explain_photosynthesis_002, graded_dispute_escalation_003
 - Top failure categories: missing_payload=1, over_escalation=1, resume_failure=1
 - Workflow-route accuracy: 80%
@@ -117,6 +126,18 @@ No model arena scorecard found.
 - Resume success rate: 33%
 - Late-escalation rate: 0%
 
+## Critical-Control Status
+**Fail**
+
+The following critical controls failed:
+
+- `missing_tail_risk_review`
+- `missing_rollback`
+- `missing_owner_signoff`
+
+## Maximum Permitted Stage
+Documentation remediation
+
 ## Required Mitigations
 - Launch blocker: High-impact workflows lack passing tail-risk/P0 review.
 - Launch blocker: Rollback gate is missing or not passing.
@@ -134,13 +155,9 @@ No model arena scorecard found.
 - Rollback gate: Define stop criteria.
 - Owner signoff gate: Complete signoff after arena and drift plan.
 
-## Suggested Next Actions
-- Resolve hard blockers before any user-facing launch.
-- Close mitigation for Golden eval gate.
-- Close mitigation for Model selection gate.
-- Close mitigation for Model arena gate.
-- Close mitigation for Routing / capability allocation gate.
-- Close mitigation for SOP/policy compilation gate.
+## Recommended Next Actions
+- Complete missing or invalid control-evidence requirements.
+- Remediate known hard blockers.
 
 ## Final Launch Recommendation
-Not ready. Do not launch until hard blockers are resolved.
+Not ready to advance beyond documentation remediation

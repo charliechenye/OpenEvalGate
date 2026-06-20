@@ -113,6 +113,7 @@ class ValidationIssue:
 
     path: str
     message: str
+    source: str = "project"
 
 
 @dataclass(frozen=True)
@@ -147,6 +148,21 @@ class LaunchReadinessReport:
     assistant_type: str
     score: int
     recommendation: str
+    hard_blockers: list[HardBlocker]
+
+
+@dataclass(frozen=True)
+class LaunchAssessment:
+    """Independent evidence, behavior, control, and launch determinations."""
+
+    evidence_completeness_score: int
+    evidence_band: str
+    control_evidence_completeness_threshold_met: bool
+    behavioral_evidence_state: str
+    critical_control_status: str
+    maximum_permitted_stage: str
+    recommendation: str
+    recommended_next_actions: list[str]
     hard_blockers: list[HardBlocker]
 
 

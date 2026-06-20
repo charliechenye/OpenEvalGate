@@ -31,10 +31,10 @@ OpenEvalGate should be positioned as an **evidence-backed release-assurance fram
 
 ### Correct the readiness model
 
-- [ ] Rename the current `Overall Readiness Score` to `Evidence Completeness Score` or `Launch-Control Coverage Score`.
-- [ ] Add a separate `Observed Behavioral Quality` section derived from `eval_results.csv`.
-- [ ] Add a separate `Critical-Control Status` with explicit pass/fail semantics.
-- [ ] Prevent the CLI from recommending `Ready for controlled launch` without empirical eval results.
+- [x] Rename the current weighted score to `Evidence Completeness Score`.
+- [x] Add a separate `Observed Behavioral Quality` section derived from `eval_results.csv`.
+- [x] Add a separate `Critical-Control Status` that distinguishes known failure, unevaluated behavior, and absence of currently detected blockers.
+- [x] Prevent the CLI from recommending `Ready for controlled launch` without empirical eval results.
 - [ ] Define minimum result coverage for shadow and controlled-launch reviews.
 - [ ] Add configurable thresholds for critical metrics.
 - [ ] Make critical-slice failures override all aggregate scores.

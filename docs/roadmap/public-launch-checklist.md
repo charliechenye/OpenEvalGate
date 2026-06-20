@@ -6,10 +6,10 @@ A checked box means the condition has been verified on the exact release commit.
 
 ## 1. Release Semantics
 
-- [ ] The report no longer labels document coverage as overall readiness.
-- [ ] Evidence completeness, observed behavioral quality, and critical-control status are separate.
+- [x] The report labels document coverage as evidence completeness rather than launch readiness.
+- [x] Evidence completeness, behavioral evidence, and critical-control status are separate.
 - [ ] The final launch recommendation is derived from review mode, empirical evidence, thresholds, and blockers.
-- [ ] A project without eval results cannot receive a controlled-launch recommendation.
+- [x] A project without eval results cannot receive a controlled-launch recommendation.
 - [ ] Critical metrics display thresholds and denominators.
 - [ ] Insufficient evidence is reported explicitly.
 - [ ] `partial` critical gates block launch.

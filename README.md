@@ -128,7 +128,7 @@ Hard blocker: critical_escalation_regression
 Recommendation: Not ready
 ```
 
-That is the point of OpenEvalGate: a high aggregate readiness score cannot hide a high-risk case that failed to stop or reached the wrong human destination.
+That is the point of OpenEvalGate: high evidence completeness cannot hide a high-risk case that failed to stop or reached the wrong human destination.
 
 ## Example Workflow
 
@@ -167,9 +167,9 @@ That is the point of OpenEvalGate: a high aggregate readiness score cannot hide 
 22. Rollback gate
 23. Owner signoff gate
 
-## Readiness Scoring
+## Evidence Completeness Scoring
 
-OpenEvalGate uses a 100-point trust-weighted score:
+OpenEvalGate uses a 100-point trust-weighted evidence completeness score. It measures how completely a project has documented and reviewed its declared launch controls and governance evidence. It is not a behavioral quality score and does not determine launch readiness by itself.
 
 - Scope readiness: 5
 - Trust preservation readiness: 8
@@ -188,16 +188,28 @@ OpenEvalGate uses a 100-point trust-weighted score:
 - Cost/latency readiness: 3
 - Journey/business metrics readiness: 5
 
-Recommendation bands:
+Evidence package bands:
 
-- 85-100: Ready for controlled launch
-- 70-84: Conditional launch
-- 50-69: Shadow launch only
-- Below 50: Not ready
+- 85-100: Substantially complete
+- 50-84: Material gaps
+- Below 50: Incomplete
+
+These bands describe evidence completeness only. They do not grant a deployment stage. The final recommendation is determined separately from project validity, behavioral-evidence state, and known hard blockers. Missing, empty, or invalid `eval_results.csv` cannot produce a controlled-launch recommendation.
+
+In this iteration, even valid empirical rows with no known blockers permit only shadow evaluation. Controlled-launch readiness remains undetermined until minimum coverage, required critical slices, behavioral thresholds, repeated-run sufficiency, and complete hard-gate semantics are implemented.
+
+Behavioral evidence is reported as one of:
+
+- `Not evaluated — no results provided.`
+- `Not evaluated — results file contains no rows.`
+- `Invalid — results could not be validated.`
+- `Evaluated — valid empirical rows are available.`
+
+`Control evidence completeness threshold met` means only that the evidence score is at least 85, required project artifacts are present, and non-result project validation has no errors. Meeting this threshold does not override hard blockers or grant permission to begin shadow evaluation.
 
 ## Hard Blockers
 
-Regardless of score, OpenEvalGate recommends `Not ready` when:
+Regardless of score, OpenEvalGate prevents controlled launch when:
 
 - Scope is missing or failed.
 - Golden eval set is missing or invalid.
