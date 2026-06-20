@@ -7,7 +7,7 @@ import pytest
 from openevalgate.cli import main
 from openevalgate.report import generate_report
 from openevalgate.schema import load_eval_cases
-from openevalgate.scorer import WEIGHTS, readiness_recommendation, score_gates, GateRow
+from openevalgate.scorer import WEIGHTS, score_gates, GateRow
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -22,6 +22,7 @@ def test_report_generation_returns_expected_sections() -> None:
     assert "## Evidence Completeness Score" in report
     assert "## Observed Behavioral Quality" in report
     assert "## Critical-Control Status" in report
+    assert "## Maximum Permitted Stage" in report
     assert "## Hard Blockers" in report
     assert "## Trust Preservation Summary" in report
     assert "## Business Behavior Contract Summary" in report
@@ -37,18 +38,17 @@ def test_high_evidence_completeness_can_still_be_not_ready() -> None:
     report = generate_report(CUSTOMER_SUPPORT)
 
     assert "**Evidence completeness score:** 90/100" in report
-    assert "**Observed behavioral quality:** Evaluated" in report
+    assert "**Evidence package band:** Substantially complete" in report
+    assert "**Behavioral evidence status:** Evaluated — valid empirical rows are available." in report
     assert "**Critical-control status:** Fail" in report
-    assert "**Final launch recommendation:** Not ready" in report
+    assert "**Maximum permitted stage:** Shadow evaluation or remediation" in report
+    assert "**Final launch recommendation:** Not ready for controlled launch" in report
     assert "## Evidence Completeness Score\n90/100" in report
     assert "Overall Readiness Score" not in report
 
 
-def test_recommendation_bands_match_thresholds() -> None:
-    assert readiness_recommendation(85) == "Ready for controlled launch"
-    assert readiness_recommendation(70) == "Conditional launch"
-    assert readiness_recommendation(50) == "Shadow launch only"
-    assert readiness_recommendation(49) == "Not ready"
+def test_scorer_emits_evidence_bands_not_deployment_recommendations() -> None:
+    assert score_gates([GateRow("Scope gate", "pass", "", "", "")]).evidence_band == "Incomplete"
 
 
 def test_score_gates_uses_partial_half_credit() -> None:
@@ -60,7 +60,7 @@ def test_score_gates_uses_partial_half_credit() -> None:
     result = score_gates(gates, boundary_coverage_status="fail")
 
     assert result.score == 10
-    assert result.recommendation == "Not ready"
+    assert result.evidence_band == "Incomplete"
 
 
 def test_routing_gate_shares_model_selection_weight() -> None:
@@ -118,12 +118,11 @@ def test_missing_eval_results_are_not_evaluated_and_cap_launch_recommendation(tm
 
     report = generate_report(project)
 
-    assert "**Observed behavioral quality:** Not evaluated" in report
+    assert "**Behavioral evidence status:** Not evaluated — no results provided." in report
     assert "**Critical-control status:** Not evaluated" in report
-    assert "Reason: eval_results.csv was not provided." in report
-    assert "**Final launch recommendation:** Shadow launch only" in report
-    assert "Production launch is prohibited until empirical eval results are available." in report
-    assert "Observed behavioral quality: Evaluated" not in report
+    assert "**Final launch recommendation:** Not ready for controlled launch" in report
+    assert "**Maximum permitted stage:** Shadow evaluation" in report
+    assert "Ready for bounded controlled launch" not in report
 
 
 def test_empty_eval_results_are_distinguished_from_missing_results(tmp_path: Path) -> None:
@@ -134,11 +133,10 @@ def test_empty_eval_results_are_distinguished_from_missing_results(tmp_path: Pat
 
     report = generate_report(project)
 
-    assert "**Observed behavioral quality:** Not evaluated" in report
+    assert "**Behavioral evidence status:** Not evaluated — results file contains no rows." in report
     assert "**Critical-control status:** Not evaluated" in report
-    assert "Reason: eval_results.csv contains no result rows." in report
-    assert "**Final launch recommendation:** Shadow launch only" in report
-    assert "Production launch is prohibited until empirical eval results are available." in report
+    assert "**Final launch recommendation:** Not ready for controlled launch" in report
+    assert "**Maximum permitted stage:** Shadow evaluation" in report
 
 
 def test_empirical_results_without_hard_blockers_pass_critical_controls(tmp_path: Path) -> None:
@@ -171,9 +169,45 @@ def test_empirical_results_without_hard_blockers_pass_critical_controls(tmp_path
     report = generate_report(project)
 
     assert "**Evidence completeness score:** 90/100" in report
-    assert "**Observed behavioral quality:** Evaluated" in report
+    assert "**Behavioral evidence status:** Evaluated — valid empirical rows are available." in report
     assert "**Critical-control status:** Pass" in report
-    assert "**Final launch recommendation:** Ready for controlled launch" in report
+    assert "**Final launch recommendation:** Ready for bounded controlled launch" in report
+
+
+def test_malformed_eval_results_are_invalid_not_missing(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    copytree(CUSTOMER_SUPPORT, project)
+    (project / "eval_results.csv").write_text(
+        "run_id,case_id\nrun_1,refund_boundary_case_001\n",
+        encoding="utf-8",
+    )
+
+    report = generate_report(project)
+
+    assert "**Behavioral evidence status:** Invalid — results could not be validated." in report
+    assert "**Final launch recommendation:** Not ready" in report
+    assert "**Maximum permitted stage:** Documentation remediation" in report
+    assert "Validation issues:" in report
+
+
+def test_missing_results_do_not_hide_known_blockers(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    copytree(CUSTOMER_SUPPORT, project)
+    (project / "eval_results.csv").unlink()
+    text = (project / "launch_gate_review.md").read_text(encoding="utf-8")
+    text = text.replace(
+        "| Rollback gate | pass |",
+        "| Rollback gate | fail |",
+    )
+    (project / "launch_gate_review.md").write_text(text, encoding="utf-8")
+
+    report = generate_report(project)
+
+    assert "**Behavioral evidence status:** Not evaluated — no results provided." in report
+    assert "**Critical-control status:** Fail" in report
+    assert "**Maximum permitted stage:** Documentation remediation" in report
+    assert "**Final launch recommendation:** Not ready for shadow evaluation" in report
+    assert "`missing_rollback`" in report
 
 
 @pytest.mark.parametrize(
@@ -193,6 +227,26 @@ def test_cli_commands_retain_success_exit_behavior(capsys: pytest.CaptureFixture
     assert main(["check", str(CUSTOMER_SUPPORT)]) == 0
     assert main(["report", str(CUSTOMER_SUPPORT)]) == 0
     capsys.readouterr()
+
+
+def test_check_and_report_do_not_conflict_on_invalid_results(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    project = tmp_path / "project"
+    copytree(CUSTOMER_SUPPORT, project)
+    (project / "eval_results.csv").write_text(
+        "run_id,case_id\nrun_1,refund_boundary_case_001\n",
+        encoding="utf-8",
+    )
+
+    assert main(["check", str(project)]) == 1
+    check_output = capsys.readouterr().out
+    report = generate_report(project)
+
+    assert "Artifact validation failed. This is not a launch recommendation." in check_output
+    assert "Invalid — results could not be validated." in report
+    assert "**Final launch recommendation:** Not ready" in report
 
 
 def test_high_risk_escalation_regression_is_hard_blocker() -> None:
@@ -255,7 +309,7 @@ def test_missing_files_report_shows_gaps_and_not_ready(tmp_path: Path) -> None:
     assert "missing_rollback" in report
     assert "missing_owner_signoff" in report
     assert "missing_monitoring" in report
-    assert "Not ready. Do not launch until hard blockers are resolved." in report
+    assert "Not ready for evaluation" in report
 
 
 def test_high_risk_action_without_controls_is_hard_blocker(tmp_path: Path) -> None:

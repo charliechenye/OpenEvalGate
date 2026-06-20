@@ -3,8 +3,11 @@
 - **System name:** Presales Product Advisor
 - **Assistant type:** presales
 - **Evidence completeness score:** 78/100
-- **Observed behavioral quality:** Evaluated
+- **Evidence package band:** Material gaps
+- **Behavioral evidence status:** Evaluated — valid empirical rows are available.
 - **Critical-control status:** Fail
-- **Final launch recommendation:** Not ready
+- **Maximum permitted stage:** Documentation remediation
+- **Final launch recommendation:** Not ready for evaluation
+- **Recommended next action:** Complete required evidence and close evidence-package gaps.
 
 This example emphasizes product-specific model arena scoring and commercial commitment risk. It is close to controlled launch but needs an explicit action risk matrix and stronger grounding behavior for stale or missing product context.

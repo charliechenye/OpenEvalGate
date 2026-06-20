@@ -188,18 +188,24 @@ OpenEvalGate uses a 100-point trust-weighted evidence completeness score. It mea
 - Cost/latency readiness: 3
 - Journey/business metrics readiness: 5
 
-Baseline recommendation bands:
+Evidence package bands:
 
-- 85-100: Ready for controlled launch
-- 70-84: Conditional launch
-- 50-69: Shadow launch only
-- Below 50: Not ready
+- 85-100: Substantially complete
+- 50-84: Material gaps
+- Below 50: Incomplete
 
-These bands are only a baseline. Hard blockers override them, and a project without empirical result rows cannot receive a production-launch recommendation. Missing or empty `eval_results.csv` caps the recommendation at `Shadow launch only` and explicitly prohibits production launch.
+These bands describe evidence completeness only. They do not grant a deployment stage. The final recommendation is determined separately from project validity, behavioral-evidence state, and known hard blockers. Missing, empty, or invalid `eval_results.csv` cannot produce a controlled-launch recommendation.
+
+Behavioral evidence is reported as one of:
+
+- `Not evaluated — no results provided.`
+- `Not evaluated — results file contains no rows.`
+- `Invalid — results could not be validated.`
+- `Evaluated — valid empirical rows are available.`
 
 ## Hard Blockers
 
-Regardless of score, OpenEvalGate recommends `Not ready` when:
+Regardless of score, OpenEvalGate prevents controlled launch when:
 
 - Scope is missing or failed.
 - Golden eval set is missing or invalid.

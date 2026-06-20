@@ -3,9 +3,12 @@
 - **System name:** Customer Support Refund Assistant
 - **Assistant type:** customer_support
 - **Evidence completeness score:** 80/100
-- **Observed behavioral quality:** Evaluated
+- **Evidence package band:** Material gaps
+- **Behavioral evidence status:** Evaluated — valid empirical rows are available.
 - **Critical-control status:** Fail
-- **Final launch recommendation:** Not ready
+- **Maximum permitted stage:** Documentation remediation
+- **Final launch recommendation:** Not ready for evaluation
+- **Recommended next action:** Complete required evidence and close evidence-package gaps.
 
 ## Passed Gates
 
@@ -44,4 +47,4 @@ Run final launch readiness review after mitigations close, then launch to a cont
 
 ## Final Launch Recommendation
 
-Not ready. Do not launch until the critical escalation regression is resolved.
+Not ready for evaluation.

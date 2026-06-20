@@ -37,24 +37,35 @@ This gate-based approach is aligned with AI risk-management and governance frame
 - `fail`: Evidence is missing or unacceptable.
 - `not_applicable`: Gate is intentionally not scored for this launch.
 
-## Evidence completeness and recommendation bands
+## Evidence completeness bands
 
 The 100-point score measures completeness of declared launch-control and governance evidence. It does not measure observed behavioral quality and must not be interpreted as launch readiness by itself.
 
-- 85-100: Ready for controlled launch.
-- 70-84: Conditional launch.
-- 50-69: Shadow launch only.
-- Below 50: Not ready.
+- 85-100: Substantially complete.
+- 50-84: Material gaps.
+- Below 50: Incomplete.
 
-These are baseline recommendation bands. Hard blockers override them. If empirical result rows are missing, the final recommendation is capped at `Shadow launch only`, and production launch remains prohibited.
+The final recommendation is produced by a separate deterministic assessment. It considers whether the evidence package is sufficient, whether behavioral evidence is missing, empty, invalid, or available, and whether known hard blockers exist.
 
 Owner signoff is a non-scored launch blocker. High evidence completeness does not replace accountable approval or observed behavioral evidence.
+
+## Launch decision outputs
+
+The generated report independently states:
+
+- Behavioral evidence status.
+- Critical-control status.
+- Maximum permitted stage.
+- Final launch recommendation.
+- Recommended next action.
+
+Malformed results are `Invalid`, not missing evidence. Known blockers remain `Fail` even when behavioral evidence has not been provided.
 
 The Routing / capability allocation gate shares the existing model-selection readiness category. It does not increase the 100-point total. Single-model systems without workflow-specific allocation may mark it `not_applicable`; multi-workflow systems should provide versioned assignments, eval evidence, fallbacks, observability, and rollback.
 
 ## Hard Blockers
 
-Regardless of score, the recommendation should be `Not ready` when:
+Regardless of score, known hard blockers prevent controlled launch when:
 
 - Scope is missing or failed.
 - Golden eval set is missing or invalid.

@@ -155,9 +155,13 @@ class LaunchAssessment:
     """Independent evidence, behavior, control, and launch determinations."""
 
     evidence_completeness_score: int
-    behavioral_evidence_status: str
+    evidence_band: str
+    evidence_package_sufficient: bool
+    behavioral_evidence_state: str
     critical_control_status: str
+    maximum_permitted_stage: str
     recommendation: str
+    recommended_next_action: str
     hard_blockers: list[HardBlocker]
 
 

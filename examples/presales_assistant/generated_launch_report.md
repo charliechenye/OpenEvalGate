@@ -4,13 +4,18 @@
 - **System name:** Presales Product Advisor
 - **Assistant type:** presales
 - **Evidence completeness score:** 37/100
-- **Observed behavioral quality:** Evaluated
+- **Evidence package band:** Incomplete
+- **Behavioral evidence status:** Evaluated — valid empirical rows are available.
 - **Critical-control status:** Fail
-- **Final launch recommendation:** Not ready
+- **Maximum permitted stage:** Documentation remediation
+- **Final launch recommendation:** Not ready for evaluation
+- **Recommended next action:** Complete required evidence and close evidence-package gaps.
 - **Hard blockers:** 4
 
 ## Evidence Completeness Score
 37/100
+Evidence package band: Incomplete
+Evidence package sufficient: No
 
 This score measures declared launch-control and governance evidence completeness. It does not measure observed behavioral quality or determine launch readiness by itself.
 
@@ -94,9 +99,7 @@ This score measures declared launch-control and governance evidence completeness
 - Rollback gate: partial
 
 ## Observed Behavioral Quality
-**Evaluated**
-
-Observed behavioral quality: Evaluated
+**Evaluated — valid empirical rows are available.**
 
 - Total result rows: 4
 - Latest run ID: run_001
@@ -134,6 +137,9 @@ The following critical controls failed:
 - `missing_rollback`
 - `missing_owner_signoff`
 
+## Maximum Permitted Stage
+Documentation remediation
+
 ## Required Mitigations
 - Launch blocker: High-impact workflows lack passing tail-risk/P0 review.
 - Launch blocker: High-risk escalation evidence contains under-escalation, wrong-destination, payload, or resume failures.
@@ -151,12 +157,7 @@ The following critical controls failed:
 - Owner signoff gate: Complete final review.
 
 ## Suggested Next Actions
-- Resolve hard blockers before any user-facing launch.
-- Close mitigation for Golden eval gate.
-- Close mitigation for Routing / capability allocation gate.
-- Close mitigation for Grounding gate.
-- Close mitigation for SOP/policy compilation gate.
-- Close mitigation for Tool/action safety gate.
+Complete required evidence and close evidence-package gaps.
 
 ## Final Launch Recommendation
-Not ready. Do not launch until hard blockers are resolved.
+Not ready for evaluation

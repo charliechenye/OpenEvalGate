@@ -4,7 +4,11 @@ from shutil import copytree
 
 import yaml
 
-from openevalgate.eval_results import summarize_eval_results, validate_eval_results
+from openevalgate.eval_results import (
+    classify_behavioral_evidence,
+    summarize_eval_results,
+    validate_eval_results,
+)
 from openevalgate.report import generate_report
 from openevalgate.validator import check_project
 
@@ -18,6 +22,30 @@ def test_valid_eval_results_pass() -> None:
 
     assert result.valid
     assert result.row_count == 6
+    assert classify_behavioral_evidence(CUSTOMER_SUPPORT).state == "available"
+
+
+def test_missing_eval_results_are_not_provided(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    copytree(CUSTOMER_SUPPORT, project)
+    (project / "eval_results.csv").unlink()
+
+    evidence = classify_behavioral_evidence(project)
+
+    assert evidence.state == "not_provided"
+    assert evidence.summary is None
+
+
+def test_header_only_eval_results_are_empty(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    copytree(CUSTOMER_SUPPORT, project)
+    header = (project / "eval_results.csv").read_text(encoding="utf-8").splitlines()[0]
+    (project / "eval_results.csv").write_text(header + "\n", encoding="utf-8")
+
+    evidence = classify_behavioral_evidence(project)
+
+    assert evidence.state == "empty"
+    assert evidence.summary is None
 
 
 def test_invalid_eval_results_fail(tmp_path: Path) -> None:
@@ -34,8 +62,11 @@ def test_invalid_eval_results_fail(tmp_path: Path) -> None:
     )
 
     result = validate_eval_results(project)
+    evidence = classify_behavioral_evidence(project)
 
     assert not result.valid
+    assert evidence.state == "invalid"
+    assert evidence.summary is None
     assert any("actual_route" in issue.path for issue in result.issues)
     assert any("route_match" in issue.path for issue in result.issues)
     assert any("score" in issue.path for issue in result.issues)

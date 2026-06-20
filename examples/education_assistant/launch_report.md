@@ -3,8 +3,11 @@
 - **System name:** Education Study Assistant
 - **Assistant type:** education
 - **Evidence completeness score:** 67/100
-- **Observed behavioral quality:** Evaluated
+- **Evidence package band:** Material gaps
+- **Behavioral evidence status:** Evaluated — valid empirical rows are available.
 - **Critical-control status:** Fail
-- **Final launch recommendation:** Not ready
+- **Maximum permitted stage:** Documentation remediation
+- **Final launch recommendation:** Not ready for evaluation
+- **Recommended next action:** Complete required evidence and close evidence-package gaps.
 
 This example is intentionally less complete than the customer support example. It shows how an assistant can have a useful PRD and critic rubric while still needing model arena, historical eval, and drift monitoring evidence before controlled launch.

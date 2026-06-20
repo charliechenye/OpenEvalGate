@@ -181,9 +181,12 @@ generated_launch_report.md
 The report should make clear:
 
 - evidence completeness score
-- observed behavioral quality
+- evidence package band
+- behavioral evidence status
 - critical-control status
+- maximum permitted stage
 - final launch recommendation
+- recommended next action
 - hard blockers
 - trust preservation evidence
 - business behavior contract evidence

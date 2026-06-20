@@ -3,9 +3,12 @@
 - **System name:**
 - **Assistant type:**
 - **Evidence completeness score:**
-- **Observed behavioral quality:**
+- **Evidence package band:**
+- **Behavioral evidence status:**
 - **Critical-control status:**
+- **Maximum permitted stage:**
 - **Final launch recommendation:**
+- **Recommended next action:**
 
 ## Executive Summary
 
@@ -14,6 +17,8 @@ Summarize what is ready, what is blocked, and whether launch would preserve user
 ## Evidence Completeness Score
 
 Report completeness of declared launch-control and governance evidence. Do not present this score as observed behavioral quality or as the final launch determination.
+
+Use only these evidence package bands: `Substantially complete`, `Material gaps`, or `Incomplete`.
 
 ## Hard Blockers
 
@@ -71,11 +76,15 @@ Summarize monitoring, drift review, incident response, and rollback evidence.
 
 Summarize externally generated candidate outputs and grading feedback from `eval_results.csv`, including required-escalation recall, over-escalation, destination accuracy, context preservation, fallback success, resume success, and late escalation.
 
-When no empirical result rows are available, state `Observed behavioral quality: Not evaluated` and explain whether the file is missing or empty.
+Use the exact behavioral-evidence wording for missing, empty, invalid, and available results. Do not calculate metrics from invalid rows.
 
 ## Critical-Control Status
 
 Report `Pass`, `Fail`, or `Not evaluated`. List failed critical controls when the status is `Fail`. Do not derive this status from the evidence completeness score.
+
+## Maximum Permitted Stage
+
+State the highest permitted stage from the deterministic assessment.
 
 ## Required Mitigations
 
@@ -85,7 +94,7 @@ Report `Pass`, `Fail`, or `Not evaluated`. List failed critical controls when th
 
 ## Suggested Next Actions
 
-List the next concrete actions needed before launch.
+State the deterministic recommended next action.
 
 ## Final Launch Recommendation
 

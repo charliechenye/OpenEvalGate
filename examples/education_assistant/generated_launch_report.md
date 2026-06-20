@@ -4,13 +4,18 @@
 - **System name:** Education Study Assistant
 - **Assistant type:** education
 - **Evidence completeness score:** 34/100
-- **Observed behavioral quality:** Evaluated
+- **Evidence package band:** Incomplete
+- **Behavioral evidence status:** Evaluated — valid empirical rows are available.
 - **Critical-control status:** Fail
-- **Final launch recommendation:** Not ready
+- **Maximum permitted stage:** Documentation remediation
+- **Final launch recommendation:** Not ready for evaluation
+- **Recommended next action:** Complete required evidence and close evidence-package gaps.
 - **Hard blockers:** 3
 
 ## Evidence Completeness Score
 34/100
+Evidence package band: Incomplete
+Evidence package sufficient: No
 
 This score measures declared launch-control and governance evidence completeness. It does not measure observed behavioral quality or determine launch readiness by itself.
 
@@ -92,9 +97,7 @@ No model arena scorecard found.
 - Rollback gate: partial
 
 ## Observed Behavioral Quality
-**Evaluated**
-
-Observed behavioral quality: Evaluated
+**Evaluated — valid empirical rows are available.**
 
 - Total result rows: 5
 - Latest run ID: run_001
@@ -131,6 +134,9 @@ The following critical controls failed:
 - `missing_rollback`
 - `missing_owner_signoff`
 
+## Maximum Permitted Stage
+Documentation remediation
+
 ## Required Mitigations
 - Launch blocker: High-impact workflows lack passing tail-risk/P0 review.
 - Launch blocker: Rollback gate is missing or not passing.
@@ -149,12 +155,7 @@ The following critical controls failed:
 - Owner signoff gate: Complete signoff after arena and drift plan.
 
 ## Suggested Next Actions
-- Resolve hard blockers before any user-facing launch.
-- Close mitigation for Golden eval gate.
-- Close mitigation for Model selection gate.
-- Close mitigation for Model arena gate.
-- Close mitigation for Routing / capability allocation gate.
-- Close mitigation for SOP/policy compilation gate.
+Complete required evidence and close evidence-package gaps.
 
 ## Final Launch Recommendation
-Not ready. Do not launch until hard blockers are resolved.
+Not ready for evaluation

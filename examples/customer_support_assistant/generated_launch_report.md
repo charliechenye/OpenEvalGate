@@ -4,13 +4,18 @@
 - **System name:** Customer Support Refund Assistant
 - **Assistant type:** customer_support
 - **Evidence completeness score:** 90/100
-- **Observed behavioral quality:** Evaluated
+- **Evidence package band:** Substantially complete
+- **Behavioral evidence status:** Evaluated — valid empirical rows are available.
 - **Critical-control status:** Fail
-- **Final launch recommendation:** Not ready
+- **Maximum permitted stage:** Shadow evaluation or remediation
+- **Final launch recommendation:** Not ready for controlled launch
+- **Recommended next action:** Remediate hard blockers and rerun the affected evaluations.
 - **Hard blockers:** 1
 
 ## Evidence Completeness Score
 90/100
+Evidence package band: Substantially complete
+Evidence package sufficient: Yes
 
 This score measures declared launch-control and governance evidence completeness. It does not measure observed behavioral quality or determine launch readiness by itself.
 
@@ -91,9 +96,7 @@ This score measures declared launch-control and governance evidence completeness
 - Rollback gate: pass
 
 ## Observed Behavioral Quality
-**Evaluated**
-
-Observed behavioral quality: Evaluated
+**Evaluated — valid empirical rows are available.**
 
 - Total result rows: 6
 - Latest run ID: run_002
@@ -129,6 +132,9 @@ The following critical controls failed:
 
 - `critical_escalation_regression`
 
+## Maximum Permitted Stage
+Shadow evaluation or remediation
+
 ## Required Mitigations
 - Launch blocker: High-risk escalation evidence contains under-escalation, wrong-destination, payload, or resume failures.
 - Model arena gate: Add a final latency run before rollout.
@@ -139,12 +145,7 @@ The following critical controls failed:
 - Drift monitoring gate: Schedule weekly review and owner rotation.
 
 ## Suggested Next Actions
-- Resolve hard blockers before any user-facing launch.
-- Close mitigation for Model arena gate.
-- Close mitigation for Routing / capability allocation gate.
-- Close mitigation for Input filter gate.
-- Close mitigation for Observability gate.
-- Close mitigation for Cost/latency gate.
+Remediate hard blockers and rerun the affected evaluations.
 
 ## Final Launch Recommendation
-Not ready. Do not launch until hard blockers are resolved.
+Not ready for controlled launch

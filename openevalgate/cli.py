@@ -57,6 +57,7 @@ def _check(args: argparse.Namespace) -> int:
         print(f"OK: {args.project_dir} contains required launch gate files.")
         if result.present_optional:
             print("Optional summaries found: " + ", ".join(result.present_optional))
+        print("Artifact validation passed. This is not a launch recommendation.")
         return 0
 
     print("Project check failed:")
@@ -64,6 +65,7 @@ def _check(args: argparse.Namespace) -> int:
         print(f"- Missing required file: {missing}")
     for issue in result.issues:
         print(f"- {issue.path}: {issue.message}")
+    print("Artifact validation failed. This is not a launch recommendation.")
     return 1
 
 

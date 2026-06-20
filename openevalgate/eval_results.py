@@ -89,6 +89,13 @@ class EvalResultsSummary:
     deterministic_path_compliance: float | None = None
 
 
+@dataclass(frozen=True)
+class BehavioralEvidence:
+    state: str
+    summary: EvalResultsSummary | None
+    issues: list[ValidationIssue]
+
+
 def read_eval_results(path: str | Path) -> list[dict[str, str]]:
     """Read eval result CSV rows."""
 
@@ -106,13 +113,20 @@ def validate_eval_results(project_dir: str | Path) -> EvalResultsValidationResul
 
     issues: list[ValidationIssue] = []
 
-    with results_path.open("r", encoding="utf-8", newline="") as handle:
-        reader = csv.DictReader(handle)
-        fieldnames = reader.fieldnames or []
-        missing_headers = [column for column in REQUIRED_EVAL_RESULT_COLUMNS if column not in fieldnames]
-        for header in missing_headers:
-            issues.append(ValidationIssue(f"{results_path}:{header}", "Required eval result column is missing."))
-        rows = list(reader)
+    try:
+        with results_path.open("r", encoding="utf-8", newline="") as handle:
+            reader = csv.DictReader(handle)
+            fieldnames = reader.fieldnames or []
+            missing_headers = [column for column in REQUIRED_EVAL_RESULT_COLUMNS if column not in fieldnames]
+            for header in missing_headers:
+                issues.append(ValidationIssue(f"{results_path}:{header}", "Required eval result column is missing."))
+            rows = list(reader)
+    except (csv.Error, OSError, UnicodeError) as exc:
+        return EvalResultsValidationResult(
+            False,
+            [ValidationIssue(str(results_path), f"Could not read eval results: {exc}")],
+            0,
+        )
 
     case_ids = _case_ids(root / "eval_cases.yaml")
     policy_path = root / "routing_policy.yaml"
@@ -210,6 +224,31 @@ def validate_eval_results(project_dir: str | Path) -> EvalResultsValidationResul
             )
 
     return EvalResultsValidationResult(not issues, issues, len(rows))
+
+
+def classify_behavioral_evidence(project_dir: str | Path) -> BehavioralEvidence:
+    """Classify eval results before any behavioral metrics are summarized."""
+
+    root = Path(project_dir)
+    path = root / "eval_results.csv"
+    if not path.is_file():
+        return BehavioralEvidence("not_provided", None, [])
+
+    validation = validate_eval_results(root)
+    if not validation.valid:
+        return BehavioralEvidence("invalid", None, validation.issues)
+    if validation.row_count == 0:
+        return BehavioralEvidence("empty", None, [])
+
+    try:
+        summary = summarize_eval_results(root)
+    except (csv.Error, OSError, UnicodeError, ValueError) as exc:
+        return BehavioralEvidence(
+            "invalid",
+            None,
+            [ValidationIssue(str(path), f"Could not summarize eval results: {exc}")],
+        )
+    return BehavioralEvidence("available", summary, [])
 
 
 def summarize_eval_results(project_dir: str | Path) -> EvalResultsSummary | None:
