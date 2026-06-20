@@ -196,12 +196,16 @@ Evidence package bands:
 
 These bands describe evidence completeness only. They do not grant a deployment stage. The final recommendation is determined separately from project validity, behavioral-evidence state, and known hard blockers. Missing, empty, or invalid `eval_results.csv` cannot produce a controlled-launch recommendation.
 
+In this iteration, even valid empirical rows with no known blockers permit only shadow evaluation. Controlled-launch readiness remains undetermined until minimum coverage, required critical slices, behavioral thresholds, repeated-run sufficiency, and complete hard-gate semantics are implemented.
+
 Behavioral evidence is reported as one of:
 
 - `Not evaluated — no results provided.`
 - `Not evaluated — results file contains no rows.`
 - `Invalid — results could not be validated.`
 - `Evaluated — valid empirical rows are available.`
+
+`Control evidence package sufficient for shadow evaluation` means only that the evidence score is at least 85, required project artifacts are present, and non-result project validation has no errors.
 
 ## Hard Blockers
 

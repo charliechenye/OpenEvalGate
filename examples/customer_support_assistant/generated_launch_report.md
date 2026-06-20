@@ -7,15 +7,15 @@
 - **Evidence package band:** Substantially complete
 - **Behavioral evidence status:** Evaluated — valid empirical rows are available.
 - **Critical-control status:** Fail
-- **Maximum permitted stage:** Shadow evaluation or remediation
+- **Maximum permitted stage:** Shadow evaluation with remediation
 - **Final launch recommendation:** Not ready for controlled launch
-- **Recommended next action:** Remediate hard blockers and rerun the affected evaluations.
+- **Recommended next actions:** Remediate known hard blockers.
 - **Hard blockers:** 1
 
 ## Evidence Completeness Score
 90/100
 Evidence package band: Substantially complete
-Evidence package sufficient: Yes
+Control evidence package sufficient for shadow evaluation: Yes
 
 This score measures declared launch-control and governance evidence completeness. It does not measure observed behavioral quality or determine launch readiness by itself.
 
@@ -133,7 +133,7 @@ The following critical controls failed:
 - `critical_escalation_regression`
 
 ## Maximum Permitted Stage
-Shadow evaluation or remediation
+Shadow evaluation with remediation
 
 ## Required Mitigations
 - Launch blocker: High-risk escalation evidence contains under-escalation, wrong-destination, payload, or resume failures.
@@ -144,8 +144,8 @@ Shadow evaluation or remediation
 - Cost/latency gate: Validate p95 latency under launch traffic.
 - Drift monitoring gate: Schedule weekly review and owner rotation.
 
-## Suggested Next Actions
-Remediate hard blockers and rerun the affected evaluations.
+## Recommended Next Actions
+- Remediate known hard blockers.
 
 ## Final Launch Recommendation
 Not ready for controlled launch

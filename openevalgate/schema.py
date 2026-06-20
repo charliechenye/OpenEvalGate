@@ -156,12 +156,12 @@ class LaunchAssessment:
 
     evidence_completeness_score: int
     evidence_band: str
-    evidence_package_sufficient: bool
+    control_evidence_sufficient_for_shadow: bool
     behavioral_evidence_state: str
     critical_control_status: str
     maximum_permitted_stage: str
     recommendation: str
-    recommended_next_action: str
+    recommended_next_actions: list[str]
     hard_blockers: list[HardBlocker]
 
 

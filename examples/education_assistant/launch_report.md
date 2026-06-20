@@ -4,10 +4,11 @@
 - **Assistant type:** education
 - **Evidence completeness score:** 67/100
 - **Evidence package band:** Material gaps
+- **Control evidence package sufficient for shadow evaluation:** No
 - **Behavioral evidence status:** Evaluated — valid empirical rows are available.
 - **Critical-control status:** Fail
 - **Maximum permitted stage:** Documentation remediation
 - **Final launch recommendation:** Not ready for evaluation
-- **Recommended next action:** Complete required evidence and close evidence-package gaps.
+- **Recommended next actions:** Complete missing or invalid control-evidence requirements; Remediate known hard blockers.
 
 This example is intentionally less complete than the customer support example. It shows how an assistant can have a useful PRD and critic rubric while still needing model arena, historical eval, and drift monitoring evidence before controlled launch.

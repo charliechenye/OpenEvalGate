@@ -47,6 +47,8 @@ The 100-point score measures completeness of declared launch-control and governa
 
 The final recommendation is produced by a separate deterministic assessment. It considers whether the evidence package is sufficient, whether behavioral evidence is missing, empty, invalid, or available, and whether known hard blockers exist.
 
+The sufficiency field is named `Control evidence package sufficient for shadow evaluation`. It does not imply behavioral sufficiency or launch readiness.
+
 Owner signoff is a non-scored launch blocker. High evidence completeness does not replace accountable approval or observed behavioral evidence.
 
 ## Launch decision outputs
@@ -60,6 +62,8 @@ The generated report independently states:
 - Recommended next action.
 
 Malformed results are `Invalid`, not missing evidence. Known blockers remain `Fail` even when behavioral evidence has not been provided.
+
+Valid result rows with no known blockers use `No known blockers detected`, not `Pass`. The maximum permitted stage remains `Shadow evaluation`, and controlled-launch readiness remains undetermined until coverage and threshold policy is implemented.
 
 The Routing / capability allocation gate shares the existing model-selection readiness category. It does not increase the 100-point total. Single-model systems without workflow-specific allocation may mark it `not_applicable`; multi-workflow systems should provide versioned assignments, eval evidence, fallbacks, observability, and rollback.
 

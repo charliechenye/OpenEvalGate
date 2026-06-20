@@ -9,13 +9,13 @@
 - **Critical-control status:** Fail
 - **Maximum permitted stage:** Documentation remediation
 - **Final launch recommendation:** Not ready for evaluation
-- **Recommended next action:** Complete required evidence and close evidence-package gaps.
+- **Recommended next actions:** Complete missing or invalid control-evidence requirements.; Remediate known hard blockers.
 - **Hard blockers:** 4
 
 ## Evidence Completeness Score
 37/100
 Evidence package band: Incomplete
-Evidence package sufficient: No
+Control evidence package sufficient for shadow evaluation: No
 
 This score measures declared launch-control and governance evidence completeness. It does not measure observed behavioral quality or determine launch readiness by itself.
 
@@ -156,8 +156,9 @@ Documentation remediation
 - Rollback gate: Define launch stop criteria.
 - Owner signoff gate: Complete final review.
 
-## Suggested Next Actions
-Complete required evidence and close evidence-package gaps.
+## Recommended Next Actions
+- Complete missing or invalid control-evidence requirements.
+- Remediate known hard blockers.
 
 ## Final Launch Recommendation
 Not ready for evaluation

@@ -8,11 +8,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from openevalgate.assessment import (
-    EVIDENCE_SUFFICIENCY_SCORE,
-    assess_launch,
-    behavioral_evidence_display,
-)
+from openevalgate.assessment import assess_launch, behavioral_evidence_display
 from openevalgate.escalation import summarize_escalation_contract, validate_escalation_contract
 from openevalgate.eval_results import BehavioralEvidence, classify_behavioral_evidence, read_eval_results
 from openevalgate.routing import summarize_routing_policy, validate_routing_policy
@@ -36,14 +32,13 @@ def generate_report(project_dir: str | Path) -> str:
         include_behavioral_results=behavioral_evidence.state == "available",
     )
     score = score_gates(gates)
-    evidence_package_sufficient = (
-        score.score >= EVIDENCE_SUFFICIENCY_SCORE
-        and not check.missing_required
+    project_evidence_valid = (
+        not check.missing_required
         and not _non_eval_result_issues(check.issues)
     )
     assessment = assess_launch(
         evidence_completeness_score=score.score,
-        evidence_package_sufficient=evidence_package_sufficient,
+        project_evidence_valid=project_evidence_valid,
         behavioral_evidence_state=behavioral_evidence.state,
         hard_blockers=blockers,
     )
@@ -58,7 +53,10 @@ def generate_report(project_dir: str | Path) -> str:
         "## Evidence Completeness Score",
         f"{assessment.evidence_completeness_score}/100",
         f"Evidence package band: {assessment.evidence_band}",
-        f"Evidence package sufficient: {'Yes' if assessment.evidence_package_sufficient else 'No'}",
+        (
+            "Control evidence package sufficient for shadow evaluation: "
+            f"{'Yes' if assessment.control_evidence_sufficient_for_shadow else 'No'}"
+        ),
         "",
         (
             "This score measures declared launch-control and governance evidence completeness. "
@@ -119,8 +117,8 @@ def generate_report(project_dir: str | Path) -> str:
         "## Required Mitigations",
         _required_mitigations(score.weak_gates, check.missing_required, blockers),
         "",
-        "## Suggested Next Actions",
-        assessment.recommended_next_action,
+        "## Recommended Next Actions",
+        _recommended_next_actions(assessment),
         "",
         "## Final Launch Recommendation",
         assessment.recommendation,
@@ -270,7 +268,8 @@ def _executive_summary(
             f"- **Critical-control status:** {assessment.critical_control_status}",
             f"- **Maximum permitted stage:** {assessment.maximum_permitted_stage}",
             f"- **Final launch recommendation:** {assessment.recommendation}",
-            f"- **Recommended next action:** {assessment.recommended_next_action}",
+            "- **Recommended next actions:** "
+            + "; ".join(assessment.recommended_next_actions),
             f"- **Hard blockers:** {len(assessment.hard_blockers)}",
         ]
     )
@@ -482,8 +481,11 @@ def _observed_behavioral_quality(evidence: BehavioralEvidence) -> str:
 def _critical_control_summary(assessment: LaunchAssessment) -> str:
     if assessment.critical_control_status == "Not evaluated":
         return "**Not evaluated**\n\nNo known blockers were found, but valid empirical behavior has not established a pass."
-    if assessment.critical_control_status == "Pass":
-        return "**Pass**\n\nNo hard blockers detected in the available evidence."
+    if assessment.critical_control_status == "No known blockers detected":
+        return (
+            "**No known blockers detected**\n\n"
+            "Available evidence has not established that all critical controls pass."
+        )
     return "\n".join(
         [
             "**Fail**",
@@ -492,6 +494,12 @@ def _critical_control_summary(assessment: LaunchAssessment) -> str:
             "",
             *[f"- `{blocker.id}`" for blocker in assessment.hard_blockers],
         ]
+    )
+
+
+def _recommended_next_actions(assessment: LaunchAssessment) -> str:
+    return "\n".join(
+        f"- {action}" for action in assessment.recommended_next_actions
     )
 
 

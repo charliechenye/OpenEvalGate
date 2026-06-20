@@ -4,11 +4,12 @@
 - **Assistant type:**
 - **Evidence completeness score:**
 - **Evidence package band:**
+- **Control evidence package sufficient for shadow evaluation:**
 - **Behavioral evidence status:**
 - **Critical-control status:**
 - **Maximum permitted stage:**
 - **Final launch recommendation:**
-- **Recommended next action:**
+- **Recommended next actions:**
 
 ## Executive Summary
 
@@ -19,6 +20,8 @@ Summarize what is ready, what is blocked, and whether launch would preserve user
 Report completeness of declared launch-control and governance evidence. Do not present this score as observed behavioral quality or as the final launch determination.
 
 Use only these evidence package bands: `Substantially complete`, `Material gaps`, or `Incomplete`.
+
+State whether the control evidence package is sufficient for shadow evaluation only. Do not imply behavioral sufficiency or controlled-launch readiness.
 
 ## Hard Blockers
 
@@ -80,11 +83,11 @@ Use the exact behavioral-evidence wording for missing, empty, invalid, and avail
 
 ## Critical-Control Status
 
-Report `Pass`, `Fail`, or `Not evaluated`. List failed critical controls when the status is `Fail`. Do not derive this status from the evidence completeness score.
+Report `Fail`, `Not evaluated`, or `No known blockers detected`. Do not use `Pass` until complete critical-control policy exists.
 
 ## Maximum Permitted Stage
 
-State the highest permitted stage from the deterministic assessment.
+State the highest permitted stage from the deterministic assessment. Do not permit controlled launch in this iteration.
 
 ## Required Mitigations
 
@@ -92,7 +95,7 @@ State the highest permitted stage from the deterministic assessment.
 | --- | --- | --- | --- |
 |  |  |  |  |
 
-## Suggested Next Actions
+## Recommended Next Actions
 
 State the deterministic recommended next action.
 

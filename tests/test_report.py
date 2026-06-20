@@ -41,7 +41,7 @@ def test_high_evidence_completeness_can_still_be_not_ready() -> None:
     assert "**Evidence package band:** Substantially complete" in report
     assert "**Behavioral evidence status:** Evaluated — valid empirical rows are available." in report
     assert "**Critical-control status:** Fail" in report
-    assert "**Maximum permitted stage:** Shadow evaluation or remediation" in report
+    assert "**Maximum permitted stage:** Shadow evaluation with remediation" in report
     assert "**Final launch recommendation:** Not ready for controlled launch" in report
     assert "## Evidence Completeness Score\n90/100" in report
     assert "Overall Readiness Score" not in report
@@ -170,8 +170,12 @@ def test_empirical_results_without_hard_blockers_pass_critical_controls(tmp_path
 
     assert "**Evidence completeness score:** 90/100" in report
     assert "**Behavioral evidence status:** Evaluated — valid empirical rows are available." in report
-    assert "**Critical-control status:** Pass" in report
-    assert "**Final launch recommendation:** Ready for bounded controlled launch" in report
+    assert "**Critical-control status:** No known blockers detected" in report
+    assert "**Maximum permitted stage:** Shadow evaluation" in report
+    assert "**Final launch recommendation:** Controlled-launch readiness not yet determined" in report
+    assert "Verify required-slice coverage and behavioral thresholds before controlled launch." in report
+    assert "Ready for bounded controlled launch" not in report
+    assert "Critical-control status: Pass" not in report
 
 
 def test_malformed_eval_results_are_invalid_not_missing(tmp_path: Path) -> None:
@@ -188,6 +192,23 @@ def test_malformed_eval_results_are_invalid_not_missing(tmp_path: Path) -> None:
     assert "**Final launch recommendation:** Not ready" in report
     assert "**Maximum permitted stage:** Documentation remediation" in report
     assert "Validation issues:" in report
+
+
+def test_invalid_results_and_incomplete_control_package_show_all_actions(
+    tmp_path: Path,
+) -> None:
+    project = tmp_path / "project"
+    copytree(CUSTOMER_SUPPORT, project)
+    (project / "business_behavior_contract.md").unlink()
+    (project / "eval_results.csv").write_text(
+        "run_id,case_id\nrun_1,refund_boundary_case_001\n",
+        encoding="utf-8",
+    )
+
+    report = generate_report(project)
+
+    assert "Repair and revalidate eval_results.csv." in report
+    assert "Complete missing or invalid control-evidence requirements." in report
 
 
 def test_missing_results_do_not_hide_known_blockers(tmp_path: Path) -> None:
@@ -216,10 +237,14 @@ def test_missing_results_do_not_hide_known_blockers(tmp_path: Path) -> None:
 )
 def test_generated_example_reports_are_reproducible(example_name: str) -> None:
     project = ROOT / "examples" / example_name
+    report = generate_report(project)
 
     assert (project / "generated_launch_report.md").read_text(
         encoding="utf-8"
-    ) == generate_report(project)
+    ) == report
+    assert "Ready for bounded controlled launch" not in report
+    assert "Critical-control status: Pass" not in report
+    assert "**Pass**" not in report
 
 
 def test_cli_commands_retain_success_exit_behavior(capsys: pytest.CaptureFixture[str]) -> None:

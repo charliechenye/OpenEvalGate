@@ -4,11 +4,12 @@
 - **Assistant type:** customer_support
 - **Evidence completeness score:** 80/100
 - **Evidence package band:** Material gaps
+- **Control evidence package sufficient for shadow evaluation:** No
 - **Behavioral evidence status:** Evaluated — valid empirical rows are available.
 - **Critical-control status:** Fail
 - **Maximum permitted stage:** Documentation remediation
 - **Final launch recommendation:** Not ready for evaluation
-- **Recommended next action:** Complete required evidence and close evidence-package gaps.
+- **Recommended next actions:** Complete missing or invalid control-evidence requirements; Remediate known hard blockers.
 
 ## Passed Gates
 
@@ -27,7 +28,7 @@ Model arena, tool/action safety, input filter, observability, cost/latency, drif
 - Schedule weekly fresh drift sample review.
 - Fix escalation failure observed in `refund_abuse_history_002`.
 
-## Suggested Next Actions
+## Recommended Next Actions
 
 Run final launch readiness review after mitigations close, then launch to a controlled cohort with explicit rollback criteria.
 

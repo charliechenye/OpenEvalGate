@@ -12,7 +12,7 @@ BEHAVIORAL_EVIDENCE_STATES = {"not_provided", "empty", "invalid", "available"}
 def assess_launch(
     *,
     evidence_completeness_score: int,
-    evidence_package_sufficient: bool,
+    project_evidence_valid: bool,
     behavioral_evidence_state: str,
     hard_blockers: list[HardBlocker],
 ) -> LaunchAssessment:
@@ -21,46 +21,56 @@ def assess_launch(
     if behavioral_evidence_state not in BEHAVIORAL_EVIDENCE_STATES:
         raise ValueError(f"Unknown behavioral evidence state: {behavioral_evidence_state}")
 
+    control_evidence_sufficient_for_shadow = (
+        evidence_completeness_score >= EVIDENCE_SUFFICIENCY_SCORE
+        and project_evidence_valid
+    )
     critical_control_status = _critical_control_status(
         behavioral_evidence_state,
         hard_blockers,
     )
+    next_actions: list[str] = []
 
-    if not evidence_package_sufficient:
+    if behavioral_evidence_state == "invalid":
+        next_actions.append("Repair and revalidate eval_results.csv.")
+    if not control_evidence_sufficient_for_shadow:
+        next_actions.append("Complete missing or invalid control-evidence requirements.")
+    if hard_blockers:
+        next_actions.append("Remediate known hard blockers.")
+
+    if not control_evidence_sufficient_for_shadow:
         maximum_permitted_stage = "Documentation remediation"
         recommendation = "Not ready for evaluation"
-        next_action = "Complete required evidence and close evidence-package gaps."
     elif behavioral_evidence_state == "invalid":
         maximum_permitted_stage = "Documentation remediation"
         recommendation = "Not ready"
-        next_action = "Repair and revalidate eval_results.csv."
     elif behavioral_evidence_state in {"not_provided", "empty"}:
         if hard_blockers:
             maximum_permitted_stage = "Documentation remediation"
             recommendation = "Not ready for shadow evaluation"
-            next_action = "Remediate known hard blockers before shadow evaluation."
         else:
             maximum_permitted_stage = "Shadow evaluation"
             recommendation = "Not ready for controlled launch"
-            next_action = "Run shadow evaluations and provide valid empirical result rows."
+            next_actions.append("Run shadow evaluations and provide valid empirical result rows.")
     elif hard_blockers:
-        maximum_permitted_stage = "Shadow evaluation or remediation"
+        maximum_permitted_stage = "Shadow evaluation with remediation"
         recommendation = "Not ready for controlled launch"
-        next_action = "Remediate hard blockers and rerun the affected evaluations."
     else:
-        maximum_permitted_stage = "Controlled launch, subject to later threshold policy"
-        recommendation = "Ready for bounded controlled launch"
-        next_action = "Conduct a bounded controlled launch with monitoring and rollback."
+        maximum_permitted_stage = "Shadow evaluation"
+        recommendation = "Controlled-launch readiness not yet determined"
+        next_actions.append(
+            "Verify required-slice coverage and behavioral thresholds before controlled launch."
+        )
 
     return LaunchAssessment(
         evidence_completeness_score=evidence_completeness_score,
         evidence_band=evidence_completeness_band(evidence_completeness_score),
-        evidence_package_sufficient=evidence_package_sufficient,
+        control_evidence_sufficient_for_shadow=control_evidence_sufficient_for_shadow,
         behavioral_evidence_state=behavioral_evidence_state,
         critical_control_status=critical_control_status,
         maximum_permitted_stage=maximum_permitted_stage,
         recommendation=recommendation,
-        recommended_next_action=next_action,
+        recommended_next_actions=next_actions,
         hard_blockers=hard_blockers,
     )
 
@@ -97,5 +107,5 @@ def _critical_control_status(
     if hard_blockers:
         return "Fail"
     if behavioral_evidence_state == "available":
-        return "Pass"
+        return "No known blockers detected"
     return "Not evaluated"
