@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
+from openevalgate.action_risk import ActionRiskReview, inspect_action_risk_matrix
 from openevalgate.escalation import validate_escalation_contract
 from openevalgate.eval_results import validate_eval_results
+from openevalgate.launch_gate_review import (
+    LaunchGateReview,
+    parse_launch_gate_review,
+)
 from openevalgate.routing import validate_routing_policy
 from openevalgate.schema import ValidationIssue, validate_eval_cases
 
@@ -44,6 +49,17 @@ class ProjectCheckResult:
     missing_required: list[str]
     present_optional: list[str]
     issues: list[ValidationIssue]
+    launch_gate_review: LaunchGateReview = field(
+        default_factory=lambda: LaunchGateReview(
+            [],
+            [],
+            frozenset(),
+            [],
+        )
+    )
+    action_risk_review: ActionRiskReview = field(
+        default_factory=lambda: ActionRiskReview(False, False, [], [])
+    )
 
 
 def check_project(project_dir: str | Path) -> ProjectCheckResult:
@@ -53,7 +69,15 @@ def check_project(project_dir: str | Path) -> ProjectCheckResult:
     issues: list[ValidationIssue] = []
 
     if not root.exists() or not root.is_dir():
-        return ProjectCheckResult(False, root, REQUIRED_PROJECT_FILES, [], [ValidationIssue(str(root), "Project directory not found.")])
+        return ProjectCheckResult(
+            False,
+            root,
+            REQUIRED_PROJECT_FILES,
+            [],
+            [ValidationIssue(str(root), "Project directory not found.")],
+            LaunchGateReview([], [], frozenset(), []),
+            ActionRiskReview(False, False, [], []),
+        )
 
     missing = [name for name in REQUIRED_PROJECT_FILES if not (root / name).is_file()]
     present_optional = [name for name in OPTIONAL_PROJECT_FILES if (root / name).is_file()]
@@ -77,5 +101,21 @@ def check_project(project_dir: str | Path) -> ProjectCheckResult:
         routing_validation = validate_routing_policy(routing_path, eval_path)
         issues.extend(routing_validation.issues)
 
+    launch_gate_review = parse_launch_gate_review(root / "launch_gate_review.md")
+    issues.extend(launch_gate_review.issues)
+
+    action_risk_review = inspect_action_risk_matrix(
+        root / "action_risk_matrix.csv"
+    )
+    issues.extend(action_risk_review.issues)
+
     valid = not missing and not issues
-    return ProjectCheckResult(valid, root, missing, present_optional, issues)
+    return ProjectCheckResult(
+        valid,
+        root,
+        missing,
+        present_optional,
+        issues,
+        launch_gate_review,
+        action_risk_review,
+    )

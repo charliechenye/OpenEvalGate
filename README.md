@@ -207,18 +207,20 @@ Behavioral evidence is reported as one of:
 
 `Control evidence completeness threshold met` means only that the evidence score is at least 85, required project artifacts are present, and non-result project validation has no errors. Meeting this threshold does not override hard blockers or grant permission to begin shadow evaluation.
 
+`openevalgate check` validates whether project artifacts and gate declarations are structurally usable. A supported `partial` or `fail` declaration is structurally valid, so it does not make `check` fail; it does create a launch-policy blocker in the report. Unsupported statuses, duplicate standard gates, prohibited `not_applicable` declarations, and malformed required artifacts fail `check`.
+
 ## Hard Blockers
 
-Regardless of score, OpenEvalGate prevents controlled launch when:
+Eight centralized hard gates are evaluated independently from the evidence-completeness score:
 
-- Scope is missing or failed.
-- Golden eval set is missing or invalid.
-- Tail-risk/P0 review is missing or failed for high-impact workflows.
-- A high-risk action lacks deterministic enforcement or human approval.
-- High-risk or low-confidence cases lack an escalation path.
-- Rollback is missing or not passing.
-- Owner signoff is missing or not passing.
-- Observability/monitoring is missing or failed.
+- Scope and golden eval are always applicable.
+- Tail-risk/P0 and human escalation are applicable to high-impact projects.
+- Tool/action safety is applicable when the validated action matrix contains actions.
+- Observability, rollback, and owner signoff are always applicable.
+
+An applicable hard gate requires `pass`, a meaningful evidence cell, and any gate-specific artifact evidence. `partial`, `fail`, missing, or prohibited `not_applicable` declarations block advancement. When conditional applicability cannot be established because source evidence is missing or invalid, the gate is blocked rather than treated as non-applicable.
+
+Independent blockers, such as an ungated high-risk action or a behavioral escalation regression, remain separate from the eight policy-gate blocker IDs.
 
 ## Templates
 

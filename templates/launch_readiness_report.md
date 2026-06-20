@@ -23,6 +23,16 @@ Use only these evidence package bands: `Substantially complete`, `Material gaps`
 
 State whether the control evidence completeness threshold is met. Explain that meeting it does not override hard blockers or grant permission to begin shadow evaluation.
 
+## Hard-Gate Evaluation
+
+Render one deterministic row for each centralized hard gate:
+
+| Gate | Applicable | Required status | Actual status | Outcome |
+| --- | --- | --- | --- | --- |
+|  | Yes / No / Unknown | pass / pass when applicable | pass / partial / fail / not_applicable / missing / invalid | Satisfied / Blocked / Not applicable / Invalid |
+
+Unknown applicability must be `Blocked`. Unsupported or duplicate declarations must be `Invalid`; do not select one duplicate row.
+
 ## Hard Blockers
 
 List blockers that force `Not ready` regardless of score.

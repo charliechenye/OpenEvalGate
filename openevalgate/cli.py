@@ -6,9 +6,9 @@ import argparse
 import sys
 from pathlib import Path
 
+from openevalgate.project_inspection import inspect_project
 from openevalgate.report import generate_report, write_report
 from openevalgate.schema import validate_eval_cases
-from openevalgate.validator import check_project
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -52,8 +52,9 @@ def _validate(args: argparse.Namespace) -> int:
 
 
 def _check(args: argparse.Namespace) -> int:
-    result = check_project(args.project_dir)
-    if result.valid:
+    inspection = inspect_project(args.project_dir)
+    result = inspection.check
+    if inspection.valid:
         print(f"OK: {args.project_dir} contains required launch gate files.")
         if result.present_optional:
             print("Optional summaries found: " + ", ".join(result.present_optional))
@@ -64,6 +65,8 @@ def _check(args: argparse.Namespace) -> int:
     for missing in result.missing_required:
         print(f"- Missing required file: {missing}")
     for issue in result.issues:
+        print(f"- {issue.path}: {issue.message}")
+    for issue in inspection.policy_issues:
         print(f"- {issue.path}: {issue.message}")
     print("Artifact validation failed. This is not a launch recommendation.")
     return 1

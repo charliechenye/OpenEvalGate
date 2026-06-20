@@ -23,6 +23,7 @@ def test_report_generation_returns_expected_sections() -> None:
     assert "## Observed Behavioral Quality" in report
     assert "## Critical-Control Status" in report
     assert "## Maximum Permitted Stage" in report
+    assert "## Hard-Gate Evaluation" in report
     assert "## Hard Blockers" in report
     assert "## Trust Preservation Summary" in report
     assert "## Business Behavior Contract Summary" in report
@@ -128,9 +129,10 @@ def test_missing_eval_results_are_not_evaluated_and_cap_launch_recommendation(tm
     report = generate_report(project)
 
     assert "**Behavioral evidence status:** Not evaluated — no results provided." in report
-    assert "**Critical-control status:** Not evaluated" in report
-    assert "**Final launch recommendation:** Not ready for controlled launch" in report
-    assert "**Maximum permitted stage:** Shadow evaluation" in report
+    assert "**Critical-control status:** Fail" in report
+    assert "**Final launch recommendation:** Not ready for shadow evaluation" in report
+    assert "**Maximum permitted stage:** Documentation remediation" in report
+    assert "`missing_monitoring`" in report
     assert "Ready for bounded controlled launch" not in report
 
 
@@ -143,9 +145,9 @@ def test_empty_eval_results_are_distinguished_from_missing_results(tmp_path: Pat
     report = generate_report(project)
 
     assert "**Behavioral evidence status:** Not evaluated — results file contains no rows." in report
-    assert "**Critical-control status:** Not evaluated" in report
-    assert "**Final launch recommendation:** Not ready for controlled launch" in report
-    assert "**Maximum permitted stage:** Shadow evaluation" in report
+    assert "**Critical-control status:** Fail" in report
+    assert "**Final launch recommendation:** Not ready for shadow evaluation" in report
+    assert "**Maximum permitted stage:** Documentation remediation" in report
 
 
 def test_empirical_results_without_hard_blockers_remain_shadow_only(tmp_path: Path) -> None:
@@ -172,6 +174,14 @@ def test_empirical_results_without_hard_blockers_remain_shadow_only(tmp_path: Pa
             ]
         )
         + "\n",
+        encoding="utf-8",
+    )
+    gate_review = project / "launch_gate_review.md"
+    gate_review.write_text(
+        gate_review.read_text(encoding="utf-8").replace(
+            "| Observability gate | partial |",
+            "| Observability gate | pass |",
+        ),
         encoding="utf-8",
     )
 
@@ -364,3 +374,44 @@ def test_high_risk_action_without_controls_is_hard_blocker(tmp_path: Path) -> No
 
     assert "ungated_high_risk_action" in report
     assert "Not ready" in report
+
+
+def test_report_renders_duplicate_gate_as_invalid(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    copytree(CUSTOMER_SUPPORT, project)
+    path = project / "launch_gate_review.md"
+    path.write_text(
+        path.read_text(encoding="utf-8")
+        + "| Rollback gate | pass | duplicate evidence | None | owner |\n",
+        encoding="utf-8",
+    )
+
+    report = generate_report(project)
+
+    assert (
+        "| rollback gate | Yes | pass | invalid: duplicate rows | Invalid |"
+        in report
+    )
+    assert "`missing_rollback`" in report
+
+
+def test_report_renders_unsupported_gate_status_as_invalid(
+    tmp_path: Path,
+) -> None:
+    project = tmp_path / "project"
+    copytree(CUSTOMER_SUPPORT, project)
+    path = project / "launch_gate_review.md"
+    path.write_text(
+        path.read_text(encoding="utf-8").replace(
+            "| Rollback gate | pass |",
+            "| Rollback gate | warning |",
+        ),
+        encoding="utf-8",
+    )
+
+    report = generate_report(project)
+
+    assert (
+        "| rollback gate | Yes | pass | invalid: warning | Invalid |"
+        in report
+    )
