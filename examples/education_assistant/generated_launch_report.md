@@ -9,7 +9,7 @@
 - **Critical-control status:** Fail
 - **Maximum permitted stage:** Documentation remediation
 - **Final launch recommendation:** Not ready to advance beyond documentation remediation
-- **Recommended next actions:** Complete missing or invalid control-evidence requirements.; Remediate known hard blockers.
+- **Recommended next actions:** Complete missing or invalid control-evidence requirements; Remediate known hard blockers.
 - **Hard blockers:** 3
 
 ## Evidence Completeness Score

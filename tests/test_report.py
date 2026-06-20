@@ -254,6 +254,7 @@ def test_generated_example_reports_are_reproducible(example_name: str) -> None:
     assert "Ready for bounded controlled launch" not in report
     assert "Critical-control status: Pass" not in report
     assert "**Pass**" not in report
+    assert ".;" not in report
 
 
 def test_cli_commands_retain_success_exit_behavior(capsys: pytest.CaptureFixture[str]) -> None:

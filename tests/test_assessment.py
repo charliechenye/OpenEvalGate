@@ -103,7 +103,7 @@ def test_incomplete_evidence_package_takes_precedence() -> None:
     assert result.recommendation == "Not ready to advance beyond documentation remediation"
 
 
-def test_score_84_is_insufficient_for_shadow_evaluation() -> None:
+def test_score_84_does_not_meet_control_evidence_threshold() -> None:
     result = assess_launch(
         evidence_completeness_score=84,
         project_evidence_valid=True,
@@ -114,7 +114,7 @@ def test_score_84_is_insufficient_for_shadow_evaluation() -> None:
     assert not result.control_evidence_completeness_threshold_met
 
 
-def test_score_85_is_sufficient_for_shadow_evaluation() -> None:
+def test_score_85_meets_control_evidence_threshold_for_valid_project() -> None:
     result = assess_launch(
         evidence_completeness_score=85,
         project_evidence_valid=True,
