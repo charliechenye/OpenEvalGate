@@ -100,7 +100,7 @@ def test_incomplete_evidence_package_takes_precedence() -> None:
     )
 
     assert result.maximum_permitted_stage == "Documentation remediation"
-    assert result.recommendation == "Not ready for evaluation"
+    assert result.recommendation == "Not ready to advance beyond documentation remediation"
 
 
 def test_score_84_is_insufficient_for_shadow_evaluation() -> None:

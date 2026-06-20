@@ -40,7 +40,7 @@ def assess_launch(
 
     if not control_evidence_completeness_threshold_met:
         maximum_permitted_stage = "Documentation remediation"
-        recommendation = "Not ready for evaluation"
+        recommendation = "Not ready to advance beyond documentation remediation"
     elif behavioral_evidence_state == "invalid":
         maximum_permitted_stage = "Documentation remediation"
         recommendation = "Not ready"

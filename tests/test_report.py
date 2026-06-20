@@ -343,7 +343,7 @@ def test_missing_files_report_shows_gaps_and_not_ready(tmp_path: Path) -> None:
     assert "missing_rollback" in report
     assert "missing_owner_signoff" in report
     assert "missing_monitoring" in report
-    assert "Not ready for evaluation" in report
+    assert "Not ready to advance beyond documentation remediation" in report
 
 
 def test_high_risk_action_without_controls_is_hard_blocker(tmp_path: Path) -> None:

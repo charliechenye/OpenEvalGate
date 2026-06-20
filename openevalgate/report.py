@@ -484,11 +484,14 @@ def _observed_behavioral_quality(evidence: BehavioralEvidence) -> str:
 
 def _critical_control_summary(assessment: LaunchAssessment) -> str:
     if assessment.critical_control_status == "Not evaluated":
-        return "**Not evaluated**\n\nNo known blockers were found, but valid empirical behavior has not established a pass."
+        return (
+            "**Not evaluated**\n\n"
+            "No known blockers were found, but critical-control sufficiency has not been evaluated."
+        )
     if assessment.critical_control_status == "No known blockers detected":
         return (
             "**No known blockers detected**\n\n"
-            "Available evidence has not established that all critical controls pass."
+            "Available evidence has not established that all critical controls are satisfied."
         )
     return "\n".join(
         [
