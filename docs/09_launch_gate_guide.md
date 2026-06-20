@@ -91,3 +91,10 @@ The generated report evaluates these gates in a stable order:
 For an applicable gate, `partial`, `fail`, missing, and `not_applicable` are blocking. A `pass` with blank or placeholder evidence such as `none`, `n/a`, `TBD`, or `unknown` is also blocking. Conditional applicability is tri-state: true, false, or unknown. Unknown applicability is blocked because missing evidence must not create a permissive result.
 
 A valid empty action matrix establishes that tool/action safety is not applicable. A missing or invalid matrix leaves applicability unknown and fails project validation independently. Unsafe high-risk rows continue to create the separate `ungated_high_risk_action` blocker even when the declared gate says `pass`.
+
+An action-risk row is populated when any CSV cell contains a non-whitespace
+value. Every populated row requires a nonblank action, a risk tier of `low`,
+`medium`, `high`, or `prohibited`, and a `human_review_required` value of
+`true` or `false`. If any row is invalid, the complete matrix is untrusted:
+parsed rows may still support diagnostics, but none may determine
+applicability, impact, artifact satisfaction, or unsafe-action blockers.

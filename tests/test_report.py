@@ -5,6 +5,8 @@ from shutil import copytree
 import pytest
 
 from openevalgate.cli import main
+from openevalgate.launch_gate_review import is_meaningful_mitigation
+from openevalgate.project_inspection import inspect_project
 from openevalgate.report import _non_eval_result_issues, generate_report
 from openevalgate.schema import ValidationIssue, load_eval_cases
 from openevalgate.scorer import WEIGHTS, score_gates, GateRow
@@ -265,6 +267,100 @@ def test_generated_example_reports_are_reproducible(example_name: str) -> None:
     assert "Critical-control status: Pass" not in report
     assert "**Pass**" not in report
     assert ".;" not in report
+
+
+@pytest.mark.parametrize(
+    ("example_name", "expected_score", "rollback_status"),
+    [
+        ("customer_support_assistant", 90, "pass"),
+        ("presales_assistant", 37, "partial"),
+        ("education_assistant", 34, "partial"),
+    ],
+)
+def test_canonical_scores_and_rollback_sections_are_consistent(
+    example_name: str,
+    expected_score: int,
+    rollback_status: str,
+) -> None:
+    project = ROOT / "examples" / example_name
+    inspection = inspect_project(project)
+    score = score_gates(inspection.launch_gate_review)
+    report = generate_report(project)
+
+    assert score.score == expected_score
+    assert (
+        f"| rollback gate | Yes | pass | {rollback_status} |"
+        in report
+    )
+    assert f"- Rollback gate: {rollback_status}" in report
+
+
+def test_non_scored_hard_gate_mitigations_remain_in_example_reports() -> None:
+    presales = generate_report(ROOT / "examples" / "presales_assistant")
+    education = generate_report(ROOT / "examples" / "education_assistant")
+
+    assert "- Rollback gate: Define launch stop criteria." in presales
+    assert "- Owner signoff gate: Complete final review." in presales
+    assert "- Rollback gate: Define stop criteria." in education
+    assert (
+        "- Owner signoff gate: Complete signoff after arena and drift plan."
+        in education
+    )
+
+
+@pytest.mark.parametrize(
+    "example_name",
+    ["customer_support_assistant", "presales_assistant", "education_assistant"],
+)
+def test_every_weak_standard_gate_has_a_required_mitigation_line(
+    example_name: str,
+) -> None:
+    project = ROOT / "examples" / example_name
+    inspection = inspect_project(project)
+    result = score_gates(inspection.launch_gate_review)
+    report = generate_report(project)
+
+    for gate in result.weak_gates:
+        mitigation = (
+            gate.mitigation
+            if is_meaningful_mitigation(gate.mitigation)
+            else "mitigation not provided."
+        )
+        assert f"- {gate.gate}: {mitigation}" in report
+
+
+def test_weak_gate_without_meaningful_mitigation_uses_fallback(
+    tmp_path: Path,
+) -> None:
+    project = tmp_path / "project"
+    copytree(CUSTOMER_SUPPORT, project)
+    path = project / "launch_gate_review.md"
+    path.write_text(
+        path.read_text(encoding="utf-8").replace(
+            (
+                "| Rollback gate | pass | Product and engineering owners "
+                "can pause rollout. | None | engineering |"
+            ),
+            (
+                "| Rollback gate | partial | Product and engineering owners "
+                "can pause rollout. | N/A | engineering |"
+            ),
+        ),
+        encoding="utf-8",
+    )
+
+    report = generate_report(project)
+
+    assert "- Rollback gate: mitigation not provided." in report
+
+
+def test_legacy_manual_report_copies_are_removed() -> None:
+    for example_name in (
+        "customer_support_assistant",
+        "presales_assistant",
+        "education_assistant",
+    ):
+        assert not (ROOT / "examples" / example_name / "launch_report.md").exists()
 
 
 def test_cli_commands_retain_success_exit_behavior(capsys: pytest.CaptureFixture[str]) -> None:

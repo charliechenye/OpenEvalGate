@@ -12,7 +12,7 @@ from openevalgate.assessment import assess_launch, behavioral_evidence_display
 from openevalgate.escalation import summarize_escalation_contract
 from openevalgate.eval_results import BehavioralEvidence, classify_behavioral_evidence
 from openevalgate.hard_gate_policy import HardGateEvaluation
-from openevalgate.launch_gate_review import GateRow
+from openevalgate.launch_gate_review import GateRow, is_meaningful_mitigation
 from openevalgate.project_inspection import inspect_project
 from openevalgate.routing import summarize_routing_policy
 from openevalgate.schema import HardBlocker, LaunchAssessment, ValidationIssue, load_eval_cases
@@ -323,8 +323,10 @@ def _required_mitigations(weak_gates: list[GateRow], missing_required: list[str]
     for missing in missing_required:
         lines.append(f"- Add missing required launch file: `{missing}`.")
     for gate in weak_gates:
-        if gate.mitigation and gate.mitigation.lower() not in {"none", "n/a"}:
+        if is_meaningful_mitigation(gate.mitigation):
             lines.append(f"- {gate.gate}: {gate.mitigation}")
+        else:
+            lines.append(f"- {gate.gate}: mitigation not provided.")
     return "\n".join(lines) if lines else "No required mitigations recorded."
 
 

@@ -113,6 +113,11 @@ eval_runs/
 launch_gate_review.md
 ```
 
+Every populated action-risk row must include a nonblank `action`, a
+`risk_tier` of `low`, `medium`, `high`, or `prohibited`, and a
+`human_review_required` value of `true` or `false`. Any invalid row makes the
+whole matrix untrusted for policy decisions until the artifact is repaired.
+
 For multi-workflow or multi-agent systems, optionally add:
 
 ```text

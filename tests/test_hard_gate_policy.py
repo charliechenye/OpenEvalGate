@@ -17,7 +17,7 @@ from openevalgate.launch_gate_review import (
     is_meaningful_evidence,
     parse_launch_gate_review,
 )
-from openevalgate.scorer import score_gates
+from openevalgate.scorer import gate_statuses, score_gates
 
 
 VALID_EVIDENCE = HardGateEvidence(True, True, True, True, True)
@@ -239,7 +239,11 @@ def test_one_policy_blocker_reports_status_and_artifact_failures() -> None:
 
     assert evaluation.blocker is not None
     assert evaluation.blocker.id == "missing_scope"
-    assert "declared pass" in evaluation.reason
+    assert (
+        evaluation.reason
+        == "Scope gate requires `pass`; actual status is `partial`. "
+        "Required evidence is missing or invalid: assistant_prd.md."
+    )
     assert "assistant_prd.md" in evaluation.reason
 
 
@@ -296,7 +300,12 @@ def test_unsupported_custom_gate_status_is_invalid_but_unscored(
 
 
 def test_valid_custom_gate_is_allowed_but_unscored() -> None:
-    assert score_gates(_review(_row("Custom review gate"))).score == 0
+    result = score_gates(_review(_row("Custom review gate")))
+
+    assert result.score == 0
+    assert result.passed_gates == []
+    assert result.weak_gates == []
+    assert result.not_applicable_gates == []
 
 
 def test_recognized_alias_receives_canonical_scoring_credit() -> None:
@@ -347,3 +356,102 @@ def test_malformed_markdown_row_is_structural_issue(tmp_path: Path) -> None:
 
     assert not review.rows
     assert len(review.issues) == 1
+
+
+def test_non_scored_standard_gates_remain_visible_without_score_credit() -> None:
+    review = _review(
+        _row("Rollback gate", "partial"),
+        _row("Owner signoff gate", "partial"),
+    )
+
+    result = score_gates(review)
+    statuses = gate_statuses(review.valid_rows)
+
+    assert result.score == 0
+    assert [row.canonical_gate for row in result.weak_gates] == [
+        "rollback gate",
+        "owner signoff gate",
+    ]
+    assert statuses["rollback gate"] == "partial"
+    assert statuses["owner signoff gate"] == "partial"
+
+
+def test_duplicate_and_unsupported_rows_enter_neither_classification_path(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "launch_gate_review.md"
+    path.write_text(
+        "\n".join(
+            [
+                "| Gate | Status | Evidence | Required mitigation | Owner |",
+                "| --- | --- | --- | --- | --- |",
+                "| Rollback gate | pass | first | None | owner |",
+                "| Rollback gate | partial | second | Fix it | owner |",
+                "| Owner signoff gate | warning | evidence | Fix it | owner |",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    review = parse_launch_gate_review(path)
+    result = score_gates(review)
+
+    assert result.passed_gates == []
+    assert result.weak_gates == []
+    assert result.not_applicable_gates == []
+    assert gate_statuses(review.valid_rows) == {}
+
+
+def test_conditional_required_status_is_stable_across_outcomes() -> None:
+    satisfied = evaluate_hard_gate_policy(
+        _review(_row("tail-risk / p0 failure mode gate")),
+        HardGateContext(True, False),
+        VALID_EVIDENCE,
+    )[2]
+    not_applicable = evaluate_hard_gate_policy(
+        _review(_row("tail-risk / p0 failure mode gate")),
+        HardGateContext(False, False),
+        VALID_EVIDENCE,
+    )[2]
+    blocked = evaluate_hard_gate_policy(
+        _review(_row("tail-risk / p0 failure mode gate", "partial")),
+        HardGateContext(True, False),
+        VALID_EVIDENCE,
+    )[2]
+
+    assert {
+        satisfied.required_status,
+        not_applicable.required_status,
+        blocked.required_status,
+    } == {"pass when applicable"}
+
+
+def test_gate_specific_reasons_distinguish_status_missing_and_evidence() -> None:
+    partial = evaluate_hard_gate_policy(
+        _review(_row("rollback gate", "partial")),
+        HardGateContext(False, False),
+        VALID_EVIDENCE,
+    )[-2]
+    missing = evaluate_hard_gate_policy(
+        _review(),
+        HardGateContext(True, False),
+        HardGateEvidence(True, True, False, True, True),
+    )[2]
+    no_evidence = evaluate_hard_gate_policy(
+        _review(_row("owner signoff gate", evidence="TBD")),
+        HardGateContext(False, False),
+        VALID_EVIDENCE,
+    )[-1]
+
+    assert (
+        partial.reason
+        == "Rollback gate requires `pass`; actual status is `partial`."
+    )
+    assert missing.reason == (
+        "Tail-risk / P0 failure mode gate requires `pass` for high-impact "
+        "projects; the gate is missing. Required evidence is missing or "
+        "invalid: p0_failure_mode_checklist.md."
+    )
+    assert no_evidence.reason == (
+        "Owner signoff gate is declared `pass` but does not contain "
+        "meaningful evidence."
+    )

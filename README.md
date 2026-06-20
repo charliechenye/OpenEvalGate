@@ -222,6 +222,13 @@ An applicable hard gate requires `pass`, a meaningful evidence cell, and any gat
 
 Independent blockers, such as an ungated high-risk action or a behavioral escalation regression, remain separate from the eight policy-gate blocker IDs.
 
+For every populated `action_risk_matrix.csv` row, `action` must be nonblank,
+`risk_tier` must be `low`, `medium`, `high`, or `prohibited`, and
+`human_review_required` must be `true` or `false`. A row is populated when any
+cell contains a non-whitespace value. If any row is invalid, the entire matrix
+fails validation and none of its rows influence action applicability, impact
+classification, or unsafe-action blockers.
+
 ## Templates
 
 The repo includes templates for assistant PRDs, golden eval cases, eval results, business behavior contracts, domain-owner feedback, behavior change requests, P0 failure modes, automation boundaries, human escalation design, machine-readable escalation and routing policies, chatbot metric stacks, trust-preservation reviews, launch gates, and launch readiness reports. Some playbooks include additional local templates for specialized workflows, such as routing decisions, routing experiments, and staged rollouts.

@@ -189,6 +189,10 @@ def is_meaningful_evidence(value: str) -> bool:
     return normalize_gate_name(value) not in NON_EVIDENCE_VALUES
 
 
+def is_meaningful_mitigation(value: str) -> bool:
+    return normalize_gate_name(value) not in NON_EVIDENCE_VALUES
+
+
 def _is_separator_row(line: str) -> bool:
     cells = [cell.strip() for cell in line.strip("|").split("|")]
     return bool(cells) and all(cell and set(cell) <= {"-", ":"} for cell in cells)

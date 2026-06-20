@@ -6,6 +6,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from openevalgate.action_risk import (
+    ALLOWED_BOOLEAN_VALUES,
+    HIGH_IMPACT_ACTION_RISK_TIERS,
+    ActionRiskRow,
+)
 from openevalgate.escalation import validate_escalation_contract
 from openevalgate.eval_results import classify_behavioral_evidence, read_eval_results
 from openevalgate.hard_gate_policy import (
@@ -69,7 +74,7 @@ def inspect_project(project_dir: str | Path) -> ProjectInspection:
     action_high_impact = (
         any(
             row.get("risk_tier", "").lower()
-            in {"high", "prohibited"}
+            in HIGH_IMPACT_ACTION_RISK_TIERS
             for row in action_review.rows
         )
         if action_review.valid
@@ -221,14 +226,14 @@ def _evaluate_independent_blockers(
 
 
 def _high_risk_actions_without_controls(
-    rows: list[dict[str, str]],
+    rows: list[ActionRiskRow],
 ) -> list[str]:
     unsafe: list[str] = []
     for row in rows:
-        if row.get("risk_tier", "").lower() not in {
-            "high",
-            "prohibited",
-        }:
+        if (
+            row.get("risk_tier", "").lower()
+            not in HIGH_IMPACT_ACTION_RISK_TIERS
+        ):
             continue
         deterministic_gate = row.get("deterministic_gate", "").lower()
         human_review = row.get("human_review_required", "").lower()
@@ -239,7 +244,10 @@ def _high_risk_actions_without_controls(
             "n/a",
             "na",
         }
-        has_review = human_review == "true"
+        has_review = (
+            human_review in ALLOWED_BOOLEAN_VALUES
+            and human_review == "true"
+        )
         if not has_gate and not has_review:
             unsafe.append(row.get("action", "") or "unknown_action")
     return unsafe

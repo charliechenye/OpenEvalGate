@@ -26,19 +26,19 @@ Meeting this threshold does not override hard blockers or grant permission to be
 | scope gate | Yes | pass | pass | Satisfied |
 | golden eval gate | Yes | pass | partial | Blocked |
 | tail-risk / p0 failure mode gate | Yes | pass when applicable | missing | Blocked |
-| tool/action safety gate | Yes | pass | pass | Satisfied |
+| tool/action safety gate | Yes | pass when applicable | pass | Satisfied |
 | human escalation gate | Yes | pass when applicable | partial | Blocked |
 | observability gate | Yes | pass | partial | Blocked |
 | rollback gate | Yes | pass | partial | Blocked |
 | owner signoff gate | Yes | pass | partial | Blocked |
 
 ## Hard Blockers
-- **missing_golden_eval:** The applicable hard gate must be declared pass. Evidence: eval_cases.yaml
-- **missing_tail_risk_review:** The applicable hard gate must be declared pass. Required evidence is missing or invalid: p0_failure_mode_checklist.md. Evidence: p0_failure_mode_checklist.md
-- **missing_escalation_path:** The applicable hard gate must be declared pass. Evidence: human_escalation_design.md
-- **missing_monitoring:** The applicable hard gate must be declared pass. Evidence: launch-gate evidence cell
-- **missing_rollback:** The applicable hard gate must be declared pass. Evidence: launch-gate evidence cell
-- **missing_owner_signoff:** The applicable hard gate must be declared pass. Evidence: launch-gate evidence cell
+- **missing_golden_eval:** Golden eval gate requires `pass`; actual status is `partial`. Evidence: eval_cases.yaml
+- **missing_tail_risk_review:** Tail-risk / P0 failure mode gate requires `pass` for high-impact projects; the gate is missing. Required evidence is missing or invalid: p0_failure_mode_checklist.md. Evidence: p0_failure_mode_checklist.md
+- **missing_escalation_path:** Human escalation gate requires `pass` for high-impact projects; actual status is `partial`. Evidence: human_escalation_design.md
+- **missing_monitoring:** Observability gate requires `pass`; actual status is `partial`. Evidence: launch-gate evidence cell
+- **missing_rollback:** Rollback gate requires `pass`; actual status is `partial`. Evidence: launch-gate evidence cell
+- **missing_owner_signoff:** Owner signoff gate requires `pass`; actual status is `partial`. Evidence: launch-gate evidence cell
 
 ## Trust Preservation Summary
 - Trust preservation review is present.
@@ -110,7 +110,7 @@ No model arena scorecard found.
 ## Observability / Rollback Summary
 - Observability gate: partial
 - Drift monitoring gate: fail
-- Rollback gate: missing
+- Rollback gate: partial
 
 ## Observed Behavioral Quality
 **Evaluated — valid empirical rows are available.**
@@ -157,12 +157,12 @@ The following critical controls failed:
 Documentation remediation
 
 ## Required Mitigations
-- Launch blocker: The applicable hard gate must be declared pass.
-- Launch blocker: The applicable hard gate must be declared pass. Required evidence is missing or invalid: p0_failure_mode_checklist.md.
-- Launch blocker: The applicable hard gate must be declared pass.
-- Launch blocker: The applicable hard gate must be declared pass.
-- Launch blocker: The applicable hard gate must be declared pass.
-- Launch blocker: The applicable hard gate must be declared pass.
+- Launch blocker: Golden eval gate requires `pass`; actual status is `partial`.
+- Launch blocker: Tail-risk / P0 failure mode gate requires `pass` for high-impact projects; the gate is missing. Required evidence is missing or invalid: p0_failure_mode_checklist.md.
+- Launch blocker: Human escalation gate requires `pass` for high-impact projects; actual status is `partial`.
+- Launch blocker: Observability gate requires `pass`; actual status is `partial`.
+- Launch blocker: Rollback gate requires `pass`; actual status is `partial`.
+- Launch blocker: Owner signoff gate requires `pass`; actual status is `partial`.
 - Golden eval gate: Add historical learner support cases.
 - Model selection gate: Record product-specific selection rationale.
 - Model arena gate: Run candidate models on golden eval set.
@@ -173,6 +173,8 @@ Documentation remediation
 - Observability gate: Add drift sampling owner.
 - Cost/latency gate: Measure p95 latency.
 - Drift monitoring gate: Add weekly learner request review.
+- Rollback gate: Define stop criteria.
+- Owner signoff gate: Complete signoff after arena and drift plan.
 
 ## Recommended Next Actions
 - Complete missing or invalid control-evidence requirements.

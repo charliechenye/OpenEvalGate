@@ -144,7 +144,10 @@ def _evaluate_rule(
             applicable,
             "invalid: duplicate rows",
             "Invalid",
-            "Duplicate declarations prevent deterministic policy evaluation.",
+            (
+                f"{_gate_label(rule)} has duplicate declarations and "
+                "cannot be evaluated deterministically."
+            ),
         )
 
     row = rows[0] if rows else None
@@ -159,7 +162,10 @@ def _evaluate_rule(
             applicable,
             f"invalid: {row.status.strip()}",
             "Invalid",
-            "The declared status is unsupported.",
+            (
+                f"{_gate_label(rule)} declares unsupported status "
+                f"`{row.status.strip()}`."
+            ),
         )
 
     actual_status = row.normalized_status if row is not None else "missing"
@@ -170,7 +176,10 @@ def _evaluate_rule(
             None,
             actual_status,
             "Blocked",
-            "Applicability could not be established from valid project evidence.",
+            (
+                f"{_gate_label(rule)} applicability could not be "
+                "established from valid project evidence."
+            ),
         )
 
     if applicable is False:
@@ -180,12 +189,16 @@ def _evaluate_rule(
                 False,
                 actual_status,
                 "Blocked",
-                "A non-applicable conditional gate was explicitly declared incomplete.",
+                (
+                    f"{_gate_label(rule)} is not required for this project, "
+                    f"but actual status is `{actual_status}`; an explicitly "
+                    "incomplete declaration remains blocking."
+                ),
             )
         return HardGateEvaluation(
             gate=rule.gate,
             applicable=False,
-            required_status="pass when applicable",
+            required_status=_required_status(rule),
             actual_status=actual_status,
             outcome="Not applicable",
             reason="The project context establishes that this conditional gate is not applicable.",
@@ -198,7 +211,10 @@ def _evaluate_rule(
             source="hard_gate_policy",
         )
         reasons = [
-            "An applicable hard gate cannot be declared not_applicable."
+            (
+                f"{_gate_requirement(rule)}; actual status is "
+                "`not_applicable`."
+            )
         ]
         if (
             rule.artifact_field is not None
@@ -217,7 +233,14 @@ def _evaluate_rule(
         )
 
     if actual_status != "pass":
-        reasons = ["The applicable hard gate must be declared pass."]
+        if actual_status == "missing":
+            status_reason = f"{_gate_requirement(rule)}; the gate is missing."
+        else:
+            status_reason = (
+                f"{_gate_requirement(rule)}; actual status is "
+                f"`{actual_status}`."
+            )
+        reasons = [status_reason]
         if (
             rule.artifact_field is not None
             and not getattr(evidence, rule.artifact_field)
@@ -237,7 +260,10 @@ def _evaluate_rule(
     reasons: list[str] = []
     if not is_meaningful_evidence(row.evidence):
         reasons.append(
-            "A passing applicable hard gate requires meaningful declared evidence."
+            (
+                f"{_gate_label(rule)} is declared `pass` but does not "
+                "contain meaningful evidence."
+            )
         )
     if (
         rule.artifact_field is not None
@@ -258,7 +284,7 @@ def _evaluate_rule(
     return HardGateEvaluation(
         gate=rule.gate,
         applicable=True,
-        required_status="pass",
+        required_status=_required_status(rule),
         actual_status=actual_status,
         outcome="Satisfied",
         reason="The declaration and required evidence satisfy this hard gate.",
@@ -288,10 +314,32 @@ def _blocked_evaluation(
     return HardGateEvaluation(
         gate=rule.gate,
         applicable=applicable,
-        required_status="pass" if rule.applicability == "always" else "pass when applicable",
+        required_status=_required_status(rule),
         actual_status=actual_status,
         outcome=outcome,
         reason=reason,
         blocker=HardBlocker(rule.blocker_id, reason, rule.artifact_label),
         policy_issue=policy_issue,
     )
+
+
+def _required_status(rule: HardGateRule) -> str:
+    return (
+        "pass"
+        if rule.applicability == "always"
+        else "pass when applicable"
+    )
+
+
+def _gate_requirement(rule: HardGateRule) -> str:
+    requirement = f"{_gate_label(rule)} requires `pass`"
+    if rule.applicability == "high_impact":
+        return requirement + " for high-impact projects"
+    if rule.applicability == "tool_actions":
+        return requirement + " when tool actions are present"
+    return requirement
+
+
+def _gate_label(rule: HardGateRule) -> str:
+    label = rule.gate[0].upper() + rule.gate[1:]
+    return label.replace("p0", "P0")

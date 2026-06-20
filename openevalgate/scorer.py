@@ -81,8 +81,8 @@ def score_gates(
     weak: list[GateRow] = []
     not_applicable: list[GateRow] = []
 
-    valid_gates = _valid_scoring_rows(gates)
-    for gate in valid_gates:
+    valid_standard_rows = _valid_standard_rows(gates)
+    for gate in valid_standard_rows:
         normalized_status = gate.normalized_status
         if normalized_status == "pass":
             passed.append(gate)
@@ -91,6 +91,8 @@ def score_gates(
         elif normalized_status in {"partial", "fail"}:
             weak.append(gate)
 
+    for gate in _scorable_rows(valid_standard_rows):
+        normalized_status = gate.normalized_status
         category = GATE_TO_CATEGORY.get(gate.canonical_gate or "")
         if category:
             category_statuses[category].append(normalized_status)
@@ -120,7 +122,7 @@ def score_gates(
 def gate_statuses(gates: list[GateRow]) -> dict[str, str]:
     """Return unambiguous standard-gate statuses for display compatibility."""
 
-    rows = _valid_scoring_rows(gates)
+    rows = _valid_standard_rows(gates)
     return {
         gate.canonical_gate: gate.normalized_status
         for gate in rows
@@ -146,7 +148,7 @@ def _category_value(statuses: list[str]) -> float:
     return 0.0
 
 
-def _valid_scoring_rows(
+def _valid_standard_rows(
     gates: list[GateRow] | LaunchGateReview,
 ) -> list[GateRow]:
     if isinstance(gates, LaunchGateReview):
@@ -176,4 +178,12 @@ def _valid_scoring_rows(
             if row.normalized_status in ALLOWED_GATE_STATUSES
             and row.canonical_gate not in duplicates
         ]
-    return [row for row in rows if row.canonical_gate in GATE_TO_CATEGORY]
+    return [row for row in rows if row.canonical_gate is not None]
+
+
+def _scorable_rows(valid_standard_rows: list[GateRow]) -> list[GateRow]:
+    return [
+        row
+        for row in valid_standard_rows
+        if row.canonical_gate in GATE_TO_CATEGORY
+    ]

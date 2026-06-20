@@ -269,3 +269,115 @@ def test_unsafe_action_blocker_remains_independent_of_gate_pass(
     assert "ungated_high_risk_action" in {
         blocker.id for blocker in inspection.hard_blockers
     }
+
+
+def test_action_matrix_rejects_blank_and_raw_unsupported_semantic_values(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "action_risk_matrix.csv"
+    path.write_text(
+        "\n".join(
+            [
+                "action,risk_tier,deterministic_gate,human_review_required",
+                "lookup,,,",
+                "refund,Critical,authorization,YES",
+                ",low,authorization,false",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    review = inspect_action_risk_matrix(path)
+    messages = [issue.message for issue in review.issues]
+
+    assert not review.valid
+    assert len(review.rows) == 3
+    assert review.rows[1].raw_values["risk_tier"] == "Critical"
+    assert review.rows[1].normalized_values["risk_tier"] == "critical"
+    assert review.rows[1].raw_values["human_review_required"] == "YES"
+    assert review.rows[1].normalized_values["human_review_required"] == "yes"
+    assert "Risk tier must be nonblank for a populated row." in messages
+    assert (
+        "Human-review requirement must be nonblank for a populated row."
+        in messages
+    )
+    assert (
+        "Unsupported risk tier `Critical`; expected one of: high, low, "
+        "medium, prohibited."
+    ) in messages
+    assert (
+        "Unsupported human-review requirement `YES`; expected one of: "
+        "false, true."
+    ) in messages
+    assert "Action must be nonblank for a populated row." in messages
+
+
+def test_invalid_mixed_action_matrix_is_untrusted_with_low_risk_evals(
+    tmp_path: Path,
+) -> None:
+    project = _copy_project(tmp_path)
+    eval_path = project / "eval_cases.yaml"
+    document = yaml.safe_load(eval_path.read_text(encoding="utf-8"))
+    for case in document["eval_cases"]:
+        case["risk_tier"] = "low"
+    eval_path.write_text(
+        yaml.safe_dump(document, sort_keys=False),
+        encoding="utf-8",
+    )
+    _write_mixed_invalid_action_matrix(project)
+
+    inspection = inspect_project(project)
+
+    assert not inspection.check.action_risk_review.valid
+    assert inspection.context.has_tool_actions is None
+    assert inspection.context.high_impact is None
+    assert not inspection.check.valid
+    tool_evaluation = next(
+        item
+        for item in inspection.evaluations
+        if item.gate == "tool/action safety gate"
+    )
+    assert tool_evaluation.applicable is None
+    assert tool_evaluation.outcome == "Blocked"
+    assert "ungated_high_risk_action" not in {
+        blocker.id for blocker in inspection.hard_blockers
+    }
+
+
+def test_invalid_mixed_action_matrix_does_not_override_high_risk_evals(
+    tmp_path: Path,
+) -> None:
+    project = _copy_project(tmp_path)
+    _write_mixed_invalid_action_matrix(project)
+
+    inspection = inspect_project(project)
+
+    assert not inspection.check.action_risk_review.valid
+    assert inspection.context.has_tool_actions is None
+    assert inspection.context.high_impact is True
+    assert not inspection.check.valid
+    tool_evaluation = next(
+        item
+        for item in inspection.evaluations
+        if item.gate == "tool/action safety gate"
+    )
+    assert tool_evaluation.applicable is None
+    assert tool_evaluation.outcome == "Blocked"
+    assert "ungated_high_risk_action" not in {
+        blocker.id for blocker in inspection.hard_blockers
+    }
+
+
+def _write_mixed_invalid_action_matrix(project: Path) -> None:
+    (project / "action_risk_matrix.csv").write_text(
+        "\n".join(
+            [
+                "action,risk_tier,deterministic_gate,human_review_required",
+                "unsafe_refund,high,,false",
+                "unclear_action,Critical,,false",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
