@@ -47,7 +47,7 @@ The 100-point score measures completeness of declared launch-control and governa
 
 The final recommendation is produced by a separate deterministic assessment. It considers whether the evidence package is sufficient, whether behavioral evidence is missing, empty, invalid, or available, and whether known hard blockers exist.
 
-The sufficiency field is named `Control evidence package sufficient for shadow evaluation`. It does not imply behavioral sufficiency or launch readiness.
+The structural field is named `Control evidence completeness threshold met`. Meeting this threshold does not override hard blockers or grant permission to begin shadow evaluation.
 
 Owner signoff is a non-scored launch blocker. High evidence completeness does not replace accountable approval or observed behavioral evidence.
 

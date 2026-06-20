@@ -15,9 +15,10 @@
 ## Evidence Completeness Score
 90/100
 Evidence package band: Substantially complete
-Control evidence package sufficient for shadow evaluation: Yes
+Control evidence completeness threshold met: Yes
 
 This score measures declared launch-control and governance evidence completeness. It does not measure observed behavioral quality or determine launch readiness by itself.
+Meeting this threshold does not override hard blockers or grant permission to begin shadow evaluation.
 
 ## Hard Blockers
 - **critical_escalation_regression:** High-risk escalation evidence contains under-escalation, wrong-destination, payload, or resume failures. Evidence: refund_abuse_history_002, wrong_destination_fraud_012

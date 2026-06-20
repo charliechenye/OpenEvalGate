@@ -4,7 +4,7 @@
 - **Assistant type:**
 - **Evidence completeness score:**
 - **Evidence package band:**
-- **Control evidence package sufficient for shadow evaluation:**
+- **Control evidence completeness threshold met:**
 - **Behavioral evidence status:**
 - **Critical-control status:**
 - **Maximum permitted stage:**
@@ -21,7 +21,7 @@ Report completeness of declared launch-control and governance evidence. Do not p
 
 Use only these evidence package bands: `Substantially complete`, `Material gaps`, or `Incomplete`.
 
-State whether the control evidence package is sufficient for shadow evaluation only. Do not imply behavioral sufficiency or controlled-launch readiness.
+State whether the control evidence completeness threshold is met. Explain that meeting it does not override hard blockers or grant permission to begin shadow evaluation.
 
 ## Hard Blockers
 

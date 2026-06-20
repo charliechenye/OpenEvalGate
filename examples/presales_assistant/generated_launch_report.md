@@ -15,9 +15,10 @@
 ## Evidence Completeness Score
 37/100
 Evidence package band: Incomplete
-Control evidence package sufficient for shadow evaluation: No
+Control evidence completeness threshold met: No
 
 This score measures declared launch-control and governance evidence completeness. It does not measure observed behavioral quality or determine launch readiness by itself.
+Meeting this threshold does not override hard blockers or grant permission to begin shadow evaluation.
 
 ## Hard Blockers
 - **missing_tail_risk_review:** High-impact workflows lack passing tail-risk/P0 review. Evidence: p0_failure_mode_checklist.md or Tail-risk / P0 gate

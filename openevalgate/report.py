@@ -12,7 +12,7 @@ from openevalgate.assessment import assess_launch, behavioral_evidence_display
 from openevalgate.escalation import summarize_escalation_contract, validate_escalation_contract
 from openevalgate.eval_results import BehavioralEvidence, classify_behavioral_evidence, read_eval_results
 from openevalgate.routing import summarize_routing_policy, validate_routing_policy
-from openevalgate.schema import HardBlocker, LaunchAssessment, load_eval_cases, validate_eval_cases
+from openevalgate.schema import HardBlocker, LaunchAssessment, ValidationIssue, load_eval_cases, validate_eval_cases
 from openevalgate.scorer import GateRow, gate_statuses, normalize_gate, score_gates
 from openevalgate.validator import check_project
 
@@ -54,13 +54,17 @@ def generate_report(project_dir: str | Path) -> str:
         f"{assessment.evidence_completeness_score}/100",
         f"Evidence package band: {assessment.evidence_band}",
         (
-            "Control evidence package sufficient for shadow evaluation: "
-            f"{'Yes' if assessment.control_evidence_sufficient_for_shadow else 'No'}"
+            "Control evidence completeness threshold met: "
+            f"{'Yes' if assessment.control_evidence_completeness_threshold_met else 'No'}"
         ),
         "",
         (
             "This score measures declared launch-control and governance evidence completeness. "
             "It does not measure observed behavioral quality or determine launch readiness by itself."
+        ),
+        (
+            "Meeting this threshold does not override hard blockers or grant permission "
+            "to begin shadow evaluation."
         ),
         "",
         "## Hard Blockers",
@@ -503,8 +507,8 @@ def _recommended_next_actions(assessment: LaunchAssessment) -> str:
     )
 
 
-def _non_eval_result_issues(issues: list[Any]) -> list[Any]:
-    return [issue for issue in issues if "eval_results.csv" not in issue.path]
+def _non_eval_result_issues(issues: list[ValidationIssue]) -> list[ValidationIssue]:
+    return [issue for issue in issues if issue.source != "eval_results"]
 
 
 def _safe_load_cases(path: Path) -> list[dict[str, Any]]:

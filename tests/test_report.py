@@ -5,8 +5,8 @@ from shutil import copytree
 import pytest
 
 from openevalgate.cli import main
-from openevalgate.report import generate_report
-from openevalgate.schema import load_eval_cases
+from openevalgate.report import _non_eval_result_issues, generate_report
+from openevalgate.schema import ValidationIssue, load_eval_cases
 from openevalgate.scorer import WEIGHTS, score_gates, GateRow
 
 
@@ -49,6 +49,15 @@ def test_high_evidence_completeness_can_still_be_not_ready() -> None:
 
 def test_scorer_emits_evidence_bands_not_deployment_recommendations() -> None:
     assert score_gates([GateRow("Scope gate", "pass", "", "", "")]).evidence_band == "Incomplete"
+
+
+def test_project_issue_filter_uses_source_not_path_substring() -> None:
+    issues = [
+        ValidationIssue("unrelated/path", "bad results", source="eval_results"),
+        ValidationIssue("looks-like-eval_results.csv", "project issue", source="project"),
+    ]
+
+    assert _non_eval_result_issues(issues) == [issues[1]]
 
 
 def test_score_gates_uses_partial_half_credit() -> None:
@@ -139,7 +148,7 @@ def test_empty_eval_results_are_distinguished_from_missing_results(tmp_path: Pat
     assert "**Maximum permitted stage:** Shadow evaluation" in report
 
 
-def test_empirical_results_without_hard_blockers_pass_critical_controls(tmp_path: Path) -> None:
+def test_empirical_results_without_hard_blockers_remain_shadow_only(tmp_path: Path) -> None:
     project = tmp_path / "project"
     copytree(CUSTOMER_SUPPORT, project)
     low_risk_case = next(

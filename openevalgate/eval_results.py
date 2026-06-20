@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import csv
 from collections import Counter
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 from openevalgate.routing import load_routing_policy, routing_expectations
@@ -124,7 +124,13 @@ def validate_eval_results(project_dir: str | Path) -> EvalResultsValidationResul
     except (csv.Error, OSError, UnicodeError) as exc:
         return EvalResultsValidationResult(
             False,
-            [ValidationIssue(str(results_path), f"Could not read eval results: {exc}")],
+            [
+                ValidationIssue(
+                    str(results_path),
+                    f"Could not read eval results: {exc}",
+                    source="eval_results",
+                )
+            ],
             0,
         )
 
@@ -223,6 +229,7 @@ def validate_eval_results(project_dir: str | Path) -> EvalResultsValidationResul
                 )
             )
 
+    issues = [replace(issue, source="eval_results") for issue in issues]
     return EvalResultsValidationResult(not issues, issues, len(rows))
 
 
@@ -246,7 +253,13 @@ def classify_behavioral_evidence(project_dir: str | Path) -> BehavioralEvidence:
         return BehavioralEvidence(
             "invalid",
             None,
-            [ValidationIssue(str(path), f"Could not summarize eval results: {exc}")],
+            [
+                ValidationIssue(
+                    str(path),
+                    f"Could not summarize eval results: {exc}",
+                    source="eval_results",
+                )
+            ],
         )
     return BehavioralEvidence("available", summary, [])
 

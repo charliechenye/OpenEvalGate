@@ -21,7 +21,7 @@ def assess_launch(
     if behavioral_evidence_state not in BEHAVIORAL_EVIDENCE_STATES:
         raise ValueError(f"Unknown behavioral evidence state: {behavioral_evidence_state}")
 
-    control_evidence_sufficient_for_shadow = (
+    control_evidence_completeness_threshold_met = (
         evidence_completeness_score >= EVIDENCE_SUFFICIENCY_SCORE
         and project_evidence_valid
     )
@@ -33,12 +33,12 @@ def assess_launch(
 
     if behavioral_evidence_state == "invalid":
         next_actions.append("Repair and revalidate eval_results.csv.")
-    if not control_evidence_sufficient_for_shadow:
+    if not control_evidence_completeness_threshold_met:
         next_actions.append("Complete missing or invalid control-evidence requirements.")
     if hard_blockers:
         next_actions.append("Remediate known hard blockers.")
 
-    if not control_evidence_sufficient_for_shadow:
+    if not control_evidence_completeness_threshold_met:
         maximum_permitted_stage = "Documentation remediation"
         recommendation = "Not ready for evaluation"
     elif behavioral_evidence_state == "invalid":
@@ -65,7 +65,9 @@ def assess_launch(
     return LaunchAssessment(
         evidence_completeness_score=evidence_completeness_score,
         evidence_band=evidence_completeness_band(evidence_completeness_score),
-        control_evidence_sufficient_for_shadow=control_evidence_sufficient_for_shadow,
+        control_evidence_completeness_threshold_met=(
+            control_evidence_completeness_threshold_met
+        ),
         behavioral_evidence_state=behavioral_evidence_state,
         critical_control_status=critical_control_status,
         maximum_permitted_stage=maximum_permitted_stage,

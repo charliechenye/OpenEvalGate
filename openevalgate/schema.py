@@ -113,6 +113,7 @@ class ValidationIssue:
 
     path: str
     message: str
+    source: str = "project"
 
 
 @dataclass(frozen=True)
@@ -156,7 +157,7 @@ class LaunchAssessment:
 
     evidence_completeness_score: int
     evidence_band: str
-    control_evidence_sufficient_for_shadow: bool
+    control_evidence_completeness_threshold_met: bool
     behavioral_evidence_state: str
     critical_control_status: str
     maximum_permitted_stage: str

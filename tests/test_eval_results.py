@@ -65,6 +65,8 @@ def test_invalid_eval_results_fail(tmp_path: Path) -> None:
     evidence = classify_behavioral_evidence(project)
 
     assert not result.valid
+    assert result.issues
+    assert all(issue.source == "eval_results" for issue in result.issues)
     assert evidence.state == "invalid"
     assert evidence.summary is None
     assert any("actual_route" in issue.path for issue in result.issues)

@@ -4,7 +4,7 @@
 - **Assistant type:** presales
 - **Evidence completeness score:** 78/100
 - **Evidence package band:** Material gaps
-- **Control evidence package sufficient for shadow evaluation:** No
+- **Control evidence completeness threshold met:** No
 - **Behavioral evidence status:** Evaluated — valid empirical rows are available.
 - **Critical-control status:** Fail
 - **Maximum permitted stage:** Documentation remediation

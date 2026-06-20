@@ -111,7 +111,7 @@ def test_score_84_is_insufficient_for_shadow_evaluation() -> None:
         hard_blockers=[],
     )
 
-    assert not result.control_evidence_sufficient_for_shadow
+    assert not result.control_evidence_completeness_threshold_met
 
 
 def test_score_85_is_sufficient_for_shadow_evaluation() -> None:
@@ -122,7 +122,7 @@ def test_score_85_is_sufficient_for_shadow_evaluation() -> None:
         hard_blockers=[],
     )
 
-    assert result.control_evidence_sufficient_for_shadow
+    assert result.control_evidence_completeness_threshold_met
     assert result.maximum_permitted_stage == "Shadow evaluation"
 
 
@@ -134,7 +134,7 @@ def test_project_validation_error_makes_score_85_insufficient() -> None:
         hard_blockers=[],
     )
 
-    assert not result.control_evidence_sufficient_for_shadow
+    assert not result.control_evidence_completeness_threshold_met
     assert result.maximum_permitted_stage == "Documentation remediation"
 
 

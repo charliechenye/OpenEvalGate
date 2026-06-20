@@ -205,7 +205,7 @@ Behavioral evidence is reported as one of:
 - `Invalid — results could not be validated.`
 - `Evaluated — valid empirical rows are available.`
 
-`Control evidence package sufficient for shadow evaluation` means only that the evidence score is at least 85, required project artifacts are present, and non-result project validation has no errors.
+`Control evidence completeness threshold met` means only that the evidence score is at least 85, required project artifacts are present, and non-result project validation has no errors. Meeting this threshold does not override hard blockers or grant permission to begin shadow evaluation.
 
 ## Hard Blockers
 
