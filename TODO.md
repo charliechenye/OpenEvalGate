@@ -41,11 +41,11 @@ OpenEvalGate should be positioned as an **evidence-backed release-assurance fram
 
 ### Fix hard-gate semantics
 
-- [ ] Treat `partial`, `fail`, and missing as blocking for gates that require a full pass.
-- [ ] Define the complete list of hard gates in code rather than distributing the logic across conditionals.
-- [ ] Define when `not_applicable` is permitted for each gate.
-- [ ] Add tests for all gate statuses across every hard gate.
-- [ ] Ensure blocker messages match the actual implementation.
+- [x] Treat `partial`, `fail`, and missing as blocking for gates that require a full pass.
+- [x] Define the complete list of hard gates in code rather than distributing the logic across conditionals.
+- [x] Define when `not_applicable` is permitted for each gate.
+- [x] Add tests for all gate statuses across every hard gate.
+- [x] Ensure blocker messages match the actual implementation.
 
 ### Require execution evidence
 

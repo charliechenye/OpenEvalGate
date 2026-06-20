@@ -10,7 +10,7 @@
 - **Maximum permitted stage:** Documentation remediation
 - **Final launch recommendation:** Not ready to advance beyond documentation remediation
 - **Recommended next actions:** Complete missing or invalid control-evidence requirements; Remediate known hard blockers.
-- **Hard blockers:** 3
+- **Hard blockers:** 6
 
 ## Evidence Completeness Score
 34/100
@@ -20,10 +20,25 @@ Control evidence completeness threshold met: No
 This score measures declared launch-control and governance evidence completeness. It does not measure observed behavioral quality or determine launch readiness by itself.
 Meeting this threshold does not override hard blockers or grant permission to begin shadow evaluation.
 
+## Hard-Gate Evaluation
+| Gate | Applicable | Required status | Actual status | Outcome |
+| --- | --- | --- | --- | --- |
+| scope gate | Yes | pass | pass | Satisfied |
+| golden eval gate | Yes | pass | partial | Blocked |
+| tail-risk / p0 failure mode gate | Yes | pass when applicable | missing | Blocked |
+| tool/action safety gate | Yes | pass when applicable | pass | Satisfied |
+| human escalation gate | Yes | pass when applicable | partial | Blocked |
+| observability gate | Yes | pass | partial | Blocked |
+| rollback gate | Yes | pass | partial | Blocked |
+| owner signoff gate | Yes | pass | partial | Blocked |
+
 ## Hard Blockers
-- **missing_tail_risk_review:** High-impact workflows lack passing tail-risk/P0 review. Evidence: p0_failure_mode_checklist.md or Tail-risk / P0 gate
-- **missing_rollback:** Rollback gate is missing or not passing. Evidence: Rollback gate
-- **missing_owner_signoff:** Owner signoff gate is missing or not passing. Evidence: Owner signoff gate
+- **missing_golden_eval:** Golden eval gate requires `pass`; actual status is `partial`. Evidence: eval_cases.yaml
+- **missing_tail_risk_review:** Tail-risk / P0 failure mode gate requires `pass` for high-impact projects; the gate is missing. Required evidence is missing or invalid: p0_failure_mode_checklist.md. Evidence: p0_failure_mode_checklist.md
+- **missing_escalation_path:** Human escalation gate requires `pass` for high-impact projects; actual status is `partial`. Evidence: human_escalation_design.md
+- **missing_monitoring:** Observability gate requires `pass`; actual status is `partial`. Evidence: launch-gate evidence cell
+- **missing_rollback:** Rollback gate requires `pass`; actual status is `partial`. Evidence: launch-gate evidence cell
+- **missing_owner_signoff:** Owner signoff gate requires `pass`; actual status is `partial`. Evidence: launch-gate evidence cell
 
 ## Trust Preservation Summary
 - Trust preservation review is present.
@@ -131,7 +146,10 @@ No model arena scorecard found.
 
 The following critical controls failed:
 
+- `missing_golden_eval`
 - `missing_tail_risk_review`
+- `missing_escalation_path`
+- `missing_monitoring`
 - `missing_rollback`
 - `missing_owner_signoff`
 
@@ -139,9 +157,12 @@ The following critical controls failed:
 Documentation remediation
 
 ## Required Mitigations
-- Launch blocker: High-impact workflows lack passing tail-risk/P0 review.
-- Launch blocker: Rollback gate is missing or not passing.
-- Launch blocker: Owner signoff gate is missing or not passing.
+- Launch blocker: Golden eval gate requires `pass`; actual status is `partial`.
+- Launch blocker: Tail-risk / P0 failure mode gate requires `pass` for high-impact projects; the gate is missing. Required evidence is missing or invalid: p0_failure_mode_checklist.md.
+- Launch blocker: Human escalation gate requires `pass` for high-impact projects; actual status is `partial`.
+- Launch blocker: Observability gate requires `pass`; actual status is `partial`.
+- Launch blocker: Rollback gate requires `pass`; actual status is `partial`.
+- Launch blocker: Owner signoff gate requires `pass`; actual status is `partial`.
 - Golden eval gate: Add historical learner support cases.
 - Model selection gate: Record product-specific selection rationale.
 - Model arena gate: Run candidate models on golden eval set.

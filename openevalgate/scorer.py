@@ -2,12 +2,20 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from collections import Counter
+from dataclasses import dataclass, replace
 
 from openevalgate.assessment import evidence_completeness_band
+from openevalgate.launch_gate_review import (
+    ALLOWED_GATE_STATUSES,
+    GateRow,
+    LaunchGateReview,
+    canonicalize_gate_name,
+    normalize_gate_name,
+)
 
-
-STATUS_VALUES = {"pass", "partial", "fail", "not_applicable"}
+# Backward-compatible alias; launch_gate_review remains the source of truth.
+STATUS_VALUES = ALLOWED_GATE_STATUSES
 
 WEIGHTS = {
     "scope_readiness": 5,
@@ -34,11 +42,9 @@ GATE_TO_CATEGORY = {
     "business behavior contract gate": "business_behavior_contract_readiness",
     "golden eval gate": "golden_eval_readiness",
     "tail-risk / p0 failure mode gate": "tail_risk_p0_failure_readiness",
-    "tail-risk/p0 failure mode gate": "tail_risk_p0_failure_readiness",
     "model selection gate": "model_selection_arena_readiness",
     "model arena gate": "model_selection_arena_readiness",
     "routing / capability allocation gate": "model_selection_arena_readiness",
-    "routing/capability allocation gate": "model_selection_arena_readiness",
     "grounding gate": "grounding_readiness",
     "sop/policy compilation gate": "sop_policy_compilation_readiness",
     "tool/action safety gate": "tool_action_safety_readiness",
@@ -56,15 +62,6 @@ GATE_TO_CATEGORY = {
 
 
 @dataclass(frozen=True)
-class GateRow:
-    gate: str
-    status: str
-    evidence: str
-    mitigation: str
-    owner: str
-
-
-@dataclass(frozen=True)
 class ScoreResult:
     score: int
     evidence_band: str
@@ -74,7 +71,7 @@ class ScoreResult:
 
 
 def score_gates(
-    gates: list[GateRow],
+    gates: list[GateRow] | LaunchGateReview,
     boundary_coverage_status: str | None = None,
 ) -> ScoreResult:
     """Compute the weighted evidence-completeness score and band."""
@@ -84,8 +81,9 @@ def score_gates(
     weak: list[GateRow] = []
     not_applicable: list[GateRow] = []
 
-    for gate in gates:
-        normalized_status = gate.status.strip().lower()
+    valid_standard_rows = _valid_standard_rows(gates)
+    for gate in valid_standard_rows:
+        normalized_status = gate.normalized_status
         if normalized_status == "pass":
             passed.append(gate)
         elif normalized_status == "not_applicable":
@@ -93,13 +91,15 @@ def score_gates(
         elif normalized_status in {"partial", "fail"}:
             weak.append(gate)
 
-        category = GATE_TO_CATEGORY.get(normalize_gate(gate.gate))
-        if category and normalized_status in STATUS_VALUES:
+    for gate in _scorable_rows(valid_standard_rows):
+        normalized_status = gate.normalized_status
+        category = GATE_TO_CATEGORY.get(gate.canonical_gate or "")
+        if category:
             category_statuses[category].append(normalized_status)
 
     # Backward-compatible hint from older report code; ignored by the new model
     # except when no tail-risk gate exists.
-    if boundary_coverage_status in STATUS_VALUES and not category_statuses["tail_risk_p0_failure_readiness"]:
+    if boundary_coverage_status in ALLOWED_GATE_STATUSES and not category_statuses["tail_risk_p0_failure_readiness"]:
         category_statuses["tail_risk_p0_failure_readiness"] = [boundary_coverage_status]
 
     raw_score = 0.0
@@ -120,11 +120,20 @@ def score_gates(
 
 
 def gate_statuses(gates: list[GateRow]) -> dict[str, str]:
-    return {normalize_gate(gate.gate): gate.status.strip().lower() for gate in gates}
+    """Return unambiguous standard-gate statuses for display compatibility."""
+
+    rows = _valid_standard_rows(gates)
+    return {
+        gate.canonical_gate: gate.normalized_status
+        for gate in rows
+        if gate.canonical_gate is not None
+    }
 
 
 def normalize_gate(gate: str) -> str:
-    return " ".join(gate.strip().lower().split())
+    """Backward-compatible gate-name normalization."""
+
+    return normalize_gate_name(gate)
 
 
 def _category_value(statuses: list[str]) -> float:
@@ -137,3 +146,44 @@ def _category_value(statuses: list[str]) -> float:
     if "pass" in statuses:
         return 1.0
     return 0.0
+
+
+def _valid_standard_rows(
+    gates: list[GateRow] | LaunchGateReview,
+) -> list[GateRow]:
+    if isinstance(gates, LaunchGateReview):
+        rows = gates.valid_rows
+    else:
+        normalized_rows = [
+            replace(
+                row,
+                canonical_gate=(
+                    row.canonical_gate
+                    or canonicalize_gate_name(row.gate)
+                ),
+            )
+            for row in gates
+        ]
+        counts = Counter(
+            row.canonical_gate
+            for row in normalized_rows
+            if row.canonical_gate is not None
+        )
+        duplicates = {
+            gate for gate, count in counts.items() if count > 1
+        }
+        rows = [
+            row
+            for row in normalized_rows
+            if row.normalized_status in ALLOWED_GATE_STATUSES
+            and row.canonical_gate not in duplicates
+        ]
+    return [row for row in rows if row.canonical_gate is not None]
+
+
+def _scorable_rows(valid_standard_rows: list[GateRow]) -> list[GateRow]:
+    return [
+        row
+        for row in valid_standard_rows
+        if row.canonical_gate in GATE_TO_CATEGORY
+    ]

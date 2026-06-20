@@ -5,6 +5,8 @@ from shutil import copytree
 import pytest
 
 from openevalgate.cli import main
+from openevalgate.launch_gate_review import is_meaningful_mitigation
+from openevalgate.project_inspection import inspect_project
 from openevalgate.report import _non_eval_result_issues, generate_report
 from openevalgate.schema import ValidationIssue, load_eval_cases
 from openevalgate.scorer import WEIGHTS, score_gates, GateRow
@@ -23,6 +25,7 @@ def test_report_generation_returns_expected_sections() -> None:
     assert "## Observed Behavioral Quality" in report
     assert "## Critical-Control Status" in report
     assert "## Maximum Permitted Stage" in report
+    assert "## Hard-Gate Evaluation" in report
     assert "## Hard Blockers" in report
     assert "## Trust Preservation Summary" in report
     assert "## Business Behavior Contract Summary" in report
@@ -128,9 +131,10 @@ def test_missing_eval_results_are_not_evaluated_and_cap_launch_recommendation(tm
     report = generate_report(project)
 
     assert "**Behavioral evidence status:** Not evaluated — no results provided." in report
-    assert "**Critical-control status:** Not evaluated" in report
-    assert "**Final launch recommendation:** Not ready for controlled launch" in report
-    assert "**Maximum permitted stage:** Shadow evaluation" in report
+    assert "**Critical-control status:** Fail" in report
+    assert "**Final launch recommendation:** Not ready for shadow evaluation" in report
+    assert "**Maximum permitted stage:** Documentation remediation" in report
+    assert "`missing_monitoring`" in report
     assert "Ready for bounded controlled launch" not in report
 
 
@@ -143,9 +147,9 @@ def test_empty_eval_results_are_distinguished_from_missing_results(tmp_path: Pat
     report = generate_report(project)
 
     assert "**Behavioral evidence status:** Not evaluated — results file contains no rows." in report
-    assert "**Critical-control status:** Not evaluated" in report
-    assert "**Final launch recommendation:** Not ready for controlled launch" in report
-    assert "**Maximum permitted stage:** Shadow evaluation" in report
+    assert "**Critical-control status:** Fail" in report
+    assert "**Final launch recommendation:** Not ready for shadow evaluation" in report
+    assert "**Maximum permitted stage:** Documentation remediation" in report
 
 
 def test_empirical_results_without_hard_blockers_remain_shadow_only(tmp_path: Path) -> None:
@@ -172,6 +176,14 @@ def test_empirical_results_without_hard_blockers_remain_shadow_only(tmp_path: Pa
             ]
         )
         + "\n",
+        encoding="utf-8",
+    )
+    gate_review = project / "launch_gate_review.md"
+    gate_review.write_text(
+        gate_review.read_text(encoding="utf-8").replace(
+            "| Observability gate | partial |",
+            "| Observability gate | pass |",
+        ),
         encoding="utf-8",
     )
 
@@ -255,6 +267,100 @@ def test_generated_example_reports_are_reproducible(example_name: str) -> None:
     assert "Critical-control status: Pass" not in report
     assert "**Pass**" not in report
     assert ".;" not in report
+
+
+@pytest.mark.parametrize(
+    ("example_name", "expected_score", "rollback_status"),
+    [
+        ("customer_support_assistant", 90, "pass"),
+        ("presales_assistant", 37, "partial"),
+        ("education_assistant", 34, "partial"),
+    ],
+)
+def test_canonical_scores_and_rollback_sections_are_consistent(
+    example_name: str,
+    expected_score: int,
+    rollback_status: str,
+) -> None:
+    project = ROOT / "examples" / example_name
+    inspection = inspect_project(project)
+    score = score_gates(inspection.launch_gate_review)
+    report = generate_report(project)
+
+    assert score.score == expected_score
+    assert (
+        f"| rollback gate | Yes | pass | {rollback_status} |"
+        in report
+    )
+    assert f"- Rollback gate: {rollback_status}" in report
+
+
+def test_non_scored_hard_gate_mitigations_remain_in_example_reports() -> None:
+    presales = generate_report(ROOT / "examples" / "presales_assistant")
+    education = generate_report(ROOT / "examples" / "education_assistant")
+
+    assert "- Rollback gate: Define launch stop criteria." in presales
+    assert "- Owner signoff gate: Complete final review." in presales
+    assert "- Rollback gate: Define stop criteria." in education
+    assert (
+        "- Owner signoff gate: Complete signoff after arena and drift plan."
+        in education
+    )
+
+
+@pytest.mark.parametrize(
+    "example_name",
+    ["customer_support_assistant", "presales_assistant", "education_assistant"],
+)
+def test_every_weak_standard_gate_has_a_required_mitigation_line(
+    example_name: str,
+) -> None:
+    project = ROOT / "examples" / example_name
+    inspection = inspect_project(project)
+    result = score_gates(inspection.launch_gate_review)
+    report = generate_report(project)
+
+    for gate in result.weak_gates:
+        mitigation = (
+            gate.mitigation
+            if is_meaningful_mitigation(gate.mitigation)
+            else "mitigation not provided."
+        )
+        assert f"- {gate.gate}: {mitigation}" in report
+
+
+def test_weak_gate_without_meaningful_mitigation_uses_fallback(
+    tmp_path: Path,
+) -> None:
+    project = tmp_path / "project"
+    copytree(CUSTOMER_SUPPORT, project)
+    path = project / "launch_gate_review.md"
+    path.write_text(
+        path.read_text(encoding="utf-8").replace(
+            (
+                "| Rollback gate | pass | Product and engineering owners "
+                "can pause rollout. | None | engineering |"
+            ),
+            (
+                "| Rollback gate | partial | Product and engineering owners "
+                "can pause rollout. | N/A | engineering |"
+            ),
+        ),
+        encoding="utf-8",
+    )
+
+    report = generate_report(project)
+
+    assert "- Rollback gate: mitigation not provided." in report
+
+
+def test_legacy_manual_report_copies_are_removed() -> None:
+    for example_name in (
+        "customer_support_assistant",
+        "presales_assistant",
+        "education_assistant",
+    ):
+        assert not (ROOT / "examples" / example_name / "launch_report.md").exists()
 
 
 def test_cli_commands_retain_success_exit_behavior(capsys: pytest.CaptureFixture[str]) -> None:
@@ -364,3 +470,160 @@ def test_high_risk_action_without_controls_is_hard_blocker(tmp_path: Path) -> No
 
     assert "ungated_high_risk_action" in report
     assert "Not ready" in report
+
+
+def test_report_renders_duplicate_gate_as_invalid(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    copytree(CUSTOMER_SUPPORT, project)
+    path = project / "launch_gate_review.md"
+    path.write_text(
+        path.read_text(encoding="utf-8")
+        + "| Rollback gate | pass | duplicate evidence | None | owner |\n",
+        encoding="utf-8",
+    )
+
+    report = generate_report(project)
+
+    assert (
+        "| rollback gate | Yes | pass | invalid: duplicate rows | Invalid |"
+        in report
+    )
+    assert "- Rollback gate: invalid: duplicate rows" in report
+    assert "`missing_rollback`" in report
+
+
+def test_report_renders_unsupported_gate_status_as_invalid(
+    tmp_path: Path,
+) -> None:
+    project = tmp_path / "project"
+    copytree(CUSTOMER_SUPPORT, project)
+    path = project / "launch_gate_review.md"
+    path.write_text(
+        path.read_text(encoding="utf-8").replace(
+            "| Rollback gate | pass |",
+            "| Rollback gate | warning |",
+        ),
+        encoding="utf-8",
+    )
+
+    report = generate_report(project)
+
+    assert (
+        "| rollback gate | Yes | pass | invalid: warning | Invalid |"
+        in report
+    )
+    assert "- Rollback gate: invalid: warning" in report
+
+
+def test_report_renders_truly_missing_rollback_consistently(
+    tmp_path: Path,
+) -> None:
+    project = tmp_path / "project"
+    copytree(CUSTOMER_SUPPORT, project)
+    path = project / "launch_gate_review.md"
+    lines = [
+        line
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if not line.startswith("| Rollback gate |")
+    ]
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    report = generate_report(project)
+
+    assert "| rollback gate | Yes | pass | missing | Blocked |" in report
+    assert "- Rollback gate: missing" in report
+
+
+def test_invalid_duplicate_risk_header_summary_uses_unknown_counts(
+    tmp_path: Path,
+) -> None:
+    project = tmp_path / "project"
+    copytree(CUSTOMER_SUPPORT, project)
+    (project / "action_risk_matrix.csv").write_text(
+        "\n".join(
+            [
+                (
+                    "action,risk_tier,risk_tier,deterministic_gate,"
+                    "human_review_required"
+                ),
+                "refund,low,high,,false",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    report = generate_report(project)
+    inspection = inspect_project(project)
+    section = report.split("## Tool/Action Safety Summary\n", 1)[1].split(
+        "\n\n## Input/Output Perimeter Summary",
+        1,
+    )[0]
+
+    assert (
+        "Action-risk matrix: invalid; the following counts are diagnostic "
+        "only and were not used for policy decisions."
+    ) in section
+    assert "- Rows: 1" in section
+    assert "- Risk tiers: unknown=1" in section
+    assert "High/prohibited actions" not in section
+    assert not inspection.check.action_risk_review.valid
+    assert inspection.context.has_tool_actions is None
+    assert (
+        "risk_tier"
+        not in inspection.check.action_risk_review.rows[0].raw_values
+    )
+
+
+def test_invalid_unrelated_duplicate_header_preserves_unique_tier_counts(
+    tmp_path: Path,
+) -> None:
+    project = tmp_path / "project"
+    copytree(CUSTOMER_SUPPORT, project)
+    (project / "action_risk_matrix.csv").write_text(
+        "\n".join(
+            [
+                (
+                    "action,risk_tier,extra,extra,deterministic_gate,"
+                    "human_review_required"
+                ),
+                "refund,high,a,b,,false",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    report = generate_report(project)
+    inspection = inspect_project(project)
+    section = report.split("## Tool/Action Safety Summary\n", 1)[1].split(
+        "\n\n## Input/Output Perimeter Summary",
+        1,
+    )[0]
+
+    assert "- Risk tiers: high=1" in section
+    assert "High/prohibited actions" not in section
+    assert "ungated_high_risk_action" not in report
+    assert not inspection.check.action_risk_review.valid
+    assert inspection.context.has_tool_actions is None
+
+
+def test_missing_and_valid_action_risk_summaries_keep_existing_behavior(
+    tmp_path: Path,
+) -> None:
+    valid_report = generate_report(CUSTOMER_SUPPORT)
+    valid_section = valid_report.split(
+        "## Tool/Action Safety Summary\n",
+        1,
+    )[1].split("\n\n## Input/Output Perimeter Summary", 1)[0]
+    assert "- Rows: 7" in valid_section
+    assert "High/prohibited actions:" in valid_section
+
+    project = tmp_path / "project"
+    copytree(CUSTOMER_SUPPORT, project)
+    (project / "action_risk_matrix.csv").unlink()
+    missing_report = generate_report(project)
+    assert (
+        "## Tool/Action Safety Summary\nNo action risk matrix found."
+        in missing_report
+    )

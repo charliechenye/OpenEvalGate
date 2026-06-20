@@ -68,11 +68,11 @@ HARD_GATE_POLICY = {
 }
 ```
 
-- [ ] Treat `partial`, `fail`, and missing as blocking when a full pass is required.
-- [ ] Define gate-specific `not_applicable` rules.
-- [ ] Reject unsupported gate statuses.
-- [ ] Remove contradictory blocker wording.
-- [ ] Expose the hard-gate policy in generated reports.
+- [x] Treat `partial`, `fail`, and missing as blocking when a full pass is required.
+- [x] Define gate-specific `not_applicable` rules.
+- [x] Reject unsupported gate statuses.
+- [x] Remove contradictory blocker wording.
+- [x] Expose the hard-gate policy in generated reports.
 
 ### Required Tests
 

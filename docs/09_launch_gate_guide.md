@@ -32,10 +32,10 @@ This gate-based approach is aligned with AI risk-management and governance frame
 
 ## Status values
 
-- `pass`: Evidence is sufficient.
+- `pass`: The declaration claims completion. Applicable hard gates must also contain meaningful evidence and satisfy any required artifact checks.
 - `partial`: Evidence exists but a mitigation remains.
 - `fail`: Evidence is missing or unacceptable.
-- `not_applicable`: Gate is intentionally not scored for this launch.
+- `not_applicable`: A conditional gate is not required only when validated project context establishes non-applicability.
 
 ## Evidence completeness bands
 
@@ -50,6 +50,12 @@ The final recommendation is produced by a separate deterministic assessment. It 
 The structural field is named `Control evidence completeness threshold met`. Meeting this threshold does not override hard blockers or grant permission to begin shadow evaluation.
 
 Owner signoff is a non-scored launch blocker. High evidence completeness does not replace accountable approval or observed behavioral evidence.
+
+## Validation versus launch policy
+
+`openevalgate check` answers whether artifacts and declarations are structurally usable. Supported `partial` and `fail` values are valid declarations, so they do not fail structural validation. The report separately evaluates whether those declarations block advancement.
+
+Unsupported statuses on any row, duplicate aliases that resolve to the same standard gate, malformed rows, and prohibited `not_applicable` declarations fail validation. Unknown custom gate names are allowed when they use the standard status vocabulary, but they are neither scored nor evaluated as hard gates.
 
 ## Launch decision outputs
 
@@ -67,15 +73,28 @@ Valid result rows with no known blockers use `No known blockers detected`, not `
 
 The Routing / capability allocation gate shares the existing model-selection readiness category. It does not increase the 100-point total. Single-model systems without workflow-specific allocation may mark it `not_applicable`; multi-workflow systems should provide versioned assignments, eval evidence, fallbacks, observability, and rollback.
 
-## Hard Blockers
+## Hard-Gate Policy
 
-Regardless of score, known hard blockers prevent controlled launch when:
+The generated report evaluates these gates in a stable order:
 
-- Scope is missing or failed.
-- Golden eval set is missing or invalid.
-- Tail-risk/P0 review is missing or failed for high-impact workflows.
-- A high-risk action lacks deterministic enforcement or human approval.
-- High-risk or low-confidence cases lack an escalation path.
-- Rollback is missing or not passing.
-- Owner signoff is missing or not passing.
-- Observability/monitoring is missing or failed.
+| Gate | Applicability | Additional evidence |
+| --- | --- | --- |
+| Scope | Always | Valid `assistant_prd.md` |
+| Golden eval | Always | Valid `eval_cases.yaml` |
+| Tail-risk / P0 failure mode | High-impact projects | `p0_failure_mode_checklist.md` |
+| Tool/action safety | Projects with declared actions | Valid `action_risk_matrix.csv` |
+| Human escalation | High-impact projects | `human_escalation_design.md` |
+| Observability | Always | Meaningful declared evidence |
+| Rollback | Always | Meaningful declared evidence |
+| Owner signoff | Always | Meaningful declared evidence |
+
+For an applicable gate, `partial`, `fail`, missing, and `not_applicable` are blocking. A `pass` with blank or placeholder evidence such as `none`, `n/a`, `TBD`, or `unknown` is also blocking. Conditional applicability is tri-state: true, false, or unknown. Unknown applicability is blocked because missing evidence must not create a permissive result.
+
+A valid empty action matrix establishes that tool/action safety is not applicable. A missing or invalid matrix leaves applicability unknown and fails project validation independently. Unsafe high-risk rows continue to create the separate `ungated_high_risk_action` blocker even when the declared gate says `pass`.
+
+An action-risk row is populated when any CSV cell contains a non-whitespace
+value. Every populated row requires a nonblank action, a risk tier of `low`,
+`medium`, `high`, or `prohibited`, and a `human_review_required` value of
+`true` or `false`. If any row is invalid, the complete matrix is untrusted:
+parsed rows may still support diagnostics, but none may determine
+applicability, impact, artifact satisfaction, or unsafe-action blockers.
