@@ -266,7 +266,9 @@ def test_generated_example_reports_are_reproducible(example_name: str) -> None:
     project = ROOT / "examples" / example_name
     report = generate_report(project)
 
-    assert generate_report(project) == report
+    assert (project / "generated_launch_report.md").read_text(
+        encoding="utf-8"
+    ) == report
     assert "Ready for bounded controlled launch" not in report
     assert "Critical-control status: Pass" not in report
     assert "**Pass**" not in report

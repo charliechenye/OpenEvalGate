@@ -201,7 +201,7 @@ Evidence package bands:
 
 These bands describe evidence completeness only. They do not grant a deployment stage. The final recommendation is determined separately from project validity, behavioral-evidence state, and known hard blockers. Missing, empty, or invalid `eval_results.csv` cannot produce a controlled-launch recommendation.
 
-In this iteration, even valid empirical rows with no known blockers permit only shadow evaluation. Controlled-launch readiness remains undetermined until minimum coverage, required critical slices, behavioral thresholds, repeated-run sufficiency, evidence provenance, and controlled-launch authorization are implemented.
+Explicit review modes, selected-run coverage, critical-case sufficiency, and initial behavioral thresholds are documented in [Review Modes and Behavioral Sufficiency](docs/review-modes.md). Controlled-launch recommendations remain bounded and do not replace provenance, freshness, runtime monitoring, or organizational approval.
 
 Behavioral evidence is reported as one of:
 

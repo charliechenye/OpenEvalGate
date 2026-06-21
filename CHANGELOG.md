@@ -8,6 +8,11 @@ The project follows semantic versioning while it remains in alpha. Until a stabl
 
 ### Added
 
+- Explicit documentation, shadow-launch, and controlled-launch review modes.
+- Optional `review_policy.yaml` with selected run/candidate scope, coverage,
+  trial-depth, and initial behavioral thresholds.
+- Complete critical-case coverage and non-relaxable behavioral invariants.
+- Deterministic controlled-launch sufficiency assessment and report tables.
 - Global `openevalgate --version` output derived from installed package metadata.
 - Wheel and source-distribution content and metadata verification.
 - Clean-wheel installation and installed console-script smoke testing.
@@ -42,4 +47,4 @@ The project follows semantic versioning while it remains in alpha. Until a stabl
 
 - The 100-point evidence-completeness scoring model.
 - Stable blocker IDs and CLI behavior.
-- The shadow-only launch ceiling pending behavioral sufficiency policy.
+- Backward-compatible effective shadow mode for projects without a review policy.
