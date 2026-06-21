@@ -4,13 +4,13 @@ This roadmap tracks the work required to make OpenEvalGate technically credible,
 
 OpenEvalGate should be positioned as an **evidence-backed release-assurance framework for production AI assistants and agents**. It should not claim to be a complete AI governance platform, eval runner, observability system, runtime guardrail, or compliance certification product.
 
-> **Current status:** Iteration 1 hard-gate semantics are complete. Public-repository infrastructure is implemented in draft PR #5 and has passed CI. The repository is not yet approved for public visibility because behavioral-sufficiency policy, clean-wheel verification, repository protection, release metadata, and independent external review remain open.
+> **Post-merge status for PR #5:** Iteration 1 hard-gate semantics and the core public-repository infrastructure are complete, with the consolidated CI workflow green across Python 3.10–3.13. The repository is not yet approved for public visibility because behavioral-sufficiency policy, clean-wheel verification, repository protection, governance and support documentation, release metadata, and independent external review remain open.
 
 ## Status Legend
 
 - [ ] Not started
-- [~] In progress or implemented on an unmerged branch
-- [x] Complete on `main`
+- [~] Partially implemented or in progress
+- [x] Complete
 - [!] Blocked
 
 ## Operating Rules
@@ -60,37 +60,40 @@ OpenEvalGate should be positioned as an **evidence-backed release-assurance fram
 - [ ] Pin framework, eval-case, routing-policy, and escalation-contract versions in each run.
 - [ ] Define evidence provenance and freshness requirements.
 
-### Add continuous integration
+### Continuous integration and repository verification
 
-- [~] Add GitHub Actions for Python 3.10 through 3.13. Implemented and green in PR #5.
-- [~] Run the full test suite on every pull request. Implemented and green in PR #5.
-- [~] Build source and wheel distributions. Implemented and green in PR #5.
+- [x] Add one consolidated GitHub Actions check covering Python 3.10 through 3.13.
+- [x] Run the full test suite on every pull request.
+- [x] Build source and wheel distributions.
 - [ ] Install the built wheel in a clean environment and exercise the installed CLI.
-- [~] Run CLI smoke tests against all canonical examples. Implemented and green in PR #5.
-- [~] Verify committed generated reports match current CLI output. Implemented and green in PR #5.
+- [x] Run CLI smoke tests against all canonical examples.
+- [x] Verify committed generated reports match current CLI output byte-for-byte.
+- [x] Use Node 24-compatible GitHub Actions.
 - [ ] Add linting, formatting, and type checking.
-- [~] Add dependency maintenance and a lightweight security scan. Dependabot is implemented in PR #5; dependency review and code scanning remain open.
-- [ ] Configure branch protection to require CI checks after PR #5 merges.
+- [x] Add dependency maintenance through Dependabot.
+- [ ] Add dependency review and a lightweight security scan.
+- [ ] Configure branch protection to require the consolidated `CI` check.
 
 ### Establish clear authorship and citation
 
-- [~] Identify Chenye Zhu as project author and maintainer in package metadata. Implemented in PR #5.
-- [~] Update the copyright line to `Chenye Zhu and OpenEvalGate contributors`. Implemented in PR #5.
-- [~] Add `CITATION.cff` with Chenye Zhu and the Charlie Zhu alias. Implemented in PR #5.
+- [x] Identify Chenye Zhu as project author and maintainer in package metadata.
+- [x] Update the copyright line to `Chenye Zhu and OpenEvalGate contributors`.
+- [x] Add `CITATION.cff` with Chenye Zhu and the Charlie Zhu alias.
 - [ ] Add `AUTHORS.md` with contribution-credit rules.
-- [~] Add project URLs and maintainer metadata to `pyproject.toml`. Implemented in PR #5.
-- [~] Add README maintainer and citation guidance. Implemented in PR #5.
+- [x] Add project URLs and maintainer metadata to `pyproject.toml`.
+- [x] Add README maintainer and citation guidance.
 - [ ] Create a tagged release and stable release notes before public launch.
 
 ### Establish public repository governance
 
-- [~] Add `SECURITY.md`, `CODE_OF_CONDUCT.md`, and `CHANGELOG.md`. Implemented in PR #5.
-- [~] Expand `CONTRIBUTING.md` with validation, trust-boundary, and evidence-hygiene requirements. Implemented in PR #5.
-- [~] Add issue forms and a pull-request template. Implemented in PR #5.
-- [~] Add Dependabot configuration. Implemented in PR #5.
+- [x] Add `SECURITY.md`, `CODE_OF_CONDUCT.md`, and `CHANGELOG.md`.
+- [x] Expand `CONTRIBUTING.md` with validation, trust-boundary, and evidence-hygiene requirements.
+- [x] Add structured issue forms and a pull-request template.
+- [x] Add Dependabot configuration.
 - [ ] Add `GOVERNANCE.md` and `SUPPORT.md`.
 - [ ] Document release, deprecation, and schema-change policy.
 - [ ] Configure repository labels and public support boundaries.
+- [ ] Enable private vulnerability reporting and applicable security features.
 
 ## P1: Required for a Strong Public Launch
 
@@ -160,12 +163,14 @@ OpenEvalGate should be positioned as an **evidence-backed release-assurance fram
 OpenEvalGate is ready to become public only when:
 
 - [ ] All remaining P0 work is complete or explicitly accepted as a documented launch risk.
-- [ ] PR #5 is merged and CI is green on the exact public-release commit.
-- [ ] Branch protection requires the verified CI checks.
+- [x] The core public-readiness changes from PR #5 are merged.
+- [ ] CI is green on the exact public-release commit.
+- [ ] Branch protection requires the consolidated `CI` check.
 - [ ] The built wheel installs and the installed CLI runs in a clean environment.
 - [ ] A blocked example is reproducible and the limitations of the current shadow-only ceiling are explicit.
 - [x] The report cleanly separates evidence completeness, observed behavior, and critical-control status.
-- [~] Authorship, citation, security, contribution, and changelog metadata are implemented in PR #5; governance, support, and release-process documentation remain open.
+- [x] Authorship, citation, security, contribution, changelog, issue-template, and dependency-maintenance infrastructure are present.
+- [ ] Governance, support, release-process, and deprecation documentation are present.
 - [ ] At least one independent practitioner has completed a structured pilot or review, or the absence is explicitly accepted and disclosed as a launch risk.
 - [ ] The README explains the category and value in under one minute.
 - [ ] The public-launch checklist has no unresolved required item.
