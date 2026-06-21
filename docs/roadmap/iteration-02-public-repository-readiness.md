@@ -2,7 +2,9 @@
 
 ## Status
 
-**In progress in draft PR #5.** Continuous integration, package builds, canonical-report reproducibility, security and conduct policies, contribution templates, citation metadata, changelog, maintainer attribution, and dependency automation are implemented and green on the PR branch. Clean-wheel installation, branch protection, governance/support documents, release policy, version output, and final public-release verification remain open.
+**Core infrastructure complete after PR #5.** Continuous integration, Python 3.10–3.13 compatibility testing, package builds, canonical-report reproducibility, security and conduct policies, contribution templates, citation metadata, changelog, maintainer attribution, issue forms, pull-request guidance, and dependency automation are complete.
+
+Iteration 2 remains open for clean-wheel installation, branch protection, governance and support documents, release and deprecation policy, version output, security scanning, and final public-release verification.
 
 ## Objective
 
@@ -12,18 +14,22 @@ This iteration should not expand product scope. It should make the existing fram
 
 ## P0.1 Add Continuous Integration
 
-Add a required GitHub Actions workflow covering:
+The required GitHub Actions workflow covers:
 
-- [~] Python 3.10 — implemented and green in PR #5.
-- [~] Python 3.11 — implemented and green in PR #5.
-- [~] Python 3.12 — implemented and green in PR #5.
-- [~] Python 3.13 — implemented and green in PR #5.
-- [~] Full `pytest` suite — implemented and green in PR #5.
-- [~] Package build — source and wheel builds pass in PR #5.
+- [x] Python 3.10.
+- [x] Python 3.11.
+- [x] Python 3.12.
+- [x] Python 3.13.
+- [x] Full `pytest` suite on every supported Python version.
+- [x] One consolidated `CI` status check for branch protection.
+- [x] Node 24-compatible GitHub Actions.
+- [x] Source and wheel package builds.
 - [ ] Wheel installation in a clean environment.
-- [~] CLI smoke tests — implemented for all canonical examples in PR #5.
-- [~] Canonical-example validation — implemented and green in PR #5.
-- [~] Generated-report reproducibility — implemented and green in PR #5.
+- [x] CLI smoke tests for all canonical examples.
+- [x] Canonical-example validation.
+- [x] Generated-report byte-for-byte reproducibility.
+- [x] Package compilation.
+- [x] Whitespace validation.
 - [ ] Linting and formatting.
 - [ ] Type checking.
 - [ ] Dependency review.
@@ -42,19 +48,19 @@ openevalgate check examples/presales_assistant/
 openevalgate check examples/education_assistant/
 ```
 
-Current PR #5 coverage includes the build, canonical validation, checks, reports, and byte-for-byte report comparison. Clean-wheel installation and `--version` remain open.
+The build, supported-version tests, canonical validation, checks, reports, and byte-for-byte report comparison are complete. Clean-wheel installation and `--version` remain open.
 
 ### Acceptance Criteria
 
-- [~] Every pull request runs required CI checks after PR #5 merges.
-- [ ] The default branch cannot merge with failed required checks.
-- [~] Committed generated reports match current CLI output in PR #5.
+- [x] Every pull request runs the consolidated `CI` workflow.
+- [ ] The default branch cannot merge with a failed required check.
+- [x] Committed generated reports match current CLI output.
 - [ ] A wheel installed in a clean environment exposes a working CLI.
 
 ## P0.2 Configure Repository Protection
 
 - [ ] Require pull requests for changes to the default branch.
-- [ ] Require CI status checks.
+- [ ] Require the consolidated `CI` status check.
 - [ ] Require branches to be up to date before merge.
 - [ ] Disable force pushes to the default branch.
 - [ ] Enable secret scanning and dependency alerts where available.
@@ -62,50 +68,51 @@ Current PR #5 coverage includes the build, canonical validation, checks, reports
 - [x] Use `main` as the default branch.
 - [ ] Enable private vulnerability reporting before public visibility.
 
-These settings require manual repository configuration after PR #5 merges.
+These settings require manual repository configuration after PR #5 is merged.
 
 ## P0.3 Establish Authorship and Citation
 
-- [~] Set package authorship to Chenye Zhu — implemented in PR #5.
-- [~] Update copyright to `Chenye Zhu and OpenEvalGate contributors` — implemented in PR #5.
-- [~] Add maintainer and homepage metadata — implemented in PR #5.
-- [~] Add `CITATION.cff` with the Charlie Zhu alias — implemented in PR #5.
+- [x] Set package authorship to Chenye Zhu.
+- [x] Update copyright to `Chenye Zhu and OpenEvalGate contributors`.
+- [x] Add maintainer and homepage metadata.
+- [x] Add `CITATION.cff` with the Charlie Zhu alias.
 - [ ] Add `AUTHORS.md`.
-- [~] Define contribution-credit expectations in `CONTRIBUTING.md` and the Code of Conduct — implemented in PR #5; a formal authors file remains open.
-- [~] Add repository, documentation, issues, and changelog URLs to `pyproject.toml` — implemented in PR #5.
-- [~] Add a citation section to the README — implemented in PR #5.
+- [x] Define contribution-credit expectations in `CONTRIBUTING.md` and the Code of Conduct.
+- [x] Add repository, documentation, issues, and changelog URLs to `pyproject.toml`.
+- [x] Add a citation section to the README.
 - [ ] Create a stable tagged release before public visibility.
 
 ### Acceptance Criteria
 
-- [~] GitHub can display citation metadata after PR #5 merges.
-- [~] Installed package metadata identifies the creator and canonical repository after PR #5 merges.
-- [~] The license preserves permissive reuse while maintaining clear provenance after PR #5 merges.
+- [x] GitHub can display citation metadata.
+- [x] Installed package metadata identifies the creator and canonical repository.
+- [x] The license preserves permissive reuse while maintaining clear provenance.
 
 ## P0.4 Add Open-Source Project Infrastructure
 
-- [~] Add `SECURITY.md` with supported versions and private reporting instructions — implemented in PR #5.
-- [~] Add `CODE_OF_CONDUCT.md` — implemented in PR #5.
-- [~] Add `CHANGELOG.md` beginning with `[Unreleased]` — implemented in PR #5.
+- [x] Add `SECURITY.md` with supported versions and private reporting instructions.
+- [x] Add `CODE_OF_CONDUCT.md`.
+- [x] Add `CHANGELOG.md` beginning with `[Unreleased]`.
 - [ ] Add `GOVERNANCE.md` describing maintainer authority and decision rules.
 - [ ] Add `SUPPORT.md` explaining support boundaries.
-- [~] Add a pull-request template — implemented in PR #5.
-- [~] Add structured bug and feature issue forms — implemented in PR #5.
+- [x] Add a pull-request template.
+- [x] Add structured bug and feature issue forms.
 - [ ] Add dedicated documentation, integration, and example issue forms only when contribution volume justifies them.
 - [ ] Add labels for `good first issue`, `help wanted`, `schema`, `docs`, `integration`, and `example`.
 - [ ] Document release, deprecation, and schema-change policy.
-- [~] Add automated dependency update configuration — implemented in PR #5.
+- [x] Add automated dependency update configuration.
 
 ## P0.5 Tighten Package and Release Metadata
 
 - [x] Confirm the distribution name `openevalgate` and import package are intentional.
-- [~] Add package classifiers appropriate to alpha maturity and Python 3.10–3.13 — implemented in PR #5.
-- [~] Add project URLs — implemented in PR #5.
-- [~] Pin minimum supported Python versions in documentation and CI — implemented in PR #5.
+- [x] Add package classifiers appropriate to alpha maturity and Python 3.10–3.13.
+- [x] Add project URLs.
+- [x] Pin minimum supported Python versions in documentation and CI.
 - [ ] Add a package-data strategy if schemas or templates are included at runtime.
 - [ ] Inspect source distribution and wheel contents for intended files.
-- [~] Build source and wheel distributions successfully — implemented in PR #5.
-- [~] Add release notes for user-visible changes through `CHANGELOG.md` — implemented in PR #5; tagged release notes remain open.
+- [x] Build source and wheel distributions successfully.
+- [x] Add an `[Unreleased]` changelog for user-visible changes.
+- [ ] Add stable tagged release notes.
 - [ ] Add a release checklist and rollback procedure for broken package releases.
 
 ### Acceptance Criteria
@@ -135,8 +142,8 @@ Recommended top-level order:
 - [ ] Move scoring weights to methodology documentation.
 - [ ] Remove duplicated definitions and FAQs.
 - [x] Retain a concise architecture block.
-- [~] Add explicit non-claims — several are present; compliance-certification and universal-readiness wording should be made more explicit.
-- [~] Add CI, license, Python, maintainer, citation, security, contribution, and changelog links — implemented in PR #5.
+- [~] Add explicit non-claims. Several are present; compliance-certification and universal-readiness wording should be made more explicit.
+- [x] Add CI, license, Python, maintainer, citation, security, contribution, and changelog links.
 
 ### Required Non-Claims
 
@@ -241,12 +248,15 @@ Maintain two flagship narratives:
 
 Iteration 2 is complete when:
 
-- [~] Required CI is green on PR #5; it must be merged and required on the release commit.
+- [x] The consolidated CI workflow is present and green across Python 3.10–3.13.
 - [ ] Branch protection is configured.
-- [~] Package build succeeds; clean-wheel installation remains open.
-- [~] Authorship and citation are explicit in PR #5.
-- [~] Security, conduct, contribution, and changelog files exist in PR #5; governance and support files remain open.
+- [x] Source and wheel package builds succeed.
+- [ ] Clean-wheel installation succeeds.
+- [x] Authorship and citation are explicit.
+- [x] Security, conduct, contribution, changelog, issue-template, and dependency-maintenance infrastructure exist.
+- [ ] Governance and support files exist.
 - [ ] The README communicates the category and value in under one minute.
 - [ ] A minimal new-user flow works without copying a large example.
-- [~] A blocked example is reproducible; a controlled-launch passing example depends on unfinished behavioral-sufficiency semantics.
+- [x] A blocked example is reproducible.
+- [ ] A controlled-launch passing example exists after behavioral-sufficiency semantics are implemented.
 - [ ] Public claims are reviewed, bounded, and supportable on the exact release commit.
