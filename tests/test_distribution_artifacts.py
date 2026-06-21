@@ -4,6 +4,7 @@ import io
 import stat
 import tarfile
 import zipfile
+from importlib.metadata import version
 from pathlib import Path
 
 import pytest
@@ -18,7 +19,7 @@ from scripts.verify_distribution_artifacts import (
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "0.1.1"
+VERSION = version("openevalgate")
 DIST_INFO = f"openevalgate-{VERSION}.dist-info"
 SDIST_ROOT = f"openevalgate-{VERSION}"
 

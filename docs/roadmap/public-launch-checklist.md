@@ -2,7 +2,7 @@
 
 Use this checklist for the final decision to change repository visibility from private to public.
 
-This checklist reflects the intended post-merge state of PR #5. A checked implementation item means the work is present after that merge. Final release approval still requires verification on the exact public-release commit.
+This checklist distinguishes implemented, locally validated work from checks that require the eventual PR or exact public-release commit. Release-artifact verification is implemented and locally validated on the `verify-release-artifacts` branch; GitHub CI on the final branch commit remains pending.
 
 ## 1. Release Semantics
 
@@ -37,15 +37,17 @@ This checklist reflects the intended post-merge state of PR #5. A checked implem
 - [x] The consolidated `CI` job passes on Python 3.11.
 - [x] The consolidated `CI` job passes on Python 3.12.
 - [x] The consolidated `CI` job passes on Python 3.13.
+- [x] Full `pytest` runs on Python 3.10 and Python 3.13; Python 3.11 and Python 3.12 run lightweight install, compile, import, and CLI checks.
+- [ ] The consolidated `CI` check passes on the final release-artifact branch commit.
 - [x] Node 24-compatible GitHub Actions are used.
 - [ ] Linting passes.
 - [ ] Formatting checks pass.
 - [ ] Type checks pass.
 - [x] Source and wheel package builds pass.
-- [ ] Wheel installation passes in a clean environment.
+- [x] Wheel installation passes in a clean environment locally; PR CI remains pending.
 - [x] CLI smoke tests pass for all canonical examples.
 - [x] All canonical examples pass structural validation.
-- [x] Generated reports match committed examples byte-for-byte.
+- [x] Generated reports match committed examples byte-for-byte and were revalidated locally through the installed wheel.
 - [x] Dependabot configuration is present.
 - [ ] Dependency review and security scanning pass or have documented accepted findings.
 - [ ] Branch protection requires the consolidated `CI` check.
@@ -53,10 +55,10 @@ This checklist reflects the intended post-merge state of PR #5. A checked implem
 ## 4. Package and Release
 
 - [x] Package version remains intentionally `0.1.1` until a release bump is approved.
-- [ ] `openevalgate --version` matches the package version.
-- [ ] Source distribution contents are inspected and correct.
-- [ ] Wheel contents are inspected and correct.
-- [ ] Installation does not require an editable checkout.
+- [x] `openevalgate --version` matches installed package metadata locally.
+- [x] Source distribution contents are inspected and correct locally.
+- [x] Wheel contents are inspected and correct locally.
+- [x] Installation does not require an editable checkout.
 - [x] `CHANGELOG.md` contains an `[Unreleased]` section.
 - [ ] Stable release notes describe all user-visible changes.
 - [ ] A release tag is prepared from the verified release commit.
@@ -139,7 +141,7 @@ A controlled-launch passing example is intentionally blocked on unfinished revie
 - [ ] Windows PowerShell clean-install commands work.
 - [x] Error messages identify failing artifact paths.
 - [ ] JSON output is available and documented.
-- [ ] `openevalgate --version` is available.
+- [x] `openevalgate --version` is available.
 
 ## 10. External Validation
 
@@ -173,7 +175,7 @@ A controlled-launch passing example is intentionally blocked on unfinished revie
 - [ ] The exact public-release commit hash is recorded.
 - [ ] All required CI checks are green on that exact commit.
 - [ ] The public package and repository versions agree.
-- [ ] The built wheel installs and the installed CLI runs from scratch.
+- [ ] The built wheel installs and the installed CLI run from scratch on the exact public-release commit. The current branch is locally validated.
 - [ ] No secrets, confidential examples, internal employer material, or private pilot data are present.
 - [ ] No unresolved required P0 item remains in [TODO.md](../../TODO.md), or each exception is explicitly accepted and documented.
 - [ ] Release notes identify known limitations.

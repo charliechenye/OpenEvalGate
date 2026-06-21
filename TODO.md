@@ -4,7 +4,7 @@ This roadmap tracks the work required to make OpenEvalGate technically credible,
 
 OpenEvalGate should be positioned as an **evidence-backed release-assurance framework for production AI assistants and agents**. It should not claim to be a complete AI governance platform, eval runner, observability system, runtime guardrail, or compliance certification product.
 
-> **Post-merge status for PR #5:** Iteration 1 hard-gate semantics and the core public-repository infrastructure are complete, with the consolidated CI workflow green across Python 3.10–3.13. The repository is not yet approved for public visibility because behavioral-sufficiency policy, clean-wheel verification, repository protection, governance and support documentation, release metadata, and independent external review remain open.
+> **Current local status:** Iteration 1 hard-gate semantics and the core public-repository infrastructure are complete. Release-artifact inspection, clean-wheel installation, installed CLI execution, and installed-wheel report reproduction are implemented and locally validated on the `verify-release-artifacts` branch. PR CI on the final branch commit, repository protection, governance and support documentation, release metadata, behavioral-sufficiency policy, and independent external review remain open.
 
 ## Status Legend
 
@@ -63,11 +63,13 @@ OpenEvalGate should be positioned as an **evidence-backed release-assurance fram
 ### Continuous integration and repository verification
 
 - [x] Add one consolidated GitHub Actions check covering Python 3.10 through 3.13.
-- [x] Run the full test suite on every pull request.
+- [x] Run the full test suite on Python 3.10 and Python 3.13.
+- [x] Run lightweight install, compile, import, and CLI checks on Python 3.11 and Python 3.12.
 - [x] Build source and wheel distributions.
-- [ ] Install the built wheel in a clean environment and exercise the installed CLI.
+- [x] Install the built wheel in a clean environment and exercise the installed CLI. Implemented and locally validated; awaiting PR CI.
 - [x] Run CLI smoke tests against all canonical examples.
-- [x] Verify committed generated reports match current CLI output byte-for-byte.
+- [x] Verify committed generated reports match current CLI output byte-for-byte, revalidated locally through the installed wheel.
+- [x] Inspect wheel and source-distribution contents and metadata.
 - [x] Use Node 24-compatible GitHub Actions.
 - [ ] Add linting, formatting, and type checking.
 - [x] Add dependency maintenance through Dependabot.
@@ -92,6 +94,7 @@ OpenEvalGate should be positioned as an **evidence-backed release-assurance fram
 - [x] Add Dependabot configuration.
 - [ ] Add `GOVERNANCE.md` and `SUPPORT.md`.
 - [ ] Document release, deprecation, and schema-change policy.
+- [ ] Modernize setuptools license metadata before its February 18, 2027 deprecation deadline.
 - [ ] Configure repository labels and public support boundaries.
 - [ ] Enable private vulnerability reporting and applicable security features.
 
@@ -105,7 +108,7 @@ OpenEvalGate should be positioned as an **evidence-backed release-assurance fram
 - [ ] Add a concise example that passes all controlled-launch gates after controlled-launch semantics exist.
 - [x] Retain a deliberately blocked example that demonstrates why aggregate scores are insufficient.
 - [ ] Add JSON output for `check` and `report`.
-- [ ] Add `openevalgate --version`.
+- [x] Add `openevalgate --version`. Implemented and locally validated; awaiting PR CI.
 
 ### Formalize the methodology
 
@@ -129,12 +132,12 @@ OpenEvalGate should be positioned as an **evidence-backed release-assurance fram
 
 ### Improve release and integration ergonomics
 
-- [ ] Add clean-wheel installation validation.
-- [ ] Add `openevalgate --version` and ensure it matches package metadata.
+- [x] Add clean-wheel installation validation. Implemented and locally validated; awaiting PR CI.
+- [x] Add `openevalgate --version` and ensure it matches package metadata.
 - [ ] Add JSON output for CI and external integrations.
 - [ ] Add SARIF output for GitHub-native findings.
 - [ ] Package project templates or add a deterministic scaffolding command.
-- [ ] Inspect source and wheel contents in CI.
+- [x] Inspect source and wheel contents in CI. Workflow implemented and locally validated; awaiting PR CI.
 
 ## P2: Adoption and Ecosystem Growth
 
@@ -166,7 +169,7 @@ OpenEvalGate is ready to become public only when:
 - [x] The core public-readiness changes from PR #5 are merged.
 - [ ] CI is green on the exact public-release commit.
 - [ ] Branch protection requires the consolidated `CI` check.
-- [ ] The built wheel installs and the installed CLI runs in a clean environment.
+- [x] The built wheel installs and the installed CLI runs in a clean environment locally; final PR CI remains pending.
 - [ ] A blocked example is reproducible and the limitations of the current shadow-only ceiling are explicit.
 - [x] The report cleanly separates evidence completeness, observed behavior, and critical-control status.
 - [x] Authorship, citation, security, contribution, changelog, issue-template, and dependency-maintenance infrastructure are present.
