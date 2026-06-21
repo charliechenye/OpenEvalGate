@@ -6,6 +6,7 @@ import argparse
 import sys
 from pathlib import Path
 
+from openevalgate import __version__
 from openevalgate.project_inspection import inspect_project
 from openevalgate.report import generate_report, write_report
 from openevalgate.schema import validate_eval_cases
@@ -21,6 +22,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="openevalgate",
         description="Validate GenAI launch-readiness artifacts and generate Markdown reports.",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
