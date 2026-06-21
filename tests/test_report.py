@@ -7,7 +7,7 @@ import pytest
 from openevalgate.cli import main
 from openevalgate.launch_gate_review import is_meaningful_mitigation
 from openevalgate.project_inspection import inspect_project
-from openevalgate.report import _non_eval_result_issues, generate_report
+from openevalgate.report import _non_eval_result_issues, generate_report, write_report
 from openevalgate.schema import ValidationIssue, load_eval_cases
 from openevalgate.scorer import WEIGHTS, score_gates, GateRow
 
@@ -273,6 +273,14 @@ def test_generated_example_reports_are_reproducible(example_name: str) -> None:
     assert "Critical-control status: Pass" not in report
     assert "**Pass**" not in report
     assert ".;" not in report
+
+
+def test_written_report_uses_canonical_lf_bytes(tmp_path: Path) -> None:
+    target = tmp_path / "generated.md"
+
+    write_report(CUSTOMER_SUPPORT, target)
+
+    assert target.read_bytes() == generate_report(CUSTOMER_SUPPORT).encode("utf-8")
 
 
 @pytest.mark.parametrize(

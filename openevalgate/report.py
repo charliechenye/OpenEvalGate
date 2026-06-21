@@ -139,7 +139,7 @@ def write_report(project_dir: str | Path, output_path: str | Path) -> Path:
     report = generate_report(project_dir)
     target = Path(output_path)
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(report, encoding="utf-8")
+    target.write_text(report, encoding="utf-8", newline="\n")
     return target
 
 
