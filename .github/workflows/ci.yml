@@ -25,9 +25,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Check whitespace errors
-        run: git diff --check
-
       - name: Determine CI scope
         id: scope
         shell: bash
@@ -38,16 +35,36 @@ jobs:
           PUSH_BEFORE_SHA: ${{ github.event.before }}
           CURRENT_SHA: ${{ github.sha }}
         run: |
-          set -uo pipefail
+          set -euo pipefail
 
           run_expensive=true
-          reason="Fail-closed default."
+          reason_code=fail_closed_default
           base_sha=""
           head_sha=""
+          comparison_available=false
+
+          check_fallback_whitespace() {
+            fallback_base=""
+            if git rev-parse --verify origin/main >/dev/null 2>&1; then
+              fallback_base="$(git merge-base HEAD origin/main || true)"
+            fi
+
+            if [[ -n "${fallback_base}" ]]; then
+              echo "Using merge-base whitespace fallback: ${fallback_base}..HEAD"
+              git diff \
+                --check \
+                --no-renames \
+                "${fallback_base}" \
+                HEAD
+            else
+              echo "No meaningful comparison range is available; checking the current commit."
+              git show --check --format= HEAD
+            fi
+          }
 
           case "${EVENT_NAME}" in
             workflow_dispatch)
-              reason="workflow_dispatch always runs full CI."
+              reason_code=workflow_dispatch
               ;;
             pull_request)
               base_sha="${PR_BASE_SHA}"
@@ -58,7 +75,7 @@ jobs:
               head_sha="${CURRENT_SHA}"
               ;;
             *)
-              reason="Unknown event type; running full CI."
+              reason_code=unknown_event
               ;;
           esac
 
@@ -68,62 +85,100 @@ jobs:
 
           if [[ "${EVENT_NAME}" == "pull_request" || "${EVENT_NAME}" == "push" ]]; then
             if [[ -z "${base_sha}" || -z "${head_sha}" ]]; then
-              reason="A comparison SHA is missing; running full CI."
+              reason_code=missing_comparison_sha
             elif [[ "${base_sha}" =~ ^0+$ ]]; then
-              reason="The comparison base SHA is all zeros; running full CI."
+              reason_code=zero_base_sha
             elif ! git cat-file -e "${base_sha}^{commit}" 2>/dev/null; then
-              reason="The comparison base commit is unavailable; running full CI."
+              reason_code=unavailable_base_commit
             elif ! git cat-file -e "${head_sha}^{commit}" 2>/dev/null; then
-              reason="The comparison head commit is unavailable; running full CI."
+              reason_code=unavailable_head_commit
             else
-              changed_file_list="$(mktemp)"
-              if git diff --name-only -z "${base_sha}" "${head_sha}" > "${changed_file_list}"; then
-                changed_count=0
-                unknown_path=""
-
-                echo "Changed paths:"
-                while IFS= read -r -d '' path; do
-                  changed_count=$((changed_count + 1))
-                  printf '  %s\n' "${path}"
-                  case "${path}" in
-                    docs/* | \
-                    TODO.md | CHANGELOG.md | CITATION.cff | \
-                    SECURITY.md | CODE_OF_CONDUCT.md | GOVERNANCE.md | SUPPORT.md | \
-                    .github/ISSUE_TEMPLATE/* | .github/pull_request_template.md)
-                      ;;
-                    *)
-                      if [[ -z "${unknown_path}" ]]; then
-                        unknown_path="${path}"
-                      fi
-                      ;;
-                  esac
-                done < "${changed_file_list}"
-
-                if [[ "${changed_count}" -eq 0 ]]; then
-                  reason="The changed-file set was unexpectedly empty; running full CI."
-                elif [[ -n "${unknown_path}" ]]; then
-                  reason="Path '${unknown_path}' is outside the documentation-only allowlist."
-                else
-                  run_expensive=false
-                  reason="Every changed path is documentation-only; skipping expensive CI."
-                fi
-              else
-                reason="Changed-file detection failed; running full CI."
-              fi
-              rm -f "${changed_file_list}"
+              comparison_available=true
             fi
           fi
 
+          if [[ "${comparison_available}" == "true" ]]; then
+            git diff \
+              --check \
+              --no-renames \
+              "${base_sha}" \
+              "${head_sha}"
+
+            changed_file_list="$(mktemp)"
+            if git diff \
+              --name-only \
+              -z \
+              --no-renames \
+              "${base_sha}" \
+              "${head_sha}" \
+              > "${changed_file_list}"
+            then
+              changed_count=0
+              non_allowlisted_path_found=false
+
+              echo "Changed paths:"
+              while IFS= read -r -d '' path; do
+                changed_count=$((changed_count + 1))
+                printf '  %q\n' "${path}"
+                case "${path}" in
+                  docs/* | \
+                  TODO.md | CHANGELOG.md | CITATION.cff | \
+                  SECURITY.md | CODE_OF_CONDUCT.md | GOVERNANCE.md | SUPPORT.md | \
+                  .github/ISSUE_TEMPLATE/* | .github/pull_request_template.md)
+                    ;;
+                  *)
+                    printf 'Non-allowlisted path requiring full CI: %q\n' "${path}"
+                    non_allowlisted_path_found=true
+                    ;;
+                esac
+              done < "${changed_file_list}"
+
+              if [[ "${changed_count}" -eq 0 ]]; then
+                reason_code=empty_changed_file_set
+              elif [[ "${non_allowlisted_path_found}" == "true" ]]; then
+                reason_code=non_allowlisted_path
+              else
+                run_expensive=false
+                reason_code=documentation_only
+              fi
+            else
+              reason_code=changed_file_detection_failed
+            fi
+            rm -f "${changed_file_list}"
+          else
+            check_fallback_whitespace
+          fi
+
+          case "${reason_code}" in
+            workflow_dispatch | \
+            unknown_event | \
+            missing_comparison_sha | \
+            zero_base_sha | \
+            unavailable_base_commit | \
+            unavailable_head_commit | \
+            changed_file_detection_failed | \
+            empty_changed_file_set | \
+            non_allowlisted_path | \
+            documentation_only | \
+            fail_closed_default)
+              ;;
+            *)
+              echo "Unexpected reason code; reverting to fail-closed behavior."
+              run_expensive=true
+              reason_code=fail_closed_default
+              ;;
+          esac
+
           echo "Decision: run_expensive=${run_expensive}"
-          echo "Reason: ${reason}"
-          echo "run_expensive=${run_expensive}" >> "${GITHUB_OUTPUT}"
-          echo "reason=${reason}" >> "${GITHUB_OUTPUT}"
+          echo "Reason code: ${reason_code}"
+          printf 'run_expensive=%s\n' "${run_expensive}" >> "${GITHUB_OUTPUT}"
+          printf 'reason_code=%s\n' "${reason_code}" >> "${GITHUB_OUTPUT}"
 
       - name: Report documentation-only shortcut
         if: steps.scope.outputs.run_expensive == 'false'
         run: |
           echo "CI completed without Python setup or tests."
-          echo "${{ steps.scope.outputs.reason }}"
+          echo "Scope decision: ${{ steps.scope.outputs.reason_code }}"
 
       - name: Set up Python 3.10
         if: steps.scope.outputs.run_expensive == 'true'
@@ -139,7 +194,12 @@ jobs:
 
       - name: Test on Python 3.10
         if: steps.scope.outputs.run_expensive == 'true'
-        run: python -m pytest -n 2 --dist=loadfile --durations=20
+        run: >-
+          python -m pytest
+          -n 2
+          --dist=loadfile
+          --basetemp=".test-tmp/pytest-internal-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          --durations=20
 
       - name: Set up Python 3.11
         if: steps.scope.outputs.run_expensive == 'true'
@@ -190,7 +250,11 @@ jobs:
       - name: Test and compile on Python 3.13
         if: steps.scope.outputs.run_expensive == 'true'
         run: |
-          python -m pytest -n 2 --dist=loadfile --durations=20
+          python -m pytest \
+            -n 2 \
+            --dist=loadfile \
+            --basetemp=".test-tmp/pytest-internal-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
+            --durations=20
           python -m compileall -q openevalgate
 
       - name: Validate canonical examples

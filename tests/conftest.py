@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import hashlib
-import os
 import re
 import shutil
 from pathlib import Path
@@ -14,31 +13,6 @@ from openevalgate.report import generate_report
 ROOT = Path(__file__).resolve().parents[1]
 SCRATCH_ROOT = ROOT / ".test-tmp"
 READABLE_NODE_ID_LIMIT = 96
-
-
-@pytest.hookimpl(trylast=True)
-def pytest_configure(config: pytest.Config) -> None:
-    """Keep pytest and xdist out of locked Windows temp directories."""
-
-    if config.option.basetemp is not None:
-        return
-    internal_root = SCRATCH_ROOT / f"pytest-internal-{os.getpid()}"
-    if internal_root.exists():
-        shutil.rmtree(internal_root, ignore_errors=True)
-    internal_root.mkdir(parents=True, exist_ok=True)
-    config._tmp_path_factory._basetemp = internal_root.resolve()
-    config._openevalgate_internal_root = internal_root
-
-
-@pytest.hookimpl(trylast=True)
-def pytest_sessionfinish(session: pytest.Session) -> None:
-    internal_root = getattr(
-        session.config,
-        "_openevalgate_internal_root",
-        None,
-    )
-    if internal_root is not None:
-        shutil.rmtree(internal_root, ignore_errors=True)
 
 
 def _worker_id(config: pytest.Config) -> str:
@@ -59,7 +33,7 @@ def _safe_test_directory_name(node_id: str) -> str:
 def _worker_scratch_root(request: pytest.FixtureRequest) -> Path:
     """Create one isolated scratch root per xdist worker."""
 
-    SCRATCH_ROOT.mkdir(exist_ok=True)
+    SCRATCH_ROOT.mkdir(parents=True, exist_ok=True)
     worker_root = SCRATCH_ROOT / _worker_id(request.config)
     if worker_root.exists():
         shutil.rmtree(worker_root, ignore_errors=True)

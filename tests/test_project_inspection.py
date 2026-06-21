@@ -320,6 +320,7 @@ def test_placeholder_deterministic_gate_is_blocked_end_to_end(
 
     inspection = inspect_project(project)
 
+    assert inspection.check.action_risk_review.valid
     assert "ungated_high_risk_action" in {
         blocker.id for blocker in inspection.hard_blockers
     }
