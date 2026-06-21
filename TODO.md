@@ -4,7 +4,7 @@ This roadmap tracks the work required to make OpenEvalGate technically credible,
 
 OpenEvalGate should be positioned as an **evidence-backed release-assurance framework for production AI assistants and agents**. It should not claim to be a complete AI governance platform, eval runner, observability system, runtime guardrail, or compliance certification product.
 
-> **Current local status:** Iteration 1 hard-gate semantics and the core public-repository infrastructure are complete. Release-artifact inspection, clean-wheel installation, installed CLI execution, and installed-wheel report reproduction are implemented and locally validated on the `verify-release-artifacts` branch. PR CI on the final branch commit, repository protection, governance and support documentation, release metadata, behavioral-sufficiency policy, and independent external review remain open.
+> **Repository state:** Iteration 1 hard-gate semantics and the core public-repository infrastructure are complete. Release-artifact inspection, clean-wheel installation, installed CLI execution, and installed-wheel report reproduction are implemented. Verification on the exact public-release commit, repository protection, governance and support documentation, release metadata, behavioral-sufficiency policy, and independent external review remain open.
 
 ## Status Legend
 
@@ -66,9 +66,9 @@ OpenEvalGate should be positioned as an **evidence-backed release-assurance fram
 - [x] Run the full test suite on Python 3.10 and Python 3.13.
 - [x] Run lightweight install, compile, import, and CLI checks on Python 3.11 and Python 3.12.
 - [x] Build source and wheel distributions.
-- [x] Install the built wheel in a clean environment and exercise the installed CLI. Implemented and locally validated; awaiting PR CI.
+- [x] Install the built wheel in a clean environment and exercise the installed CLI.
 - [x] Run CLI smoke tests against all canonical examples.
-- [x] Verify committed generated reports match current CLI output byte-for-byte, revalidated locally through the installed wheel.
+- [x] Verify committed generated reports match current CLI output byte-for-byte, including reproduction through the installed wheel.
 - [x] Inspect wheel and source-distribution contents and metadata.
 - [x] Use Node 24-compatible GitHub Actions.
 - [ ] Add linting, formatting, and type checking.
@@ -108,7 +108,7 @@ OpenEvalGate should be positioned as an **evidence-backed release-assurance fram
 - [ ] Add a concise example that passes all controlled-launch gates after controlled-launch semantics exist.
 - [x] Retain a deliberately blocked example that demonstrates why aggregate scores are insufficient.
 - [ ] Add JSON output for `check` and `report`.
-- [x] Add `openevalgate --version`. Implemented and locally validated; awaiting PR CI.
+- [x] Add `openevalgate --version`.
 
 ### Formalize the methodology
 
@@ -132,12 +132,12 @@ OpenEvalGate should be positioned as an **evidence-backed release-assurance fram
 
 ### Improve release and integration ergonomics
 
-- [x] Add clean-wheel installation validation. Implemented and locally validated; awaiting PR CI.
+- [x] Add clean-wheel installation validation.
 - [x] Add `openevalgate --version` and ensure it matches package metadata.
 - [ ] Add JSON output for CI and external integrations.
 - [ ] Add SARIF output for GitHub-native findings.
 - [ ] Package project templates or add a deterministic scaffolding command.
-- [x] Inspect source and wheel contents in CI. Workflow implemented and locally validated; awaiting PR CI.
+- [x] Inspect source and wheel contents in CI.
 
 ## P2: Adoption and Ecosystem Growth
 
@@ -169,7 +169,7 @@ OpenEvalGate is ready to become public only when:
 - [x] The core public-readiness changes from PR #5 are merged.
 - [ ] CI is green on the exact public-release commit.
 - [ ] Branch protection requires the consolidated `CI` check.
-- [x] The built wheel installs and the installed CLI runs in a clean environment locally; final PR CI remains pending.
+- [x] The built wheel installs and the installed CLI runs in a clean environment.
 - [ ] A blocked example is reproducible and the limitations of the current shadow-only ceiling are explicit.
 - [x] The report cleanly separates evidence completeness, observed behavior, and critical-control status.
 - [x] Authorship, citation, security, contribution, changelog, issue-template, and dependency-maintenance infrastructure are present.

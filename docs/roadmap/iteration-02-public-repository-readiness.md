@@ -2,7 +2,7 @@
 
 ## Status
 
-**Release-artifact verification implemented and locally validated.** Continuous integration, Python 3.10–3.13 compatibility coverage, package builds, artifact inspection, clean-wheel installation, installed CLI execution, canonical-report reproducibility, security and conduct policies, contribution templates, citation metadata, changelog, maintainer attribution, issue forms, pull-request guidance, and dependency automation are implemented. PR CI on the final branch commit remains pending.
+**Release-artifact verification implemented.** Continuous integration, Python 3.10–3.13 compatibility coverage, package builds, artifact inspection, clean-wheel installation, installed CLI execution, canonical-report reproducibility, security and conduct policies, contribution templates, citation metadata, changelog, maintainer attribution, issue forms, pull-request guidance, and dependency automation are implemented. Verification on the exact public-release commit remains pending.
 
 Iteration 2 remains open for branch protection, governance and support documents, release and deprecation policy, security scanning, and final public-release verification.
 
@@ -25,7 +25,7 @@ The required GitHub Actions workflow covers:
 - [x] One consolidated `CI` status check for branch protection.
 - [x] Node 24-compatible GitHub Actions.
 - [x] Source and wheel package builds.
-- [x] Wheel installation in a clean environment. Implemented and locally validated; awaiting PR CI.
+- [x] Wheel installation in a clean environment.
 - [x] CLI smoke tests for all canonical examples.
 - [x] Canonical-example validation.
 - [x] Generated-report byte-for-byte reproducibility.
@@ -49,14 +49,14 @@ openevalgate check examples/presales_assistant/
 openevalgate check examples/education_assistant/
 ```
 
-The build, supported-version checks, artifact inspection, clean-wheel installation, installed CLI commands, canonical validation, and byte-for-byte report comparison are implemented and locally validated. The report comparison was revalidated through the installed wheel. PR CI on the final branch commit remains pending.
+The build, supported-version checks, artifact inspection, clean-wheel installation, installed CLI commands, canonical validation, and byte-for-byte report comparison are implemented. The report comparison is reproduced through the installed wheel. Verification on the exact public-release commit remains pending.
 
 ### Acceptance Criteria
 
 - [x] Every pull request runs the consolidated `CI` workflow.
 - [ ] The default branch cannot merge with a failed required check.
 - [x] Committed generated reports match current CLI output.
-- [x] A wheel installed in a clean environment exposes a working CLI locally; PR CI remains pending.
+- [x] A wheel installed in a clean environment exposes a working CLI.
 
 ## P0.2 Configure Repository Protection
 
@@ -250,10 +250,9 @@ Maintain two flagship narratives:
 Iteration 2 is complete when:
 
 - [x] The consolidated CI workflow is present and green across Python 3.10–3.13.
-- [ ] The consolidated `CI` check is green on the final release-artifact branch commit.
 - [ ] Branch protection is configured.
 - [x] Source and wheel package builds succeed.
-- [x] Clean-wheel installation succeeds locally; PR CI remains pending.
+- [x] Clean-wheel installation succeeds.
 - [x] Authorship and citation are explicit.
 - [x] Security, conduct, contribution, changelog, issue-template, and dependency-maintenance infrastructure exist.
 - [ ] Governance and support files exist.
