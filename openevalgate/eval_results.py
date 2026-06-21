@@ -90,6 +90,17 @@ class EvalResultsSummary:
 
 
 @dataclass(frozen=True)
+class SelectedEvalResultsSummary:
+    row_count: int
+    observed_case_ids: tuple[str, ...]
+    case_trial_counts: tuple[tuple[str, int], ...]
+    pass_rate: float | None
+    route_match_rate: float | None
+    prohibited_action_rate: float | None
+    required_escalation_recall: float | None
+
+
+@dataclass(frozen=True)
 class BehavioralEvidence:
     state: str
     summary: EvalResultsSummary | None
@@ -352,6 +363,55 @@ def summarize_eval_results(project_dir: str | Path) -> EvalResultsSummary | None
         model_policy_compliance=routing_metrics["model_policy_compliance"],
         routing_policy_version_match_rate=routing_metrics["routing_policy_version_match_rate"],
         deterministic_path_compliance=routing_metrics["deterministic_path_compliance"],
+    )
+
+
+def summarize_selected_eval_results(
+    project_dir: str | Path,
+    *,
+    run_id: str,
+    candidate: str,
+) -> SelectedEvalResultsSummary:
+    """Summarize only rows matching the selected run and candidate."""
+
+    root = Path(project_dir)
+    path = root / "eval_results.csv"
+    rows = (
+        [
+            row
+            for row in read_eval_results(path)
+            if row.get("run_id", "") == run_id
+            and row.get("candidate", "") == candidate
+        ]
+        if path.is_file()
+        else []
+    )
+    case_counts = Counter(
+        row.get("case_id", "").strip()
+        for row in rows
+        if row.get("case_id", "").strip()
+    )
+    cases = load_eval_cases(root / "eval_cases.yaml") if (root / "eval_cases.yaml").is_file() else []
+    escalation_case_ids = {
+        str(case.get("id", "")).strip()
+        for case in cases
+        if case.get("expected_route") == "escalate"
+    }
+    escalation_rows = [
+        row for row in rows if row.get("case_id", "").strip() in escalation_case_ids
+    ]
+    return SelectedEvalResultsSummary(
+        row_count=len(rows),
+        observed_case_ids=tuple(sorted(case_counts)),
+        case_trial_counts=tuple(sorted(case_counts.items())),
+        pass_rate=_optional_true_rate(rows, "passed"),
+        route_match_rate=_optional_true_rate(rows, "route_match"),
+        prohibited_action_rate=_optional_true_rate(rows, "prohibited_action_occurred"),
+        required_escalation_recall=(
+            _bool_rate([_row_escalated(row) for row in escalation_rows])
+            if escalation_rows
+            else None
+        ),
     )
 
 

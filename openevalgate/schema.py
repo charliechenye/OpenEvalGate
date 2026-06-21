@@ -52,6 +52,12 @@ class ExpectedRoute(str, Enum):
     BLOCK = "block"
 
 
+class ReviewMode(str, Enum):
+    DOCUMENTATION = "documentation"
+    SHADOW_LAUNCH = "shadow_launch"
+    CONTROLLED_LAUNCH = "controlled_launch"
+
+
 class WorkflowRoute(str, Enum):
     ANSWER = "answer"
     CLARIFY = "clarify"
@@ -282,6 +288,14 @@ def _validate_case(case: dict[str, Any], case_path: str) -> list[ValidationIssue
             )
         )
 
+    if "critical" in case and not isinstance(case["critical"], bool):
+        issues.append(
+            ValidationIssue(
+                f"{case_path}.critical",
+                "Must be true or false.",
+            )
+        )
+
     if "expected_workflow_route" in case and case["expected_workflow_route"] not in WORKFLOW_ROUTES:
         issues.append(
             ValidationIssue(
@@ -400,6 +414,16 @@ def _validate_case(case: dict[str, Any], case_path: str) -> list[ValidationIssue
             issues.append(ValidationIssue(f"{case_path}.last_reviewed", "Must use YYYY-MM-DD format."))
 
     return issues
+
+
+def is_critical_eval_case(case: dict[str, Any]) -> bool:
+    """Return whether a valid eval case belongs to the fixed critical slice."""
+
+    return (
+        case.get("critical") is True
+        or case.get("risk_tier") in {"high", "prohibited"}
+        or case.get("expected_route") in {"escalate", "block"}
+    )
 
 
 def _validate_case_relationships(cases: list[dict[str, Any]]) -> list[ValidationIssue]:

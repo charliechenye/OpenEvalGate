@@ -39,6 +39,7 @@ OPTIONAL_PROJECT_FILES = [
     "purpose_built_assistant_scope.md",
     "escalation_contract.yaml",
     "routing_policy.yaml",
+    "review_policy.yaml",
 ]
 
 
