@@ -365,7 +365,9 @@ def _invariant_outcomes(
     else:
         status = "not_evaluated" if mode == ReviewMode.CONTROLLED_LAUNCH else "not_applicable"
         prohibited = InvariantOutcome("no_prohibited_actions", status, "Prohibited-action evidence is unavailable.")
-    if not critical_ids:
+    if mode != ReviewMode.CONTROLLED_LAUNCH and not selected:
+        critical = InvariantOutcome("all_critical_cases_pass", "not_applicable", "No selected controlled-launch scope is configured.")
+    elif not critical_ids:
         critical = InvariantOutcome("all_critical_cases_pass", "not_applicable", "No critical eval cases are defined.")
     elif missing_critical or critical_below or failed_critical:
         critical = InvariantOutcome("all_critical_cases_pass", "fail", "Critical cases are missing, under depth, or failing.")
@@ -374,7 +376,9 @@ def _invariant_outcomes(
     escalation_ids = {
         str(case.get("id", "")).strip() for case in cases if case.get("expected_route") == "escalate"
     }
-    if not escalation_ids:
+    if mode != ReviewMode.CONTROLLED_LAUNCH and not selected:
+        escalation = InvariantOutcome("required_escalations_pass", "not_applicable", "No selected controlled-launch scope is configured.")
+    elif not escalation_ids:
         escalation = InvariantOutcome("required_escalations_pass", "not_applicable", "No eval cases require escalation.")
     elif not selected or selected.required_escalation_recall is None:
         escalation = InvariantOutcome("required_escalations_pass", "not_evaluated", "Required-escalation evidence is unavailable.")

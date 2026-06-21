@@ -165,6 +165,9 @@ class LaunchAssessment:
     evidence_band: str
     control_evidence_completeness_threshold_met: bool
     behavioral_evidence_state: str
+    declared_review_mode: ReviewMode | None
+    effective_review_mode: ReviewMode | None
+    behavioral_sufficiency: Any
     critical_control_status: str
     maximum_permitted_stage: str
     recommendation: str

@@ -16,6 +16,7 @@ from openevalgate.hard_gate_policy import HardGateEvaluation
 from openevalgate.launch_gate_review import GateRow, is_meaningful_mitigation
 from openevalgate.project_inspection import inspect_project
 from openevalgate.routing import summarize_routing_policy
+from openevalgate.review_policy import evaluate_behavioral_sufficiency
 from openevalgate.schema import HardBlocker, LaunchAssessment, ValidationIssue, load_eval_cases
 from openevalgate.scorer import gate_statuses, score_gates
 
@@ -29,17 +30,18 @@ def generate_report(project_dir: str | Path) -> str:
     cases = _safe_load_cases(root / "eval_cases.yaml")
     gates = inspection.launch_gate_review.valid_rows
     behavioral_evidence = classify_behavioral_evidence(root)
+    behavioral_sufficiency = evaluate_behavioral_sufficiency(root)
     blockers = inspection.hard_blockers
     score = score_gates(inspection.launch_gate_review)
     project_evidence_valid = (
         not check.missing_required
-        and not _non_eval_result_issues(check.issues)
+        and not _non_behavioral_issues(check.issues)
         and not inspection.policy_issues
     )
     assessment = assess_launch(
         evidence_completeness_score=score.score,
         project_evidence_valid=project_evidence_valid,
-        behavioral_evidence_state=behavioral_evidence.state,
+        behavioral_sufficiency=behavioral_sufficiency,
         hard_blockers=blockers,
     )
     system_name, assistant_type = _project_identity(root, cases)
@@ -112,6 +114,9 @@ def generate_report(project_dir: str | Path) -> str:
         "## Observability / Rollback Summary",
         _observability_rollback_summary(gates, inspection.evaluations),
         "",
+        "## Review Mode and Behavioral Sufficiency",
+        _behavioral_sufficiency_summary(assessment),
+        "",
         "## Observed Behavioral Quality",
         _observed_behavioral_quality(behavioral_evidence),
         "",
@@ -172,6 +177,12 @@ def _executive_summary(
             f"- **Evidence completeness score:** {assessment.evidence_completeness_score}/100",
             f"- **Evidence package band:** {assessment.evidence_band}",
             f"- **Behavioral evidence status:** {behavioral_evidence_display(assessment.behavioral_evidence_state)}",
+            f"- **Declared review mode:** {_mode_display(assessment.declared_review_mode)}",
+            f"- **Effective review mode:** {_mode_display(assessment.effective_review_mode)}",
+            (
+                "- **Behavioral sufficiency status:** "
+                + ("Sufficient" if assessment.behavioral_sufficiency.sufficient_for_requested_mode else "Insufficient")
+            ),
             f"- **Critical-control status:** {assessment.critical_control_status}",
             f"- **Maximum permitted stage:** {assessment.maximum_permitted_stage}",
             f"- **Final launch recommendation:** {assessment.recommendation}",
@@ -476,6 +487,8 @@ def _critical_control_summary(assessment: LaunchAssessment) -> str:
             "**No known blockers detected**\n\n"
             "Available evidence has not established that all critical controls are satisfied."
         )
+    if assessment.critical_control_status == "Pass":
+        return "**Pass**\n\nAll bounded controlled-launch requirements are satisfied."
     return "\n".join(
         [
             "**Fail**",
@@ -493,8 +506,104 @@ def _recommended_next_actions(assessment: LaunchAssessment) -> str:
     )
 
 
+def _non_behavioral_issues(issues: list[ValidationIssue]) -> list[ValidationIssue]:
+    return [
+        issue for issue in issues
+        if issue.source not in {"eval_results", "review_policy"}
+    ]
+
+
 def _non_eval_result_issues(issues: list[ValidationIssue]) -> list[ValidationIssue]:
+    """Backward-compatible test helper for result-only filtering."""
     return [issue for issue in issues if issue.source != "eval_results"]
+
+
+def _mode_display(mode: Any) -> str:
+    return mode.value if mode is not None else "Not configured"
+
+
+def _behavioral_sufficiency_summary(assessment: LaunchAssessment) -> str:
+    value = assessment.behavioral_sufficiency
+    if not value.policy_present:
+        policy_display = "Not provided"
+    elif not value.policy_valid:
+        policy_display = "Invalid"
+    else:
+        policy_display = "Present"
+    lines = [
+        f"- Review policy: {policy_display}",
+        f"- Declared review mode: {_mode_display(value.declared_mode)}",
+        f"- Effective review mode: {_mode_display(value.effective_mode)}",
+        f"- Selected run: {value.selected_run_id or 'Not configured'}",
+        f"- Selected candidate: {value.selected_candidate or 'Not configured'}",
+        f"- Selected result rows: {value.selected_row_count}",
+        f"- Expected eval cases: {value.expected_case_count}",
+        f"- Observed eval cases: {value.observed_case_count}",
+        f"- Case coverage: {_sufficiency_rate(value.case_coverage, value)}",
+        f"- Cases meeting minimum trial depth: {value.cases_meeting_trial_depth_count}",
+        f"- Missing eval cases: {', '.join(value.missing_case_ids) or 'none'}",
+        (
+            "- Represented cases below trial depth: "
+            + (", ".join(value.observed_cases_below_trial_depth) or "none")
+        ),
+        f"- Expected critical cases: {value.expected_critical_case_count}",
+        f"- Observed critical cases: {value.observed_critical_case_count}",
+        f"- Critical-case coverage: {_sufficiency_rate(value.critical_case_coverage, value, critical=True)}",
+        f"- Missing critical cases: {', '.join(value.missing_critical_case_ids) or 'none'}",
+        f"- Failing critical cases: {', '.join(value.failed_critical_case_ids) or 'none'}",
+        (
+            "- Behavioral sufficiency for requested mode: "
+            + ("Yes" if value.sufficient_for_requested_mode else "No")
+        ),
+        "",
+        "| Metric | Actual | Requirement | Status |",
+        "| --- | --- | --- | --- |",
+    ]
+    outcomes = {item.metric: item for item in value.threshold_outcomes}
+    for metric in ("pass_rate", "route_match_rate"):
+        outcome = outcomes.get(metric)
+        if outcome is None:
+            lines.append(f"| {metric} | Not evaluated | Not configured | Not configured |")
+        else:
+            actual = _outcome_value(outcome.actual_value, value)
+            lines.append(
+                f"| {metric} | {actual} | >= {outcome.configured_threshold:.0%} | {_status_display(outcome.status)} |"
+            )
+    lines.extend([
+        "",
+        "| Invariant | Status | Reason |",
+        "| --- | --- | --- |",
+    ])
+    for outcome in value.invariant_outcomes:
+        lines.append(
+            f"| {outcome.invariant_id} | {_status_display(outcome.status)} | {outcome.reason} |"
+        )
+    return "\n".join(lines)
+
+
+def _sufficiency_rate(value: float | None, sufficiency: Any, critical: bool = False) -> str:
+    if not sufficiency.policy_valid:
+        return "Unavailable due to invalid evidence"
+    if value is None:
+        if critical and sufficiency.expected_critical_case_count == 0:
+            return "Not applicable"
+        return "Not evaluated"
+    return f"{value:.0%}"
+
+
+def _outcome_value(value: float | None, sufficiency: Any) -> str:
+    if not sufficiency.policy_valid:
+        return "Unavailable due to invalid evidence"
+    return "Not evaluated" if value is None else f"{value:.0%}"
+
+
+def _status_display(status: str) -> str:
+    return {
+        "pass": "Pass",
+        "fail": "Fail",
+        "not_evaluated": "Not evaluated",
+        "not_applicable": "Not applicable",
+    }.get(status, status)
 
 
 def _safe_load_cases(path: Path) -> list[dict[str, Any]]:

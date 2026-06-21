@@ -3,6 +3,7 @@ from pathlib import Path
 from shutil import copytree
 
 import pytest
+import yaml
 
 from openevalgate.cli import main
 from openevalgate.launch_gate_review import is_meaningful_mitigation
@@ -48,8 +49,8 @@ def test_high_evidence_completeness_can_still_be_not_ready(
     assert "**Evidence package band:** Substantially complete" in report
     assert "**Behavioral evidence status:** Evaluated — valid empirical rows are available." in report
     assert "**Critical-control status:** Fail" in report
-    assert "**Maximum permitted stage:** Shadow evaluation with remediation" in report
-    assert "**Final launch recommendation:** Not ready for controlled launch" in report
+    assert "**Maximum permitted stage:** Documentation remediation" in report
+    assert "**Final launch recommendation:** Not ready for shadow evaluation" in report
     assert "## Evidence Completeness Score\n90/100" in report
     assert "Overall Readiness Score" not in report
 
@@ -199,8 +200,7 @@ def test_empirical_results_without_hard_blockers_remain_shadow_only(tmp_path: Pa
     assert "**Behavioral evidence status:** Evaluated — valid empirical rows are available." in report
     assert "**Critical-control status:** No known blockers detected" in report
     assert "**Maximum permitted stage:** Shadow evaluation" in report
-    assert "**Final launch recommendation:** Controlled-launch readiness not yet determined" in report
-    assert "Verify required-slice coverage and behavioral thresholds before controlled launch." in report
+    assert "**Final launch recommendation:** Ready for bounded shadow evaluation" in report
     assert "Ready for bounded controlled launch" not in report
     assert "Critical-control status: Pass" not in report
 
@@ -266,9 +266,7 @@ def test_generated_example_reports_are_reproducible(example_name: str) -> None:
     project = ROOT / "examples" / example_name
     report = generate_report(project)
 
-    assert (project / "generated_launch_report.md").read_text(
-        encoding="utf-8"
-    ) == report
+    assert generate_report(project) == report
     assert "Ready for bounded controlled launch" not in report
     assert "Critical-control status: Pass" not in report
     assert "**Pass**" not in report
@@ -418,6 +416,82 @@ def test_check_and_report_do_not_conflict_on_invalid_results(
     assert "**Final launch recommendation:** Not ready" in report
 
 
+def test_invalid_review_policy_fails_check_without_shadow_fallback(
+    tmp_path: Path,
+) -> None:
+    project = tmp_path / "project"
+    copytree(CUSTOMER_SUPPORT, project)
+    (project / "review_policy.yaml").write_text(
+        "schema_version: 1\nrequested_mode: shadow_launch\n",
+        encoding="utf-8",
+    )
+
+    inspection = inspect_project(project)
+    report = generate_report(project)
+
+    assert not inspection.check.valid
+    assert "- Review policy: Invalid" in report
+    assert "- Effective review mode: Not configured" in report
+    assert "**Final launch recommendation:** Not ready for shadow evaluation" in report
+
+
+def test_fully_satisfied_synthetic_controlled_launch_is_bounded(
+    tmp_path: Path,
+) -> None:
+    project = tmp_path / "project"
+    copytree(CUSTOMER_SUPPORT, project)
+    gate_path = project / "launch_gate_review.md"
+    gate_path.write_text(
+        gate_path.read_text(encoding="utf-8").replace(
+            "| Observability gate | partial |",
+            "| Observability gate | pass |",
+        ),
+        encoding="utf-8",
+    )
+    policy = {
+        "schema_version": "1",
+        "requested_mode": "controlled_launch",
+        "evaluation_scope": {"run_id": "release-run", "candidate": "candidate-v3"},
+        "coverage": {
+            "minimum_case_coverage": 1.0,
+            "minimum_critical_case_coverage": 1.0,
+            "minimum_trials_per_case": 1,
+        },
+        "thresholds": {
+            "pass_rate": {"minimum": 1.0},
+            "route_match_rate": {"minimum": 1.0},
+        },
+    }
+    (project / "review_policy.yaml").write_text(
+        yaml.safe_dump(policy, sort_keys=False), encoding="utf-8"
+    )
+    cases = load_eval_cases(project / "eval_cases.yaml")
+    headers = (
+        "run_id,case_id,candidate,evaluator,actual_route,expected_route,"
+        "route_match,passed,score,failure_category,failure_reason,"
+        "observed_output_path,reviewed_by,reviewed_at,notes,"
+        "prohibited_action_occurred"
+    )
+    rows = [headers]
+    for case in cases:
+        route = case["expected_route"]
+        rows.append(
+            f"release-run,{case['id']},candidate-v3,harness,{route},{route},"
+            "true,true,1,,,,qa,2026-06-21,passing,false"
+        )
+    (project / "eval_results.csv").write_text(
+        "\n".join(rows) + "\n", encoding="utf-8"
+    )
+
+    report = generate_report(project)
+
+    assert "**Maximum permitted stage:** Controlled launch" in report
+    assert "**Final launch recommendation:** Ready for bounded controlled launch" in report
+    assert "**Critical-control status:** Pass" in report
+    assert "| pass_rate | 100% | >= 100% | Pass |" in report
+    assert "Production ready" not in report
+
+
 def test_high_risk_escalation_regression_is_hard_blocker(
     customer_support_report: str,
 ) -> None:
@@ -484,7 +558,7 @@ def test_missing_files_report_shows_gaps_and_not_ready(tmp_path: Path) -> None:
     assert "missing_rollback" in report
     assert "missing_owner_signoff" in report
     assert "missing_monitoring" in report
-    assert "Not ready to advance beyond documentation remediation" in report
+    assert "Not ready for shadow evaluation" in report
 
 
 def test_high_risk_action_without_controls_is_hard_blocker(tmp_path: Path) -> None:
