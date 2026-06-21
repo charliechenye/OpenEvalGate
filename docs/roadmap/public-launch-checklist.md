@@ -2,7 +2,7 @@
 
 Use this checklist for the final decision to change repository visibility from private to public.
 
-A checked box means the condition has been verified on the exact release commit. It does not mean the work merely exists on another branch.
+This checklist reflects the intended post-merge state of PR #5. A checked implementation item means the work is present after that merge. Final release approval still requires verification on the exact public-release commit.
 
 ## 1. Release Semantics
 
@@ -11,10 +11,12 @@ A checked box means the condition has been verified on the exact release commit.
 - [ ] The final launch recommendation is derived from review mode, empirical evidence, thresholds, and blockers.
 - [x] A project without eval results cannot receive a controlled-launch recommendation.
 - [ ] Critical metrics display thresholds and denominators.
-- [ ] Insufficient evidence is reported explicitly.
-- [ ] `partial` critical gates block launch.
-- [ ] `not_applicable` is permitted only by documented policy.
-- [ ] Hard-blocker messages match implementation behavior.
+- [ ] Insufficient evidence is reported explicitly for behavioral thresholds and denominators.
+- [x] `partial` critical gates block advancement.
+- [x] `not_applicable` is permitted only by documented hard-gate policy.
+- [x] Hard-blocker messages match implementation behavior.
+- [x] Unknown conditional applicability is fail-closed.
+- [x] Invalid action-risk evidence remains diagnostic-only and cannot satisfy policy.
 
 ## 2. Evidence Integrity
 
@@ -24,107 +26,120 @@ A checked box means the condition has been verified on the exact release commit.
 - [ ] Run timestamps and artifact versions are recorded.
 - [ ] Output references are validated.
 - [ ] Evaluator type and reviewer identity are recorded.
-- [ ] Blank or superficial artifacts cannot earn full evidence credit.
+- [x] Blank or placeholder hard-gate evidence cannot satisfy an applicable centralized hard gate.
+- [ ] Broader artifact-depth validation is implemented.
 - [ ] Evidence provenance is visible in reports.
+- [ ] Evidence freshness requirements are defined.
 
 ## 3. Tests and CI
 
-- [ ] CI passes on Python 3.10.
-- [ ] CI passes on Python 3.11.
-- [ ] CI passes on Python 3.12.
-- [ ] CI passes on Python 3.13.
+- [x] The consolidated `CI` job passes on Python 3.10.
+- [x] The consolidated `CI` job passes on Python 3.11.
+- [x] The consolidated `CI` job passes on Python 3.12.
+- [x] The consolidated `CI` job passes on Python 3.13.
+- [x] Node 24-compatible GitHub Actions are used.
 - [ ] Linting passes.
 - [ ] Formatting checks pass.
 - [ ] Type checks pass.
-- [ ] Package build passes.
+- [x] Source and wheel package builds pass.
 - [ ] Wheel installation passes in a clean environment.
-- [ ] CLI smoke tests pass.
-- [ ] All canonical examples pass structural validation.
-- [ ] Generated reports match committed examples.
-- [ ] Dependency and security checks pass or have documented accepted findings.
-- [ ] Branch protection requires the release checks.
+- [x] CLI smoke tests pass for all canonical examples.
+- [x] All canonical examples pass structural validation.
+- [x] Generated reports match committed examples byte-for-byte.
+- [x] Dependabot configuration is present.
+- [ ] Dependency review and security scanning pass or have documented accepted findings.
+- [ ] Branch protection requires the consolidated `CI` check.
 
 ## 4. Package and Release
 
-- [ ] Package version is correct.
+- [x] Package version remains intentionally `0.1.1` until a release bump is approved.
 - [ ] `openevalgate --version` matches the package version.
-- [ ] Source distribution contains the intended files.
-- [ ] Wheel contains the intended files.
+- [ ] Source distribution contents are inspected and correct.
+- [ ] Wheel contents are inspected and correct.
 - [ ] Installation does not require an editable checkout.
-- [ ] Release notes describe all user-visible changes.
-- [ ] `CHANGELOG.md` has an `[Unreleased]` section and the release entry.
-- [ ] A release tag is prepared from the verified commit.
+- [x] `CHANGELOG.md` contains an `[Unreleased]` section.
+- [ ] Stable release notes describe all user-visible changes.
+- [ ] A release tag is prepared from the verified release commit.
 - [ ] Rollback instructions exist for a broken package release.
+- [ ] Release and deprecation policy is documented.
 
 ## 5. Authorship and Provenance
 
-- [ ] Package author is `Chenye (Charlie) Zhu`.
-- [ ] Copyright reads `Chenye Zhu and OpenEvalGate contributors`.
-- [ ] `CITATION.cff` is valid.
+- [x] Package author and maintainer identify Chenye Zhu.
+- [x] Copyright reads `Chenye Zhu and OpenEvalGate contributors`.
+- [x] `CITATION.cff` is present and syntactically valid.
 - [ ] `AUTHORS.md` exists.
-- [ ] Contributor-credit rules are documented.
-- [ ] Canonical repository and documentation URLs are present.
-- [ ] The README contains citation instructions.
+- [x] Contribution-credit expectations are documented.
+- [x] Canonical repository, documentation, issues, homepage, and changelog URLs are present.
+- [x] The README contains maintainer and citation instructions.
 
 ## 6. Open-Source Infrastructure
 
-- [ ] `LICENSE` is present and intentional.
-- [ ] `CONTRIBUTING.md` is current.
-- [ ] `SECURITY.md` is present.
-- [ ] `CODE_OF_CONDUCT.md` is present.
+- [x] `LICENSE` is present and intentionally MIT.
+- [x] `CONTRIBUTING.md` is expanded and current.
+- [x] `SECURITY.md` is present.
+- [x] `CODE_OF_CONDUCT.md` is present.
 - [ ] `GOVERNANCE.md` is present.
 - [ ] `SUPPORT.md` is present.
-- [ ] Issue templates are present.
-- [ ] Pull-request template is present.
-- [ ] Release and deprecation policies are documented.
-- [ ] Maintainer contact and private security-reporting paths are valid.
+- [x] Structured bug and feature issue forms are present.
+- [x] A pull-request template is present.
+- [x] Dependabot configuration is present.
+- [ ] Release, deprecation, and schema-change policies are documented.
+- [x] Maintainer contact and private security-reporting instructions are documented.
+- [ ] GitHub private vulnerability reporting is enabled.
+- [ ] Repository labels and support boundaries are configured.
 
 ## 7. README and Documentation
 
-- [ ] The first paragraph defines OpenEvalGate as release assurance.
-- [ ] A concrete blocked-launch example appears near the top.
-- [ ] The relationship to eval runners, observability tools, and runtime guardrails is clear.
-- [ ] Core primitives are concise and linked to the specification.
-- [ ] The five-minute quickstart works from a clean installation.
+- [ ] The first paragraph defines OpenEvalGate primarily as release assurance.
+- [x] A concrete blocked-launch example appears near the top.
+- [x] The relationship to eval runners, observability tools, and runtime guardrails is clear.
+- [ ] Core primitives are concise and linked to a versioned specification.
+- [ ] The five-minute quickstart works from a clean wheel installation.
 - [ ] The README does not repeat the full documentation set.
-- [ ] Limitations and non-goals are explicit.
-- [ ] No compliance-certification claim appears.
+- [~] Limitations and non-goals are present, but a dedicated limitations section remains open.
+- [ ] Explicit non-claims cover compliance certification, safe-deployment guarantees, and universal readiness.
 - [ ] No unsupported `first`, `standard`, `industry-leading`, or universal claim appears.
 - [ ] External standards references include exact versions or review dates where necessary.
-- [ ] All documentation links resolve.
+- [ ] All documentation links resolve on the release commit.
+- [x] CI, license, Python, maintainer, citation, changelog, contribution, and security links are present.
 
 ## 8. Examples
 
-### Passing example
+### Controlled-launch passing example
 
-- [ ] Includes empirical result coverage.
-- [ ] Meets configured critical thresholds.
-- [ ] Has no unresolved hard blocker.
-- [ ] Includes observability, rollback, and owner signoff.
-- [ ] Produces a controlled-launch recommendation.
+- [ ] Behavioral evidence sufficiency is implemented.
+- [ ] Empirical result coverage meets configured requirements.
+- [ ] Critical thresholds and denominators pass.
+- [ ] No unresolved hard blocker exists.
+- [ ] Observability, rollback, and owner signoff pass.
+- [ ] The report produces a controlled-launch recommendation.
+
+A controlled-launch passing example is intentionally blocked on unfinished review-mode and behavioral-sufficiency policy. It must not be manufactured before those semantics exist.
 
 ### Blocked example
 
-- [ ] Has high evidence completeness.
-- [ ] Fails at least one critical behavioral threshold.
-- [ ] Shows a named hard blocker.
-- [ ] Produces a `Not ready` recommendation.
-- [ ] Includes a clear mitigation and rerun path.
+- [x] Has high evidence completeness.
+- [x] Fails observed behavioral controls.
+- [x] Shows named hard blockers.
+- [x] Produces a `Not ready` recommendation.
+- [x] Includes clear mitigation and rerun guidance.
 
 ### Example integrity
 
 - [ ] Illustrative data and outputs are labeled as illustrative.
-- [ ] No example metric is presented as external adoption evidence.
-- [ ] Generated outputs can be reproduced from committed inputs.
+- [x] No example metric is presented as external adoption evidence.
+- [x] Generated outputs reproduce from committed inputs.
 
 ## 9. Onboarding
 
 - [ ] A minimal project can be initialized without copying the full flagship example.
 - [ ] Standard, high-risk, and multi-agent paths are documented or explicitly deferred.
-- [ ] Linux/macOS commands work.
-- [ ] Windows PowerShell commands work.
-- [ ] Error messages identify the failing artifact and remediation.
-- [ ] JSON output is documented if available.
+- [ ] Linux/macOS clean-install commands work.
+- [ ] Windows PowerShell clean-install commands work.
+- [x] Error messages identify failing artifact paths.
+- [ ] JSON output is available and documented.
+- [ ] `openevalgate --version` is available.
 
 ## 10. External Validation
 
@@ -140,22 +155,28 @@ A checked box means the condition has been verified on the exact release commit.
 - [ ] Repository description is concise and accurate.
 - [ ] Repository topics are relevant and not keyword spam.
 - [ ] Social preview image is correct.
-- [ ] Default branch decision is final.
-- [ ] Merge strategy is configured.
+- [x] Default branch is `main`.
+- [ ] Pull requests are required for `main`.
+- [ ] The consolidated `CI` check is required.
+- [ ] Branches must be up to date before merge.
+- [ ] Force pushes to `main` are disabled.
+- [x] Squash merging is supported and used for major changes.
+- [ ] Dependency alerts and security updates are enabled.
+- [ ] Secret scanning and private vulnerability reporting are enabled where available.
 - [ ] Discussions are enabled only if there is a moderation plan.
 - [ ] Issue labels are configured.
-- [ ] Security features are enabled where available.
 - [ ] Repository visibility change has been reviewed by the maintainer.
 
 ## 12. Final Release Review
 
-- [ ] The release commit hash is recorded.
-- [ ] All required CI checks are green on that commit.
+- [x] PR #5 public-readiness infrastructure is merged.
+- [ ] The exact public-release commit hash is recorded.
+- [ ] All required CI checks are green on that exact commit.
 - [ ] The public package and repository versions agree.
-- [ ] The release can be installed and exercised from scratch.
+- [ ] The built wheel installs and the installed CLI runs from scratch.
 - [ ] No secrets, confidential examples, internal employer material, or private pilot data are present.
-- [ ] No open P0 item remains in [TODO.md](../../TODO.md).
-- [ ] The release notes identify known limitations.
+- [ ] No unresolved required P0 item remains in [TODO.md](../../TODO.md), or each exception is explicitly accepted and documented.
+- [ ] Release notes identify known limitations.
 - [ ] The repository can be made public without relying on claims that are not yet evidenced.
 
 ## Launch Decision
