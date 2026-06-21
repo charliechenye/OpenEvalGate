@@ -198,7 +198,6 @@ jobs:
           python -m pytest
           -n 2
           --dist=loadfile
-          --basetemp=".test-tmp/pytest-internal-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           --durations=20
 
       - name: Set up Python 3.11
@@ -253,7 +252,6 @@ jobs:
           python -m pytest \
             -n 2 \
             --dist=loadfile \
-            --basetemp=".test-tmp/pytest-internal-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
             --durations=20
           python -m compileall -q openevalgate
 
