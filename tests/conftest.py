@@ -8,6 +8,8 @@ from pathlib import Path
 
 import pytest
 
+from openevalgate.report import generate_report
+
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRATCH_ROOT = ROOT / ".test-tmp"
@@ -81,3 +83,18 @@ def tmp_path(
     path.mkdir()
     yield path
     shutil.rmtree(path, ignore_errors=True)
+
+
+@pytest.fixture(scope="session")
+def customer_support_report() -> str:
+    return generate_report(ROOT / "examples" / "customer_support_assistant")
+
+
+@pytest.fixture(scope="session")
+def presales_report() -> str:
+    return generate_report(ROOT / "examples" / "presales_assistant")
+
+
+@pytest.fixture(scope="session")
+def education_report() -> str:
+    return generate_report(ROOT / "examples" / "education_assistant")

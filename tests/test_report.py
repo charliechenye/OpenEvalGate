@@ -16,8 +16,10 @@ ROOT = Path(__file__).resolve().parents[1]
 CUSTOMER_SUPPORT = ROOT / "examples" / "customer_support_assistant"
 
 
-def test_report_generation_returns_expected_sections() -> None:
-    report = generate_report(CUSTOMER_SUPPORT)
+def test_report_generation_returns_expected_sections(
+    customer_support_report: str,
+) -> None:
+    report = customer_support_report
 
     assert "# Launch Readiness Report: Customer Support Refund Assistant" in report
     assert "## Executive Summary" in report
@@ -37,8 +39,10 @@ def test_report_generation_returns_expected_sections() -> None:
     assert "Overall Readiness Score" not in report
 
 
-def test_high_evidence_completeness_can_still_be_not_ready() -> None:
-    report = generate_report(CUSTOMER_SUPPORT)
+def test_high_evidence_completeness_can_still_be_not_ready(
+    customer_support_report: str,
+) -> None:
+    report = customer_support_report
 
     assert "**Evidence completeness score:** 90/100" in report
     assert "**Evidence package band:** Substantially complete" in report
@@ -109,8 +113,10 @@ def test_eval_summary_counts_case_types_and_risk_tiers() -> None:
     assert risk_tiers["prohibited"] == 2
 
 
-def test_report_eval_results_summary_includes_feedback_metrics() -> None:
-    report = generate_report(CUSTOMER_SUPPORT)
+def test_report_eval_results_summary_includes_feedback_metrics(
+    customer_support_report: str,
+) -> None:
+    report = customer_support_report
 
     assert "Eval pass rate: 33%" in report
     assert "Admission-route match rate: 50%" in report
@@ -281,11 +287,18 @@ def test_canonical_scores_and_rollback_sections_are_consistent(
     example_name: str,
     expected_score: int,
     rollback_status: str,
+    request: pytest.FixtureRequest,
 ) -> None:
     project = ROOT / "examples" / example_name
     inspection = inspect_project(project)
     score = score_gates(inspection.launch_gate_review)
-    report = generate_report(project)
+    report = request.getfixturevalue(
+        {
+            "customer_support_assistant": "customer_support_report",
+            "presales_assistant": "presales_report",
+            "education_assistant": "education_report",
+        }[example_name]
+    )
 
     assert score.score == expected_score
     assert (
@@ -295,16 +308,16 @@ def test_canonical_scores_and_rollback_sections_are_consistent(
     assert f"- Rollback gate: {rollback_status}" in report
 
 
-def test_non_scored_hard_gate_mitigations_remain_in_example_reports() -> None:
-    presales = generate_report(ROOT / "examples" / "presales_assistant")
-    education = generate_report(ROOT / "examples" / "education_assistant")
-
-    assert "- Rollback gate: Define launch stop criteria." in presales
-    assert "- Owner signoff gate: Complete final review." in presales
-    assert "- Rollback gate: Define stop criteria." in education
+def test_non_scored_hard_gate_mitigations_remain_in_example_reports(
+    presales_report: str,
+    education_report: str,
+) -> None:
+    assert "- Rollback gate: Define launch stop criteria." in presales_report
+    assert "- Owner signoff gate: Complete final review." in presales_report
+    assert "- Rollback gate: Define stop criteria." in education_report
     assert (
         "- Owner signoff gate: Complete signoff after arena and drift plan."
-        in education
+        in education_report
     )
 
 
@@ -314,11 +327,18 @@ def test_non_scored_hard_gate_mitigations_remain_in_example_reports() -> None:
 )
 def test_every_weak_standard_gate_has_a_required_mitigation_line(
     example_name: str,
+    request: pytest.FixtureRequest,
 ) -> None:
     project = ROOT / "examples" / example_name
     inspection = inspect_project(project)
     result = score_gates(inspection.launch_gate_review)
-    report = generate_report(project)
+    report = request.getfixturevalue(
+        {
+            "customer_support_assistant": "customer_support_report",
+            "presales_assistant": "presales_report",
+            "education_assistant": "education_report",
+        }[example_name]
+    )
 
     for gate in result.weak_gates:
         mitigation = (
@@ -390,8 +410,10 @@ def test_check_and_report_do_not_conflict_on_invalid_results(
     assert "**Final launch recommendation:** Not ready" in report
 
 
-def test_high_risk_escalation_regression_is_hard_blocker() -> None:
-    report = generate_report(CUSTOMER_SUPPORT)
+def test_high_risk_escalation_regression_is_hard_blocker(
+    customer_support_report: str,
+) -> None:
+    report = customer_support_report
 
     assert "critical_escalation_regression" in report
     assert "refund_abuse_history_002" in report
@@ -400,8 +422,10 @@ def test_high_risk_escalation_regression_is_hard_blocker() -> None:
     assert "Not ready" in report
 
 
-def test_report_summarizes_structured_escalation_contract() -> None:
-    report = generate_report(CUSTOMER_SUPPORT)
+def test_report_summarizes_structured_escalation_contract(
+    customer_support_report: str,
+) -> None:
+    report = customer_support_report
 
     assert "Structured escalation contract: valid." in report
     assert "Destinations: 6" in report
@@ -411,8 +435,10 @@ def test_report_summarizes_structured_escalation_contract() -> None:
     assert "Eval handoff coverage: 9/9 required-handoff cases" in report
 
 
-def test_report_summarizes_structured_routing_policy() -> None:
-    report = generate_report(CUSTOMER_SUPPORT)
+def test_report_summarizes_structured_routing_policy(
+    customer_support_report: str,
+) -> None:
+    report = customer_support_report
 
     assert "Structured routing policy: valid." in report
     assert "Policy: customer_support_capability_allocation" in report
@@ -610,9 +636,9 @@ def test_invalid_unrelated_duplicate_header_preserves_unique_tier_counts(
 
 def test_missing_and_valid_action_risk_summaries_keep_existing_behavior(
     tmp_path: Path,
+    customer_support_report: str,
 ) -> None:
-    valid_report = generate_report(CUSTOMER_SUPPORT)
-    valid_section = valid_report.split(
+    valid_section = customer_support_report.split(
         "## Tool/Action Safety Summary\n",
         1,
     )[1].split("\n\n## Input/Output Perimeter Summary", 1)[0]

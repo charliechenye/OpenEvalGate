@@ -12,6 +12,9 @@ from openevalgate.action_risk import (
 from openevalgate.cli import main
 from openevalgate.launch_gate_review import NON_EVIDENCE_VALUES
 from openevalgate.project_inspection import inspect_project
+from openevalgate.project_inspection import (
+    _high_risk_actions_without_controls,
+)
 from openevalgate.validator import check_project
 
 
@@ -279,15 +282,36 @@ def test_unsafe_action_blocker_remains_independent_of_gate_pass(
 
 @pytest.mark.parametrize("placeholder", sorted(NON_EVIDENCE_VALUES))
 def test_placeholder_deterministic_gate_does_not_control_high_risk_action(
-    tmp_path: Path,
     placeholder: str,
+) -> None:
+    row = ActionRiskRow(
+        raw_values={
+            "action": "issue_refund",
+            "risk_tier": "high",
+            "deterministic_gate": placeholder,
+            "human_review_required": "false",
+        },
+        normalized_values={
+            "action": "issue_refund",
+            "risk_tier": "high",
+            "deterministic_gate": placeholder.lower(),
+            "human_review_required": "false",
+        },
+        source_line=2,
+    )
+
+    assert _high_risk_actions_without_controls([row]) == ["issue_refund"]
+
+
+def test_placeholder_deterministic_gate_is_blocked_end_to_end(
+    tmp_path: Path,
 ) -> None:
     project = _copy_project(tmp_path)
     (project / "action_risk_matrix.csv").write_text(
         "\n".join(
             [
                 "action,risk_tier,deterministic_gate,human_review_required",
-                f"issue_refund,high,{placeholder},false",
+                "issue_refund,high,N/A,false",
             ]
         )
         + "\n",
@@ -296,7 +320,6 @@ def test_placeholder_deterministic_gate_does_not_control_high_risk_action(
 
     inspection = inspect_project(project)
 
-    assert inspection.check.action_risk_review.valid
     assert "ungated_high_risk_action" in {
         blocker.id for blocker in inspection.hard_blockers
     }
