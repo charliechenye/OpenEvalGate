@@ -270,4 +270,108 @@ jobs:
 
       - name: Build distribution artifacts
         if: steps.scope.outputs.run_expensive == 'true'
-        run: python -m build
+        run: |
+          rm -rf build dist
+          python -m build
+
+      - name: Verify distribution artifact contents
+        if: steps.scope.outputs.run_expensive == 'true'
+        run: python scripts/verify_distribution_artifacts.py --dist-dir dist
+
+      - name: Smoke-test installed wheel
+        if: steps.scope.outputs.run_expensive == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          venv_dir="${RUNNER_TEMP}/openevalgate-wheel-venv"
+          smoke_dir="${RUNNER_TEMP}/openevalgate-wheel-smoke"
+          rm -rf "${venv_dir}" "${smoke_dir}"
+          python -m venv "${venv_dir}"
+
+          venv_python="${venv_dir}/bin/python"
+          venv_cli="${venv_dir}/bin/openevalgate"
+          mapfile -t wheels < <(find "${GITHUB_WORKSPACE}/dist" -maxdepth 1 -type f -name '*.whl' -print)
+          if [[ "${#wheels[@]}" -ne 1 ]]; then
+            echo "Expected exactly one wheel; found ${#wheels[@]}: ${wheels[*]-}"
+            exit 1
+          fi
+          wheel_path="$(realpath "${wheels[0]}")"
+          "${venv_python}" -m pip install "${wheel_path}"
+
+          mkdir -p "${smoke_dir}"
+          for example in customer_support_assistant presales_assistant education_assistant; do
+            cp -R "${GITHUB_WORKSPACE}/examples/${example}" "${smoke_dir}/${example}"
+          done
+
+          cd "${smoke_dir}"
+          unset PYTHONPATH
+          unset PYTHONHOME
+          export PYTHONNOUSERSITE=1
+          export GITHUB_WORKSPACE
+          export VENV_PYTHON="${venv_python}"
+          export VENV_CLI="${venv_cli}"
+
+          "${venv_python}" - <<'PY'
+          from importlib.metadata import version
+          from pathlib import Path
+          import os
+          import subprocess
+          import sys
+
+          import openevalgate
+
+          workspace = Path(os.environ["GITHUB_WORKSPACE"]).resolve()
+          package_path = Path(openevalgate.__file__).resolve()
+          assert not package_path.is_relative_to(workspace), package_path
+
+          installed_version = version("openevalgate")
+          assert openevalgate.__version__ == installed_version
+          assert openevalgate.__version__ != "0+unknown"
+
+          venv_python = Path(os.environ["VENV_PYTHON"]).resolve()
+          venv_cli = Path(os.environ["VENV_CLI"]).resolve()
+          print(f"Virtual-environment Python: {venv_python}")
+          print(f"Installed package path: {package_path}")
+          print(f"Installed distribution version: {installed_version}")
+
+          version_result = subprocess.run(
+              [str(venv_cli), "--version"],
+              check=True,
+              capture_output=True,
+          )
+          expected_output = f"openevalgate {installed_version}\n".encode()
+          assert version_result.stdout == expected_output, version_result.stdout
+          assert version_result.stderr == b"", version_result.stderr
+
+          for example in (
+              "customer_support_assistant",
+              "presales_assistant",
+              "education_assistant",
+          ):
+              example_path = Path(example)
+              subprocess.run(
+                  [str(venv_cli), "validate", str(example_path / "eval_cases.yaml")],
+                  check=True,
+              )
+              subprocess.run(
+                  [str(venv_cli), "check", str(example_path)],
+                  check=True,
+              )
+              generated = Path(f"{example}-installed-report.md")
+              subprocess.run(
+                  [
+                      str(venv_cli),
+                      "report",
+                      str(example_path),
+                      "--output",
+                      str(generated),
+                  ],
+                  check=True,
+              )
+              canonical = example_path / "generated_launch_report.md"
+              assert generated.read_bytes() == canonical.read_bytes(), example
+          PY
+
+          "${venv_python}" -m pip show openevalgate
+          "${venv_python}" -m pip show -f openevalgate

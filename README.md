@@ -114,6 +114,7 @@ New to the repo? Start with [Getting Started for Practitioners](docs/00_getting_
 
 ```bash
 python -m pip install -e ".[dev]"
+openevalgate --version
 openevalgate validate examples/customer_support_assistant/eval_cases.yaml
 openevalgate check examples/customer_support_assistant/
 openevalgate report examples/customer_support_assistant/ --output examples/customer_support_assistant/generated_launch_report.md
