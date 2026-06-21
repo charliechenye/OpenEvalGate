@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use OpenEvalGate in research, evaluation practice, or production-readiness work, please cite the project and its maintainer."
+title: "OpenEvalGate: Evidence-backed launch readiness for production AI assistants and agents"
+type: software
+authors:
+  - family-names: Zhu
+    given-names: Chenye
+    alias: Charlie Zhu
+version: 0.1.1
+license: MIT
+repository-code: "https://github.com/charliechenye/OpenEvalGate"
+url: "https://chenyezhu.com/"
+abstract: >-
+  OpenEvalGate is a local-first GenAI governance and launch-readiness framework.
+  It organizes golden evals, action-risk controls, human escalation evidence,
+  hard blockers, operational ownership, observability, and rollback evidence
+  into deterministic launch-readiness reports.
+keywords:
+  - generative AI
+  - AI governance
+  - AI agents
+  - LLM evaluation
+  - launch readiness
+  - human escalation
+  - trust preservation
