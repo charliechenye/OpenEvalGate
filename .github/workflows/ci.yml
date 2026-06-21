@@ -45,11 +45,12 @@ jobs:
 
           check_fallback_whitespace() {
             fallback_base=""
+            head_commit="$(git rev-parse HEAD)"
             if git rev-parse --verify origin/main >/dev/null 2>&1; then
               fallback_base="$(git merge-base HEAD origin/main || true)"
             fi
 
-            if [[ -n "${fallback_base}" ]]; then
+            if [[ -n "${fallback_base}" && "${fallback_base}" != "${head_commit}" ]]; then
               echo "Using merge-base whitespace fallback: ${fallback_base}..HEAD"
               git diff \
                 --check \
@@ -57,7 +58,7 @@ jobs:
                 "${fallback_base}" \
                 HEAD
             else
-              echo "No meaningful comparison range is available; checking the current commit."
+              echo "No non-empty comparison range is available; checking the current commit."
               git show --check --format= HEAD
             fi
           }
