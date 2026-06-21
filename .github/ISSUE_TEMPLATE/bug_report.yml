@@ -1,0 +1,80 @@
+name: Bug report
+description: Report a reproducible validation, policy, scoring, CLI, or reporting defect.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping make OpenEvalGate more deterministic. Do not include credentials, private customer data, proprietary prompts, or confidential evaluation traces.
+
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      description: Provide the installed version or commit SHA.
+      placeholder: 0.1.1 or abc1234
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - Golden eval validation
+        - Project structural validation
+        - Hard-gate policy
+        - Action-risk parsing
+        - Behavioral evidence
+        - Report generation
+        - CLI
+        - Packaging or installation
+        - Documentation or examples
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Include the smallest synthetic artifact or command sequence that reproduces the issue.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Policy or user impact
+      description: Explain whether the issue could make evidence appear valid, suppress a blocker, change a score, or misstate launch readiness.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submission checks
+      options:
+        - label: I used synthetic or redacted evidence and included no secrets or private customer data.
+          required: true
+        - label: I searched existing issues for the same problem.
+          required: true
+        - label: This is not a security vulnerability that should be reported privately.
+          required: true
