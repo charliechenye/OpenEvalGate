@@ -211,3 +211,5 @@ Do not optimize only for containment.
 Containment tells you whether the bot absorbed the session. Resolution tells you whether the user's problem was solved. Trust tells you whether the platform relationship survived.
 
 OpenEvalGate is useful when teams treat launch readiness as a cross-functional decision, not a model-quality score.
+
+<!-- CI documentation-only scope probe. -->
