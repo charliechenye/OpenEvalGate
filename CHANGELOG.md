@@ -25,6 +25,9 @@ The project follows semantic versioning while it remains in alpha. Until a stabl
 
 ### Changed
 
+- Controlled-launch behavioral blockers and authorization now use only the
+  selected run and candidate; reports distinguish unevaluated selection,
+  invalid policy, invalid results, and informational full-file metrics.
 - Canonical report reproduction is revalidated byte-for-byte through the installed wheel.
 - Generated Markdown reports now use canonical LF line endings across platforms to preserve byte-for-byte reproducibility.
 - Public package metadata now identifies the maintainer and project URLs.

@@ -115,6 +115,22 @@ class BehavioralSufficiency:
     sufficient_for_requested_mode: bool
     issues: tuple[ValidationIssue, ...]
 
+    @property
+    def selected_scope_configured(self) -> bool:
+        """Whether a valid policy configures an exact run and candidate."""
+
+        return (
+            self.policy_valid
+            and self.selected_run_id is not None
+            and self.selected_candidate is not None
+        )
+
+    @property
+    def sufficient_for_effective_mode(self) -> bool:
+        """Whether prerequisites for the effective review mode are satisfied."""
+
+        return self.sufficient_for_requested_mode
+
 
 def load_review_policy(path: str | Path) -> Any:
     with Path(path).open("r", encoding="utf-8") as handle:

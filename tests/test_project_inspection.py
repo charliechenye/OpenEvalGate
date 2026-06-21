@@ -280,6 +280,40 @@ def test_unsafe_action_blocker_remains_independent_of_gate_pass(
     }
 
 
+def test_missing_policy_preserves_legacy_full_file_behavioral_blocker() -> None:
+    inspection = inspect_project(CUSTOMER_SUPPORT)
+
+    assert "critical_escalation_regression" in {
+        blocker.id for blocker in inspection.hard_blockers
+    }
+
+
+def test_invalid_policy_skips_scope_dependent_behavioral_blocker(
+    tmp_path: Path,
+) -> None:
+    project = _copy_project(tmp_path)
+    (project / "review_policy.yaml").write_text(
+        "\n".join(
+            [
+                'schema_version: "1"',
+                "requested_mode: controlled_launch",
+                "evaluation_scope:",
+                "  run_id: run_002",
+                "  candidate: gpt-4.1-mini",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    inspection = inspect_project(project)
+
+    assert not inspection.check.valid
+    assert "critical_escalation_regression" not in {
+        blocker.id for blocker in inspection.hard_blockers
+    }
+
+
 @pytest.mark.parametrize("placeholder", sorted(NON_EVIDENCE_VALUES))
 def test_placeholder_deterministic_gate_does_not_control_high_risk_action(
     placeholder: str,

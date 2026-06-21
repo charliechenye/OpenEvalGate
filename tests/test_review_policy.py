@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+from dataclasses import replace
 from pathlib import Path
 from shutil import copytree
 
@@ -49,10 +50,27 @@ def _write_policy(project: Path, data: object) -> None:
 
 
 def test_missing_policy_uses_exact_backward_compatible_state(tmp_path: Path) -> None:
-    result = validate_review_policy(_project(tmp_path))
+    project = _project(tmp_path)
+    result = validate_review_policy(project)
     assert (result.policy_present, result.policy_valid) == (False, True)
     assert result.declared_mode is None
     assert result.effective_mode == ReviewMode.SHADOW_LAUNCH
+    sufficiency = evaluate_behavioral_sufficiency(project)
+    assert not sufficiency.selected_scope_configured
+
+
+def test_invalid_policy_cannot_configure_selected_scope(tmp_path: Path) -> None:
+    project = _project(tmp_path)
+    _write_policy(project, _policy(coverage=None))
+    result = evaluate_behavioral_sufficiency(project)
+
+    assert not result.policy_valid
+    assert not result.selected_scope_configured
+    assert not replace(
+        result,
+        selected_run_id="partially-parsed-run",
+        selected_candidate="partially-parsed-candidate",
+    ).selected_scope_configured
 
 
 @pytest.mark.parametrize(
@@ -142,3 +160,95 @@ def test_zero_matching_rows_fail_closed_without_zero_rates(tmp_path: Path) -> No
     assert result.selected_row_count == 0
     assert all(item.actual_value is None and item.status == "not_evaluated" for item in result.threshold_outcomes)
     assert not result.sufficient_for_requested_mode
+
+
+@pytest.mark.parametrize(
+    ("change", "expected_path", "expected_message"),
+    [
+        (
+            {"coverage": None},
+            "review_policy.coverage",
+            "Required for controlled-launch review.",
+        ),
+        (
+            {"thresholds": None},
+            "review_policy.thresholds",
+            "Required for controlled-launch review.",
+        ),
+        (
+            {"thresholds": {"route_match_rate": {"minimum": 1.0}}},
+            "review_policy.thresholds.pass_rate",
+            "Required for controlled-launch review.",
+        ),
+        (
+            {"thresholds": {"pass_rate": {"minimum": 1.0}}},
+            "review_policy.thresholds.route_match_rate",
+            "Required for controlled-launch review.",
+        ),
+        (
+            {"evaluation_scope": {"run_id": "run", "candidate": "candidate", "extra": "x"}},
+            "review_policy.evaluation_scope.extra",
+            "Unknown field.",
+        ),
+        (
+            {"coverage": {
+                "minimum_case_coverage": 1.0,
+                "minimum_critical_case_coverage": 1.0,
+                "minimum_trials_per_case": 1,
+                "extra": 1,
+            }},
+            "review_policy.coverage.extra",
+            "Unknown field.",
+        ),
+        (
+            {"coverage": {
+                "minimum_case_coverage": 1.0,
+                "minimum_critical_case_coverage": 1.0,
+                "minimum_trials_per_case": 0,
+            }},
+            "review_policy.coverage.minimum_trials_per_case",
+            "Must be an integer of at least 1.",
+        ),
+        (
+            {"thresholds": {
+                "pass_rate": "invalid",
+                "route_match_rate": {"minimum": 1.0},
+            }},
+            "review_policy.thresholds.pass_rate",
+            "Must be an object.",
+        ),
+        (
+            {"coverage": {
+                "minimum_case_coverage": 1.0,
+                "minimum_critical_case_coverage": 0.9,
+                "minimum_trials_per_case": 1,
+            }},
+            "review_policy.coverage.minimum_critical_case_coverage",
+            "Controlled-launch review requires minimum_critical_case_coverage to be exactly 1.0.",
+        ),
+        (
+            {"coverage": {
+                "minimum_case_coverage": 1.0,
+                "minimum_critical_case_coverage": 1.1,
+                "minimum_trials_per_case": 1,
+            }},
+            "review_policy.coverage.minimum_critical_case_coverage",
+            "Controlled-launch review requires minimum_critical_case_coverage to be exactly 1.0.",
+        ),
+    ],
+)
+def test_controlled_policy_validation_paths(
+    tmp_path: Path,
+    change: dict[str, object],
+    expected_path: str,
+    expected_message: str,
+) -> None:
+    project = _project(tmp_path)
+    _write_policy(project, _policy(**change))
+
+    issues = validate_review_policy(project).issues
+
+    assert any(
+        issue.path == expected_path and issue.message == expected_message
+        for issue in issues
+    )

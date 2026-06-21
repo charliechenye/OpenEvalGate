@@ -17,7 +17,13 @@ from openevalgate.launch_gate_review import GateRow, is_meaningful_mitigation
 from openevalgate.project_inspection import inspect_project
 from openevalgate.routing import summarize_routing_policy
 from openevalgate.review_policy import evaluate_behavioral_sufficiency
-from openevalgate.schema import HardBlocker, LaunchAssessment, ValidationIssue, load_eval_cases
+from openevalgate.schema import (
+    HardBlocker,
+    LaunchAssessment,
+    ReviewMode,
+    ValidationIssue,
+    load_eval_cases,
+)
 from openevalgate.scorer import gate_statuses, score_gates
 
 
@@ -180,8 +186,8 @@ def _executive_summary(
             f"- **Declared review mode:** {_mode_display(assessment.declared_review_mode)}",
             f"- **Effective review mode:** {_mode_display(assessment.effective_review_mode)}",
             (
-                "- **Behavioral sufficiency status:** "
-                + ("Sufficient" if assessment.behavioral_sufficiency.sufficient_for_requested_mode else "Insufficient")
+                "- **Sufficiency for effective review mode:** "
+                + ("Sufficient" if assessment.behavioral_sufficiency.sufficient_for_effective_mode else "Insufficient")
             ),
             f"- **Critical-control status:** {assessment.critical_control_status}",
             f"- **Maximum permitted stage:** {assessment.maximum_permitted_stage}",
@@ -420,8 +426,13 @@ def _eval_summary(cases: list[dict[str, Any]]) -> str:
 
 def _observed_behavioral_quality(evidence: BehavioralEvidence) -> str:
     display = behavioral_evidence_display(evidence.state)
+    scope_note = (
+        "This section summarizes all valid behavioral rows in the results file. "
+        "Controlled-launch authorization, when requested, uses only the selected "
+        "run and candidate shown above."
+    )
     if evidence.state != "available":
-        lines = [f"**{display}**"]
+        lines = [scope_note, "", f"**{display}**"]
         if evidence.issues:
             lines.extend(
                 [
@@ -437,6 +448,8 @@ def _observed_behavioral_quality(evidence: BehavioralEvidence) -> str:
     assert summary is not None
 
     lines = [
+        scope_note,
+        "",
         f"**{display}**",
         "",
         f"- Total result rows: {summary.row_count}",
@@ -530,30 +543,38 @@ def _behavioral_sufficiency_summary(assessment: LaunchAssessment) -> str:
         policy_display = "Invalid"
     else:
         policy_display = "Present"
+    selected_state = _selected_scope_state(value)
+    selected_value = lambda actual, empty="none": _selected_scope_value(
+        value, selected_state, actual, empty=empty
+    )
     lines = [
         f"- Review policy: {policy_display}",
         f"- Declared review mode: {_mode_display(value.declared_mode)}",
         f"- Effective review mode: {_mode_display(value.effective_mode)}",
         f"- Selected run: {value.selected_run_id or 'Not configured'}",
         f"- Selected candidate: {value.selected_candidate or 'Not configured'}",
-        f"- Selected result rows: {value.selected_row_count}",
+        f"- Selected result rows: {selected_value(str(value.selected_row_count))}",
         f"- Expected eval cases: {value.expected_case_count}",
-        f"- Observed eval cases: {value.observed_case_count}",
-        f"- Case coverage: {_sufficiency_rate(value.case_coverage, value)}",
-        f"- Cases meeting minimum trial depth: {value.cases_meeting_trial_depth_count}",
-        f"- Missing eval cases: {', '.join(value.missing_case_ids) or 'none'}",
+        f"- Observed eval cases: {selected_value(str(value.observed_case_count))}",
+        f"- Case coverage: {_selected_scope_rate(value.case_coverage, value, selected_state)}",
+        f"- Cases meeting minimum trial depth: {selected_value(str(value.cases_meeting_trial_depth_count))}",
+        f"- Missing eval cases: {selected_value(', '.join(value.missing_case_ids))}",
         (
             "- Represented cases below trial depth: "
-            + (", ".join(value.observed_cases_below_trial_depth) or "none")
+            + selected_value(", ".join(value.observed_cases_below_trial_depth))
         ),
         f"- Expected critical cases: {value.expected_critical_case_count}",
-        f"- Observed critical cases: {value.observed_critical_case_count}",
-        f"- Critical-case coverage: {_sufficiency_rate(value.critical_case_coverage, value, critical=True)}",
-        f"- Missing critical cases: {', '.join(value.missing_critical_case_ids) or 'none'}",
-        f"- Failing critical cases: {', '.join(value.failed_critical_case_ids) or 'none'}",
+        f"- Observed critical cases: {selected_value(str(value.observed_critical_case_count))}",
+        f"- Critical-case coverage: {_selected_scope_rate(value.critical_case_coverage, value, selected_state, critical=True)}",
+        f"- Missing critical cases: {selected_value(', '.join(value.missing_critical_case_ids))}",
         (
-            "- Behavioral sufficiency for requested mode: "
-            + ("Yes" if value.sufficient_for_requested_mode else "No")
+            "- Critical cases below trial depth: "
+            + selected_value(", ".join(value.critical_cases_below_trial_depth))
+        ),
+        f"- Failing critical cases: {selected_value(', '.join(value.failed_critical_case_ids))}",
+        (
+            "- Sufficiency for effective review mode: "
+            + ("Yes" if value.sufficient_for_effective_mode else "No")
         ),
         "",
         "| Metric | Actual | Requirement | Status |",
@@ -565,11 +586,13 @@ def _behavioral_sufficiency_summary(assessment: LaunchAssessment) -> str:
         if outcome is None:
             lines.append(f"| {metric} | Not evaluated | Not configured | Not configured |")
         else:
-            actual = _outcome_value(outcome.actual_value, value)
+            actual = _outcome_value(outcome.actual_value, value, selected_state)
             lines.append(
                 f"| {metric} | {actual} | >= {outcome.configured_threshold:.0%} | {_status_display(outcome.status)} |"
             )
     lines.extend([
+        "",
+        "Controlled-launch behavioral invariants",
         "",
         "| Invariant | Status | Reason |",
         "| --- | --- | --- |",
@@ -578,12 +601,52 @@ def _behavioral_sufficiency_summary(assessment: LaunchAssessment) -> str:
         lines.append(
             f"| {outcome.invariant_id} | {_status_display(outcome.status)} | {outcome.reason} |"
         )
+    if value.effective_mode != ReviewMode.CONTROLLED_LAUNCH:
+        lines.extend([
+            "",
+            (
+                "These invariants are informational in the current review mode "
+                "and do not authorize controlled launch."
+            ),
+        ])
     return "\n".join(lines)
 
 
-def _sufficiency_rate(value: float | None, sufficiency: Any, critical: bool = False) -> str:
+def _selected_scope_state(sufficiency: Any) -> str:
     if not sufficiency.policy_valid:
-        return "Unavailable due to invalid evidence"
+        return "invalid_policy"
+    if sufficiency.behavioral_evidence_state == "invalid":
+        return "invalid_behavioral_evidence"
+    if not sufficiency.selected_scope_configured:
+        return "not_evaluated"
+    return "evaluated"
+
+
+def _selected_scope_value(
+    sufficiency: Any,
+    state: str,
+    value: str,
+    *,
+    empty: str = "none",
+) -> str:
+    if state == "invalid_policy":
+        return "Unavailable due to invalid review policy"
+    if state == "invalid_behavioral_evidence":
+        return "Unavailable due to invalid behavioral evidence"
+    if state == "not_evaluated":
+        return "Not evaluated"
+    return value or empty
+
+
+def _selected_scope_rate(
+    value: float | None,
+    sufficiency: Any,
+    state: str,
+    critical: bool = False,
+) -> str:
+    unavailable = _selected_scope_value(sufficiency, state, "")
+    if state != "evaluated":
+        return unavailable
     if value is None:
         if critical and sufficiency.expected_critical_case_count == 0:
             return "Not applicable"
@@ -591,9 +654,11 @@ def _sufficiency_rate(value: float | None, sufficiency: Any, critical: bool = Fa
     return f"{value:.0%}"
 
 
-def _outcome_value(value: float | None, sufficiency: Any) -> str:
-    if not sufficiency.policy_valid:
-        return "Unavailable due to invalid evidence"
+def _outcome_value(value: float | None, sufficiency: Any, state: str) -> str:
+    if state == "invalid_policy":
+        return "Unavailable due to invalid review policy"
+    if state == "invalid_behavioral_evidence":
+        return "Unavailable due to invalid behavioral evidence"
     return "Not evaluated" if value is None else f"{value:.0%}"
 
 

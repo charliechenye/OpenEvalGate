@@ -15,6 +15,70 @@ from openevalgate.scorer import WEIGHTS, score_gates, GateRow
 
 ROOT = Path(__file__).resolve().parents[1]
 CUSTOMER_SUPPORT = ROOT / "examples" / "customer_support_assistant"
+RESULT_HEADERS = (
+    "run_id,case_id,candidate,evaluator,actual_route,expected_route,"
+    "route_match,passed,score,failure_category,failure_reason,"
+    "observed_output_path,reviewed_by,reviewed_at,notes,"
+    "prohibited_action_occurred"
+)
+
+
+def _controlled_launch_project(
+    tmp_path: Path,
+    *,
+    minimum_trials: int = 1,
+) -> tuple[Path, list[dict[str, object]]]:
+    project = tmp_path / "project"
+    copytree(CUSTOMER_SUPPORT, project)
+    gate_path = project / "launch_gate_review.md"
+    gate_path.write_text(
+        gate_path.read_text(encoding="utf-8").replace(
+            "| Observability gate | partial |",
+            "| Observability gate | pass |",
+        ),
+        encoding="utf-8",
+    )
+    policy = {
+        "schema_version": "1",
+        "requested_mode": "controlled_launch",
+        "evaluation_scope": {"run_id": "release-run", "candidate": "candidate-v3"},
+        "coverage": {
+            "minimum_case_coverage": 1.0,
+            "minimum_critical_case_coverage": 1.0,
+            "minimum_trials_per_case": minimum_trials,
+        },
+        "thresholds": {
+            "pass_rate": {"minimum": 1.0},
+            "route_match_rate": {"minimum": 1.0},
+        },
+    }
+    (project / "review_policy.yaml").write_text(
+        yaml.safe_dump(policy, sort_keys=False), encoding="utf-8"
+    )
+    return project, load_eval_cases(project / "eval_cases.yaml")
+
+
+def _passing_rows(
+    cases: list[dict[str, object]],
+    *,
+    run_id: str = "release-run",
+    candidate: str = "candidate-v3",
+) -> list[str]:
+    rows = []
+    for case in cases:
+        route = str(case["expected_route"])
+        rows.append(
+            f"{run_id},{case['id']},{candidate},harness,{route},{route},"
+            "true,true,1,,,,qa,2026-06-21,passing,false"
+        )
+    return rows
+
+
+def _write_result_rows(project: Path, rows: list[str]) -> None:
+    (project / "eval_results.csv").write_text(
+        "\n".join([RESULT_HEADERS, *rows]) + "\n",
+        encoding="utf-8",
+    )
 
 
 def test_report_generation_returns_expected_sections(
@@ -434,56 +498,16 @@ def test_invalid_review_policy_fails_check_without_shadow_fallback(
     assert not inspection.check.valid
     assert "- Review policy: Invalid" in report
     assert "- Effective review mode: Not configured" in report
+    assert "Unavailable due to invalid review policy" in report
+    assert "critical_escalation_regression" not in report
     assert "**Final launch recommendation:** Not ready for shadow evaluation" in report
 
 
 def test_fully_satisfied_synthetic_controlled_launch_is_bounded(
     tmp_path: Path,
 ) -> None:
-    project = tmp_path / "project"
-    copytree(CUSTOMER_SUPPORT, project)
-    gate_path = project / "launch_gate_review.md"
-    gate_path.write_text(
-        gate_path.read_text(encoding="utf-8").replace(
-            "| Observability gate | partial |",
-            "| Observability gate | pass |",
-        ),
-        encoding="utf-8",
-    )
-    policy = {
-        "schema_version": "1",
-        "requested_mode": "controlled_launch",
-        "evaluation_scope": {"run_id": "release-run", "candidate": "candidate-v3"},
-        "coverage": {
-            "minimum_case_coverage": 1.0,
-            "minimum_critical_case_coverage": 1.0,
-            "minimum_trials_per_case": 1,
-        },
-        "thresholds": {
-            "pass_rate": {"minimum": 1.0},
-            "route_match_rate": {"minimum": 1.0},
-        },
-    }
-    (project / "review_policy.yaml").write_text(
-        yaml.safe_dump(policy, sort_keys=False), encoding="utf-8"
-    )
-    cases = load_eval_cases(project / "eval_cases.yaml")
-    headers = (
-        "run_id,case_id,candidate,evaluator,actual_route,expected_route,"
-        "route_match,passed,score,failure_category,failure_reason,"
-        "observed_output_path,reviewed_by,reviewed_at,notes,"
-        "prohibited_action_occurred"
-    )
-    rows = [headers]
-    for case in cases:
-        route = case["expected_route"]
-        rows.append(
-            f"release-run,{case['id']},candidate-v3,harness,{route},{route},"
-            "true,true,1,,,,qa,2026-06-21,passing,false"
-        )
-    (project / "eval_results.csv").write_text(
-        "\n".join(rows) + "\n", encoding="utf-8"
-    )
+    project, cases = _controlled_launch_project(tmp_path)
+    _write_result_rows(project, _passing_rows(cases))
 
     report = generate_report(project)
 
@@ -492,6 +516,144 @@ def test_fully_satisfied_synthetic_controlled_launch_is_bounded(
     assert "**Critical-control status:** Pass" in report
     assert "| pass_rate | 100% | >= 100% | Pass |" in report
     assert "Production ready" not in report
+
+
+@pytest.mark.parametrize(
+    ("failure_run", "failure_candidate"),
+    [
+        ("historical-run", "candidate-v3"),
+        ("release-run", "candidate-a"),
+    ],
+)
+def test_unselected_behavioral_failures_do_not_affect_controlled_launch(
+    tmp_path: Path,
+    failure_run: str,
+    failure_candidate: str,
+) -> None:
+    project, cases = _controlled_launch_project(tmp_path)
+    critical = next(case for case in cases if case["id"] == "refund_abuse_history_002")
+    rows = _passing_rows(cases)
+    rows.append(
+        f"{failure_run},{critical['id']},{failure_candidate},harness,show,"
+        f"{critical['expected_route']},false,false,0,route,historical failure,,"
+        "qa,2026-06-20,unselected,false"
+    )
+    _write_result_rows(project, rows)
+
+    inspection = inspect_project(project)
+    report = generate_report(project)
+
+    assert "**Maximum permitted stage:** Controlled launch" in report
+    assert "**Final launch recommendation:** Ready for bounded controlled launch" in report
+    assert "**Critical-control status:** Pass" in report
+    assert "critical_escalation_regression" not in {
+        blocker.id for blocker in inspection.hard_blockers
+    }
+    assert "Eval pass rate: 94%" in report
+    assert (
+        "This section summarizes all valid behavioral rows in the results file."
+        in report
+    )
+
+
+def test_selected_critical_failure_blocks_controlled_launch(
+    tmp_path: Path,
+) -> None:
+    project, cases = _controlled_launch_project(tmp_path)
+    critical = next(case for case in cases if case["id"] == "refund_abuse_history_002")
+    rows = [
+        row for row in _passing_rows(cases)
+        if f",{critical['id']}," not in row
+    ]
+    rows.append(
+        f"release-run,{critical['id']},candidate-v3,harness,show,"
+        f"{critical['expected_route']},false,false,0,route,selected failure,,"
+        "qa,2026-06-21,selected,false"
+    )
+    _write_result_rows(project, rows)
+
+    report = generate_report(project)
+
+    assert "**Maximum permitted stage:** Shadow evaluation with remediation" in report
+    assert "**Final launch recommendation:** Not ready for controlled launch" in report
+    assert "**Critical-control status:** Fail" in report
+    assert "- Failing critical cases: refund_abuse_history_002" in report
+
+
+def test_missing_policy_selected_scope_is_not_evaluated() -> None:
+    report = generate_report(CUSTOMER_SUPPORT)
+
+    assert "- Selected result rows: Not evaluated" in report
+    assert "- Observed eval cases: Not evaluated" in report
+    assert "- Case coverage: Not evaluated" in report
+    assert "- Missing eval cases: Not evaluated" in report
+    assert "- Critical-case coverage: Not evaluated" in report
+    assert "- Missing critical cases: Not evaluated" in report
+    assert "Case coverage: 0%" not in report
+    assert "Critical-case coverage: 0%" not in report
+    assert "Sufficiency for effective review mode" in report
+
+
+def test_zero_matching_selected_rows_report_real_zero_coverage(
+    tmp_path: Path,
+) -> None:
+    project, _ = _controlled_launch_project(tmp_path)
+    _write_result_rows(
+        project,
+        [
+            "other-run,refund_boundary_case_001,other-candidate,harness,show,"
+            "show,true,true,1,,,,qa,2026-06-21,other,false"
+        ],
+    )
+
+    report = generate_report(project)
+
+    assert "- Selected result rows: 0" in report
+    assert "- Observed eval cases: 0" in report
+    assert "- Case coverage: 0%" in report
+    assert "| pass_rate | Not evaluated | >= 100% | Not evaluated |" in report
+    assert "**Final launch recommendation:** Not ready for controlled launch" in report
+
+
+def test_invalid_behavioral_evidence_has_distinct_selected_scope_wording(
+    tmp_path: Path,
+) -> None:
+    project, _ = _controlled_launch_project(tmp_path)
+    (project / "eval_results.csv").write_text(
+        "run_id,case_id\nrelease-run,refund_boundary_case_001\n",
+        encoding="utf-8",
+    )
+
+    report = generate_report(project)
+
+    assert "Invalid — results could not be validated." in report
+    assert "Unavailable due to invalid behavioral evidence" in report
+    assert "Unavailable due to invalid review policy" not in report
+
+
+def test_critical_trial_depth_has_dedicated_report_line(
+    tmp_path: Path,
+) -> None:
+    project, cases = _controlled_launch_project(tmp_path, minimum_trials=2)
+    _write_result_rows(project, _passing_rows(cases))
+
+    report = generate_report(project)
+
+    assert "- Critical cases below trial depth: " in report
+    assert "refund_abuse_history_002" in report.split(
+        "- Critical cases below trial depth: ", 1
+    )[1].splitlines()[0]
+    assert "**Final launch recommendation:** Not ready for controlled launch" in report
+
+
+def test_shadow_invariants_are_explicitly_informational(
+    customer_support_report: str,
+) -> None:
+    assert "Controlled-launch behavioral invariants" in customer_support_report
+    assert (
+        "These invariants are informational in the current review mode "
+        "and do not authorize controlled launch."
+    ) in customer_support_report
 
 
 def test_high_risk_escalation_regression_is_hard_blocker(

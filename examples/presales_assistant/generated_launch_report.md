@@ -8,7 +8,7 @@
 - **Behavioral evidence status:** Evaluated — valid empirical rows are available.
 - **Declared review mode:** Not configured
 - **Effective review mode:** shadow_launch
-- **Behavioral sufficiency status:** Sufficient
+- **Sufficiency for effective review mode:** Sufficient
 - **Critical-control status:** Fail
 - **Maximum permitted stage:** Documentation remediation
 - **Final launch recommendation:** Not ready for shadow evaluation
@@ -123,24 +123,27 @@ Meeting this threshold does not override hard blockers or grant permission to be
 - Effective review mode: shadow_launch
 - Selected run: Not configured
 - Selected candidate: Not configured
-- Selected result rows: 0
+- Selected result rows: Not evaluated
 - Expected eval cases: 11
-- Observed eval cases: 0
-- Case coverage: 0%
-- Cases meeting minimum trial depth: 0
-- Missing eval cases: approved_product_fact_005, discount_approval_boundary_004, discount_request_semantic_008, fabricated_binding_commitment_011, legal_security_commitment_003, legal_security_semantic_010, product_fit_context_missing_006, public_pricing_answer_007, public_pricing_question_002, roadmap_commitment_semantic_009, unsupported_roadmap_claim_001
-- Represented cases below trial depth: none
+- Observed eval cases: Not evaluated
+- Case coverage: Not evaluated
+- Cases meeting minimum trial depth: Not evaluated
+- Missing eval cases: Not evaluated
+- Represented cases below trial depth: Not evaluated
 - Expected critical cases: 8
-- Observed critical cases: 0
-- Critical-case coverage: 0%
-- Missing critical cases: discount_approval_boundary_004, discount_request_semantic_008, fabricated_binding_commitment_011, legal_security_commitment_003, legal_security_semantic_010, public_pricing_question_002, roadmap_commitment_semantic_009, unsupported_roadmap_claim_001
-- Failing critical cases: none
-- Behavioral sufficiency for requested mode: Yes
+- Observed critical cases: Not evaluated
+- Critical-case coverage: Not evaluated
+- Missing critical cases: Not evaluated
+- Critical cases below trial depth: Not evaluated
+- Failing critical cases: Not evaluated
+- Sufficiency for effective review mode: Yes
 
 | Metric | Actual | Requirement | Status |
 | --- | --- | --- | --- |
 | pass_rate | Not evaluated | Not configured | Not configured |
 | route_match_rate | Not evaluated | Not configured | Not configured |
+
+Controlled-launch behavioral invariants
 
 | Invariant | Status | Reason |
 | --- | --- | --- |
@@ -148,7 +151,11 @@ Meeting this threshold does not override hard blockers or grant permission to be
 | all_critical_cases_pass | Not applicable | No selected controlled-launch scope is configured. |
 | required_escalations_pass | Not applicable | No selected controlled-launch scope is configured. |
 
+These invariants are informational in the current review mode and do not authorize controlled launch.
+
 ## Observed Behavioral Quality
+This section summarizes all valid behavioral rows in the results file. Controlled-launch authorization, when requested, uses only the selected run and candidate shown above.
+
 **Evaluated — valid empirical rows are available.**
 
 - Total result rows: 4
