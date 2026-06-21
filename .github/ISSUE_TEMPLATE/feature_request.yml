@@ -1,0 +1,60 @@
+name: Feature request
+description: Propose a focused improvement to launch-readiness evidence, policy, reporting, or adoption.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        OpenEvalGate is intentionally local-first, deterministic, and dependency-light. Strong proposals explain the launch decision that becomes more reliable, not only the interface being added.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Launch-readiness problem
+      description: What decision, evidence gap, or trust boundary is difficult today?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: Describe the smallest coherent change that addresses the problem.
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence and examples
+      description: Include a synthetic example, incident pattern, standard, or workflow showing why the change matters.
+    validations:
+      required: true
+
+  - type: textarea
+    id: trust_boundary
+    attributes:
+      label: Trust-boundary impact
+      description: Explain how missing, invalid, or ambiguous evidence should behave and what must remain fail-closed.
+    validations:
+      required: true
+
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility considerations
+      description: Note effects on scoring, blocker IDs, CLI behavior, schemas, templates, generated reports, or existing projects.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submission checks
+      options:
+        - label: I reviewed the documented V1 non-goals and existing roadmap.
+          required: true
+        - label: I searched existing issues and pull requests for related work.
+          required: true
+        - label: The proposal can be evaluated with deterministic tests or artifacts.
+          required: true
