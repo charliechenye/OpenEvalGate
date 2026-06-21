@@ -1,10 +1,14 @@
 # Iteration 1: Correctness and Release Semantics
 
+## Status
+
+**Partially complete.** The readiness-model separation, centralized hard-gate policy, fail-closed gate applicability, strict action-risk trust boundary, deterministic reporting, and associated regression tests are complete. Review modes, behavioral-sufficiency thresholds, result integrity, version pinning, and evidence provenance remain open.
+
 ## Objective
 
 Make OpenEvalGate's launch recommendations semantically honest, empirically grounded, and resistant to self-attested evidence inflation.
 
-The iteration is complete only when a project with strong documentation but weak observed behavior cannot appear highly ready for launch.
+The iteration is complete only when a project with strong documentation but weak observed behavior cannot appear highly ready for launch, and when empirical evidence is sufficient—not merely present—for the requested review mode.
 
 ## P0.1 Separate Evidence Coverage from Behavioral Readiness
 
@@ -16,12 +20,9 @@ The iteration is complete only when a project with strong documentation but weak
 
 ### Acceptance Criteria
 
-- A report may show high evidence completeness and still show low behavioral quality without contradiction.
-- The first report screen displays all three dimensions:
-  - Evidence completeness.
-  - Observed behavioral quality.
-  - Critical-control status.
-- No code path refers to the evidence-completeness score as overall launch readiness.
+- [x] A report may show high evidence completeness and still show low behavioral quality without contradiction.
+- [x] The first report screen displays evidence completeness, observed behavioral quality, and critical-control status.
+- [x] No code path refers to the evidence-completeness score as overall launch readiness.
 
 ## P0.2 Introduce Review Modes
 
@@ -45,15 +46,13 @@ Supported values:
 
 ### Acceptance Criteria
 
-- A project without `eval_results.csv` cannot receive `Ready for controlled launch`.
-- Documentation mode reports `Launch determination: not evaluated`.
-- Controlled-launch mode fails clearly when required execution evidence is absent.
+- [x] A project without `eval_results.csv` cannot receive `Ready for controlled launch`.
+- [ ] Documentation mode reports `Launch determination: not evaluated`.
+- [ ] Controlled-launch mode fails clearly when required execution evidence is absent.
 
 ## P0.3 Centralize Hard-Gate Policy
 
-Create one explicit policy table in code instead of distributing critical-gate semantics across helper functions.
-
-Suggested shape:
+The centralized policy covers:
 
 ```python
 HARD_GATE_POLICY = {
@@ -73,21 +72,29 @@ HARD_GATE_POLICY = {
 - [x] Reject unsupported gate statuses.
 - [x] Remove contradictory blocker wording.
 - [x] Expose the hard-gate policy in generated reports.
+- [x] Require meaningful evidence and gate-specific artifact evidence where applicable.
+- [x] Treat unknown conditional applicability as blocking rather than permissive.
+- [x] Keep invalid action-risk evidence diagnostic-only and outside policy decisions.
 
 ### Required Tests
 
 For every hard gate, test:
 
-- [ ] `pass`
-- [ ] `partial`
-- [ ] `fail`
-- [ ] missing
-- [ ] `not_applicable`
+- [x] `pass`
+- [x] `partial`
+- [x] `fail`
+- [x] missing
+- [x] `not_applicable`
+- [x] duplicate declarations and aliases
+- [x] unsupported statuses
+- [x] blank and placeholder evidence
+- [x] applicable, non-applicable, and unknown conditional contexts
 
 ### Acceptance Criteria
 
-- No partial critical gate can silently avoid a hard blocker.
-- Reported blocker reasons match code behavior.
+- [x] No partial critical gate can silently avoid a hard blocker.
+- [x] Reported blocker reasons match code behavior.
+- [x] Invalid structured evidence cannot create a trusted positive or permissive negative policy result.
 
 ## P0.4 Define Critical Behavioral Thresholds
 
@@ -111,12 +118,13 @@ Candidate metrics:
 - [ ] Support stricter thresholds by risk tier.
 - [ ] Define minimum denominators before a rate is considered meaningful.
 - [ ] Report `insufficient evidence` instead of treating missing values as good or bad performance.
+- [~] Preserve independent critical-control blockers regardless of aggregate score. Critical escalation regressions already do this; a general configurable critical-slice policy remains open.
 
 ### Acceptance Criteria
 
-- A critical-slice failure produces a named blocker.
-- A metric with insufficient samples cannot be presented as a reliable percentage.
-- Threshold values and evidence denominators appear in the report.
+- [ ] Every required critical-slice failure produces a named blocker.
+- [ ] A metric with insufficient samples cannot be presented as a reliable percentage.
+- [ ] Threshold values and evidence denominators appear in the report.
 
 ## P0.5 Strengthen Eval-Result Integrity
 
@@ -135,9 +143,9 @@ Candidate metrics:
 
 ### Acceptance Criteria
 
-- User-entered derived booleans cannot contradict source fields.
-- Duplicate or stale result records fail validation.
-- The report identifies the exact artifact versions used for a launch decision.
+- [ ] User-entered derived booleans cannot contradict source fields.
+- [ ] Duplicate or stale result records fail validation.
+- [ ] The report identifies the exact artifact versions used for a launch decision.
 
 ## P0.6 Distinguish Evidence Provenance
 
@@ -151,12 +159,12 @@ Introduce evidence provenance categories:
 - [ ] Add provenance to structured gate evidence.
 - [ ] Report counts by provenance category.
 - [ ] Require stronger provenance for controlled-launch hard gates.
-- [ ] Do not award full evidence credit for a path that exists but contains no validated evidence.
+- [~] Prevent blank or placeholder gate evidence from satisfying applicable hard gates. Implemented for centralized hard gates; broader artifact-depth validation remains open.
 
 ### Acceptance Criteria
 
-- A blank Markdown file cannot satisfy a hard gate.
-- A self-attested gate is visibly different from a tool-validated or human-approved gate.
+- [~] A blank or placeholder hard-gate evidence cell cannot satisfy an applicable hard gate.
+- [ ] A self-attested gate is visibly different from a tool-validated or human-approved gate.
 
 ## P1.1 Add a Structured Project Manifest
 
@@ -193,11 +201,12 @@ artifacts:
 
 Iteration 1 is complete when:
 
-- [ ] Reports separate evidence completeness, observed behavior, and critical-control status.
-- [ ] Controlled-launch recommendations require empirical evidence.
-- [ ] Partial critical gates block launch.
+- [x] Reports separate evidence completeness, observed behavior, and critical-control status.
+- [x] Missing, empty, or invalid empirical results cannot produce a controlled-launch recommendation.
+- [x] Partial critical gates block advancement.
 - [ ] Critical metrics have explicit thresholds and denominators.
 - [ ] Eval results are internally consistent and versioned.
-- [ ] Blank or superficial artifacts cannot receive full readiness credit.
-- [ ] All new semantics are covered by regression tests.
-- [ ] Canonical examples regenerate without undocumented manual edits.
+- [~] Blank or superficial hard-gate declarations cannot receive passing policy treatment; broader artifact-depth and provenance checks remain open.
+- [x] Centralized gate semantics are covered by regression tests.
+- [x] Canonical examples regenerate without undocumented manual edits.
+- [ ] Review modes and behavioral evidence sufficiency are implemented.
