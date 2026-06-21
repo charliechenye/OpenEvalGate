@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "3.10"
+          - "3.11"
+          - "3.12"
+          - "3.13"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install development dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Run test suite
+        run: python -m pytest
+
+      - name: Compile package
+        run: python -m compileall -q openevalgate
+
+  repository-validation:
+    name: Repository validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install development dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Validate canonical examples
+        shell: bash
+        run: |
+          set -euo pipefail
+          for example in customer_support_assistant presales_assistant education_assistant; do
+            openevalgate validate "examples/${example}/eval_cases.yaml"
+            openevalgate check "examples/${example}/"
+            openevalgate report "examples/${example}/" --output "/tmp/${example}.md"
+            diff -u "examples/${example}/generated_launch_report.md" "/tmp/${example}.md"
+          done
+
+      - name: Build distribution artifacts
+        run: python -m build
+
+      - name: Check whitespace errors
+        run: git diff --check
