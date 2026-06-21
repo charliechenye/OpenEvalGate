@@ -2,6 +2,10 @@
 
 GenAI governance and AI agent launch readiness, not vibe checks.
 
+[![CI](https://github.com/charliechenye/OpenEvalGate/actions/workflows/ci.yml/badge.svg)](https://github.com/charliechenye/OpenEvalGate/actions/workflows/ci.yml)
+[![Python 3.10-3.13](https://img.shields.io/badge/python-3.10--3.13-blue.svg)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 OpenEvalGate is an open-source GenAI governance framework for production AI assistants and agents. It helps teams prove three things before launch:
 
 1. **Expected behavior:** the system resolves, clarifies, acts, escalates, or refuses according to a business-owned contract.
@@ -196,7 +200,7 @@ Evidence package bands:
 
 These bands describe evidence completeness only. They do not grant a deployment stage. The final recommendation is determined separately from project validity, behavioral-evidence state, and known hard blockers. Missing, empty, or invalid `eval_results.csv` cannot produce a controlled-launch recommendation.
 
-In this iteration, even valid empirical rows with no known blockers permit only shadow evaluation. Controlled-launch readiness remains undetermined until minimum coverage, required critical slices, behavioral thresholds, repeated-run sufficiency, and complete hard-gate semantics are implemented.
+In this iteration, even valid empirical rows with no known blockers permit only shadow evaluation. Controlled-launch readiness remains undetermined until minimum coverage, required critical slices, behavioral thresholds, repeated-run sufficiency, evidence provenance, and controlled-launch authorization are implemented.
 
 Behavioral evidence is reported as one of:
 
@@ -306,6 +310,14 @@ No. OpenEvalGate does not call LLM APIs, execute candidate models, send telemetr
 
 OpenEvalGate makes governance concrete through launch gates, ownership, evidence, mitigations, hard blockers, golden eval coverage, tool/action safety review, automation boundaries, human escalation paths, observability checks, rollback expectations, and launch-readiness reporting.
 
+## Maintainer and citation
+
+OpenEvalGate was created and is maintained by [Chenye Zhu](https://chenyezhu.com/). The project is released under the [MIT License](LICENSE).
+
+For academic, professional, or internal references, use the repository's [citation metadata](CITATION.cff). Release history is documented in the [changelog](CHANGELOG.md).
+
 ## How To Contribute
 
-Start with templates, examples, and docs. High-value contributions include domain-specific escalation contracts, incident-derived eval cases, queue and fallback patterns, handoff payload examples, and evidence from finance, HR, healthcare administration, developer tooling, and other enterprise workflows. Keep the CLI small, deterministic, local-first, and dependency-light.
+Start with [CONTRIBUTING.md](CONTRIBUTING.md) and follow the [Code of Conduct](CODE_OF_CONDUCT.md). High-value contributions include domain-specific escalation contracts, incident-derived eval cases, queue and fallback patterns, handoff payload examples, and evidence from finance, HR, healthcare administration, developer tooling, and other enterprise workflows.
+
+Keep the CLI small, deterministic, local-first, and dependency-light. Report suspected vulnerabilities privately according to [SECURITY.md](SECURITY.md).
