@@ -2,7 +2,7 @@
 
 Use this checklist for the final decision to change repository visibility from private to public.
 
-A checked box means the condition has been verified on the exact release commit. `[~]` means the work is implemented or validated on draft PR #5 but must be reverified after merge. It does not count as final public-release approval.
+This checklist reflects the intended post-merge state of PR #5. A checked implementation item means the work is present after that merge. Final release approval still requires verification on the exact public-release commit.
 
 ## 1. Release Semantics
 
@@ -26,27 +26,29 @@ A checked box means the condition has been verified on the exact release commit.
 - [ ] Run timestamps and artifact versions are recorded.
 - [ ] Output references are validated.
 - [ ] Evaluator type and reviewer identity are recorded.
-- [~] Blank or placeholder hard-gate evidence cannot satisfy an applicable centralized hard gate; broader artifact-depth validation remains open.
+- [x] Blank or placeholder hard-gate evidence cannot satisfy an applicable centralized hard gate.
+- [ ] Broader artifact-depth validation is implemented.
 - [ ] Evidence provenance is visible in reports.
 - [ ] Evidence freshness requirements are defined.
 
 ## 3. Tests and CI
 
-- [~] CI passes on Python 3.10 in PR #5.
-- [~] CI passes on Python 3.11 in PR #5.
-- [~] CI passes on Python 3.12 in PR #5.
-- [~] CI passes on Python 3.13 in PR #5.
+- [x] The consolidated `CI` job passes on Python 3.10.
+- [x] The consolidated `CI` job passes on Python 3.11.
+- [x] The consolidated `CI` job passes on Python 3.12.
+- [x] The consolidated `CI` job passes on Python 3.13.
+- [x] Node 24-compatible GitHub Actions are used.
 - [ ] Linting passes.
 - [ ] Formatting checks pass.
 - [ ] Type checks pass.
-- [~] Source and wheel package builds pass in PR #5.
+- [x] Source and wheel package builds pass.
 - [ ] Wheel installation passes in a clean environment.
-- [~] CLI smoke tests pass for all canonical examples in PR #5.
-- [~] All canonical examples pass structural validation in PR #5.
-- [~] Generated reports match committed examples byte-for-byte in PR #5.
-- [~] Dependabot configuration is present in PR #5.
+- [x] CLI smoke tests pass for all canonical examples.
+- [x] All canonical examples pass structural validation.
+- [x] Generated reports match committed examples byte-for-byte.
+- [x] Dependabot configuration is present.
 - [ ] Dependency review and security scanning pass or have documented accepted findings.
-- [ ] Branch protection requires the release checks.
+- [ ] Branch protection requires the consolidated `CI` check.
 
 ## 4. Package and Release
 
@@ -55,7 +57,7 @@ A checked box means the condition has been verified on the exact release commit.
 - [ ] Source distribution contents are inspected and correct.
 - [ ] Wheel contents are inspected and correct.
 - [ ] Installation does not require an editable checkout.
-- [~] `CHANGELOG.md` contains an `[Unreleased]` section in PR #5.
+- [x] `CHANGELOG.md` contains an `[Unreleased]` section.
 - [ ] Stable release notes describe all user-visible changes.
 - [ ] A release tag is prepared from the verified release commit.
 - [ ] Rollback instructions exist for a broken package release.
@@ -63,27 +65,27 @@ A checked box means the condition has been verified on the exact release commit.
 
 ## 5. Authorship and Provenance
 
-- [~] Package author and maintainer identify Chenye Zhu in PR #5.
-- [~] Copyright reads `Chenye Zhu and OpenEvalGate contributors` in PR #5.
-- [~] `CITATION.cff` is present and syntactically valid in PR #5.
+- [x] Package author and maintainer identify Chenye Zhu.
+- [x] Copyright reads `Chenye Zhu and OpenEvalGate contributors`.
+- [x] `CITATION.cff` is present and syntactically valid.
 - [ ] `AUTHORS.md` exists.
-- [~] Contribution-credit expectations are documented in PR #5; formal authorship rules remain open.
-- [~] Canonical repository, documentation, issues, homepage, and changelog URLs are present in PR #5.
-- [~] The README contains maintainer and citation instructions in PR #5.
+- [x] Contribution-credit expectations are documented.
+- [x] Canonical repository, documentation, issues, homepage, and changelog URLs are present.
+- [x] The README contains maintainer and citation instructions.
 
 ## 6. Open-Source Infrastructure
 
 - [x] `LICENSE` is present and intentionally MIT.
-- [~] `CONTRIBUTING.md` is expanded and current in PR #5.
-- [~] `SECURITY.md` is present in PR #5.
-- [~] `CODE_OF_CONDUCT.md` is present in PR #5.
+- [x] `CONTRIBUTING.md` is expanded and current.
+- [x] `SECURITY.md` is present.
+- [x] `CODE_OF_CONDUCT.md` is present.
 - [ ] `GOVERNANCE.md` is present.
 - [ ] `SUPPORT.md` is present.
-- [~] Structured bug and feature issue forms are present in PR #5.
-- [~] A pull-request template is present in PR #5.
-- [~] Dependabot configuration is present in PR #5.
+- [x] Structured bug and feature issue forms are present.
+- [x] A pull-request template is present.
+- [x] Dependabot configuration is present.
 - [ ] Release, deprecation, and schema-change policies are documented.
-- [~] Maintainer contact and private security-reporting instructions are documented in PR #5.
+- [x] Maintainer contact and private security-reporting instructions are documented.
 - [ ] GitHub private vulnerability reporting is enabled.
 - [ ] Repository labels and support boundaries are configured.
 
@@ -100,7 +102,7 @@ A checked box means the condition has been verified on the exact release commit.
 - [ ] No unsupported `first`, `standard`, `industry-leading`, or universal claim appears.
 - [ ] External standards references include exact versions or review dates where necessary.
 - [ ] All documentation links resolve on the release commit.
-- [~] CI, license, Python, maintainer, citation, changelog, contribution, and security links are present in PR #5.
+- [x] CI, license, Python, maintainer, citation, changelog, contribution, and security links are present.
 
 ## 8. Examples
 
@@ -127,7 +129,7 @@ A controlled-launch passing example is intentionally blocked on unfinished revie
 
 - [ ] Illustrative data and outputs are labeled as illustrative.
 - [x] No example metric is presented as external adoption evidence.
-- [~] Generated outputs reproduce from committed inputs in PR #5.
+- [x] Generated outputs reproduce from committed inputs.
 
 ## 9. Onboarding
 
@@ -155,7 +157,7 @@ A controlled-launch passing example is intentionally blocked on unfinished revie
 - [ ] Social preview image is correct.
 - [x] Default branch is `main`.
 - [ ] Pull requests are required for `main`.
-- [ ] Required CI checks are configured.
+- [ ] The consolidated `CI` check is required.
 - [ ] Branches must be up to date before merge.
 - [ ] Force pushes to `main` are disabled.
 - [x] Squash merging is supported and used for major changes.
@@ -167,8 +169,8 @@ A controlled-launch passing example is intentionally blocked on unfinished revie
 
 ## 12. Final Release Review
 
-- [ ] PR #5 is merged.
-- [ ] The release commit hash is recorded.
+- [x] PR #5 public-readiness infrastructure is merged.
+- [ ] The exact public-release commit hash is recorded.
 - [ ] All required CI checks are green on that exact commit.
 - [ ] The public package and repository versions agree.
 - [ ] The built wheel installs and the installed CLI runs from scratch.
