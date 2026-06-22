@@ -197,8 +197,8 @@ jobs:
         if: steps.scope.outputs.run_expensive == 'true'
         run: >-
           python -m pytest
-          -n 2
-          --dist=loadfile
+          -n 4
+          --dist=load
           --durations=20
 
       - name: Set up Python 3.11
@@ -251,8 +251,8 @@ jobs:
         if: steps.scope.outputs.run_expensive == 'true'
         run: |
           python -m pytest \
-            -n 2 \
-            --dist=loadfile \
+            -n 4 \
+            --dist=load \
             --durations=20
           python -m compileall -q openevalgate
 
