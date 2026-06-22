@@ -23,6 +23,7 @@ SOURCE = ROOT / "examples" / "customer_support_assistant"
 def _project(tmp_path: Path) -> Path:
     target = tmp_path / "project"
     copytree(SOURCE, target)
+    (target / "review_policy.yaml").unlink(missing_ok=True)
     return target
 
 

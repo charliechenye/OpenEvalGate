@@ -1,0 +1,22 @@
+# This canonical example intentionally requests documentation review.
+# Behavioral evidence remains visible, but it cannot advance the project beyond
+# the documentation stage requested here.
+schema_version: "1"
+
+requested_mode: documentation
+
+evaluation_scope:
+  run_id: run_001
+  candidate: presales_candidate
+
+coverage:
+  minimum_case_coverage: 0.90
+  minimum_critical_case_coverage: 1.0
+  minimum_trials_per_case: 1
+
+# These are project-specific release criteria, not universal safety constants.
+thresholds:
+  pass_rate:
+    minimum: 0.90
+  route_match_rate:
+    minimum: 0.95
