@@ -107,19 +107,23 @@ The following are not required merely to make the repository public:
 
 ### B1. Strengthen eval-result integrity
 
-- [ ] Require non-empty values for mandatory result fields.
-- [ ] Validate expected routes against referenced eval cases.
-- [ ] Recompute or consistency-check route, workflow-route, destination, and policy-compliance fields where source evidence exists.
-- [ ] Reject duplicate result keys such as `(run_id, candidate, trial_id, case_id)`.
-- [ ] Validate result timestamps and select runs by explicit scope or timestamps rather than CSV row order.
-- [ ] Validate candidate, case, workflow, model, and output references.
-- [ ] Prevent invalid result evidence from influencing behavioral metrics or launch decisions.
+- [x] Require non-empty values for mandatory result fields.
+- [x] Validate expected routes against referenced eval cases.
+- [x] Consistency-check declared route matches and derive route-match metrics.
+- [ ] Derive workflow-route, destination, handoff, and model-policy claims where source evidence exists.
+- [x] Reject duplicate result keys `(run_id, candidate, trial_id, case_id)`.
+- [x] Validate result timestamps and remove CSV row order from informational run chronology.
+- [x] Validate supplied output references as safe, contained, existing regular files.
+- [ ] Validate candidate registries and pin case, workflow, model, and artifact versions.
+- [ ] Validate output digests and referenced artifact provenance.
+- [x] Prevent invalid core result evidence from influencing summaries or launch decisions.
 
 ### B2. Add run provenance and freshness
 
 - [ ] Add explicit evaluator type: human, deterministic, model judge, or hybrid.
 - [ ] Record candidate version, run timestamps, framework version, and selected artifact versions or digests.
 - [ ] Pin eval-set, review-policy, routing-policy, and escalation-contract evidence where applicable.
+- [ ] Validate that referenced output-artifact metadata and directory identity agree with the result row's run, case, candidate, and evaluator fields.
 - [ ] Define provenance categories and display them in reports.
 - [ ] Define stale-evidence behavior when artifacts change after a run.
 - [ ] Require versioned, non-stale evidence for controlled-launch authorization while retaining bounded legacy support for documentation or shadow review.

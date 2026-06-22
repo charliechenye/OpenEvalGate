@@ -15,7 +15,8 @@ Public visibility is not the same as publishing OpenEvalGate `0.2.0`, releasing 
 - [x] `not_applicable` is governed by documented policy.
 - [x] Unknown conditional applicability is fail-closed.
 - [x] Invalid action-risk evidence cannot satisfy policy.
-- [ ] Known eval-result contradictions, duplicate records, or unsafe output references cannot silently influence a controlled-launch decision.
+- [x] Core eval-result identity, expected-route, duplicate, timestamp, and supplied-output-reference errors cannot silently influence a controlled-launch decision.
+- [ ] Enriched workflow, handoff, provenance, freshness, and artifact-version claims are validated for controlled launch.
 
 ## 2. Public Positioning and Non-Claims
 

@@ -148,7 +148,7 @@ OpenEvalGate is an early, pre-1.0 framework with practitioner-defined defaults a
 - It does not execute candidate models, call LLM APIs, or evaluate live behavior by itself.
 - It does not replace eval runners, observability systems, runtime guardrails, security controls, or organizational approval.
 - It validates submitted artifacts and declared evidence; it does not independently verify that every claim in those artifacts is true, current, or complete.
-- The current implementation does not yet fully validate evidence provenance, evidence freshness, artifact-version pinning, duplicate result identity, or every user-declared routing and policy-compliance field.
+- The current implementation validates core result identities, expected-route consistency, duplicate identities, review timestamps, supplied output references, and basic route-match derivation. It does not yet fully validate evidence provenance, evidence freshness, artifact-version pinning, enriched workflow-route claims, handoff claims, or every routing-policy and model-policy field.
 - A recommendation is only as reliable as the quality, completeness, provenance, and freshness of the supplied evidence.
 - A passing check, high evidence score, or bounded recommendation does not guarantee safe, reliable, compliant, or successful deployment.
 - It does not certify compliance or provide legal, regulatory, security, or risk-management certification.

@@ -8,6 +8,10 @@ The project follows semantic versioning while it remains in alpha. Until a stabl
 
 ### Added
 
+- Non-empty core eval-result validation, duplicate identity rejection, strict
+  ISO review-timestamp validation, and safe project-relative output references.
+- Eval-case authority for expected routes and consistency validation for
+  declared route matches.
 - Explicit limitations and non-claims for certification, safe-deployment
   guarantees, standards alignment, official integrations, external validation,
   and adoption evidence.
@@ -32,6 +36,12 @@ The project follows semantic versioning while it remains in alpha. Until a stabl
 
 ### Changed
 
+- Route-match metrics are derived from actual routes and authoritative eval
+  cases instead of trusting the declared CSV boolean.
+- Invalid result evidence is rejected by whole-file and selected-scope
+  summaries before it can influence behavioral or controlled-launch metrics.
+- Informational latest-run selection now uses recorded review dates and
+  offset-aware timestamps with a deterministic lexical run-ID tie-break.
 - Public positioning now describes OpenEvalGate as a local release-assurance
   framework with bounded, evidence-backed recommendations.
 - The README is shorter and links to detailed gate, scoring, and review-mode

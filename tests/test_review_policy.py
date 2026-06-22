@@ -8,7 +8,11 @@ from shutil import copytree
 import pytest
 import yaml
 
-from openevalgate.eval_results import summarize_selected_eval_results
+from openevalgate.eval_results import (
+    classify_behavioral_evidence,
+    summarize_selected_eval_results,
+)
+from openevalgate.report import generate_report
 from openevalgate.review_policy import (
     evaluate_behavioral_sufficiency,
     validate_review_policy,
@@ -131,6 +135,31 @@ def test_selected_scope_is_exact_and_empty_rates_stay_none(tmp_path: Path) -> No
     assert empty.pass_rate is None and empty.route_match_rate is None
 
 
+def test_controlled_scope_normalizes_result_identity_whitespace(
+    tmp_path: Path,
+) -> None:
+    project = _project(tmp_path)
+    _write_policy(project, _policy())
+    results_path = project / "eval_results.csv"
+    with results_path.open(encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        headers = list(reader.fieldnames or [])
+        rows = list(reader)
+    for row in rows:
+        row["run_id"] = f"  {row['run_id']}  "
+        row["candidate"] = f"  {row['candidate']}  "
+    with results_path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=headers, lineterminator="\n")
+        writer.writeheader()
+        writer.writerows(rows)
+
+    result = evaluate_behavioral_sufficiency(project)
+
+    assert result.selected_row_count == 6
+    assert "refund_abuse_history_002" in result.failed_critical_case_ids
+    assert "wrong_destination_fraud_012" in result.failed_critical_case_ids
+
+
 def test_coverage_distinguishes_missing_from_below_depth(tmp_path: Path) -> None:
     project = _project(tmp_path)
     data = _policy()
@@ -161,6 +190,42 @@ def test_zero_matching_rows_fail_closed_without_zero_rates(tmp_path: Path) -> No
     assert result.selected_row_count == 0
     assert all(item.actual_value is None and item.status == "not_evaluated" for item in result.threshold_outcomes)
     assert not result.sufficient_for_requested_mode
+
+
+def test_invalid_row_outside_selected_scope_invalidates_whole_file(
+    tmp_path: Path,
+) -> None:
+    project = _project(tmp_path)
+    _write_policy(project, _policy())
+    results_path = project / "eval_results.csv"
+    with results_path.open(encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        headers = list(reader.fieldnames or [])
+        rows = list(reader)
+    invalid_row = rows[0].copy()
+    invalid_row["run_id"] = "other_run"
+    invalid_row["candidate"] = "other_candidate"
+    invalid_row["route_match"] = "true"
+    rows.append(invalid_row)
+    with results_path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=headers, lineterminator="\n")
+        writer.writeheader()
+        writer.writerows(rows)
+
+    with pytest.raises(ValueError, match=r"^Cannot summarize invalid eval results\.$"):
+        summarize_selected_eval_results(
+            project,
+            run_id="run_002",
+            candidate="gpt-4.1-mini",
+        )
+    evidence = classify_behavioral_evidence(project)
+    sufficiency = evaluate_behavioral_sufficiency(project)
+    report = generate_report(project)
+
+    assert evidence.state == "invalid"
+    assert evidence.summary is None
+    assert not sufficiency.sufficient_for_requested_mode
+    assert "Unavailable due to invalid behavioral evidence" in report
 
 
 @pytest.mark.parametrize(
