@@ -639,8 +639,28 @@ def _validate_output_reference(project_dir: Path, value: str) -> str | None:
 
 
 def _latest_run_id(rows: list[dict[str, str]]) -> str | None:
-    run_ids = [row.get("run_id", "").strip() for row in rows if row.get("run_id", "").strip()]
-    return run_ids[-1] if run_ids else None
+    """Select the newest reviewed run, breaking timestamp ties by run ID."""
+
+    latest_by_run: dict[str, tuple[date, int, datetime]] = {}
+    for row in rows:
+        run_id = row.get("run_id", "").strip()
+        reviewed_at = row.get("reviewed_at", "").strip()
+        if not run_id or not reviewed_at:
+            continue
+        parsed = _parse_review_timestamp(reviewed_at)
+        comparison_key = (
+            parsed.calendar_date,
+            1 if parsed.kind == "datetime" else 0,
+            parsed.utc_instant or datetime.min.replace(tzinfo=timezone.utc),
+        )
+        previous = latest_by_run.get(run_id)
+        if previous is None or comparison_key > previous:
+            latest_by_run[run_id] = comparison_key
+
+    if not latest_by_run:
+        return None
+    # Lexically greatest run_id is the deliberate deterministic final tie-break.
+    return max(latest_by_run, key=lambda run_id: (latest_by_run[run_id], run_id))
 
 
 def _true_rate(values: list[str]) -> float | None:

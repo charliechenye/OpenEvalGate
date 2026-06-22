@@ -1,4 +1,5 @@
 import csv
+import random
 from pathlib import Path
 from shutil import copytree
 
@@ -47,6 +48,23 @@ def _single_result_project(tmp_path: Path) -> tuple[Path, list[str], dict[str, s
     project = _project(tmp_path)
     headers, rows = _read_result_table(project)
     return project, headers, rows[0]
+
+
+def _project_with_run_timestamps(
+    tmp_path: Path,
+    values: list[tuple[str, str]],
+) -> Path:
+    project = _project(tmp_path)
+    headers, canonical_rows = _read_result_table(project)
+    rows: list[dict[str, str]] = []
+    for index, (run_id, reviewed_at) in enumerate(values):
+        row = canonical_rows[index % len(canonical_rows)].copy()
+        row["run_id"] = run_id
+        row["reviewed_at"] = reviewed_at
+        row["trial_id"] = f"trial_{index:03d}"
+        rows.append(row)
+    _write_result_table(project, headers, rows)
+    return project
 
 
 def test_valid_eval_results_pass() -> None:
@@ -656,3 +674,143 @@ def test_pass_rate_remains_based_on_declared_passed(tmp_path: Path) -> None:
     assert summary is not None
     assert summary.route_match_rate == 1.0
     assert summary.pass_rate == 0.0
+
+
+def test_latest_run_uses_newest_timestamp_not_last_row(tmp_path: Path) -> None:
+    project = _project_with_run_timestamps(
+        tmp_path,
+        [
+            ("run_new", "2026-06-23"),
+            ("run_old", "2026-06-22"),
+        ],
+    )
+
+    summary = summarize_eval_results(project)
+
+    assert summary is not None
+    assert summary.latest_run_id == "run_new"
+
+
+def test_latest_run_uses_greatest_timestamp_within_each_run(
+    tmp_path: Path,
+) -> None:
+    project = _project_with_run_timestamps(
+        tmp_path,
+        [
+            ("run_a", "2026-06-20"),
+            ("run_b", "2026-06-21"),
+            ("run_a", "2026-06-22"),
+        ],
+    )
+
+    summary = summarize_eval_results(project)
+
+    assert summary is not None
+    assert summary.latest_run_id == "run_a"
+
+
+def test_later_recorded_date_beats_earlier_late_night_instant(
+    tmp_path: Path,
+) -> None:
+    project = _project_with_run_timestamps(
+        tmp_path,
+        [
+            ("run_date", "2026-06-23"),
+            ("run_instant", "2026-06-22T23:59:59-07:00"),
+        ],
+    )
+
+    summary = summarize_eval_results(project)
+
+    assert summary is not None
+    assert summary.latest_run_id == "run_date"
+
+
+def test_same_date_datetime_orders_by_utc_instant(tmp_path: Path) -> None:
+    project = _project_with_run_timestamps(
+        tmp_path,
+        [
+            ("run_early", "2026-06-22T09:00:00-07:00"),
+            ("run_late", "2026-06-22T10:00:00-07:00"),
+        ],
+    )
+
+    summary = summarize_eval_results(project)
+
+    assert summary is not None
+    assert summary.latest_run_id == "run_late"
+
+
+def test_same_date_datetime_is_more_precise_than_date_only(
+    tmp_path: Path,
+) -> None:
+    project = _project_with_run_timestamps(
+        tmp_path,
+        [
+            ("run_date", "2026-06-22"),
+            ("run_datetime", "2026-06-22T00:00:00+00:00"),
+        ],
+    )
+
+    summary = summarize_eval_results(project)
+
+    assert summary is not None
+    assert summary.latest_run_id == "run_datetime"
+
+
+def test_date_only_tie_uses_lexical_run_id(tmp_path: Path) -> None:
+    project = _project_with_run_timestamps(
+        tmp_path,
+        [
+            ("run_a", "2026-06-22"),
+            ("run_z", "2026-06-22"),
+        ],
+    )
+
+    summary = summarize_eval_results(project)
+
+    assert summary is not None
+    assert summary.latest_run_id == "run_z"
+
+
+def test_equivalent_datetime_instants_use_lexical_run_id(
+    tmp_path: Path,
+) -> None:
+    project = _project_with_run_timestamps(
+        tmp_path,
+        [
+            ("run_a", "2026-06-22T09:30:00-07:00"),
+            ("run_z", "2026-06-22T12:30:00-04:00"),
+        ],
+    )
+
+    summary = summarize_eval_results(project)
+
+    assert summary is not None
+    assert summary.latest_run_id == "run_z"
+
+
+def test_latest_run_is_independent_of_row_order(tmp_path: Path) -> None:
+    values = [
+        ("run_a", "2026-06-20"),
+        ("run_b", "2026-06-22T10:00:00-07:00"),
+        ("run_c", "2026-06-21"),
+        ("run_b", "2026-06-22T09:00:00-07:00"),
+    ]
+    project = _project_with_run_timestamps(tmp_path, values)
+    first = summarize_eval_results(project)
+    headers, rows = _read_result_table(project)
+    random.Random(42).shuffle(rows)
+    _write_result_table(project, headers, rows)
+    second = summarize_eval_results(project)
+
+    assert first is not None
+    assert second is not None
+    assert first.latest_run_id == second.latest_run_id == "run_b"
+
+
+def test_canonical_latest_run_remains_deterministic() -> None:
+    summary = summarize_eval_results(CUSTOMER_SUPPORT)
+
+    assert summary is not None
+    assert summary.latest_run_id == "run_002"
