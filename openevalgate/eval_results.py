@@ -10,7 +10,13 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 
 from openevalgate.routing import load_routing_policy, routing_expectations
-from openevalgate.schema import EXPECTED_ROUTES, WORKFLOW_ROUTES, ValidationIssue, load_eval_cases
+from openevalgate.schema import (
+    EXPECTED_ROUTES,
+    WORKFLOW_ROUTES,
+    ValidationIssue,
+    load_eval_cases,
+    validate_eval_cases,
+)
 
 
 REQUIRED_EVAL_RESULT_COLUMNS = [
@@ -185,7 +191,8 @@ def validate_eval_results(project_dir: str | Path) -> EvalResultsValidationResul
             0,
         )
 
-    case_ids = _case_ids(root / "eval_cases.yaml")
+    cases_by_id = _valid_case_map(root / "eval_cases.yaml")
+    case_ids = set(cases_by_id or {})
     policy_path = root / "routing_policy.yaml"
     policy_workflows: dict[str, dict[str, object]] = {}
     policy_models: set[str] = set()
@@ -264,6 +271,42 @@ def validate_eval_results(project_dir: str | Path) -> EvalResultsValidationResul
             value = row.get(bool_field, "").strip().lower()
             if value not in {"true", "false"}:
                 issues.append(ValidationIssue(f"{prefix}.{bool_field}", "Must be true or false."))
+
+        case = cases_by_id.get(case_id) if cases_by_id is not None else None
+        case_expected_route = (
+            str(case.get("expected_route", "")).strip()
+            if case is not None
+            else ""
+        )
+        result_expected_route = row.get("expected_route", "").strip()
+        actual_route = row.get("actual_route", "").strip()
+        declared_route_match = row.get("route_match", "").strip().lower()
+        if (
+            case is not None
+            and case_expected_route in EXPECTED_ROUTES
+            and result_expected_route in EXPECTED_ROUTES
+            and result_expected_route != case_expected_route
+        ):
+            issues.append(
+                ValidationIssue(
+                    f"{prefix}.expected_route",
+                    f"Does not match eval case expected_route: {case_expected_route}.",
+                )
+            )
+        if (
+            case is not None
+            and case_expected_route in EXPECTED_ROUTES
+            and actual_route in EXPECTED_ROUTES
+            and declared_route_match in {"true", "false"}
+            and (declared_route_match == "true")
+            != (actual_route == case_expected_route)
+        ):
+            issues.append(
+                ValidationIssue(
+                    f"{prefix}.route_match",
+                    "Does not match the value derived from actual_route and the referenced eval case.",
+                )
+            )
 
         score = row.get("score", "").strip()
         try:
@@ -378,9 +421,17 @@ def classify_behavioral_evidence(project_dir: str | Path) -> BehavioralEvidence:
 def summarize_eval_results(project_dir: str | Path) -> EvalResultsSummary | None:
     """Summarize optional eval_results.csv for launch reports."""
 
-    path = Path(project_dir) / "eval_results.csv"
+    root = Path(project_dir)
+    path = root / "eval_results.csv"
     if not path.is_file():
         return None
+
+    validation = validate_eval_results(root)
+    if not validation.valid:
+        raise ValueError("Cannot summarize invalid eval results.")
+    cases_by_id = _valid_case_map(root / "eval_cases.yaml")
+    if cases_by_id is None:
+        raise ValueError("Cannot summarize eval results without valid eval cases.")
 
     rows = read_eval_results(path)
     if not rows:
@@ -412,8 +463,7 @@ def summarize_eval_results(project_dir: str | Path) -> EvalResultsSummary | None
             None,
         )
 
-    eval_path = Path(project_dir) / "eval_cases.yaml"
-    cases = load_eval_cases(eval_path) if eval_path.is_file() else []
+    cases = list(cases_by_id.values())
     candidates = sorted({row.get("candidate", "").strip() for row in rows if row.get("candidate", "").strip()})
     failed_case_ids = sorted({row.get("case_id", "").strip() for row in rows if row.get("passed", "").strip().lower() == "false" and row.get("case_id", "").strip()})
     failure_categories = Counter(
@@ -428,17 +478,16 @@ def summarize_eval_results(project_dir: str | Path) -> EvalResultsSummary | None
     ]
 
     passed_values = [row.get("passed", "").strip().lower() for row in rows]
-    route_values = [row.get("route_match", "").strip().lower() for row in rows]
     boundary_metrics = _boundary_metrics(cases, rows)
     escalation_metrics = _escalation_metrics(cases, rows)
-    routing_metrics = _routing_metrics(Path(project_dir), rows)
+    routing_metrics = _routing_metrics(root, rows)
 
     return EvalResultsSummary(
         row_count=len(rows),
         latest_run_id=_latest_run_id(rows),
         candidates=candidates,
         pass_rate=_true_rate(passed_values),
-        route_match_rate=_true_rate(route_values),
+        route_match_rate=_derived_route_match_rate(rows, cases_by_id),
         failed_case_ids=failed_case_ids,
         failure_categories=failure_categories,
         observed_output_paths=observed_output_paths,
@@ -476,6 +525,13 @@ def summarize_selected_eval_results(
 
     root = Path(project_dir)
     path = root / "eval_results.csv"
+    if path.is_file():
+        validation = validate_eval_results(root)
+        if not validation.valid:
+            raise ValueError("Cannot summarize invalid eval results.")
+    cases_by_id = _valid_case_map(root / "eval_cases.yaml")
+    if cases_by_id is None:
+        raise ValueError("Cannot summarize eval results without valid eval cases.")
     rows = (
         [
             row
@@ -491,7 +547,7 @@ def summarize_selected_eval_results(
         for row in rows
         if row.get("case_id", "").strip()
     )
-    cases = load_eval_cases(root / "eval_cases.yaml") if (root / "eval_cases.yaml").is_file() else []
+    cases = list(cases_by_id.values())
     escalation_case_ids = {
         str(case.get("id", "")).strip()
         for case in cases
@@ -505,7 +561,7 @@ def summarize_selected_eval_results(
         observed_case_ids=tuple(sorted(case_counts)),
         case_trial_counts=tuple(sorted(case_counts.items())),
         pass_rate=_optional_true_rate(rows, "passed"),
-        route_match_rate=_optional_true_rate(rows, "route_match"),
+        route_match_rate=_derived_route_match_rate(rows, cases_by_id),
         prohibited_action_rate=_optional_true_rate(rows, "prohibited_action_occurred"),
         required_escalation_recall=(
             _bool_rate([_row_escalated(row) for row in escalation_rows])
@@ -515,10 +571,14 @@ def summarize_selected_eval_results(
     )
 
 
-def _case_ids(path: Path) -> set[str]:
-    if not path.is_file():
-        return set()
-    return {str(case.get("id", "")).strip() for case in load_eval_cases(path) if str(case.get("id", "")).strip()}
+def _valid_case_map(path: Path) -> dict[str, dict[str, object]] | None:
+    if not path.is_file() or not validate_eval_cases(path).valid:
+        return None
+    return {
+        str(case.get("id", "")).strip(): case
+        for case in load_eval_cases(path)
+        if isinstance(case, dict) and str(case.get("id", "")).strip()
+    }
 
 
 def _parse_review_timestamp(value: str) -> _ParsedReviewTimestamp:
@@ -588,6 +648,19 @@ def _true_rate(values: list[str]) -> float | None:
     if not normalized:
         return None
     return sum(1 for value in normalized if value == "true") / len(normalized)
+
+
+def _derived_route_match_rate(
+    rows: list[dict[str, str]],
+    cases_by_id: dict[str, dict[str, object]],
+) -> float | None:
+    matches = [
+        row.get("actual_route", "").strip()
+        == str(cases_by_id[row.get("case_id", "").strip()].get("expected_route", "")).strip()
+        for row in rows
+        if row.get("case_id", "").strip() in cases_by_id
+    ]
+    return _bool_rate(matches)
 
 
 def _optional_true_rate(rows: list[dict[str, str]], field: str) -> float | None:

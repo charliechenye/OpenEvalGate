@@ -9,6 +9,7 @@ from openevalgate.eval_results import (
     NONEMPTY_EVAL_RESULT_FIELDS,
     classify_behavioral_evidence,
     summarize_eval_results,
+    summarize_selected_eval_results,
     validate_eval_results,
 )
 from openevalgate.report import generate_report
@@ -152,11 +153,14 @@ def test_enriched_eval_results_validate_and_calculate_boundary_metrics(tmp_path:
         "actual_workflow_route", "workflow_route_match", "trajectory_pass",
         "end_state_pass", "prohibited_action_occurred",
     ]
+    anchor_route = anchor["expected_route"]
+    variant_route = variant["expected_route"]
+    variant_mismatch_route = "show" if variant_route != "show" else "escalate"
     rows = [
-        ["run_002", anchor["id"], "candidate", "harness", "escalate", "escalate", "true", "true", "1", "", "", "", "qa", "2026-06-18", "", "trial_1", "act", "true", "true", "true", "false"],
-        ["run_002", variant["id"], "candidate", "harness", "escalate", "escalate", "true", "true", "1", "", "", "", "qa", "2026-06-18", "", "trial_1", "act", "true", "true", "true", "false"],
-        ["run_002", anchor["id"], "candidate", "harness", "escalate", "escalate", "true", "true", "1", "", "", "", "qa", "2026-06-18", "", "trial_2", "act", "true", "true", "true", "false"],
-        ["run_002", variant["id"], "candidate", "harness", "show", "escalate", "false", "false", "0", "route", "unstable", "", "qa", "2026-06-18", "", "trial_2", "answer", "false", "false", "false", "true"],
+        ["run_002", anchor["id"], "candidate", "harness", anchor_route, anchor_route, "true", "true", "1", "", "", "", "qa", "2026-06-18", "", "trial_1", "act", "true", "true", "true", "false"],
+        ["run_002", variant["id"], "candidate", "harness", variant_route, variant_route, "true", "true", "1", "", "", "", "qa", "2026-06-18", "", "trial_1", "act", "true", "true", "true", "false"],
+        ["run_002", anchor["id"], "candidate", "harness", anchor_route, anchor_route, "true", "true", "1", "", "", "", "qa", "2026-06-18", "", "trial_2", "act", "true", "true", "true", "false"],
+        ["run_002", variant["id"], "candidate", "harness", variant_mismatch_route, variant_route, "false", "false", "0", "route", "unstable", "", "qa", "2026-06-18", "", "trial_2", "answer", "false", "false", "false", "true"],
     ]
     with (project / "eval_results.csv").open("w", encoding="utf-8", newline="") as handle:
         writer = csv.writer(handle)
@@ -514,3 +518,141 @@ def test_output_reference_internal_symlink_passes(tmp_path: Path) -> None:
     _write_result_table(project, headers, [row])
 
     assert validate_eval_results(project).valid
+
+
+def test_result_expected_route_must_match_eval_case(tmp_path: Path) -> None:
+    project, headers, row = _single_result_project(tmp_path)
+    row["expected_route"] = "escalate"
+    _write_result_table(project, headers, [row])
+
+    result = validate_eval_results(project)
+
+    assert any(
+        issue.path.endswith("row[2].expected_route")
+        and issue.message == "Does not match eval case expected_route: show."
+        for issue in result.issues
+    )
+
+
+def test_declared_true_route_match_must_match_derived_false(tmp_path: Path) -> None:
+    project, headers, row = _single_result_project(tmp_path)
+    row["route_match"] = "true"
+    _write_result_table(project, headers, [row])
+
+    result = validate_eval_results(project)
+
+    assert any(
+        issue.path.endswith("row[2].route_match")
+        and issue.message
+        == "Does not match the value derived from actual_route and the referenced eval case."
+        for issue in result.issues
+    )
+
+
+def test_declared_false_route_match_must_match_derived_true(tmp_path: Path) -> None:
+    project = _project(tmp_path)
+    headers, rows = _read_result_table(project)
+    row = rows[2]
+    row["route_match"] = "false"
+    _write_result_table(project, headers, [row])
+
+    result = validate_eval_results(project)
+
+    assert any(
+        issue.path.endswith("row[2].route_match")
+        and issue.message
+        == "Does not match the value derived from actual_route and the referenced eval case."
+        for issue in result.issues
+    )
+
+
+def test_matching_route_evidence_remains_valid(tmp_path: Path) -> None:
+    project = _project(tmp_path)
+
+    assert validate_eval_results(project).valid
+
+
+def test_route_match_rates_are_derived_for_whole_and_selected_scope(
+    tmp_path: Path,
+) -> None:
+    project = _project(tmp_path)
+
+    whole = summarize_eval_results(project)
+    selected = summarize_selected_eval_results(
+        project,
+        run_id="run_002",
+        candidate="gpt-4.1-mini",
+    )
+
+    assert whole is not None
+    assert whole.route_match_rate == 0.5
+    assert selected.route_match_rate == 0.5
+
+
+def test_direct_summaries_reject_invalid_results(tmp_path: Path) -> None:
+    project, headers, row = _single_result_project(tmp_path)
+    row["route_match"] = "true"
+    _write_result_table(project, headers, [row])
+
+    with pytest.raises(ValueError, match=r"^Cannot summarize invalid eval results\.$"):
+        summarize_eval_results(project)
+    with pytest.raises(ValueError, match=r"^Cannot summarize invalid eval results\.$"):
+        summarize_selected_eval_results(
+            project,
+            run_id=row["run_id"],
+            candidate=row["candidate"],
+        )
+
+
+@pytest.mark.parametrize("case_state", ["missing", "invalid"])
+def test_direct_summaries_require_valid_eval_cases(
+    tmp_path: Path,
+    case_state: str,
+) -> None:
+    project = _project(tmp_path)
+    cases_path = project / "eval_cases.yaml"
+    if case_state == "missing":
+        cases_path.unlink()
+    else:
+        cases_path.write_text("eval_cases: invalid\n", encoding="utf-8")
+
+    with pytest.raises(
+        ValueError,
+        match=r"^Cannot summarize eval results without valid eval cases\.$",
+    ):
+        summarize_eval_results(project)
+    with pytest.raises(
+        ValueError,
+        match=r"^Cannot summarize eval results without valid eval cases\.$",
+    ):
+        summarize_selected_eval_results(
+            project,
+            run_id="run_002",
+            candidate="gpt-4.1-mini",
+        )
+
+
+def test_invalid_route_evidence_classifies_as_invalid(tmp_path: Path) -> None:
+    project, headers, row = _single_result_project(tmp_path)
+    row["route_match"] = "true"
+    _write_result_table(project, headers, [row])
+
+    evidence = classify_behavioral_evidence(project)
+
+    assert evidence.state == "invalid"
+    assert evidence.summary is None
+
+
+def test_pass_rate_remains_based_on_declared_passed(tmp_path: Path) -> None:
+    project = _project(tmp_path)
+    headers, rows = _read_result_table(project)
+    matching_row = rows[2]
+    assert matching_row["route_match"] == "true"
+    matching_row["passed"] = "false"
+    _write_result_table(project, headers, [matching_row])
+
+    summary = summarize_eval_results(project)
+
+    assert summary is not None
+    assert summary.route_match_rate == 1.0
+    assert summary.pass_rate == 0.0
