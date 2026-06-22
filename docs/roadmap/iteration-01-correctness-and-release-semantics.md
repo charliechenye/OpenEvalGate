@@ -68,24 +68,25 @@ These items protect the central public claim that OpenEvalGate produces determin
 
 ### Validate result integrity
 
-- [ ] Require non-empty values for mandatory result fields.
-- [ ] Validate `expected_route` against the referenced eval case.
-- [ ] Recompute or consistency-check `route_match`.
+- [x] Require non-empty values for mandatory result fields.
+- [x] Validate `expected_route` against the referenced eval case.
+- [x] Consistency-check `route_match` and derive route-match metrics.
 - [ ] Recompute or consistency-check workflow-route match where possible.
 - [ ] Recompute or consistency-check destination match where structured handoff evidence exists.
-- [ ] Validate candidate, case, workflow, and model references.
-- [ ] Validate `reviewed_at` as an ISO 8601 date or datetime.
-- [ ] Reject duplicate result keys such as `(run_id, candidate, trial_id, case_id)`.
-- [ ] Validate supplied output references and reject paths that are missing, unreadable, or outside the project root.
-- [ ] Remove CSV row order as an implicit source of run chronology.
+- [ ] Validate candidate registries and pin case, workflow, model, and artifact versions.
+- [x] Validate `reviewed_at` as an ISO date or offset-aware datetime.
+- [x] Reject duplicate result keys `(run_id, candidate, trial_id, case_id)`.
+- [x] Validate supplied output references and reject unsafe, missing, non-file, or escaping paths.
+- [x] Remove CSV row order as an implicit source of run chronology.
 
 ### Acceptance criteria
 
-- [ ] User-entered derived booleans cannot contradict source fields.
-- [ ] Duplicate records cannot inflate coverage or pass rates.
-- [ ] Broken output references fail validation.
-- [ ] Invalid result evidence cannot influence behavioral metrics, blockers, or recommendations.
-- [ ] Existing valid canonical examples remain reproducible.
+- [x] Core route-match booleans cannot contradict authoritative source fields.
+- [ ] Enriched workflow, destination, handoff, and model-policy booleans are derived where possible.
+- [x] Duplicate records cannot inflate coverage or pass rates.
+- [x] Broken output references fail validation.
+- [x] Invalid core result evidence cannot influence behavioral metrics, blockers, or recommendations.
+- [x] Existing valid canonical examples remain reproducible.
 
 ## OpenEvalGate 0.2.0 Evidence Work
 
@@ -157,7 +158,7 @@ Iteration 1 is complete when:
 - [x] Missing, empty, or invalid empirical results cannot authorize controlled launch.
 - [x] Partial critical gates block advancement.
 - [x] Initial controlled-launch thresholds and denominators are explicit.
-- [ ] Eval results are internally consistent and duplicate-safe.
+- [x] Core eval results are internally consistent and duplicate-safe.
 - [ ] Controlled-launch evidence is versioned and freshness-aware.
 - [ ] Selected evidence provenance is visible.
 - [x] Centralized gate semantics are covered by regression tests.

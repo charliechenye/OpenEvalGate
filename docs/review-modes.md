@@ -87,6 +87,46 @@ launch.
 Existing project hard blockers remain a separate prerequisite. Policy settings
 cannot weaken them or the three behavioral invariants.
 
+## Core eval-result integrity contract
+
+Every result row requires non-empty `run_id`, `case_id`, `candidate`,
+`evaluator`, `actual_route`, `expected_route`, `route_match`, `passed`,
+`score`, `reviewed_by`, and `reviewed_at` values. `trial_id`, failure details,
+`observed_output_path`, notes, and optional enriched fields may remain blank
+unless an existing conditional rule requires them.
+
+Result identity is `(run_id, candidate, trial_id, case_id)`, with whitespace
+trimmed from every component. A blank trial ID remains part of the identity,
+so repeated trials must use distinct non-empty trial IDs.
+
+`reviewed_at` accepts `YYYY-MM-DD` or an ISO datetime with a mandatory `T`
+separator and explicit `Z` or `+HH:MM`/`-HH:MM` offset. Fractional seconds are
+allowed. Date-only values preserve the reviewer's recorded local date with
+day-level precision. Offset-aware values preserve the recorded local time;
+UTC normalization is internal and used only to compare explicit instants.
+OpenEvalGate does not rewrite stored or displayed timestamps to UTC.
+Timezone-naive datetimes are rejected because the project declares no default
+timezone.
+
+A supplied output path must be project-relative, remain inside the resolved
+project root, and identify an existing regular file. Absolute paths, URLs,
+Windows drive and UNC paths, parent traversal, directories, missing files, and
+symlink escapes are invalid. Both slash forms are treated as separators on
+every operating system. These checks establish reference safety, not artifact
+provenance.
+
+`eval_cases.yaml` owns `expected_route`. Each result-row value must agree with
+the referenced case, and declared `route_match` must agree with the value
+derived from `actual_route` and the case route. Route-match metrics are derived;
+`passed` remains evaluator- or harness-declared. Any invalid row invalidates
+the complete result file, including selected-scope summaries.
+
+Whole-file `latest_run_id` is informational. It uses each run's greatest
+recorded review value, compares calendar dates first, compares explicit
+instants on the same date, and uses the lexically greatest run ID for a final
+tie. It never selects controlled-launch scope: controlled launch continues to
+use the exact `run_id` and `candidate` in `review_policy.yaml`.
+
 ## Decision order and limitations
 
 Assessment considers control-evidence validity and completeness, policy
@@ -99,5 +139,5 @@ A controlled-launch recommendation is bounded to the selected candidate, run, ev
 The recommendation is not a universal safety claim, compliance certification,
 unrestricted production approval, or substitute for runtime monitoring and
 organizational authorization. This iteration does not validate provenance,
-freshness, artifact-version pinning, duplicate result identity, or recompute
-declared routing and policy booleans.
+freshness, artifact-version pinning, referenced artifact metadata, enriched
+workflow-route or handoff claims, or every routing and model-policy field.
