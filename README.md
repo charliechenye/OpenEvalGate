@@ -2,7 +2,7 @@
 
 Local release assurance for production AI assistants and agents.
 
-[![CI](https://github.com/charliechenye/OpenEvalGate/actions/workflows/ci.yml/badge.svg)](https://github.com/charliechenye/OpenEvalGate/actions/workflows/ci.yml)
+[![CI](https://github.com/charliechenye/OpenEvalGate/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/charliechenye/OpenEvalGate/actions/workflows/ci.yml?query=branch%3Amain)
 [![Python 3.10-3.13](https://img.shields.io/badge/python-3.10--3.13-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
