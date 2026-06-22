@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import csv
+import re
 from collections import Counter
 from dataclasses import dataclass, replace
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 from openevalgate.routing import load_routing_policy, routing_expectations
@@ -47,6 +49,32 @@ OPTIONAL_EVAL_RESULT_COLUMNS = [
     "routing_policy_version",
     "routing_reason",
 ]
+
+NONEMPTY_EVAL_RESULT_FIELDS = (
+    "run_id",
+    "case_id",
+    "candidate",
+    "evaluator",
+    "actual_route",
+    "expected_route",
+    "route_match",
+    "passed",
+    "score",
+    "reviewed_by",
+    "reviewed_at",
+)
+
+_DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+_AWARE_DATETIME_PATTERN = re.compile(
+    r"^(?P<date>\d{4}-\d{2}-\d{2})T"
+    r"\d{2}:\d{2}:\d{2}(?:\.\d+)?"
+    r"(?:Z|[+-]\d{2}:\d{2})$"
+)
+_NAIVE_DATETIME_PATTERN = re.compile(
+    r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?$"
+)
+_URL_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
+_WINDOWS_DRIVE_PATTERN = re.compile(r"^[A-Za-z]:")
 
 
 @dataclass(frozen=True)
@@ -107,6 +135,18 @@ class BehavioralEvidence:
     issues: list[ValidationIssue]
 
 
+@dataclass(frozen=True)
+class _ParsedReviewTimestamp:
+    kind: str
+    calendar_date: date
+    utc_instant: datetime | None
+    original_value: str
+
+
+class _NaiveReviewTimestampError(ValueError):
+    pass
+
+
 def read_eval_results(path: str | Path) -> list[dict[str, str]]:
     """Read eval result CSV rows."""
 
@@ -160,9 +200,58 @@ def validate_eval_results(project_dir: str | Path) -> EvalResultsValidationResul
         except Exception:  # noqa: BLE001 - routing policy validation reports the source error.
             policy_workflows = {}
             policy_models = set()
+    first_identity_rows: dict[tuple[str, str, str, str], int] = {}
     for index, row in enumerate(rows, start=2):
         prefix = f"{results_path}:row[{index}]"
+        for field in NONEMPTY_EVAL_RESULT_FIELDS:
+            if not row.get(field, "").strip():
+                issues.append(
+                    ValidationIssue(
+                        f"{prefix}.{field}",
+                        "Must be a non-empty value.",
+                    )
+                )
+
+        reviewed_at = row.get("reviewed_at", "").strip()
+        if reviewed_at:
+            try:
+                _parse_review_timestamp(reviewed_at)
+            except _NaiveReviewTimestampError:
+                issues.append(
+                    ValidationIssue(
+                        f"{prefix}.reviewed_at",
+                        "Datetime values must include an explicit UTC offset or Z timezone designator.",
+                    )
+                )
+            except ValueError:
+                issues.append(
+                    ValidationIssue(
+                        f"{prefix}.reviewed_at",
+                        "Must be an ISO 8601 date or an ISO 8601 datetime with an explicit timezone.",
+                    )
+                )
+
+        run_id = row.get("run_id", "").strip()
         case_id = row.get("case_id", "").strip()
+        candidate = row.get("candidate", "").strip()
+        trial_id = row.get("trial_id", "").strip()
+        if run_id and candidate and case_id:
+            identity = (run_id, candidate, trial_id, case_id)
+            first_row = first_identity_rows.get(identity)
+            if first_row is None:
+                first_identity_rows[identity] = index
+            else:
+                rendered_trial = trial_id or "<blank>"
+                issues.append(
+                    ValidationIssue(
+                        f"{prefix}.case_id",
+                        "Duplicate eval result identity "
+                        f"(run_id={run_id}, candidate={candidate}, "
+                        f"trial_id={rendered_trial}, case_id={case_id}); "
+                        f"first declared on row {first_row}.",
+                    )
+                )
+
         if case_id and case_ids and case_id not in case_ids:
             issues.append(ValidationIssue(f"{prefix}.case_id", f"Unknown eval case id: {case_id}."))
 
@@ -239,6 +328,17 @@ def validate_eval_results(project_dir: str | Path) -> EvalResultsValidationResul
                     f"Unknown routing model id: {actual_model_id}.",
                 )
             )
+
+        output_path = row.get("observed_output_path", "").strip()
+        if output_path:
+            output_issue = _validate_output_reference(root, output_path)
+            if output_issue:
+                issues.append(
+                    ValidationIssue(
+                        f"{prefix}.observed_output_path",
+                        output_issue,
+                    )
+                )
 
     issues = [replace(issue, source="eval_results") for issue in issues]
     return EvalResultsValidationResult(not issues, issues, len(rows))
@@ -419,6 +519,63 @@ def _case_ids(path: Path) -> set[str]:
     if not path.is_file():
         return set()
     return {str(case.get("id", "")).strip() for case in load_eval_cases(path) if str(case.get("id", "")).strip()}
+
+
+def _parse_review_timestamp(value: str) -> _ParsedReviewTimestamp:
+    if _DATE_PATTERN.fullmatch(value):
+        parsed_date = date.fromisoformat(value)
+        return _ParsedReviewTimestamp("date", parsed_date, None, value)
+
+    if _NAIVE_DATETIME_PATTERN.fullmatch(value):
+        try:
+            datetime.fromisoformat(value)
+        except ValueError:
+            pass
+        else:
+            raise _NaiveReviewTimestampError(value)
+
+    match = _AWARE_DATETIME_PATTERN.fullmatch(value)
+    if not match:
+        raise ValueError(value)
+
+    normalized = value[:-1] + "+00:00" if value.endswith("Z") else value
+    parsed_datetime = datetime.fromisoformat(normalized)
+    if parsed_datetime.tzinfo is None:
+        raise ValueError(value)
+    return _ParsedReviewTimestamp(
+        "datetime",
+        date.fromisoformat(match.group("date")),
+        parsed_datetime.astimezone(timezone.utc),
+        value,
+    )
+
+
+def _validate_output_reference(project_dir: Path, value: str) -> str | None:
+    if (
+        _URL_PATTERN.match(value)
+        or value.startswith("/")
+        or value.startswith("\\\\")
+        or value.startswith("//")
+        or _WINDOWS_DRIVE_PATTERN.match(value)
+    ):
+        return "Must be a project-relative filesystem path."
+
+    components = re.split(r"[\\/]+", value)
+    if ".." in components:
+        return "Parent-directory traversal is not allowed."
+
+    resolved_root = project_dir.resolve()
+    candidate = resolved_root.joinpath(*components)
+    try:
+        resolved_candidate = candidate.resolve()
+    except (OSError, RuntimeError):
+        return "Referenced output file does not exist or is not a regular file."
+
+    if not resolved_candidate.is_relative_to(resolved_root):
+        return "Resolved path must remain inside the project directory."
+    if not resolved_candidate.is_file():
+        return "Referenced output file does not exist or is not a regular file."
+    return None
 
 
 def _latest_run_id(rows: list[dict[str, str]]) -> str | None:
