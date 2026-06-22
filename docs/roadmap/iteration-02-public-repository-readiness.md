@@ -2,7 +2,7 @@
 
 ## Status
 
-**Core infrastructure complete; public-visibility review remains open.** Continuous integration, Python 3.10–3.13 compatibility coverage, package builds, artifact inspection, clean-wheel installation, installed CLI execution, canonical-report reproduction, security and conduct policies, contribution templates, citation metadata, changelog, maintainer attribution, issue forms, pull-request guidance, and dependency automation are implemented.
+**Core infrastructure and public positioning complete; public-visibility review remains open.** Bounded release-assurance claims, explicit non-claims, illustrative scenario labeling, continuous integration, Python 3.10–3.13 compatibility coverage, package builds, artifact inspection, clean-wheel installation, installed CLI execution, canonical-report reproduction, security and conduct policies, contribution templates, citation metadata, changelog, maintainer attribution, issue forms, pull-request guidance, and dependency automation are implemented.
 
 This iteration now ends when the repository can safely change from private to public. It does not require the full `0.2.0` product release or stable `1.0.0` compatibility guarantees.
 
@@ -39,15 +39,15 @@ Recommended README order:
 8. Limitations and non-goals.
 9. Contribution and citation.
 
-- [ ] Lead with `release assurance`, not a broad governance claim.
-- [ ] Replace `proof` wording for maintainer-authored examples with `examples` or `reference scenarios`.
+- [x] Lead with `release assurance`, not a broad governance claim.
+- [x] Replace `proof` wording for maintainer-authored examples with `examples` or `reference scenarios`.
 - [x] Put a blocked-launch result in the first screenful.
-- [ ] Add a dedicated limitations and non-claims section.
-- [ ] State that OpenEvalGate does not certify compliance, guarantee safe deployment, execute candidate systems, or establish a universal standard.
-- [ ] Move the full 23-gate list and score weights to methodology documentation.
-- [ ] Remove duplicated definitions and repetitive FAQ content.
+- [x] Add a dedicated limitations and non-claims section.
+- [x] State that OpenEvalGate does not certify compliance, guarantee safe deployment, execute candidate systems, or establish a universal standard.
+- [x] Move the full 23-gate list and score weights to methodology documentation.
+- [x] Remove duplicated definitions and repetitive FAQ content.
 - [ ] Review every standards and competitive reference for exact wording, version, review date, and primary source.
-- [ ] Ensure the repository can explain its category and value in under one minute.
+- [x] Ensure the repository can explain its category and value in under one minute.
 
 ## P0.2 Reference Example Integrity
 
@@ -72,8 +72,8 @@ Maintain two flagship narratives.
 
 ### Example integrity
 
-- [ ] Label all repository-authored data, metrics, and outputs as synthetic or illustrative.
-- [ ] Avoid presenting illustrative metrics as external adoption evidence.
+- [x] Label all repository-authored data, metrics, and outputs as synthetic or illustrative.
+- [x] Avoid presenting illustrative metrics as external adoption evidence.
 - [ ] Add a concise passing-versus-blocked comparison.
 - [x] Generate canonical reports from committed inputs without undocumented manual edits.
 - [x] Reproduce canonical reports byte-for-byte through the installed wheel.
@@ -206,7 +206,7 @@ The following are valuable but do not block public visibility:
 
 Iteration 2 is complete when:
 
-- [ ] Public claims are bounded and limitations are explicit.
+- [x] Public claims are bounded and limitations are explicit.
 - [ ] Passing and blocked examples are reproducible and labeled illustrative.
 - [ ] Required CI quality and security checks pass.
 - [ ] Branch protection and repository security settings are enabled.

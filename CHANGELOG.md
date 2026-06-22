@@ -8,6 +8,11 @@ The project follows semantic versioning while it remains in alpha. Until a stabl
 
 ### Added
 
+- Explicit limitations and non-claims for certification, safe-deployment
+  guarantees, standards alignment, official integrations, external validation,
+  and adoption evidence.
+- Synthetic and illustrative notices for all canonical reference scenarios.
+- Dedicated launch-gate and evidence-scoring methodology documentation.
 - Editable canonical `review_policy.yaml` samples covering documentation,
   shadow-launch, and blocked controlled-launch review.
 - Explicit documentation, shadow-launch, and controlled-launch review modes.
@@ -27,6 +32,12 @@ The project follows semantic versioning while it remains in alpha. Until a stabl
 
 ### Changed
 
+- Public positioning now describes OpenEvalGate as a local release-assurance
+  framework with bounded, evidence-backed recommendations.
+- The README is shorter and links to detailed gate, scoring, and review-mode
+  documentation.
+- External guidance and adjacent tools are described as conceptual context and
+  complementary workflows rather than formal alignment or official integration.
 - Informational controlled-launch invariant failures no longer set documentation
   or shadow review critical-control status to `Fail`.
 - Controlled-launch behavioral blockers and authorization now use only the

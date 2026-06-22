@@ -9,7 +9,7 @@ This roadmap separates four distinct milestones that should not be treated as on
 
 OpenEvalGate should be positioned as an **evidence-backed release-assurance framework for production AI assistants and agents**. It is not a complete AI governance platform, eval runner, observability system, runtime guardrail, compliance certification product, or guarantee of safe deployment.
 
-> **Current state:** Deterministic review modes, behavioral sufficiency, centralized hard-gate policy, package builds, clean-wheel installation, installed CLI execution, and canonical-report reproduction are implemented. The next milestone is making the repository safely public as an explicitly pre-1.0 project. The first public `0.2.0` release follows after evidence-integrity and onboarding work.
+> **Current state:** Public positioning and limitations, deterministic review modes, behavioral sufficiency, centralized hard-gate policy, package builds, clean-wheel installation, installed CLI execution, and canonical-report reproduction are implemented. Governance, repository protection, disclosure review, and exact-commit verification remain before public visibility. The first public `0.2.0` release follows after evidence-integrity and onboarding work.
 
 See [Release Milestones](docs/roadmap/release-milestones.md) for the milestone definitions and dependency order.
 
@@ -37,12 +37,12 @@ The repository may become public while remaining pre-1.0 and before publishing `
 
 ### A1. Public positioning and limitations
 
-- [ ] Lead with `release assurance`, not broad `AI governance` claims.
-- [ ] Replace unsupported proof language with `examples`, `reference scenarios`, or similarly bounded wording.
-- [ ] Label repository-authored metrics, outputs, and examples as synthetic or illustrative.
-- [ ] Add a dedicated limitations and non-claims section.
-- [ ] State explicitly that OpenEvalGate does not certify compliance, guarantee safe deployment, execute candidate systems, or establish a universal standard.
-- [ ] Reduce README repetition and move the full gate list, scoring weights, and extended methodology into documentation.
+- [x] Lead with `release assurance`, not broad `AI governance` claims.
+- [x] Replace unsupported proof language with `examples`, `reference scenarios`, or similarly bounded wording.
+- [x] Label repository-authored metrics, outputs, and examples as synthetic or illustrative.
+- [x] Add a dedicated limitations and non-claims section.
+- [x] State explicitly that OpenEvalGate does not certify compliance, guarantee safe deployment, execute candidate systems, or establish a universal standard.
+- [x] Reduce README repetition and move the full gate list, scoring weights, and extended methodology into documentation.
 - [ ] Review standards and competitive references for precise wording, source version, and review date.
 
 ### A2. Public example integrity
@@ -50,7 +50,7 @@ The repository may become public while remaining pre-1.0 and before publishing `
 - [x] Retain a reproducible blocked example showing that strong documentation cannot override failed behavioral or critical-control evidence.
 - [ ] Add a reproducible passing controlled-launch reference example.
 - [ ] Ensure every canonical example is generated from committed inputs without undocumented manual edits.
-- [ ] Ensure no repository example is presented as production adoption evidence.
+- [x] Ensure no repository example is presented as production adoption evidence.
 - [ ] Add a concise comparison between the passing and blocked outcomes.
 
 ### A3. Governance, support, and attribution
