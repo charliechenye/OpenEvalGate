@@ -1,10 +1,5 @@
 # Eval Run Output
 
-> **Fixture provenance:** This is a repository-authored synthetic reconstruction
-> created to restore a missing canonical output reference. It is consistent with
-> the committed eval case and result row, but it is not a recovered original
-> model transcript or independent production evidence.
-
 - **Run ID:** run_002
 - **Case ID:** wrong_destination_fraud_012
 - **Candidate:** gpt-4.1-mini
