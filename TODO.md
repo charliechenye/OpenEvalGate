@@ -61,7 +61,7 @@ The repository may become public while remaining pre-1.0 and before publishing `
 - [ ] Add `SUPPORT.md`.
 - [ ] Add `AUTHORS.md` and contribution-credit rules.
 - [ ] Document release, deprecation, schema-change, and broken-release rollback policies.
-- [ ] Modernize setuptools license metadata.
+- [x] Modernize setuptools license metadata.
 
 ### A4. Repository quality and protection
 

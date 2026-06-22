@@ -149,7 +149,7 @@ Remaining work:
 - [ ] Add `AUTHORS.md` and contribution-credit rules.
 - [ ] Document release, deprecation, and schema-change policy.
 - [ ] Add a broken-release rollback procedure.
-- [ ] Modernize setuptools license metadata.
+- [x] Modernize setuptools license metadata.
 - [ ] Link contribution guidance to governance and compatibility rules.
 
 ### Acceptance criteria

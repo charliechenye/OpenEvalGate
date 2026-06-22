@@ -38,6 +38,8 @@ The project follows semantic versioning while it remains in alpha. Until a stabl
   documentation.
 - External guidance and adjacent tools are described as conceptual context and
   complementary workflows rather than formal alignment or official integration.
+- Package metadata now uses the PEP 639 SPDX license expression and explicit
+  license-file declaration supported by modern setuptools.
 - Informational controlled-launch invariant failures no longer set documentation
   or shadow review critical-control status to `Fail`.
 - Controlled-launch behavioral blockers and authorization now use only the

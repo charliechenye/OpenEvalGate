@@ -92,7 +92,7 @@ Public visibility is not the same as publishing OpenEvalGate `0.2.0`, releasing 
 - [ ] `AUTHORS.md` defines contribution-credit rules.
 - [ ] Release, deprecation, schema-change, and broken-release rollback policies are documented.
 - [ ] Pre-1.0 compatibility expectations are explicit.
-- [ ] Setuptools license metadata is modernized.
+- [x] Setuptools license metadata is modernized.
 
 ## 6. Repository Settings
 
