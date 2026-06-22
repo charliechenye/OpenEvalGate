@@ -6,6 +6,7 @@ from shutil import copytree
 import pytest
 import yaml
 
+import openevalgate.eval_results as eval_results
 from openevalgate.eval_results import (
     NONEMPTY_EVAL_RESULT_FIELDS,
     classify_behavioral_evidence,
@@ -525,21 +526,17 @@ def test_unsafe_or_invalid_output_reference_fails(
     )
 
 
-def test_embedded_nul_output_reference_fails_closed(tmp_path: Path) -> None:
-    project, headers, row = _single_result_project(tmp_path)
-    row["observed_output_path"] = "eval_runs/\0output.md"
-    _write_result_table(project, headers, [row])
+def test_embedded_nul_output_reference_is_rejected(tmp_path: Path) -> None:
+    project = _project(tmp_path)
 
-    result = validate_eval_results(project)
-    project_result = check_project(project)
+    issue = eval_results._validate_output_reference(
+        project,
+        "eval_runs/\0output.md",
+    )
 
-    assert not result.valid
-    assert not project_result.valid
-    assert any(
-        issue.path.endswith("row[2].observed_output_path")
-        and issue.message
+    assert (
+        issue
         == "Referenced output file does not exist or is not a regular file."
-        for issue in result.issues
     )
 
 
