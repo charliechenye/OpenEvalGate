@@ -1,4 +1,4 @@
-# Launch Gates and Evidence Scoring
+# Launch Gates and Evidence Completeness Scoring
 
 This document records OpenEvalGate's launch gates, evidence-completeness scoring, evidence bands, and hard-gate policy semantics. Evidence completeness is separate from observed behavioral quality and does not determine a launch recommendation by itself.
 
@@ -33,6 +33,8 @@ OpenEvalGate uses the following 23 gates in this order:
 ## Evidence Completeness Scoring
 
 OpenEvalGate uses a 100-point trust-weighted evidence completeness score. It measures how completely a project has documented and reviewed its declared launch controls and governance evidence. It is not a behavioral quality score and does not determine launch readiness by itself.
+
+These weights and evidence bands are current framework defaults intended to support a consistent review process. They are not scientifically validated universal thresholds and may require adjustment for a project's domain, risk, and organizational controls.
 
 - Scope readiness: 5
 - Trust preservation readiness: 8

@@ -94,7 +94,7 @@ The framework distinguishes:
 - maximum permitted review stage;
 - final bounded recommendation.
 
-The complete gate list, scoring weights, evidence bands, and hard-gate semantics are documented in [Launch Gates and Evidence Scoring](docs/launch-gates-and-evidence-scoring.md). Review modes, selected-run coverage, and controlled-launch behavioral sufficiency are documented in [Review Modes and Behavioral Sufficiency](docs/review-modes.md).
+The complete gate list, scoring weights, evidence bands, and hard-gate semantics are documented in [Launch Gates and Evidence Completeness Scoring](docs/launch-gates-and-evidence-scoring.md). Review modes, selected-run coverage, and controlled-launch behavioral sufficiency are documented in [Review Modes and Behavioral Sufficiency](docs/review-modes.md).
 
 ## Where OpenEvalGate Fits
 
@@ -148,6 +148,8 @@ OpenEvalGate is an early, pre-1.0 framework with practitioner-defined defaults a
 - It does not execute candidate models, call LLM APIs, or evaluate live behavior by itself.
 - It does not replace eval runners, observability systems, runtime guardrails, security controls, or organizational approval.
 - It validates submitted artifacts and declared evidence; it does not independently verify that every claim in those artifacts is true, current, or complete.
+- The current implementation does not yet fully validate evidence provenance, evidence freshness, artifact-version pinning, duplicate result identity, or every user-declared routing and policy-compliance field.
+- A recommendation is only as reliable as the quality, completeness, provenance, and freshness of the supplied evidence.
 - A passing check, high evidence score, or bounded recommendation does not guarantee safe, reliable, compliant, or successful deployment.
 - It does not certify compliance or provide legal, regulatory, security, or risk-management certification.
 - References to NIST, ISO, OECD, OWASP, the EU AI Act, or other guidance describe conceptual relationships, not formal alignment, endorsement, partnership, or approval.

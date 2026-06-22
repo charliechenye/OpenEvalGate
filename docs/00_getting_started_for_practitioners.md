@@ -204,7 +204,7 @@ The report should make clear:
 - required mitigations
 - suggested next actions
 
-The evidence-completeness model and launch gates are documented in [Launch Gates and Evidence Scoring](launch-gates-and-evidence-scoring.md). The requirements for documentation, shadow-launch, and controlled-launch review are documented in [Review Modes and Behavioral Sufficiency](review-modes.md).
+The evidence-completeness model and launch gates are documented in [Launch Gates and Evidence Completeness Scoring](launch-gates-and-evidence-scoring.md). The requirements for documentation, shadow-launch, and controlled-launch review are documented in [Review Modes and Behavioral Sufficiency](review-modes.md).
 
 ## Required Mindset
 

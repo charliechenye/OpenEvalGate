@@ -49,7 +49,7 @@ The repository may become public while remaining pre-1.0 and before publishing `
 
 - [x] Retain a reproducible blocked example showing that strong documentation cannot override failed behavioral or critical-control evidence.
 - [ ] Add a reproducible passing controlled-launch reference example.
-- [ ] Ensure every canonical example is generated from committed inputs without undocumented manual edits.
+- [x] Ensure every canonical example is generated from committed inputs without undocumented manual edits.
 - [x] Ensure no repository example is presented as production adoption evidence.
 - [ ] Add a concise comparison between the passing and blocked outcomes.
 
