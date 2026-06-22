@@ -1,10 +1,17 @@
 # OpenEvalGate Roadmap
 
-This roadmap tracks the work required to make OpenEvalGate technically credible, easy to adopt, and ready for public release.
+This roadmap separates four distinct milestones that should not be treated as one release event:
 
-OpenEvalGate should be positioned as an **evidence-backed release-assurance framework for production AI assistants and agents**. It should not claim to be a complete AI governance platform, eval runner, observability system, runtime guardrail, or compliance certification product.
+1. **Public repository:** the code, claims, examples, governance, and repository settings are safe for public inspection.
+2. **OpenEvalGate 0.2.0:** the first substantive public-alpha release with stronger evidence integrity and a usable adoption path.
+3. **0.x stabilization:** external adoption, integrations, schema refinement, and migration experience.
+4. **OpenEvalGate 1.0.0:** stable public contracts for schemas, CLI behavior, blocker semantics, and compatibility.
 
-> **Repository state:** Iteration 1 hard-gate semantics and the core public-repository infrastructure are complete. Release-artifact inspection, clean-wheel installation, installed CLI execution, and installed-wheel report reproduction are implemented. Verification on the exact public-release commit, repository protection, governance and support documentation, release metadata, behavioral-sufficiency policy, and independent external review remain open.
+OpenEvalGate should be positioned as an **evidence-backed release-assurance framework for production AI assistants and agents**. It is not a complete AI governance platform, eval runner, observability system, runtime guardrail, compliance certification product, or guarantee of safe deployment.
+
+> **Current state:** Deterministic review modes, behavioral sufficiency, centralized hard-gate policy, package builds, clean-wheel installation, installed CLI execution, and canonical-report reproduction are implemented. The next milestone is making the repository safely public as an explicitly pre-1.0 project. The first public `0.2.0` release follows after evidence-integrity and onboarding work.
+
+See [Release Milestones](docs/roadmap/release-milestones.md) for the milestone definitions and dependency order.
 
 ## Status Legend
 
@@ -16,164 +23,180 @@ OpenEvalGate should be positioned as an **evidence-backed release-assurance fram
 ## Operating Rules
 
 1. Correctness comes before feature breadth.
-2. A launch recommendation must be supported by execution evidence, not document presence alone.
-3. Critical-control failures override aggregate scores.
-4. Every public claim must be reproducible from repository artifacts.
-5. New templates are lower priority than independent adoption of the existing framework.
-6. Public repository content should focus on practitioner value. Immigration-specific evidence packaging belongs outside the repository.
+2. Public visibility does not imply a stable release.
+3. A launch recommendation must be supported by execution evidence, not document presence alone.
+4. Critical-control failures override aggregate scores.
+5. Every public claim must be reproducible or clearly labeled as illustrative, provisional, or externally unvalidated.
+6. New templates and playbooks are lower priority than evidence integrity and independent adoption.
+7. Backward compatibility becomes a stronger commitment as the project approaches `1.0.0`.
+8. Immigration-specific evidence packaging and private professional records remain outside the public repository.
 
-## Iteration Order
+## Milestone A: Make the Repository Public
 
-1. [Iteration 1: Correctness and Release Semantics](docs/roadmap/iteration-01-correctness-and-release-semantics.md)
-2. [Iteration 2: Public Repository and Release Readiness](docs/roadmap/iteration-02-public-repository-readiness.md)
-3. [Iteration 3: Adoption and External Validation](docs/roadmap/iteration-03-adoption-and-external-validation.md)
-4. [Public Launch Checklist](docs/roadmap/public-launch-checklist.md)
+The repository may become public while remaining pre-1.0 and before publishing `0.2.0`. This milestone is about safe disclosure, bounded claims, governance, reproducibility, and repository protection—not feature completeness.
 
-## P0: Must Complete Before Public Release
-
-### Correct the readiness model
-
-- [x] Rename the current weighted score to `Evidence Completeness Score`.
-- [x] Add a separate `Observed Behavioral Quality` section derived from `eval_results.csv`.
-- [x] Add a separate `Critical-Control Status` that distinguishes known failure, unevaluated behavior, and absence of currently detected blockers.
-- [x] Prevent the CLI from recommending `Ready for controlled launch` without empirical eval results.
-- [x] Define configurable result coverage for controlled-launch reviews.
-- [x] Add configurable initial pass-rate and route-match thresholds.
-- [x] Make every required critical-case failure override aggregate scores.
-
-### Fix hard-gate semantics
-
-- [x] Treat `partial`, `fail`, and missing as blocking for gates that require a full pass.
-- [x] Define the complete list of hard gates in code rather than distributing the logic across conditionals.
-- [x] Define when `not_applicable` is permitted for each gate.
-- [x] Add tests for all supported statuses and missing declarations across every hard gate.
-- [x] Ensure blocker messages match the actual implementation.
-- [x] Keep invalid action-risk evidence diagnostic-only and unavailable to policy decisions.
-
-### Require execution evidence
-
-- [x] Introduce explicit review modes: `documentation`, `shadow_launch`, and `controlled_launch`.
-- [x] Prevent missing, empty, or invalid `eval_results.csv` from producing a controlled-launch recommendation.
-- [x] Require complete critical eval-slice coverage before controlled launch.
-- [ ] Recompute route-match and policy-compliance fields rather than trusting user-entered booleans where possible.
-- [ ] Validate output references, timestamps, evaluator metadata, run metadata, and duplicate result keys.
-- [ ] Pin framework, eval-case, routing-policy, and escalation-contract versions in each run.
-- [ ] Define evidence provenance and freshness requirements.
-
-### Continuous integration and repository verification
-
-- [x] Add one consolidated GitHub Actions check covering Python 3.10 through 3.13.
-- [x] Run the full test suite on Python 3.10 and Python 3.13.
-- [x] Run lightweight install, compile, import, and CLI checks on Python 3.11 and Python 3.12.
-- [x] Build source and wheel distributions.
-- [x] Install the built wheel in a clean environment and exercise the installed CLI.
-- [x] Run CLI smoke tests against all canonical examples.
-- [x] Verify committed generated reports match current CLI output byte-for-byte, including reproduction through the installed wheel.
-- [x] Inspect wheel and source-distribution contents and metadata.
-- [x] Use Node 24-compatible GitHub Actions.
-- [ ] Add linting, formatting, and type checking.
-- [x] Add dependency maintenance through Dependabot.
-- [ ] Add dependency review and a lightweight security scan.
-- [ ] Configure branch protection to require the consolidated `CI` check.
-
-### Establish clear authorship and citation
-
-- [x] Identify Chenye Zhu as project author and maintainer in package metadata.
-- [x] Update the copyright line to `Chenye Zhu and OpenEvalGate contributors`.
-- [x] Add `CITATION.cff` with Chenye Zhu and the Charlie Zhu alias.
-- [ ] Add `AUTHORS.md` with contribution-credit rules.
-- [x] Add project URLs and maintainer metadata to `pyproject.toml`.
-- [x] Add README maintainer and citation guidance.
-- [ ] Create a tagged release and stable release notes before public launch.
-
-### Establish public repository governance
-
-- [x] Add `SECURITY.md`, `CODE_OF_CONDUCT.md`, and `CHANGELOG.md`.
-- [x] Expand `CONTRIBUTING.md` with validation, trust-boundary, and evidence-hygiene requirements.
-- [x] Add structured issue forms and a pull-request template.
-- [x] Add Dependabot configuration.
-- [ ] Add `GOVERNANCE.md` and `SUPPORT.md`.
-- [ ] Document release, deprecation, and schema-change policy.
-- [ ] Modernize setuptools license metadata before its February 18, 2027 deprecation deadline.
-- [ ] Configure repository labels and public support boundaries.
-- [ ] Enable private vulnerability reporting and applicable security features.
-
-## P1: Required for a Strong Public Launch
-
-### Improve onboarding
-
-- [ ] Add `openevalgate init <project>`.
-- [ ] Support `minimal`, `standard`, `high-risk`, and `multi-agent` profiles.
-- [ ] Add a five-minute quickstart using the minimal profile.
-- [ ] Add a concise example that passes all controlled-launch gates after controlled-launch semantics exist.
-- [x] Retain a deliberately blocked example that demonstrates why aggregate scores are insufficient.
-- [ ] Add JSON output for `check` and `report`.
-- [x] Add `openevalgate --version`.
-
-### Formalize the methodology
-
-- [ ] Add a versioned `SPECIFICATION.md`.
-- [ ] Define behavioral contracts, contrast families, safe stopping boundaries, escalation contracts, capability allocation, hard blockers, evidence provenance, and controlled-launch authorization.
-- [ ] Mark normative requirements separately from practitioner guidance.
-- [ ] Document schema versioning and backward-compatibility policy.
-- [ ] Explain the basis and limitations of default weights and thresholds.
-- [ ] Avoid presenting initial practitioner defaults as scientifically validated constants.
-
-### Tighten public positioning
+### A1. Public positioning and limitations
 
 - [ ] Lead with `release assurance`, not broad `AI governance` claims.
-- [ ] Reduce repetition in the README.
-- [x] Put a concrete blocked-launch output near the top of the README.
-- [ ] Move the full gate list, score weights, and extended FAQ into documentation.
-- [ ] Add a dedicated limitations section.
-- [x] State that OpenEvalGate does not execute models, replace runtime guardrails, or guarantee safe deployment.
-- [ ] Add explicit non-claims covering compliance certification and universal readiness.
-- [ ] Review every standards reference for version, date, and precise wording.
+- [ ] Replace unsupported proof language with `examples`, `reference scenarios`, or similarly bounded wording.
+- [ ] Label repository-authored metrics, outputs, and examples as synthetic or illustrative.
+- [ ] Add a dedicated limitations and non-claims section.
+- [ ] State explicitly that OpenEvalGate does not certify compliance, guarantee safe deployment, execute candidate systems, or establish a universal standard.
+- [ ] Reduce README repetition and move the full gate list, scoring weights, and extended methodology into documentation.
+- [ ] Review standards and competitive references for precise wording, source version, and review date.
 
-### Improve release and integration ergonomics
+### A2. Public example integrity
 
-- [x] Add clean-wheel installation validation.
-- [x] Add `openevalgate --version` and ensure it matches package metadata.
-- [ ] Add JSON output for CI and external integrations.
-- [ ] Add SARIF output for GitHub-native findings.
-- [ ] Package project templates or add a deterministic scaffolding command.
-- [x] Inspect source and wheel contents in CI.
+- [x] Retain a reproducible blocked example showing that strong documentation cannot override failed behavioral or critical-control evidence.
+- [ ] Add a reproducible passing controlled-launch reference example.
+- [ ] Ensure every canonical example is generated from committed inputs without undocumented manual edits.
+- [ ] Ensure no repository example is presented as production adoption evidence.
+- [ ] Add a concise comparison between the passing and blocked outcomes.
 
-## P2: Adoption and Ecosystem Growth
+### A3. Governance, support, and attribution
 
-- [ ] Recruit three to five private-beta design partners.
-- [ ] Capture structured feedback from each design partner.
-- [ ] Publish at least two sanitized external case studies.
-- [ ] Obtain at least one externally authored issue, example, or pull request.
-- [ ] Build one integration adapter for an established eval or observability tool.
-- [ ] Publish a citable technical report describing the methodology and reference implementation.
-- [ ] Present the framework in at least two practitioner communities.
-- [ ] Track meaningful adoption evidence rather than vanity metrics.
-- [ ] Maintain an external evidence log for pilots, citations, talks, integrations, and independent endorsements.
+- [x] Add `SECURITY.md`, `CODE_OF_CONDUCT.md`, `CHANGELOG.md`, contribution guidance, issue forms, and a pull-request template.
+- [x] Add maintainer attribution and `CITATION.cff`.
+- [ ] Add `GOVERNANCE.md`.
+- [ ] Add `SUPPORT.md`.
+- [ ] Add `AUTHORS.md` and contribution-credit rules.
+- [ ] Document release, deprecation, schema-change, and broken-release rollback policies.
+- [ ] Modernize setuptools license metadata.
 
-## Explicit Non-Goals Before Public Release
+### A4. Repository quality and protection
 
-- [ ] Do not add a hosted service.
-- [ ] Do not add authentication or a web UI.
-- [ ] Do not add LLM API execution to the core CLI.
-- [ ] Do not add more broad playbooks unless requested by real users.
-- [ ] Do not claim NIST, ISO, OWASP, or regulatory compliance.
+- [x] Run consolidated CI across Python 3.10 through 3.13.
+- [x] Build and inspect source and wheel artifacts.
+- [x] Install the wheel in a clean environment and exercise the installed CLI.
+- [x] Reproduce canonical reports byte-for-byte through the installed wheel.
+- [ ] Add linting and formatting checks.
+- [ ] Add an enforceable type-checking baseline.
+- [ ] Add dependency review and lightweight security scanning.
+- [ ] Require pull requests and the consolidated `CI` check on `main`.
+- [ ] Require branches to be current before merge.
+- [ ] Disable force pushes and branch deletion on `main`.
+- [ ] Enable dependency alerts, secret scanning, push protection where available, and private vulnerability reporting.
+- [ ] Configure repository description, restrained topics, labels, and social preview.
+
+### A5. Disclosure and exact-commit review
+
+- [ ] Audit the current tree and Git history for secrets, confidential material, private pilot evidence, proprietary prompts, unlicensed assets, and unsafe metadata.
+- [ ] Remove or rewrite history before public visibility if sensitive material is found.
+- [ ] Record the exact public-visibility commit.
+- [ ] Confirm all required checks are green on that exact commit.
+- [ ] Re-run clean-wheel installation and canonical-report reproduction on that exact commit.
+- [ ] Record any accepted public-alpha risks and known limitations.
+- [ ] Complete the [Public Launch Checklist](docs/roadmap/public-launch-checklist.md).
+- [ ] Change repository visibility to public.
+
+### Explicit deferrals for public visibility
+
+The following are not required merely to make the repository public:
+
+- `openevalgate init`
+- JSON or SARIF output
+- external eval-tool adapters
+- a hosted service or web UI
+- a tagged `0.2.0` release
+- published external case studies
+- `1.0.0` compatibility guarantees
+
+## Milestone B: Release OpenEvalGate 0.2.0
+
+`0.2.0` is the first substantive public-alpha release. Its primary theme is **evidence integrity and minimal adoption**, not feature breadth.
+
+### B1. Strengthen eval-result integrity
+
+- [ ] Require non-empty values for mandatory result fields.
+- [ ] Validate expected routes against referenced eval cases.
+- [ ] Recompute or consistency-check route, workflow-route, destination, and policy-compliance fields where source evidence exists.
+- [ ] Reject duplicate result keys such as `(run_id, candidate, trial_id, case_id)`.
+- [ ] Validate result timestamps and select runs by explicit scope or timestamps rather than CSV row order.
+- [ ] Validate candidate, case, workflow, model, and output references.
+- [ ] Prevent invalid result evidence from influencing behavioral metrics or launch decisions.
+
+### B2. Add run provenance and freshness
+
+- [ ] Add explicit evaluator type: human, deterministic, model judge, or hybrid.
+- [ ] Record candidate version, run timestamps, framework version, and selected artifact versions or digests.
+- [ ] Pin eval-set, review-policy, routing-policy, and escalation-contract evidence where applicable.
+- [ ] Define provenance categories and display them in reports.
+- [ ] Define stale-evidence behavior when artifacts change after a run.
+- [ ] Require versioned, non-stale evidence for controlled-launch authorization while retaining bounded legacy support for documentation or shadow review.
+
+### B3. Provide a minimal adoption path
+
+- [ ] Add `openevalgate init <project> --profile minimal`, or package an equivalently deterministic minimal scaffold.
+- [ ] Keep the initial profile set small; defer speculative profile breadth until user demand is demonstrated.
+- [ ] Add a five-minute installed-wheel quickstart for Linux/macOS and Windows PowerShell.
+- [ ] Allow a user to produce a useful first report without copying the full customer-support example.
+
+### B4. Add machine-consumable output
+
+- [ ] Add versioned JSON output for `check`, `validate`, and `report`.
+- [ ] Define stable finding and blocker identifiers in machine output.
+- [ ] Document exit codes for validation failures, launch blockers, and internal errors.
+- [ ] Add an opt-in CI mode that fails when launch is blocked.
+- [ ] Defer SARIF until the finding model and JSON contract are stable.
+
+### B5. Publish `0.2.0`
+
+- [ ] Update package, citation, and changelog versions consistently.
+- [ ] Document breaking changes, migrations, known limitations, and intentionally deferred work.
+- [ ] Verify the exact release commit and artifacts.
+- [ ] Create a Git tag and GitHub Release.
+- [ ] Publish wheel and source artifacts with checksums.
+- [ ] Publish to PyPI only after clean installation and smoke tests pass.
+- [ ] Describe `0.2.0` as public alpha, not stable.
+
+## Milestone C: 0.x Adoption and Stabilization
+
+- [ ] Recruit three to five design partners after the repository is public.
+- [ ] Complete at least two independent end-to-end reviews.
+- [ ] Capture structured feedback and permission settings outside the public repository.
+- [ ] Obtain at least one externally authored issue, review, example, schema improvement, or pull request.
+- [ ] Publish at least one sanitized case study with source-backed claims.
+- [ ] Stabilize a generic result-ingestion contract before building vendor-specific adapters.
+- [ ] Build one integration selected from actual user demand.
+- [ ] Add a versioned specification separating normative requirements from practitioner guidance.
+- [ ] Add migration tooling or documented migrations for at least one earlier schema version.
+- [ ] Revisit default thresholds and weights using pilot evidence; do not present practitioner defaults as scientific constants.
+- [ ] Track completed pilots, repeat use, integrations, external contributions, citations, and decision-relevant gaps rather than vanity metrics.
+
+## Milestone D: OpenEvalGate 1.0.0
+
+`1.0.0` means users can rely on the public contract, not merely that the code runs.
+
+### Stable contracts
+
+- [ ] Project, eval-case, eval-result, review-policy, routing, and escalation schemas are versioned and documented.
+- [ ] CLI commands, exit codes, and machine-readable output are stable.
+- [ ] Hard-blocker identifiers, applicability rules, and recommendation meanings are stable.
+- [ ] Deprecation and migration behavior are tested and documented.
+- [ ] At least one previous schema version is supported or migratable.
+
+### Methodology and adoption evidence
+
+- [ ] A versioned specification defines the normative primitives and failure behavior.
+- [ ] Evidence provenance and freshness rules are operational.
+- [ ] Multiple independent users have completed end-to-end reviews.
+- [ ] At least one external contribution and one real integration exist.
+- [ ] At least one sanitized case study is published with explicit limitations.
+- [ ] Release notes distinguish implementation evidence, illustrative examples, and external adoption evidence.
+
+### Stable-release definition
+
+- [ ] All `1.0.0` public contracts are covered by compatibility fixtures.
+- [ ] No known issue allows malformed or stale evidence to produce a permissive launch recommendation.
+- [ ] Upgrade and rollback instructions are tested.
+- [ ] The exact `1.0.0` release commit, artifacts, checksums, and documentation are verified.
+- [ ] The project is no longer labeled alpha in package metadata.
+
+## Explicit Long-Term Non-Goals
+
+- [ ] Do not make a hosted service a prerequisite for the core framework.
+- [ ] Do not add LLM API execution to the deterministic core CLI without a separate, explicit design decision.
+- [ ] Do not claim NIST, ISO, OWASP, EU AI Act, or regulatory certification.
 - [ ] Do not claim OpenEvalGate is an industry standard.
-- [ ] Do not optimize the roadmap around GitHub stars.
-
-## Public-Ready Definition
-
-OpenEvalGate is ready to become public only when:
-
-- [ ] All remaining P0 work is complete or explicitly accepted as a documented launch risk.
-- [x] The core public-readiness changes from PR #5 are merged.
-- [ ] CI is green on the exact public-release commit.
-- [ ] Branch protection requires the consolidated `CI` check.
-- [x] The built wheel installs and the installed CLI runs in a clean environment.
-- [ ] A blocked example is reproducible and the limitations of the current shadow-only ceiling are explicit.
-- [x] The report cleanly separates evidence completeness, observed behavior, and critical-control status.
-- [x] Authorship, citation, security, contribution, changelog, issue-template, and dependency-maintenance infrastructure are present.
-- [ ] Governance, support, release-process, and deprecation documentation are present.
-- [ ] At least one independent practitioner has completed a structured pilot or review, or the absence is explicitly accepted and disclosed as a launch risk.
-- [ ] The README explains the category and value in under one minute.
-- [ ] The public-launch checklist has no unresolved required item.
+- [ ] Do not treat stronger models as authorization or safety controls.
+- [ ] Do not optimize the roadmap around GitHub stars, impressions, or other vanity metrics.

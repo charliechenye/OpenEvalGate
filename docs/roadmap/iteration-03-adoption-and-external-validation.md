@@ -1,185 +1,204 @@
-# Iteration 3: Adoption and External Validation
+# Iteration 3: OpenEvalGate 0.2.0, Adoption, and Stabilization
+
+## Status
+
+**Not started as a public milestone.** This iteration begins after the repository is public. It covers the first substantive public-alpha release, external practitioner validation, ecosystem integration, and the compatibility work required before `1.0.0`.
 
 ## Objective
 
-Establish that OpenEvalGate solves a real practitioner problem outside the maintainer's own repository.
+Establish that OpenEvalGate solves a real practitioner problem outside the maintainer's own examples, while stabilizing evidence, onboarding, machine-readable, and migration contracts.
 
-This iteration should prioritize independent use, concrete feedback, interoperability, and citable work. Additional templates are not a substitute for adoption.
+Additional templates are not a substitute for independent use. Public interest is not the same as adoption, and adoption is not the same as stable compatibility.
 
-## P0.1 Recruit Private-Beta Design Partners
+## Phase 1: OpenEvalGate 0.2.0 Public Alpha
 
-Target three to five practitioners before public launch.
+The `0.2.0` theme is **evidence integrity and minimal adoption**.
+
+### Evidence integrity
+
+- [ ] Require non-empty mandatory eval-result fields.
+- [ ] Recompute or consistency-check derived route, workflow, destination, and policy fields.
+- [ ] Reject duplicate result records.
+- [ ] Validate timestamps, selected scope, candidate references, and observed-output references.
+- [ ] Add explicit run provenance and evaluator type.
+- [ ] Pin framework and applicable artifact versions or digests.
+- [ ] Define stale-evidence behavior.
+- [ ] Require versioned, non-stale selected evidence for controlled-launch authorization.
+
+### Minimal onboarding
+
+- [ ] Add `openevalgate init <project> --profile minimal`, or an equivalently deterministic packaged scaffold.
+- [ ] Keep the initial profile set small until repeated user demand justifies additional profiles.
+- [ ] Add a five-minute quickstart from an installed wheel.
+- [ ] Add Linux/macOS and Windows PowerShell instructions.
+- [ ] Allow a user to produce a useful first report without copying the full flagship example.
+
+### Machine-consumable output
+
+- [ ] Add versioned JSON output for `validate`, `check`, and `report`.
+- [ ] Define stable finding and blocker IDs in machine output.
+- [ ] Document validation, blocked-launch, and internal-error exit behavior.
+- [ ] Add an opt-in CI mode that fails when launch is blocked.
+- [ ] Defer SARIF until the JSON finding contract is stable.
+
+### Release execution
+
+- [ ] Update package, citation, changelog, and documentation versions consistently.
+- [ ] Document breaking changes, migrations, limitations, and deferred work.
+- [ ] Verify the exact release commit and artifacts.
+- [ ] Create a Git tag and GitHub Release.
+- [ ] Publish wheel and source artifacts with checksums.
+- [ ] Publish to PyPI only after clean installation and smoke tests pass.
+- [ ] Describe `0.2.0` as public alpha, not stable.
+
+## Phase 2: Recruit Design Partners
+
+Target three to five practitioners after the repository is public.
 
 Preferred participants:
 
-- AI product or platform leaders.
-- ML or AI engineers shipping assistants or agents.
-- AI quality and evaluation practitioners.
-- Trust, safety, legal, compliance, or operations owners.
-- Open-source maintainers building adjacent eval or agent tooling.
+- AI product or platform leaders;
+- ML or AI engineers shipping assistants or agents;
+- AI quality and evaluation practitioners;
+- trust, safety, legal, compliance, or operations owners;
+- maintainers of adjacent eval or agent tooling.
 
 - [ ] Prepare a one-page design-partner brief.
-- [ ] Define the expected pilot scope and time commitment.
-- [ ] Provide a sanitized example project and onboarding guide.
-- [ ] Collect permission preferences before recording names or company details.
+- [ ] Define the pilot scope and time commitment.
+- [ ] Provide a sanitized example and onboarding guide.
+- [ ] Collect permission preferences before recording names or organizations.
 - [ ] Schedule one structured review with each participant.
 - [ ] Ask each participant to identify one confusing concept, one missing control, and one useful output.
 
-### Acceptance Criteria
+### Acceptance criteria
 
-- At least one participant completes an end-to-end project review.
-- Feedback includes specific evidence about usability or launch-decision value.
-- No pilot is represented publicly without permission.
+- [ ] At least two participants complete an end-to-end review.
+- [ ] Feedback includes specific evidence about usability or launch-decision value.
+- [ ] At least one participant completes the workflow without the maintainer operating the CLI for them.
+- [ ] No pilot is represented publicly without permission.
 
-## P0.2 Capture Structured Pilot Evidence
+## Phase 3: Capture Structured Adoption Evidence
 
 For every pilot, record outside the public repository:
 
-- Participant role and relevant expertise.
-- Organization or domain when disclosure is permitted.
-- System or workflow reviewed.
-- Date and framework version.
-- Artifacts used.
-- Issues discovered.
-- Launch decision affected.
-- Feedback received.
-- Follow-up change or contribution.
-- Permission for public attribution, anonymized publication, or private use only.
+- participant role and relevant expertise;
+- organization or domain when disclosure is permitted;
+- system or workflow reviewed;
+- date and OpenEvalGate version;
+- artifacts used;
+- setup time and time to first report;
+- issues or evidence gaps discovered;
+- launch or mitigation decision affected;
+- feedback received;
+- follow-up change or contribution;
+- permission for attribution, anonymized publication, or private use only.
 
 - [ ] Create a repeatable pilot-feedback form.
 - [ ] Create a sanitized case-study template.
-- [ ] Separate factual participant statements from maintainer interpretation.
-- [ ] Preserve emails, meeting notes, issues, and pull requests as source evidence.
+- [ ] Separate participant statements from maintainer interpretation.
+- [ ] Preserve source evidence without committing confidential material.
+- [ ] Track repeat use and project upgrades, not only first-time interest.
 
-### Acceptance Criteria
+### Acceptance criteria
 
-- Every public adoption claim has a traceable source.
-- Private evidence is not accidentally committed to the public repository.
+- [ ] Every public adoption claim has a traceable source.
+- [ ] Private evidence is not accidentally committed.
+- [ ] Interest, usage, and adoption are reported as different signals.
 
-## P1.1 Publish External Case Studies
+## Phase 4: Independent Contributions
 
-Target at least two case studies after permission is secured.
-
-Each case study should explain:
-
-1. The production workflow.
-2. The initial launch assumption.
-3. The evidence package created.
-4. The control or behavioral gap found.
-5. The launch or mitigation decision.
-6. The limitation of the exercise.
-
-- [ ] Publish one case where OpenEvalGate blocks launch.
-- [ ] Publish one case where the evidence supports a bounded launch.
-- [ ] Include reproducible sanitized artifacts when possible.
-- [ ] Avoid inflated claims such as `prevented harm` unless there is evidence.
-
-## P1.2 Obtain Independent Contributions
-
-- [ ] Create scoped `good first issue` items.
-- [ ] Invite design partners to file genuine issues rather than sending all feedback privately.
+- [ ] Create scoped `good first issue` and `help wanted` items from real user pain.
+- [ ] Invite design partners to file genuine issues where appropriate.
 - [ ] Seek one externally authored example, schema improvement, integration, or documentation pull request.
 - [ ] Credit contributors in release notes and `AUTHORS.md`.
 - [ ] Document decisions when external proposals are declined.
 
-### Acceptance Criteria
+### Acceptance criteria
 
-- At least one meaningful issue or contribution is authored by someone outside the maintainer account.
-- Contribution history demonstrates review and collaboration, not manufactured activity.
+- [ ] At least one meaningful issue, review, or contribution is authored outside the maintainer account.
+- [ ] Contribution history demonstrates real review and collaboration rather than manufactured activity.
 
-## P1.3 Build Ecosystem Integrations
+## Phase 5: Ecosystem Integration
 
-Prioritize one integration based on actual design-partner demand.
+Prioritize one integration based on actual user demand.
 
-Candidate adapters:
+Candidate paths:
 
-- Promptfoo result export.
-- DeepEval result export.
-- Braintrust result export.
-- LangSmith trace or evaluation export.
+- generic JSONL or CSV import contract;
+- Promptfoo result export;
+- DeepEval result export;
+- Braintrust result export;
+- LangSmith trace or evaluation export;
 - Arize Phoenix evaluation export.
-- Generic JSONL or CSV import contract.
 
-- [ ] Define a stable internal result-ingestion schema first.
-- [ ] Build one adapter end to end.
-- [ ] Include fixture data and integration tests.
+- [ ] Stabilize the generic internal ingestion schema first.
+- [ ] Select one adapter based on repeated pilot demand.
+- [ ] Build the adapter end to end with fixtures and integration tests.
 - [ ] Document unsupported fields and lossy conversions.
-- [ ] Avoid claiming official partnership without explicit approval.
+- [ ] Avoid claiming an official partnership without approval.
 
-### Acceptance Criteria
+### Acceptance criteria
 
-- A user can convert external eval evidence into a valid OpenEvalGate report without manual CSV reconstruction.
+- [ ] A user can convert external eval evidence into a valid OpenEvalGate report without manually reconstructing the canonical result format.
 
-## P1.4 Publish a Citable Technical Report
+## Phase 6: Specification and Compatibility Stabilization
+
+- [ ] Publish a versioned specification separating normative requirements from practitioner guidance.
+- [ ] Define behavioral contracts, golden evals, contrast families, routes, stopping boundaries, escalation contracts, handoff payloads, durable resume, capability allocation, provenance, hard blockers, and release decisions.
+- [ ] Document required fields, validation rules, failure behavior, and relationships for each primitive.
+- [ ] Version public schemas.
+- [ ] Define backward-compatibility and deprecation policy.
+- [ ] Provide a documented or automated migration for at least one earlier schema version.
+- [ ] Add compatibility fixtures covering supported prior schemas.
+- [ ] Explain the basis and limitations of default weights and thresholds.
+- [ ] Refine defaults only when pilot evidence supports the change.
+
+## Phase 7: External Case Studies and Citable Work
+
+### Case studies
+
+- [ ] Publish one case where OpenEvalGate blocks launch or exposes a material evidence gap.
+- [ ] Publish one case where evidence supports a bounded launch.
+- [ ] Include reproducible sanitized artifacts when permission allows.
+- [ ] State the exercise limitations.
+- [ ] Avoid causal claims such as `prevented harm` without evidence.
+
+### Technical report
 
 Working topic:
 
 > Evidence-Backed Release Assurance for Production AI Agents: Behavioral Contracts, Safe Stopping Boundaries, and Human Escalation Metrics
 
-Suggested sections:
-
-- Problem definition.
-- Prior art and adjacent tools.
-- Normative primitives.
-- Reference implementation.
-- Cross-domain examples.
-- Comparative or ablation analysis.
-- Limitations.
-- Reproducibility instructions.
-- Versioned citation.
-
-- [ ] Publish the report with a permanent identifier when the methodology stabilizes.
+- [ ] Publish only after the methodology and schemas stabilize.
 - [ ] Link the report to a tagged repository release.
 - [ ] Include independent reviewers or acknowledgements where appropriate.
-- [ ] Do not present illustrative examples as production studies.
+- [ ] Distinguish illustrative reference scenarios from production studies.
 
-## P1.5 Participate in Practitioner Communities
+## Phase 8: Practitioner Participation
 
 - [ ] Present the framework in at least two relevant practitioner communities.
 - [ ] Run one structured workshop using a real or sanitized workflow.
-- [ ] Ask participants to challenge thresholds and hard-blocker semantics.
-- [ ] Record questions that reveal missing documentation or concepts.
-- [ ] Convert validated feedback into issues or release notes.
-
-Potential formats:
-
-- Technical meetup talk.
-- Evaluation working group.
-- Open-source community demo.
-- Responsible-AI or AI-platform workshop.
-- Guest article or podcast with technical review.
-
-## P1.6 Contribute Outside OpenEvalGate
-
-- [ ] Identify adjacent projects where OpenEvalGate concepts can add value.
-- [ ] Submit at least one substantive external issue, documentation improvement, mapping, or integration contribution.
-- [ ] Participate in public standards or guidance processes when directly relevant.
+- [ ] Ask participants to challenge thresholds and blocker semantics.
+- [ ] Convert validated questions and feedback into issues or release notes.
+- [ ] Contribute at least one substantive improvement to an adjacent project or public guidance process.
 - [ ] Avoid promotional drive-by contributions.
 
-Independent contributions to other projects are useful because they demonstrate that the maintainer is participating in the field rather than only publishing within a self-controlled repository.
-
-## P2.1 Track Meaningful Adoption Metrics
+## Meaningful Adoption Metrics
 
 Track:
 
-- Number of completed pilots.
-- Number of organizations or domains represented.
-- Number of externally authored issues and pull requests.
-- Number of integration users.
-- Number of case studies.
-- Number of citations or independent references.
-- Number of talks, workshops, and invited reviews.
-- Number of launch blockers or evidence gaps identified during pilots.
-- Number of repeat users or upgraded project versions.
+- completed pilots;
+- organizations or domains represented;
+- repeat users and project upgrades;
+- externally authored issues and pull requests;
+- integration users;
+- approved case studies;
+- citations or independent references;
+- talks, workshops, and invited reviews;
+- blockers or evidence gaps identified during pilots;
+- release or mitigation decisions clarified.
 
-Do not treat stars, impressions, or page views as primary evidence of utility.
-
-## P2.2 Create a Public Roadmap from User Demand
-
-- [ ] Tag roadmap items with source: maintainer, design partner, issue, incident, or integration need.
-- [ ] Prefer repeated user pain over speculative feature expansion.
-- [ ] Publish tradeoffs and non-goals.
-- [ ] Revisit the roadmap after every two to three pilots.
+Do not use stars, impressions, or page views as primary evidence of utility.
 
 ## Evidence Integrity Rules
 
@@ -188,18 +207,30 @@ Do not treat stars, impressions, or page views as primary evidence of utility.
 - Do not publish confidential employer or customer information.
 - Do not equate interest with adoption.
 - Do not claim prevention of harm without causal evidence.
-- Do not store personal immigration strategy in the public repository.
-- Do preserve dated, source-backed evidence outside the repository for legitimate professional and legal documentation.
+- Do not store private professional or immigration records in the repository.
+- Preserve dated, source-backed evidence outside the repository for legitimate documentation.
 
-## Exit Criteria
+## 0.x Stabilization Exit Criteria
 
-Iteration 3 reaches its first meaningful milestone when:
-
-- [ ] Three to five design partners have been recruited.
-- [ ] At least one end-to-end external pilot is complete.
-- [ ] At least two participants have provided substantive structured feedback.
-- [ ] At least one external issue or contribution exists.
-- [ ] One integration path is validated or clearly prioritized by users.
-- [ ] One sanitized case study is approved for publication.
-- [ ] A technical-report outline and reproducibility plan exist.
+- [ ] `0.2.0` is published and explicitly labeled public alpha.
+- [ ] Three to five design partners have been contacted.
+- [ ] At least two end-to-end external reviews are complete.
+- [ ] At least one external issue, review, or contribution exists.
+- [ ] At least one sanitized case study is approved.
+- [ ] One integration is selected from demonstrated demand and implemented or clearly scheduled.
+- [ ] A versioned specification exists.
+- [ ] At least one schema migration has been exercised.
 - [ ] Adoption evidence is tracked with source integrity.
+
+## OpenEvalGate 1.0.0 Entry Criteria
+
+Begin the `1.0.0` release process only when:
+
+- [ ] Public schemas and migration behavior are stable.
+- [ ] CLI commands, exit codes, and machine-readable output are stable.
+- [ ] Hard-blocker IDs, applicability rules, and recommendation meanings are stable.
+- [ ] Provenance and freshness rules are operational.
+- [ ] Compatibility fixtures cover supported previous schemas.
+- [ ] Multiple independent users have completed the workflow.
+- [ ] At least one external contribution and one real integration exist.
+- [ ] Upgrade and rollback procedures have been tested.

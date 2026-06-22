@@ -1,263 +1,217 @@
-# Iteration 2: Public Repository and Release Readiness
+# Iteration 2: Public Repository Readiness
 
 ## Status
 
-**Release-artifact verification implemented.** Continuous integration, Python 3.10–3.13 compatibility coverage, package builds, artifact inspection, clean-wheel installation, installed CLI execution, canonical-report reproducibility, security and conduct policies, contribution templates, citation metadata, changelog, maintainer attribution, issue forms, pull-request guidance, and dependency automation are implemented. Verification on the exact public-release commit remains pending.
+**Core infrastructure complete; public-visibility review remains open.** Continuous integration, Python 3.10–3.13 compatibility coverage, package builds, artifact inspection, clean-wheel installation, installed CLI execution, canonical-report reproduction, security and conduct policies, contribution templates, citation metadata, changelog, maintainer attribution, issue forms, pull-request guidance, and dependency automation are implemented.
 
-Iteration 2 remains open for branch protection, governance and support documents, release and deprecation policy, security scanning, and final public-release verification.
+This iteration now ends when the repository can safely change from private to public. It does not require the full `0.2.0` product release or stable `1.0.0` compatibility guarantees.
 
 ## Objective
 
-Make OpenEvalGate reproducible, attributable, secure, understandable, and easy to adopt before the repository becomes public.
+Make OpenEvalGate safe, bounded, reproducible, attributable, and understandable for public inspection while preserving its explicit pre-1.0 status.
 
-This iteration should not expand product scope. It should make the existing framework trustworthy to engineers, practitioners, contributors, and reviewers.
+This iteration should not expand product scope. It should harden the public surface, claims, examples, governance, CI, repository settings, and disclosure posture.
 
-## P0.1 Add Continuous Integration
+## Planned PR Sequence
 
-The required GitHub Actions workflow covers:
+1. Public positioning and limitations.
+2. Eval-result integrity.
+3. Run provenance and version pinning.
+4. Passing and blocked reference examples.
+5. Governance, support, attribution, and compatibility policies.
+6. CI quality and security hardening.
+7. Disclosure and Git-history audit.
+8. Public-launch freeze.
 
-- [x] Python 3.10.
-- [x] Python 3.11.
-- [x] Python 3.12.
-- [x] Python 3.13.
-- [x] Full `pytest` suite on Python 3.10 and Python 3.13.
-- [x] Lightweight install, compile, import, and CLI checks on Python 3.11 and Python 3.12.
-- [x] One consolidated `CI` status check for branch protection.
-- [x] Node 24-compatible GitHub Actions.
-- [x] Source and wheel package builds.
-- [x] Wheel installation in a clean environment.
-- [x] CLI smoke tests for all canonical examples.
-- [x] Canonical-example validation.
-- [x] Generated-report byte-for-byte reproducibility.
-- [x] Package compilation.
-- [x] Whitespace validation.
-- [ ] Linting and formatting.
-- [ ] Type checking.
-- [ ] Dependency review.
-- [ ] CodeQL or an equivalent lightweight security scan.
+See [Release Milestones](release-milestones.md) for the dependency map.
 
-### Required Smoke Tests
+## P0.1 Public Positioning and Claim Safety
 
-```bash
-python -m build
-python -m pip install dist/*.whl
-openevalgate --version
-openevalgate validate examples/customer_support_assistant/eval_cases.yaml
-openevalgate check examples/customer_support_assistant/
-openevalgate report examples/customer_support_assistant/
-openevalgate check examples/presales_assistant/
-openevalgate check examples/education_assistant/
-```
+Recommended README order:
 
-The build, supported-version checks, artifact inspection, clean-wheel installation, installed CLI commands, canonical validation, and byte-for-byte report comparison are implemented. The report comparison is reproduced through the installed wheel. Verification on the exact public-release commit remains pending.
-
-### Acceptance Criteria
-
-- [x] Every pull request runs the consolidated `CI` workflow.
-- [ ] The default branch cannot merge with a failed required check.
-- [x] Committed generated reports match current CLI output.
-- [x] A wheel installed in a clean environment exposes a working CLI.
-
-## P0.2 Configure Repository Protection
-
-- [ ] Require pull requests for changes to the default branch.
-- [ ] Require the consolidated `CI` status check.
-- [ ] Require branches to be up to date before merge.
-- [ ] Disable force pushes to the default branch.
-- [ ] Enable secret scanning and dependency alerts where available.
-- [x] Prefer squash merging for a readable public history.
-- [x] Use `main` as the default branch.
-- [ ] Enable private vulnerability reporting before public visibility.
-
-These settings require manual repository configuration after PR #5 is merged.
-
-## P0.3 Establish Authorship and Citation
-
-- [x] Set package authorship to Chenye Zhu.
-- [x] Update copyright to `Chenye Zhu and OpenEvalGate contributors`.
-- [x] Add maintainer and homepage metadata.
-- [x] Add `CITATION.cff` with the Charlie Zhu alias.
-- [ ] Add `AUTHORS.md`.
-- [x] Define contribution-credit expectations in `CONTRIBUTING.md` and the Code of Conduct.
-- [x] Add repository, documentation, issues, and changelog URLs to `pyproject.toml`.
-- [x] Add a citation section to the README.
-- [ ] Create a stable tagged release before public visibility.
-
-### Acceptance Criteria
-
-- [x] GitHub can display citation metadata.
-- [x] Installed package metadata identifies the creator and canonical repository.
-- [x] The license preserves permissive reuse while maintaining clear provenance.
-
-## P0.4 Add Open-Source Project Infrastructure
-
-- [x] Add `SECURITY.md` with supported versions and private reporting instructions.
-- [x] Add `CODE_OF_CONDUCT.md`.
-- [x] Add `CHANGELOG.md` beginning with `[Unreleased]`.
-- [ ] Add `GOVERNANCE.md` describing maintainer authority and decision rules.
-- [ ] Add `SUPPORT.md` explaining support boundaries.
-- [x] Add a pull-request template.
-- [x] Add structured bug and feature issue forms.
-- [ ] Add dedicated documentation, integration, and example issue forms only when contribution volume justifies them.
-- [ ] Add labels for `good first issue`, `help wanted`, `schema`, `docs`, `integration`, and `example`.
-- [ ] Document release, deprecation, and schema-change policy.
-- [x] Add automated dependency update configuration.
-
-## P0.5 Tighten Package and Release Metadata
-
-- [x] Confirm the distribution name `openevalgate` and import package are intentional.
-- [x] Add package classifiers appropriate to alpha maturity and Python 3.10–3.13.
-- [x] Add project URLs.
-- [x] Pin minimum supported Python versions in documentation and CI.
-- [ ] Add a package-data strategy if schemas or templates are included at runtime.
-- [x] Inspect source distribution and wheel contents for intended files.
-- [x] Build source and wheel distributions successfully.
-- [x] Add an `[Unreleased]` changelog for user-visible changes.
-- [ ] Add stable tagged release notes.
-- [ ] Add a release checklist and rollback procedure for broken package releases.
-
-### Acceptance Criteria
-
-- [x] `pip install` from the built wheel is sufficient for documented CLI workflows.
-- [x] Release artifacts do not depend on an editable repository checkout.
-- [~] Version output matches installed package metadata; release-tag verification remains pending.
-
-## P1.1 Simplify the README
-
-Recommended top-level order:
-
-1. One-sentence definition.
+1. One-sentence release-assurance definition.
 2. Production problem.
-3. Concrete output example.
-4. Relationship to eval and observability tools.
+3. Concrete blocked-launch output.
+4. Relationship to eval, observability, and runtime-control tools.
 5. Core primitives.
-6. Five-minute quickstart.
+6. Quickstart.
 7. Passing and blocked examples.
-8. Integrations.
-9. Limitations and non-goals.
-10. Contribution and citation.
+8. Limitations and non-goals.
+9. Contribution and citation.
 
 - [ ] Lead with `release assurance`, not a broad governance claim.
+- [ ] Replace `proof` wording for maintainer-authored examples with `examples` or `reference scenarios`.
 - [x] Put a blocked-launch result in the first screenful.
-- [ ] Move the 23-gate list to detailed documentation.
-- [ ] Move scoring weights to methodology documentation.
-- [ ] Remove duplicated definitions and FAQs.
-- [x] Retain a concise architecture block.
-- [~] Add explicit non-claims. Several are present; compliance-certification and universal-readiness wording should be made more explicit.
-- [x] Add CI, license, Python, maintainer, citation, security, contribution, and changelog links.
+- [ ] Add a dedicated limitations and non-claims section.
+- [ ] State that OpenEvalGate does not certify compliance, guarantee safe deployment, execute candidate systems, or establish a universal standard.
+- [ ] Move the full 23-gate list and score weights to methodology documentation.
+- [ ] Remove duplicated definitions and repetitive FAQ content.
+- [ ] Review every standards and competitive reference for exact wording, version, review date, and primary source.
+- [ ] Ensure the repository can explain its category and value in under one minute.
 
-### Required Non-Claims
+## P0.2 Reference Example Integrity
 
-OpenEvalGate does not:
+Maintain two flagship narratives.
 
-- Certify NIST, ISO, OWASP, EU AI Act, or other regulatory compliance.
-- Execute candidate LLM systems.
-- Replace runtime guardrails.
-- Guarantee safe deployment.
-- Establish a universal industry standard.
+### Passing controlled-launch example
 
-## P1.2 Add a Versioned Specification
+- [ ] Complete selected-run and critical-case coverage.
+- [ ] Passing configured thresholds and behavioral invariants.
+- [ ] No unresolved hard blocker or prohibited action.
+- [ ] Passing observability, rollback, and owner signoff.
+- [ ] Valid selected-run provenance.
+- [ ] Deterministic controlled-launch recommendation.
 
-Create `SPECIFICATION.md` or a dedicated specification directory.
-
-Define:
-
-- [ ] Behavioral contract
-- [ ] Golden eval case
-- [ ] Contrast family
-- [ ] Admission route
-- [ ] Workflow route
-- [ ] Safe stopping boundary
-- [ ] Escalation contract
-- [ ] Handoff payload
-- [ ] Durable resume
-- [ ] Capability allocation policy
-- [ ] Evidence provenance
-- [ ] Hard blocker
-- [ ] Release decision
-
-For every primitive, document required fields, semantics, validation rules, failure behavior, versioning, and relationships to other artifacts.
-
-## P1.3 Add Minimal Onboarding
-
-Add:
-
-```bash
-openevalgate init my-agent --profile minimal
-```
-
-Profiles:
-
-- `minimal`
-- `standard`
-- `high-risk`
-- `multi-agent`
-
-- [ ] Minimal profile produces the smallest valid documentation-review project.
-- [ ] Standard profile adds action controls, observability, rollback, and eval results.
-- [ ] High-risk profile adds tail-risk and structured escalation requirements.
-- [ ] Multi-agent profile adds routing and capability allocation.
-- [ ] Add Windows PowerShell instructions.
-- [ ] Add a five-minute quickstart from an installed wheel.
-
-### Acceptance Criteria
-
-A new user can install the package, initialize a project, edit one or two sample cases, run `check`, and generate a useful report without copying the full customer-support example.
-
-## P1.4 Improve CLI Ergonomics
-
-- [x] Add `openevalgate --version`.
-- [ ] Add `--format markdown|json` to `report`.
-- [ ] Add `--format text|json` to `check` and `validate`.
-- [ ] Add stable exit codes for validation, blocker, and internal-error states.
-- [ ] Add `--strict` for warnings that should fail CI.
-- [ ] Add actionable error messages with paths and suggested fixes.
-- [ ] Document machine-consumable outputs.
-
-## P1.5 Improve Examples
-
-Maintain two flagship narratives:
-
-### Passing example
-
-- [ ] Complete empirical result coverage.
-- [ ] Passing critical controls.
-- [ ] No prohibited actions.
-- [ ] Valid rollback and owner signoff.
-- [x] Deterministic controlled-launch recommendation semantics.
-
-### Blocked example
+### Blocked controlled-launch example
 
 - [x] High evidence completeness.
 - [x] Failed observed behavioral metrics.
 - [x] At least one critical-control blocker.
 - [x] Clear mitigation and rerun path.
+- [x] Deterministic `Not ready` recommendation.
 
-- [ ] Label all data and model outputs as illustrative unless produced by a reproducible public harness.
-- [ ] Avoid presenting fabricated example metrics as real-world adoption evidence.
+### Example integrity
 
-## P1.6 Review Standards and Competitive Claims
+- [ ] Label all repository-authored data, metrics, and outputs as synthetic or illustrative.
+- [ ] Avoid presenting illustrative metrics as external adoption evidence.
+- [ ] Add a concise passing-versus-blocked comparison.
+- [x] Generate canonical reports from committed inputs without undocumented manual edits.
+- [x] Reproduce canonical reports byte-for-byte through the installed wheel.
 
-- [ ] Record the exact version and review date for every external framework.
-- [ ] Replace `aligned with` language when the mapping is only conceptual.
-- [ ] Avoid compliance or certification implications.
-- [ ] Cite primary standards and official documentation.
-- [ ] Add a limitations section to the competitive-landscape document.
-- [ ] Review links before every tagged release.
+## P0.3 Continuous Integration and Security Gates
+
+Implemented foundation:
+
+- [x] Python 3.10 through 3.13 compatibility coverage.
+- [x] Full tests on Python 3.10 and 3.13.
+- [x] Lightweight install, compile, import, and CLI checks on Python 3.11 and 3.12.
+- [x] Source and wheel builds.
+- [x] Distribution-content inspection.
+- [x] Clean-wheel installation.
+- [x] Installed CLI smoke tests.
+- [x] Canonical-report reproduction.
+- [x] Node 24-compatible GitHub Actions.
+- [x] Dependency update automation.
+
+Remaining public-repository gates:
+
+- [ ] Add linting and formatting checks.
+- [ ] Add an enforceable type-checking baseline.
+- [ ] Add dependency review.
+- [ ] Add a lightweight static-security scan.
+- [ ] Add documentation-link validation.
+- [ ] Document and accept any unresolved security-tool finding before visibility.
+
+### Acceptance criteria
+
+- [x] Every pull request runs the consolidated `CI` workflow.
+- [ ] The default branch cannot merge with failed required checks.
+- [x] A wheel installed in a clean environment exposes a working CLI.
+- [x] Committed generated reports match installed CLI output.
+- [ ] No unresolved high-severity dependency or static-analysis finding remains.
+
+## P0.4 Repository Protection and Public Settings
+
+- [ ] Require pull requests for `main`.
+- [ ] Require the consolidated `CI` status check.
+- [ ] Require branches to be current before merge.
+- [ ] Disable force pushes and branch deletion on `main`.
+- [ ] Restrict bypass of required checks.
+- [ ] Enable dependency alerts and security updates.
+- [ ] Enable secret scanning and push protection where available.
+- [ ] Enable private vulnerability reporting.
+- [x] Prefer squash merging for readable public history.
+- [x] Use `main` as the default branch.
+- [ ] Configure a concise repository description.
+- [ ] Configure restrained repository topics.
+- [ ] Configure issue labels and public support boundaries.
+- [ ] Verify the social preview image.
+- [ ] Enable Discussions only if a moderation plan exists.
+
+These settings are applied manually after the final CI check names are stable and before the public-launch freeze PR merges.
+
+## P0.5 Governance, Support, and Attribution
+
+Implemented foundation:
+
+- [x] `SECURITY.md`.
+- [x] `CODE_OF_CONDUCT.md`.
+- [x] `CHANGELOG.md`.
+- [x] Expanded `CONTRIBUTING.md`.
+- [x] Structured issue forms and pull-request template.
+- [x] Maintainer and package attribution.
+- [x] `CITATION.cff`.
+
+Remaining work:
+
+- [ ] Add `GOVERNANCE.md` describing maintainer authority and decision rules.
+- [ ] Add `SUPPORT.md` explaining support boundaries and absence of an SLA.
+- [ ] Add `AUTHORS.md` and contribution-credit rules.
+- [ ] Document release, deprecation, and schema-change policy.
+- [ ] Add a broken-release rollback procedure.
+- [ ] Modernize setuptools license metadata.
+- [ ] Link contribution guidance to governance and compatibility rules.
+
+### Acceptance criteria
+
+- [ ] Users know what support is available and what is out of scope.
+- [ ] Contributors know who decides scope and compatibility policy.
+- [ ] Attribution remains clear under the MIT license.
+- [ ] Pre-1.0 breaking-change expectations are explicit.
+
+## P0.6 Disclosure and History Audit
+
+Review the current tree and all retained Git history for:
+
+- secrets and credentials;
+- confidential employer, customer, or pilot material;
+- proprietary prompts or policies;
+- private email or contact information that should not be public;
+- absolute local paths and unsafe generated metadata;
+- unlicensed images, icons, text, or copied assets;
+- deleted sensitive files that remain in history;
+- stale private branches or tags.
+
+- [ ] Record the audit scope, tools, findings, remediation, and residual risks privately.
+- [ ] Rewrite history before visibility if sensitive material is found.
+- [ ] Remove or explicitly review retained branches and tags.
+- [ ] Confirm all public assets are owned, generated, or appropriately licensed.
+- [ ] Confirm no private audit details are placed in public PR descriptions.
+
+## P0.7 Exact-Commit Public-Launch Freeze
+
+- [ ] Update roadmap and checklist statuses without overstating completion.
+- [ ] Record intentionally deferred work and accepted public-alpha risks.
+- [ ] Record the exact public-visibility commit.
+- [ ] Confirm required checks are green on that commit.
+- [ ] Re-run clean-wheel installation and canonical-report reproduction on that commit.
+- [ ] Verify documentation links and public metadata.
+- [ ] Confirm no claim depends on unpublished external validation.
+- [ ] Complete the [Public Launch Checklist](public-launch-checklist.md).
+- [ ] Change repository visibility to public.
+
+## Explicit Deferrals Until OpenEvalGate 0.2.0
+
+The following are valuable but do not block public visibility:
+
+- `openevalgate init` and profile scaffolding;
+- versioned JSON output;
+- SARIF output;
+- stable automation exit codes beyond current behavior;
+- vendor-specific adapters;
+- a PyPI release;
+- published external case studies.
 
 ## Exit Criteria
 
 Iteration 2 is complete when:
 
-- [x] The consolidated CI workflow is present and green across Python 3.10–3.13.
-- [ ] Branch protection is configured.
-- [x] Source and wheel package builds succeed.
-- [x] Clean-wheel installation succeeds.
-- [x] Authorship and citation are explicit.
-- [x] Security, conduct, contribution, changelog, issue-template, and dependency-maintenance infrastructure exist.
-- [ ] Governance and support files exist.
-- [ ] The README communicates the category and value in under one minute.
-- [ ] A minimal new-user flow works without copying a large example.
-- [x] A blocked example is reproducible.
-- [ ] A controlled-launch passing example exists after behavioral-sufficiency semantics are implemented.
-- [ ] Public claims are reviewed, bounded, and supportable on the exact release commit.
+- [ ] Public claims are bounded and limitations are explicit.
+- [ ] Passing and blocked examples are reproducible and labeled illustrative.
+- [ ] Required CI quality and security checks pass.
+- [ ] Branch protection and repository security settings are enabled.
+- [ ] Governance, support, attribution, and compatibility policies are present.
+- [ ] Tree and history disclosure review is complete.
+- [ ] The exact public-visibility commit passes required verification.
+- [ ] The maintainer approves the visibility change.
+- [ ] The repository is public and still explicitly pre-1.0.
