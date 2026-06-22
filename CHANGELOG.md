@@ -8,6 +8,8 @@ The project follows semantic versioning while it remains in alpha. Until a stabl
 
 ### Added
 
+- Editable canonical `review_policy.yaml` samples covering documentation,
+  shadow-launch, and blocked controlled-launch review.
 - Explicit documentation, shadow-launch, and controlled-launch review modes.
 - Optional `review_policy.yaml` with selected run/candidate scope, coverage,
   trial-depth, and initial behavioral thresholds.

@@ -115,8 +115,8 @@ def test_high_evidence_completeness_can_still_be_not_ready(
     assert "**Evidence package band:** Substantially complete" in report
     assert "**Behavioral evidence status:** Evaluated — valid empirical rows are available." in report
     assert "**Critical-control status:** Fail" in report
-    assert "**Maximum permitted stage:** Documentation remediation" in report
-    assert "**Final launch recommendation:** Not ready for shadow evaluation" in report
+    assert "**Maximum permitted stage:** Shadow evaluation with remediation" in report
+    assert "**Final launch recommendation:** Not ready for controlled launch" in report
     assert "## Evidence Completeness Score\n90/100" in report
     assert "Overall Readiness Score" not in report
 
@@ -205,8 +205,8 @@ def test_missing_eval_results_are_not_evaluated_and_cap_launch_recommendation(tm
 
     assert "**Behavioral evidence status:** Not evaluated — no results provided." in report
     assert "**Critical-control status:** Fail" in report
-    assert "**Final launch recommendation:** Not ready for shadow evaluation" in report
-    assert "**Maximum permitted stage:** Documentation remediation" in report
+    assert "**Final launch recommendation:** Not ready for controlled launch" in report
+    assert "**Maximum permitted stage:** Shadow evaluation" in report
     assert "`missing_monitoring`" in report
     assert "Ready for bounded controlled launch" not in report
 
@@ -221,13 +221,14 @@ def test_empty_eval_results_are_distinguished_from_missing_results(tmp_path: Pat
 
     assert "**Behavioral evidence status:** Not evaluated — results file contains no rows." in report
     assert "**Critical-control status:** Fail" in report
-    assert "**Final launch recommendation:** Not ready for shadow evaluation" in report
-    assert "**Maximum permitted stage:** Documentation remediation" in report
+    assert "**Final launch recommendation:** Not ready for controlled launch" in report
+    assert "**Maximum permitted stage:** Shadow evaluation" in report
 
 
 def test_empirical_results_without_hard_blockers_remain_shadow_only(tmp_path: Path) -> None:
     project = tmp_path / "project"
     copytree(CUSTOMER_SUPPORT, project)
+    (project / "review_policy.yaml").unlink()
     low_risk_case = next(
         case
         for case in load_eval_cases(project / "eval_cases.yaml")
@@ -283,7 +284,7 @@ def test_malformed_eval_results_are_invalid_not_missing(tmp_path: Path) -> None:
 
     assert "**Behavioral evidence status:** Invalid — results could not be validated." in report
     assert "**Final launch recommendation:** Not ready" in report
-    assert "**Maximum permitted stage:** Documentation remediation" in report
+    assert "**Maximum permitted stage:** Shadow evaluation" in report
     assert "Validation issues:" in report
 
 
@@ -307,6 +308,7 @@ def test_invalid_results_and_incomplete_control_package_show_all_actions(
 def test_missing_results_do_not_hide_known_blockers(tmp_path: Path) -> None:
     project = tmp_path / "project"
     copytree(CUSTOMER_SUPPORT, project)
+    (project / "review_policy.yaml").unlink()
     (project / "eval_results.csv").unlink()
     text = (project / "launch_gate_review.md").read_text(encoding="utf-8")
     text = text.replace(
@@ -339,6 +341,58 @@ def test_generated_example_reports_are_reproducible(example_name: str) -> None:
     assert "Critical-control status: Pass" not in report
     assert "**Pass**" not in report
     assert ".;" not in report
+
+
+@pytest.mark.parametrize(
+    ("example_name", "mode", "run_id", "candidate", "recommendation"),
+    [
+        (
+            "customer_support_assistant",
+            "controlled_launch",
+            "run_002",
+            "gpt-4.1-mini",
+            "Not ready for controlled launch",
+        ),
+        (
+            "presales_assistant",
+            "documentation",
+            "run_001",
+            "presales_candidate",
+            "Not ready to complete documentation review",
+        ),
+        (
+            "education_assistant",
+            "shadow_launch",
+            "run_001",
+            "education_candidate",
+            "Not ready for shadow evaluation",
+        ),
+    ],
+)
+def test_canonical_examples_demonstrate_distinct_review_modes(
+    example_name: str,
+    mode: str,
+    run_id: str,
+    candidate: str,
+    recommendation: str,
+) -> None:
+    project = ROOT / "examples" / example_name
+    policy = yaml.safe_load(
+        (project / "review_policy.yaml").read_text(encoding="utf-8")
+    )
+    report = generate_report(project)
+
+    assert policy["schema_version"] == "1"
+    assert policy["requested_mode"] == mode
+    assert policy["evaluation_scope"] == {
+        "run_id": run_id,
+        "candidate": candidate,
+    }
+    assert "- Review policy: Present" in report
+    assert f"- Declared review mode: {mode}" in report
+    assert f"- Effective review mode: {mode}" in report
+    assert f"**Final launch recommendation:** {recommendation}" in report
+    assert "Ready for bounded controlled launch" not in report
 
 
 def test_written_report_uses_canonical_lf_bytes(tmp_path: Path) -> None:
@@ -582,8 +636,11 @@ def test_selected_critical_failure_blocks_controlled_launch(
     assert "- Failing critical cases: refund_abuse_history_002" in report
 
 
-def test_missing_policy_selected_scope_is_not_evaluated() -> None:
-    report = generate_report(CUSTOMER_SUPPORT)
+def test_missing_policy_selected_scope_is_not_evaluated(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    copytree(CUSTOMER_SUPPORT, project)
+    (project / "review_policy.yaml").unlink()
+    report = generate_report(project)
 
     assert "- Selected result rows: Not evaluated" in report
     assert "- Observed eval cases: Not evaluated" in report
@@ -649,13 +706,13 @@ def test_critical_trial_depth_has_dedicated_report_line(
 
 
 def test_shadow_invariants_are_explicitly_informational(
-    customer_support_report: str,
+    education_report: str,
 ) -> None:
-    assert "Controlled-launch behavioral invariants" in customer_support_report
+    assert "Controlled-launch behavioral invariants" in education_report
     assert (
         "These invariants are informational in the current review mode "
         "and do not authorize controlled launch."
-    ) in customer_support_report
+    ) in education_report
 
 
 def test_shadow_report_keeps_failed_invariant_informational(

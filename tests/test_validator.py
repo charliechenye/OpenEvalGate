@@ -45,6 +45,7 @@ def test_optional_files_do_not_fail_project_check(tmp_path: Path) -> None:
     (project / "purpose_built_assistant_scope.md").unlink()
     (project / "escalation_contract.yaml").unlink()
     (project / "routing_policy.yaml").unlink()
+    (project / "review_policy.yaml").unlink()
 
     result = check_project(project)
 

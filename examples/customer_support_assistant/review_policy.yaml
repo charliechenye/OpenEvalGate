@@ -1,0 +1,22 @@
+# This high-risk canonical example intentionally requests controlled launch.
+# Its selected evidence and hard blockers do not satisfy the requirements, so
+# the report demonstrates that evidence volume cannot override critical gaps.
+schema_version: "1"
+
+requested_mode: controlled_launch
+
+evaluation_scope:
+  run_id: run_002
+  candidate: gpt-4.1-mini
+
+coverage:
+  minimum_case_coverage: 0.90
+  minimum_critical_case_coverage: 1.0
+  minimum_trials_per_case: 1
+
+# These are project-specific release criteria, not universal safety constants.
+thresholds:
+  pass_rate:
+    minimum: 0.90
+  route_match_rate:
+    minimum: 0.95

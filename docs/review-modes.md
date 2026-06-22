@@ -3,6 +3,16 @@
 OpenEvalGate supports three explicit review modes through an optional
 `review_policy.yaml` file.
 
+The three canonical projects under `examples/` include editable policies that
+demonstrate different stages:
+
+- customer support requests controlled launch but remains blocked;
+- education requests bounded shadow evaluation;
+- presales requests documentation review.
+
+These examples teach review-mode semantics without manufacturing a passing
+controlled-launch project.
+
 ## Modes
 
 - `documentation` validates the control-evidence package and is capped at
