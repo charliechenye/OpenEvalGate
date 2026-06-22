@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "openevalgate"
 version = "0.1.1"
-description = "GenAI governance and launch-readiness evidence for agent behavior, human escalation, oversight, and safe production deployment."
+description = "Local release-assurance framework for evidence-backed launch decisions for production AI assistants and agents."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }

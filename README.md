@@ -1,22 +1,24 @@
 # OpenEvalGate
 
-GenAI governance and AI agent launch readiness, not vibe checks.
+Local release assurance for production AI assistants and agents.
 
 [![CI](https://github.com/charliechenye/OpenEvalGate/actions/workflows/ci.yml/badge.svg)](https://github.com/charliechenye/OpenEvalGate/actions/workflows/ci.yml)
 [![Python 3.10-3.13](https://img.shields.io/badge/python-3.10--3.13-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-OpenEvalGate is an open-source GenAI governance framework for production AI assistants and agents. It helps teams prove three things before launch:
+OpenEvalGate is an open-source, local release-assurance framework for production AI assistants and agents. It deterministically assesses declared review evidence and produces a bounded launch recommendation for the requested review stage.
 
-1. **Expected behavior:** the system resolves, clarifies, acts, escalates, or refuses according to a business-owned contract.
-2. **Safe stopping boundaries:** the system knows when autonomy should end, which human destination should take over, and what context must transfer.
-3. **Launch evidence:** eval results, hard blockers, mitigations, owners, and rollback evidence support a real launch decision.
+It helps teams assemble and review evidence for three questions:
 
-Use OpenEvalGate when a demo, prompt test, or model benchmark is not enough. It turns golden evals, action-risk controls, automation boundaries, human escalation contracts, model evidence, and operational ownership into a local launch-readiness report.
+1. **Expected behavior:** Does observed behavior match a business-owned contract?
+2. **Safe stopping boundaries:** Does autonomy end at the right point, with the right human destination and context?
+3. **Release evidence:** Do eval results, critical controls, mitigations, owners, and rollback plans support the requested review stage?
 
-Most GenAI demos answer: "Can the model do this once?"
+OpenEvalGate does not run the candidate system. Teams run evaluations with their existing tools, record the results locally, and use the CLI to validate the evidence package, identify blockers, and generate a release-assurance report.
 
-Production teams need to answer: "Can this system do this repeatedly without breaking user trust, business policy, or operational control?"
+## The Production Problem
+
+A demo or model benchmark can show that a system succeeded once. A release review must also examine whether it behaves consistently within policy, stops safely, transfers work correctly, and leaves operators able to observe and roll back the system.
 
 ```text
 Intent + context + policy + risk + user-friction signals
@@ -32,95 +34,34 @@ Intent + context + policy + risk + user-friction signals
               approval queue | safe fallback
 ```
 
-OpenEvalGate evaluates both sides of this boundary: under-escalation that creates unsafe autonomy or false containment, and over-escalation that wastes human capacity and increases user effort.
+OpenEvalGate assesses both under-escalation, which can create unsafe autonomy or false containment, and over-escalation, which can waste human capacity and increase user effort.
 
-## Cross-Domain Proof
+## Reference Scenarios
 
-| Domain | Safe stopping boundary | Human path evidence | Failure OpenEvalGate exposes |
+These repository-authored scenarios are synthetic and illustrative. They are not external production deployments, independent adoption evidence, or external validation of OpenEvalGate.
+
+| Domain | Safe stopping boundary | Human path evidence | Failure demonstrated |
 | --- | --- | --- | --- |
 | [Customer support](examples/customer_support_assistant/generated_launch_report.md) | Refund approval, repeated failure, fraud signal, dependency outage | Live handoff, approval queue, async case, fraud operations | Under-escalation, wrong destination, false containment |
 | [Presales](examples/presales_assistant/generated_launch_report.md) | Discount authority, roadmap claims, legal/security commitments | Account-owner follow-up, pricing approval, specialist review | Unsupported commitment, late escalation |
 | [Education](examples/education_assistant/generated_launch_report.md) | Graded work, learner safety, accommodation exception | Instructor review, safety route, accessibility approval | Missing handoff context, unnecessary escalation, failed resume |
 
-## What Is OpenEvalGate?
-
-OpenEvalGate is a local, template-driven framework for GenAI governance, AI agent evaluation, and production launch readiness. It defines the evidence teams should collect before an LLM assistant or agent reaches users, including expected behavior, unacceptable behavior, tool/action risk, escalation paths, observability, hard blockers, and owner signoff.
-
-OpenEvalGate does not replace eval runners, observability platforms, guardrails, or LLMOps tools. It sits above them as the launch gate layer: your tools generate traces, eval results, and policy signals; OpenEvalGate organizes that evidence into a launch-readiness decision.
-
-## Why Trust Preservation?
-
-Production GenAI is ultimately a trust-preservation problem.
-
-User trust is easier to break than earn. Containment is not resolution. Average performance is not launch readiness. The assistant is part of the platform relationship, not just a support surface.
-
-Production AI should optimize for durable resolution, bounded downside, graceful escalation, and long-term user trust, not short-term dashboard wins.
-
-See [Research Evidence And Competitive Landscape](docs/16_research_evidence_and_competitive_landscape.md) for supporting standards, guidance, and adjacent projects.
-
-## What OpenEvalGate Is
-
-- A launch-readiness framework.
-- A trust-preservation framework.
-- A cross-functional review system.
-- A template library.
-- A lightweight local CLI.
-- A way to generate launch-readiness reports.
-
-## What OpenEvalGate Is Not
-
-OpenEvalGate is not a full eval platform, tracing system, monitoring platform, agent framework, model benchmark, prompt library, guardrails runtime, or replacement for existing LLMOps tools. It does not call LLM APIs. It does not send telemetry. It does not require cloud services.
-
-You can use OpenEvalGate alongside LangSmith, Braintrust, Phoenix, Promptfoo, DeepEval, Guardrails AI, Langfuse, Helicone, [SkillGate](https://github.com/charliechenye/SkillGate), or your internal LLMOps and security stack. OpenEvalGate defines launch-readiness evidence; your tool stack can execute, trace, monitor, secure, or automate parts of that process.
-
-For a detailed comparison, see [Research Evidence And Competitive Landscape](docs/16_research_evidence_and_competitive_landscape.md).
-
-## Who It Is For
-
-- AI Product Managers.
-- ML / AI Engineers.
-- GenAI Platform Teams.
-- Trust, Safety, Legal, and Compliance Teams.
-- Business / Operations / Policy Owners.
-- Startup founders building AI assistants or agents.
-
-## Use Cases
-
-- **Production AI launch review:** Turn model behavior, risk controls, ownership, observability, and rollback evidence into a launch recommendation.
-- **AI assistant governance:** Define supported use cases, unacceptable behavior, owner signoff, business policy, and trust-preservation requirements.
-- **AI agent safety review:** Classify tool/action risk, require deterministic controls, and identify actions that need human approval.
-- **Golden eval set design:** Convert product expectations, policy boundaries, incidents, and edge cases into reusable golden evals.
-- **Automation boundary review:** Decide where autonomy is appropriate, where the system should ask for clarification, and where it must escalate or block.
-- **Human escalation design:** Define when a human should review, approve, take over, or resolve a high-risk workflow.
-- **Model comparison evidence:** Compare candidate models against product-specific eval cases, cost, latency, safety, and business criteria.
-- **Launch-readiness reporting:** Generate a local report that summarizes score, blockers, mitigations, and next actions.
-
-## Core Concepts
-
-- **Golden eval set as behavioral PRD:** The clearest executable description of expected assistant behavior.
-- **Agent behavior as business contract:** Golden evals are the operating contract between business intent and agent execution.
-- **Trust preservation:** The system should help users complete the task now while preserving future trust.
-- **Tail-risk/P0 evaluation:** Rare does not mean acceptable; tail failures define trust.
-- **Automation boundary:** Define where automation is appropriate and where it becomes risky.
-- **Human escalation as control surface:** Escalation protects users, business operations, and platform trust.
-- **Domain-owner feedback loop:** Domain owners review traces, propose evals, flag policy nuance, and approve high-risk behavior changes.
-- **Metric stack beyond containment:** Track efficiency, quality, journey resolution, and business/trust outcomes.
-- **Eval result feedback:** Candidate outputs and grading results are saved in `eval_results.csv` and optional `eval_runs/` files.
-- **Per-workflow capability allocation:** Multi-agent systems assign approved model capability to each bounded subagent while preserving explicit deterministic and human no-model paths.
+See the [examples index](examples/README.md) for scenario purposes, inputs, and reproduction commands.
 
 ## Quickstart
 
-New to the repo? Start with [Getting Started for Practitioners](docs/00_getting_started_for_practitioners.md).
+New to the repository? Start with [Getting Started for Practitioners](docs/00_getting_started_for_practitioners.md).
 
 ```bash
 python -m pip install -e ".[dev]"
 openevalgate --version
 openevalgate validate examples/customer_support_assistant/eval_cases.yaml
 openevalgate check examples/customer_support_assistant/
-openevalgate report examples/customer_support_assistant/ --output examples/customer_support_assistant/generated_launch_report.md
+openevalgate report examples/customer_support_assistant/ \
+  --output examples/customer_support_assistant/generated_launch_report.md
 ```
 
-The generated report does not merely confirm that an escalation worksheet exists. It summarizes structured operational evidence:
+The generated report separates evidence completeness from observed behavior and critical controls:
 
 ```text
 Structured escalation contract: valid
@@ -133,192 +74,113 @@ Hard blocker: critical_escalation_regression
 Recommendation: Not ready
 ```
 
-That is the point of OpenEvalGate: high evidence completeness cannot hide a high-risk case that failed to stop or reached the wrong human destination.
+High evidence completeness cannot override a high-risk case that failed to stop or reached the wrong human destination.
 
-## Example Workflow
+## How It Works
 
-1. Define assistant scope and unsupported use cases.
-2. Complete the business behavior contract and trust-preservation review.
-3. Build golden eval cases from historical, boundary, adversarial, tail-risk, regression, and drift samples.
-4. Define automation boundaries, tool/action safety, output critic criteria, and human escalation design.
-5. Run the candidate assistant externally using your eval or LLMOps stack.
-6. Save results in `eval_results.csv` and observed outputs in `eval_runs/`.
-7. Fill out the launch gate review.
-8. Generate the launch readiness report.
+1. Define assistant scope, unsupported uses, and business-owned behavior.
+2. Build golden eval cases from expected, boundary, adversarial, tail-risk, regression, and drift scenarios.
+3. Define action risks, automation boundaries, human escalation, observability, rollback, and ownership.
+4. Run the candidate assistant externally using an eval runner, internal harness, or manual review.
+5. Save observed results in `eval_results.csv` and optional outputs in `eval_runs/`.
+6. Validate the project and generate a local report.
+7. Review the recommendation, blockers, mitigations, and required next actions.
 
-## Launch Gates
+The framework distinguishes:
 
-1. Scope gate
-2. Trust preservation gate
-3. Business behavior contract gate
-4. Golden eval gate
-5. Tail-risk / P0 failure mode gate
-6. Model selection gate
-7. Model arena gate
-8. Routing / capability allocation gate
-9. Grounding gate
-10. SOP/policy compilation gate
-11. Tool/action safety gate
-12. Automation boundary gate
-13. Human escalation gate
-14. Input filter gate
-15. Output critic gate
-16. Domain-owner feedback loop gate
-17. Observability gate
-18. Cost/latency gate
-19. Journey metric / durable resolution gate
-20. Business trust metric gate
-21. Drift monitoring gate
-22. Rollback gate
-23. Owner signoff gate
+- evidence completeness;
+- behavioral-evidence status;
+- critical-control status;
+- maximum permitted review stage;
+- final bounded recommendation.
 
-## Evidence Completeness Scoring
+The complete gate list, scoring weights, evidence bands, and hard-gate semantics are documented in [Launch Gates and Evidence Scoring](docs/launch-gates-and-evidence-scoring.md). Review modes, selected-run coverage, and controlled-launch behavioral sufficiency are documented in [Review Modes and Behavioral Sufficiency](docs/review-modes.md).
 
-OpenEvalGate uses a 100-point trust-weighted evidence completeness score. It measures how completely a project has documented and reviewed its declared launch controls and governance evidence. It is not a behavioral quality score and does not determine launch readiness by itself.
+## Where OpenEvalGate Fits
 
-- Scope readiness: 5
-- Trust preservation readiness: 8
-- Business behavior contract readiness: 7
-- Golden eval readiness: 10
-- Tail-risk / P0 failure readiness: 10
-- Model selection / arena readiness: 7
-- Grounding readiness: 6
-- SOP/policy compilation readiness: 5
-- Tool/action safety readiness: 8
-- Automation boundary readiness: 6
-- Human escalation readiness: 5
-- Input/output perimeter readiness: 6
-- Domain-owner feedback loop readiness: 4
-- Observability readiness: 5
-- Cost/latency readiness: 3
-- Journey/business metrics readiness: 5
-
-Evidence package bands:
-
-- 85-100: Substantially complete
-- 50-84: Material gaps
-- Below 50: Incomplete
-
-These bands describe evidence completeness only. They do not grant a deployment stage. The final recommendation is determined separately from project validity, behavioral-evidence state, and known hard blockers. Missing, empty, or invalid `eval_results.csv` cannot produce a controlled-launch recommendation.
-
-Explicit review modes, selected-run coverage, critical-case sufficiency, and initial behavioral thresholds are documented in [Review Modes and Behavioral Sufficiency](docs/review-modes.md). Controlled-launch recommendations remain bounded and do not replace provenance, freshness, runtime monitoring, or organizational approval.
-
-Behavioral evidence is reported as one of:
-
-- `Not evaluated — no results provided.`
-- `Not evaluated — results file contains no rows.`
-- `Invalid — results could not be validated.`
-- `Evaluated — valid empirical rows are available.`
-
-`Control evidence completeness threshold met` means only that the evidence score is at least 85, required project artifacts are present, and non-result project validation has no errors. Meeting this threshold does not override hard blockers or grant permission to begin shadow evaluation.
-
-`openevalgate check` validates whether project artifacts and gate declarations are structurally usable. A supported `partial` or `fail` declaration is structurally valid, so it does not make `check` fail; it does create a launch-policy blocker in the report. Unsupported statuses, duplicate standard gates, prohibited `not_applicable` declarations, and malformed required artifacts fail `check`.
-
-## Hard Blockers
-
-Eight centralized hard gates are evaluated independently from the evidence-completeness score:
-
-- Scope and golden eval are always applicable.
-- Tail-risk/P0 and human escalation are applicable to high-impact projects.
-- Tool/action safety is applicable when the validated action matrix contains actions.
-- Observability, rollback, and owner signoff are always applicable.
-
-An applicable hard gate requires `pass`, a meaningful evidence cell, and any gate-specific artifact evidence. `partial`, `fail`, missing, or prohibited `not_applicable` declarations block advancement. When conditional applicability cannot be established because source evidence is missing or invalid, the gate is blocked rather than treated as non-applicable.
-
-Independent blockers, such as an ungated high-risk action or a behavioral escalation regression, remain separate from the eight policy-gate blocker IDs.
-
-For every populated `action_risk_matrix.csv` row, `action` must be nonblank,
-`risk_tier` must be `low`, `medium`, `high`, or `prohibited`, and
-`human_review_required` must be `true` or `false`. A row is populated when any
-cell contains a non-whitespace value. If any row is invalid, the entire matrix
-fails validation and none of its rows influence action applicability, impact
-classification, or unsafe-action blockers.
-
-## Templates
-
-The repo includes templates for assistant PRDs, golden eval cases, eval results, business behavior contracts, domain-owner feedback, behavior change requests, P0 failure modes, automation boundaries, human escalation design, machine-readable escalation and routing policies, chatbot metric stacks, trust-preservation reviews, launch gates, and launch readiness reports. Some playbooks include additional local templates for specialized workflows, such as routing decisions, routing experiments, and staged rollouts.
-
-## Playbooks
-
-- [Golden Eval Set Playbook](docs/playbooks/golden-eval-set-playbook/README.md): a practitioner guide for PMs and domain owners turning expected behavior into golden eval cases, release gates, and incident feedback loops.
-- [Synthetic Boundary Case Guide](docs/17_synthetic_boundary_case_guide.md): a method for turning policy thresholds into contrast families, execution assertions, reliability evidence, and release controls.
-- [Routing Playbook](docs/playbooks/routing/README.md): practitioner artifacts for scenario routing, workflow routing, model routing, risk controls, routing experiments, observability, and staged rollout.
-- [Human Escalation Playbook](docs/playbooks/human-escalation-playbook/README.md): practitioner artifacts for escalation contracts, handoff payloads, queue routing, fallback behavior, durable workflow state, release gates, incident ingestion, and recertification.
-
-Playbook artifacts complement the existing launch gates. They provide optional evidence for teams that need more than a single model arena or a generic fallback path: which scenarios use which specialist workflows, when additional model capability is justified, which deterministic controls remain outside the model, how human handoffs preserve state, and how route or escalation changes will be observed and rolled back. The CLI remains unchanged; `openevalgate check` and `openevalgate report` continue to validate the existing required project files.
-
-For multi-agent systems, OpenEvalGate treats foundation-model choice as a per-workflow or per-subagent capability assignment. Optional `routing_policy.yaml` evidence records fixed, adaptive, deterministic, and human paths without treating a stronger model as an authorization or safety control.
-
-## Repo Structure
+OpenEvalGate complements eval runners, observability platforms, runtime controls, security tooling, and internal review systems.
 
 ```text
-docs/       Opinionated guides for production GenAI launch readiness.
-templates/  Copyable Markdown, YAML, and CSV launch review templates.
-examples/   Example assistant projects users can adapt.
-openevalgate/  Small local Python CLI.
-tests/      Schema, project check, scoring, hard-blocker, and report tests.
+Business intent / policy / trust risk
+        |
+        v
+OpenEvalGate review artifacts and declared controls
+        |
+        v
+External eval runners, candidate systems, traces, and runtime tools
+        |
+        v
+eval_results.csv, observed outputs, incidents, and control evidence
+        |
+        v
+OpenEvalGate validation, blockers, and bounded recommendation
 ```
 
-## Business Owner Participation
+Eval and LLMOps tools execute tests, collect traces, monitor behavior, or enforce runtime policy. OpenEvalGate consumes their outputs through local artifacts and organizes that evidence for a defined release review. It does not require an official vendor integration.
 
-Business and domain owners often know the ground truth better than the central AI team. They should review eval cases, define unacceptable behavior, approve risky behavior changes, own escalation thresholds, and monitor drift through controlled self-service workflows.
+See [Research Context and Adjacent Tools](docs/16_research_evidence_and_competitive_landscape.md) for conceptual relationships with external guidance and tooling.
 
-## CLI Usage
+## Core Primitives
 
-Validate a golden eval YAML file:
+- **Business behavior contract:** expected and unacceptable behavior owned by product and domain stakeholders.
+- **Golden eval set:** product-specific behavior expressed as reusable test cases.
+- **Tail-risk review:** explicit treatment of rare, high-impact failures.
+- **Action-risk matrix:** classification of tool and action risks, including required human review.
+- **Automation boundary:** decisions about resolution, clarification, approval, escalation, refusal, and blocking.
+- **Human escalation contract:** destinations, service levels, payloads, fallbacks, and durable resume behavior.
+- **Evidence completeness:** documentation and review coverage, kept separate from behavioral quality.
+- **Hard blockers:** critical controls that can prevent advancement regardless of aggregate score.
+- **Review modes:** documentation, shadow-launch, and controlled-launch assessments with different evidence requirements.
 
-```bash
-openevalgate validate examples/customer_support_assistant/eval_cases.yaml
+For multi-agent systems, optional `routing_policy.yaml` evidence records fixed, adaptive, deterministic, and human paths per bounded workflow. A stronger model is not treated as an authorization or safety control.
+
+## Who It Is For
+
+- AI product managers and business or operations owners;
+- ML, AI, and platform engineers;
+- trust, safety, legal, compliance, and security reviewers;
+- teams preparing a cross-functional review of an assistant or agent.
+
+## Limitations and Non-Claims
+
+OpenEvalGate is an early, pre-1.0 framework with practitioner-defined defaults and repository-authored synthetic examples.
+
+- It does not execute candidate models, call LLM APIs, or evaluate live behavior by itself.
+- It does not replace eval runners, observability systems, runtime guardrails, security controls, or organizational approval.
+- It validates submitted artifacts and declared evidence; it does not independently verify that every claim in those artifacts is true, current, or complete.
+- A passing check, high evidence score, or bounded recommendation does not guarantee safe, reliable, compliant, or successful deployment.
+- It does not certify compliance or provide legal, regulatory, security, or risk-management certification.
+- References to NIST, ISO, OECD, OWASP, the EU AI Act, or other guidance describe conceptual relationships, not formal alignment, endorsement, partnership, or approval.
+- References to external tools describe complementary workflows, not official integrations or vendor partnerships unless explicitly documented by both parties.
+- Repository-authored scenarios are not external validation, independent adoption evidence, or proof of production performance.
+- The scoring weights and thresholds are initial practitioner defaults, not scientific constants or a universal industry standard.
+- Teams remain responsible for system design, evidence quality, runtime controls, monitoring, authorization, and release decisions.
+
+## Templates and Playbooks
+
+The repository includes local Markdown, YAML, and CSV templates for assistant scope, behavior contracts, eval cases and results, action risk, automation boundaries, escalation, output review, observability, metrics, launch gates, and reports.
+
+Practitioner playbooks include:
+
+- [Golden Eval Set Playbook](docs/playbooks/golden-eval-set-playbook/README.md)
+- [Synthetic Boundary Case Guide](docs/17_synthetic_boundary_case_guide.md)
+- [Routing Playbook](docs/playbooks/routing/README.md)
+- [Human Escalation Playbook](docs/playbooks/human-escalation-playbook/README.md)
+
+## Repository Structure
+
+```text
+docs/          Guides, methodology, and playbooks.
+templates/     Copyable review artifacts.
+examples/      Synthetic, illustrative assistant scenarios.
+openevalgate/  Deterministic local Python CLI.
+tests/         Schema, policy, assessment, and report tests.
 ```
 
-Check required launch gate files:
+## Maintainer, Citation, and Contribution
 
-```bash
-openevalgate check examples/customer_support_assistant/
-```
+OpenEvalGate was created and is maintained by [Chenye Zhu](https://chenyezhu.com/) and is released under the [MIT License](LICENSE).
 
-Generate a Markdown launch readiness report:
+For references, use [CITATION.cff](CITATION.cff). Release history is in [CHANGELOG.md](CHANGELOG.md). Contributions should follow [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md). Report suspected vulnerabilities according to [SECURITY.md](SECURITY.md).
 
-```bash
-openevalgate report examples/customer_support_assistant/ --output examples/customer_support_assistant/generated_launch_report.md
-```
-
-OpenEvalGate does not execute candidate LLM systems in V1. It ingests outputs and grades from external eval runners through `eval_results.csv`.
-
-## FAQ
-
-### What is OpenEvalGate?
-
-OpenEvalGate is a GenAI governance and AI agent launch-readiness framework. It helps teams define golden evals, risk gates, automation boundaries, human escalation, observability evidence, and launch-readiness reports before a production LLM assistant or agent reaches users.
-
-### Is OpenEvalGate an LLM evaluation framework?
-
-OpenEvalGate is not an eval runner. It defines what should be evaluated, what evidence must exist, and what blockers prevent launch. Teams can run LLM evaluation in Promptfoo, DeepEval, OpenAI Evals, Braintrust, LangSmith, Phoenix, Langfuse, Helicone, internal harnesses, or manual review, then feed the results back into OpenEvalGate.
-
-### How is OpenEvalGate different from Promptfoo, DeepEval, LangSmith, and Guardrails AI?
-
-Promptfoo, DeepEval, and OpenAI Evals execute or structure eval tests. LangSmith, Braintrust, Phoenix, Langfuse, and Helicone help trace, observe, and debug LLM systems. Guardrails AI and internal policy services help validate or enforce runtime behavior. OpenEvalGate sits above those tools as the GenAI governance and launch gate layer: it organizes eval results, risk evidence, human escalation, hard blockers, and owner signoff into a launch-readiness decision. See [Research Evidence And Competitive Landscape](docs/16_research_evidence_and_competitive_landscape.md) for a detailed comparison.
-
-### Who should use OpenEvalGate?
-
-OpenEvalGate is for teams launching production AI assistants or agents: AI product managers, ML/AI engineers, GenAI platform teams, trust and safety reviewers, legal and compliance teams, business operations owners, and startup founders who need more than a model-quality score.
-
-### Does OpenEvalGate call LLM APIs?
-
-No. OpenEvalGate does not call LLM APIs, execute candidate models, send telemetry, or require cloud services. It is local-first and ingests outputs from your existing eval, tracing, observability, guardrails, or LLMOps stack.
-
-### How does OpenEvalGate support GenAI governance?
-
-OpenEvalGate makes governance concrete through launch gates, ownership, evidence, mitigations, hard blockers, golden eval coverage, tool/action safety review, automation boundaries, human escalation paths, observability checks, rollback expectations, and launch-readiness reporting.
-
-## Maintainer and citation
-
-OpenEvalGate was created and is maintained by [Chenye Zhu](https://chenyezhu.com/). The project is released under the [MIT License](LICENSE).
-
-For academic, professional, or internal references, use the repository's [citation metadata](CITATION.cff). Release history is documented in the [changelog](CHANGELOG.md).
-
-## How To Contribute
-
-Start with [CONTRIBUTING.md](CONTRIBUTING.md) and follow the [Code of Conduct](CODE_OF_CONDUCT.md). High-value contributions include domain-specific escalation contracts, incident-derived eval cases, queue and fallback patterns, handoff payload examples, and evidence from finance, HR, healthcare administration, developer tooling, and other enterprise workflows.
-
-Keep the CLI small, deterministic, local-first, and dependency-light. Report suspected vulnerabilities privately according to [SECURITY.md](SECURITY.md).
+Keep the CLI small, deterministic, local-first, and dependency-light.
