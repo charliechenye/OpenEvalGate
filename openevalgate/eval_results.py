@@ -625,9 +625,7 @@ def _parse_review_timestamp(value: str) -> _ParsedReviewTimestamp:
 def _validate_output_reference(project_dir: Path, value: str) -> str | None:
     if (
         _URL_PATTERN.match(value)
-        or value.startswith("/")
-        or value.startswith("\\\\")
-        or value.startswith("//")
+        or value.startswith(("/", "\\"))
         or _WINDOWS_DRIVE_PATTERN.match(value)
     ):
         return "Must be a project-relative filesystem path."

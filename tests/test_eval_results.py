@@ -500,6 +500,7 @@ def test_existing_regular_output_reference_passes(
         (r"C:\private\output.md", "Must be a project-relative filesystem path."),
         ("C:/private/output.md", "Must be a project-relative filesystem path."),
         (r"\\server\share\output.md", "Must be a project-relative filesystem path."),
+        (r"\eval_runs\run_001\refund_boundary_case_001.md", "Must be a project-relative filesystem path."),
         ("https://example.com/output.md", "Must be a project-relative filesystem path."),
         ("file:///tmp/output.md", "Must be a project-relative filesystem path."),
         ("../outside.md", "Parent-directory traversal is not allowed."),
