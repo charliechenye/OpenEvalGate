@@ -19,17 +19,17 @@ Public visibility is not the same as publishing OpenEvalGate `0.2.0`, releasing 
 
 ## 2. Public Positioning and Non-Claims
 
-- [ ] The first paragraph defines OpenEvalGate primarily as release assurance.
-- [ ] Repository-authored scenarios are described as examples or reference scenarios, not external proof.
-- [ ] Synthetic and illustrative examples are labeled clearly.
-- [ ] A dedicated limitations and non-claims section exists.
-- [ ] The README states that OpenEvalGate does not certify compliance.
-- [ ] The README states that OpenEvalGate does not guarantee safe deployment.
-- [ ] The README states that OpenEvalGate does not execute candidate systems or replace runtime guardrails.
-- [ ] The README states that OpenEvalGate does not establish a universal industry standard.
-- [ ] The README avoids unsupported `first`, `standard`, `industry-leading`, or universal claims.
-- [ ] The README explains the category and value in under one minute.
-- [ ] The full gate list, scoring weights, and extended methodology are moved out of the main README where appropriate.
+- [x] The first paragraph defines OpenEvalGate primarily as release assurance.
+- [x] Repository-authored scenarios are described as examples or reference scenarios, not external proof.
+- [x] Synthetic and illustrative examples are labeled clearly.
+- [x] A dedicated limitations and non-claims section exists.
+- [x] The README states that OpenEvalGate does not certify compliance.
+- [x] The README states that OpenEvalGate does not guarantee safe deployment.
+- [x] The README states that OpenEvalGate does not execute candidate systems or replace runtime guardrails.
+- [x] The README states that OpenEvalGate does not establish a universal industry standard.
+- [x] The README avoids unsupported `first`, `standard`, `industry-leading`, or universal claims.
+- [x] The README explains the category and value in under one minute.
+- [x] The full gate list, scoring weights, and extended methodology are moved out of the main README where appropriate.
 - [ ] Standards and competitive references use precise wording and primary sources.
 
 ## 3. Reference Examples
@@ -52,7 +52,7 @@ Public visibility is not the same as publishing OpenEvalGate `0.2.0`, releasing 
 
 ### Example integrity
 
-- [ ] All repository-authored data, model outputs, and metrics are labeled synthetic or illustrative.
+- [x] All repository-authored data, model outputs, and metrics are labeled synthetic or illustrative.
 - [x] No example metric is presented as external adoption evidence.
 - [x] Generated outputs reproduce from committed inputs.
 - [x] Canonical reports reproduce byte-for-byte through the installed wheel.
@@ -92,7 +92,7 @@ Public visibility is not the same as publishing OpenEvalGate `0.2.0`, releasing 
 - [ ] `AUTHORS.md` defines contribution-credit rules.
 - [ ] Release, deprecation, schema-change, and broken-release rollback policies are documented.
 - [ ] Pre-1.0 compatibility expectations are explicit.
-- [ ] Setuptools license metadata is modernized.
+- [x] Setuptools license metadata is modernized.
 
 ## 6. Repository Settings
 
