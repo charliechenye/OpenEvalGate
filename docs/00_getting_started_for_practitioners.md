@@ -1,13 +1,13 @@
 # Getting Started For Practitioners
 
-OpenEvalGate is not an app to deploy. It is a GenAI governance and launch-readiness operating kit for production AI assistants and agents.
+OpenEvalGate is a local release-assurance toolkit for production AI assistants and agents. It is not an application runtime or an eval runner. It helps teams assemble, validate, and review evidence for a bounded review stage after candidate-system execution has happened elsewhere.
 
 Use it to answer:
 
 - What behavior are we willing to launch?
 - What behavior would damage user trust?
 - What must be evaluated before launch?
-- What evidence says this system is ready?
+- What evidence supports the requested review stage?
 - What must be escalated, blocked, or reviewed by a human?
 
 ## The Fastest Path
@@ -34,7 +34,7 @@ Copy-Item -Recurse examples/customer_support_assistant examples/my_assistant
 
 ## What To Fill Out First
 
-Start with the required launch-readiness files:
+Start with the required release-review files:
 
 ```text
 assistant_prd.md
@@ -50,7 +50,7 @@ chatbot_success_metric_stack.md
 launch_gate_review.md
 ```
 
-These files define what the assistant is allowed to do, what it must not do, when it should escalate, how tool risk is controlled, and how launch readiness will be judged.
+These files define what the assistant is allowed to do, what it must not do, when it should escalate, how tool risk is controlled, and how evidence will be assessed for the requested review stage.
 
 ## Human Escalation Path
 
@@ -204,10 +204,12 @@ The report should make clear:
 - required mitigations
 - suggested next actions
 
+The evidence-completeness model and launch gates are documented in [Launch Gates and Evidence Completeness Scoring](launch-gates-and-evidence-scoring.md). The requirements for documentation, shadow-launch, and controlled-launch review are documented in [Review Modes and Behavioral Sufficiency](review-modes.md).
+
 ## Required Mindset
 
 Do not optimize only for containment.
 
 Containment tells you whether the bot absorbed the session. Resolution tells you whether the user's problem was solved. Trust tells you whether the platform relationship survived.
 
-OpenEvalGate is useful when teams treat launch readiness as a cross-functional decision, not a model-quality score.
+OpenEvalGate is useful when teams treat release review as a bounded cross-functional decision, not a universal readiness verdict or model-quality score.
