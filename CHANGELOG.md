@@ -25,6 +25,8 @@ The project follows semantic versioning while it remains in alpha. Until a stabl
 
 ### Changed
 
+- Informational controlled-launch invariant failures no longer set documentation
+  or shadow review critical-control status to `Fail`.
 - Controlled-launch behavioral blockers and authorization now use only the
   selected run and candidate; reports distinguish unevaluated selection,
   invalid policy, invalid results, and informational full-file metrics.

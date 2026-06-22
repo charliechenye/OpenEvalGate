@@ -5,11 +5,13 @@ from shutil import copytree
 import pytest
 import yaml
 
+from openevalgate.assessment import assess_launch
 from openevalgate.cli import main
 from openevalgate.launch_gate_review import is_meaningful_mitigation
 from openevalgate.project_inspection import inspect_project
 from openevalgate.report import _non_eval_result_issues, generate_report, write_report
-from openevalgate.schema import ValidationIssue, load_eval_cases
+from openevalgate.review_policy import evaluate_behavioral_sufficiency
+from openevalgate.schema import ReviewMode, ValidationIssue, load_eval_cases
 from openevalgate.scorer import WEIGHTS, score_gates, GateRow
 
 
@@ -654,6 +656,78 @@ def test_shadow_invariants_are_explicitly_informational(
         "These invariants are informational in the current review mode "
         "and do not authorize controlled launch."
     ) in customer_support_report
+
+
+def test_shadow_report_keeps_failed_invariant_informational(
+    tmp_path: Path,
+) -> None:
+    project = tmp_path / "project"
+    copytree(CUSTOMER_SUPPORT, project)
+    gate_path = project / "launch_gate_review.md"
+    gate_path.write_text(
+        gate_path.read_text(encoding="utf-8").replace(
+            "| Observability gate | partial |",
+            "| Observability gate | pass |",
+        ),
+        encoding="utf-8",
+    )
+    low_risk_case = next(
+        case
+        for case in load_eval_cases(project / "eval_cases.yaml")
+        if case["risk_tier"] == "low"
+    )
+    policy = {
+        "schema_version": "1",
+        "requested_mode": "shadow_launch",
+        "evaluation_scope": {
+            "run_id": "shadow-run",
+            "candidate": "shadow-candidate",
+        },
+    }
+    (project / "review_policy.yaml").write_text(
+        yaml.safe_dump(policy, sort_keys=False),
+        encoding="utf-8",
+    )
+    route = low_risk_case["expected_route"]
+    _write_result_rows(
+        project,
+        [
+            (
+                f"shadow-run,{low_risk_case['id']},shadow-candidate,harness,"
+                f"{route},{route},true,true,1,,,,qa,2026-06-21,"
+                "informational prohibited action,true"
+            )
+        ],
+    )
+
+    inspection = inspect_project(project)
+    sufficiency = evaluate_behavioral_sufficiency(project)
+    assessment = assess_launch(
+        evidence_completeness_score=90,
+        project_evidence_valid=True,
+        behavioral_sufficiency=sufficiency,
+        hard_blockers=inspection.hard_blockers,
+    )
+    report = generate_report(project)
+
+    assert assessment.effective_review_mode == ReviewMode.SHADOW_LAUNCH
+    assert assessment.hard_blockers == []
+    assert any(
+        outcome.status == "fail"
+        for outcome in assessment.behavioral_sufficiency.invariant_outcomes
+    )
+    assert assessment.maximum_permitted_stage == "Shadow evaluation"
+    assert assessment.recommendation == "Ready for bounded shadow evaluation"
+    assert assessment.critical_control_status == "No known blockers detected"
+    assert "**Effective review mode:** shadow_launch" in report
+    assert "**Final launch recommendation:** Ready for bounded shadow evaluation" in report
+    assert "**Critical-control status:** No known blockers detected" in report
+    assert "Controlled-launch behavioral invariants" in report
+    assert "| no_prohibited_actions | Fail |" in report
+    assert (
+        "These invariants are informational in the current review mode "
+        "and do not authorize controlled launch."
+    ) in report
 
 
 def test_high_risk_escalation_regression_is_hard_blocker(

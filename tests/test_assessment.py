@@ -52,6 +52,20 @@ def test_documentation_mode_is_capped() -> None:
     assert result.critical_control_status != "Pass"
 
 
+def test_documentation_mode_ignores_failed_informational_invariant() -> None:
+    result = _assess(
+        _sufficiency(
+            ReviewMode.DOCUMENTATION,
+            sufficient=False,
+            invariant_status="fail",
+        )
+    )
+
+    assert result.maximum_permitted_stage == "Documentation review"
+    assert result.recommendation == "Documentation review complete"
+    assert result.critical_control_status == "No known blockers detected"
+
+
 def test_incomplete_documentation_requires_remediation() -> None:
     result = _assess(_sufficiency(ReviewMode.DOCUMENTATION), score=84)
     assert result.maximum_permitted_stage == "Documentation remediation"
@@ -70,7 +84,24 @@ def test_shadow_mode_rejects_invalid_results_and_blockers() -> None:
     invalid = _assess(_sufficiency(state="invalid", selected_rows=0))
     blocked = _assess(_sufficiency(), blockers=[BLOCKER])
     assert invalid.maximum_permitted_stage == "Documentation remediation"
+    assert invalid.critical_control_status == "Not evaluated"
     assert blocked.maximum_permitted_stage == "Documentation remediation"
+    assert blocked.recommendation == "Not ready for shadow evaluation"
+    assert blocked.critical_control_status == "Fail"
+
+
+def test_shadow_mode_ignores_failed_informational_invariant() -> None:
+    result = _assess(
+        _sufficiency(
+            ReviewMode.SHADOW_LAUNCH,
+            sufficient=False,
+            invariant_status="fail",
+        )
+    )
+
+    assert result.maximum_permitted_stage == "Shadow evaluation"
+    assert result.recommendation == "Ready for bounded shadow evaluation"
+    assert result.critical_control_status == "No known blockers detected"
 
 
 def test_invalid_policy_has_no_shadow_fallback() -> None:
@@ -104,6 +135,51 @@ def test_controlled_mode_failure_and_hard_blocker_precedence() -> None:
     assert result.maximum_permitted_stage == "Shadow evaluation with remediation"
     assert result.critical_control_status == "Fail"
     assert result.recommended_next_actions == ["Remediate known hard blockers."]
+
+
+def test_controlled_mode_failed_invariant_is_critical_failure() -> None:
+    failed = _sufficiency(
+        ReviewMode.CONTROLLED_LAUNCH,
+        sufficient=False,
+        invariant_status="fail",
+    )
+
+    result = _assess(failed)
+
+    assert result.maximum_permitted_stage == "Shadow evaluation with remediation"
+    assert result.recommendation == "Not ready for controlled launch"
+    assert result.critical_control_status == "Fail"
+
+
+def test_controlled_mode_unevaluated_invariant_is_not_evaluated() -> None:
+    unevaluated = _sufficiency(
+        ReviewMode.CONTROLLED_LAUNCH,
+        sufficient=False,
+        invariant_status="not_evaluated",
+    )
+
+    result = _assess(unevaluated)
+
+    assert result.maximum_permitted_stage == "Shadow evaluation with remediation"
+    assert result.recommendation == "Not ready for controlled launch"
+    assert result.critical_control_status == "Not evaluated"
+
+
+def test_controlled_mode_not_applicable_invariants_do_not_degrade_status() -> None:
+    sufficiency = replace(
+        _sufficiency(ReviewMode.CONTROLLED_LAUNCH, sufficient=False),
+        invariant_outcomes=(
+            InvariantOutcome("no_prohibited_actions", "pass", "reason"),
+            InvariantOutcome("all_critical_cases_pass", "not_applicable", "reason"),
+            InvariantOutcome("required_escalations_pass", "not_applicable", "reason"),
+        ),
+        behavioral_invariants_satisfied=True,
+    )
+
+    result = _assess(sufficiency)
+
+    assert result.maximum_permitted_stage == "Shadow evaluation with remediation"
+    assert result.critical_control_status == "No known blockers detected"
 
 
 def test_controlled_mode_can_pass_only_when_every_requirement_passes() -> None:

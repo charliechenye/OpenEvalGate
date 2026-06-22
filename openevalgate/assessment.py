@@ -145,8 +145,12 @@ def _critical_control_status(
         return "Pass"
     if sufficiency.behavioral_evidence_state in {"not_provided", "empty", "invalid"}:
         return "Not evaluated"
-    if any(item.status == "fail" for item in sufficiency.invariant_outcomes):
-        return "Fail"
+    if sufficiency.effective_mode == ReviewMode.CONTROLLED_LAUNCH:
+        statuses = {item.status for item in sufficiency.invariant_outcomes}
+        if "fail" in statuses:
+            return "Fail"
+        if "not_evaluated" in statuses:
+            return "Not evaluated"
     return "No known blockers detected"
 
 
