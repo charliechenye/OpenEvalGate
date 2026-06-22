@@ -246,6 +246,27 @@ def test_invalid_enriched_result_values_fail(tmp_path: Path) -> None:
     assert any("payload_complete" in issue.path for issue in result.issues)
 
 
+def test_truncated_result_row_fails_closed(tmp_path: Path) -> None:
+    project = _project(tmp_path)
+    headers, _ = _read_result_table(project)
+    (project / "eval_results.csv").write_text(
+        ",".join(headers) + "\nrun_001,refund_boundary_case_001\n",
+        encoding="utf-8",
+    )
+
+    result = validate_eval_results(project)
+    evidence = classify_behavioral_evidence(project)
+
+    assert not result.valid
+    assert any(
+        issue.path.endswith("row[2].candidate")
+        and issue.message == "Must be a non-empty value."
+        for issue in result.issues
+    )
+    assert evidence.state == "invalid"
+    assert evidence.summary is None
+
+
 @pytest.mark.parametrize("field", NONEMPTY_EVAL_RESULT_FIELDS)
 @pytest.mark.parametrize("blank", ["", "   "])
 def test_required_result_values_must_be_nonempty(
@@ -504,6 +525,24 @@ def test_unsafe_or_invalid_output_reference_fails(
     )
 
 
+def test_embedded_nul_output_reference_fails_closed(tmp_path: Path) -> None:
+    project, headers, row = _single_result_project(tmp_path)
+    row["observed_output_path"] = "eval_runs/\0output.md"
+    _write_result_table(project, headers, [row])
+
+    result = validate_eval_results(project)
+    project_result = check_project(project)
+
+    assert not result.valid
+    assert not project_result.valid
+    assert any(
+        issue.path.endswith("row[2].observed_output_path")
+        and issue.message
+        == "Referenced output file does not exist or is not a regular file."
+        for issue in result.issues
+    )
+
+
 def test_output_reference_symlink_escape_fails(tmp_path: Path) -> None:
     project, headers, row = _single_result_project(tmp_path)
     outside = tmp_path / "outside.md"
@@ -607,6 +646,24 @@ def test_route_match_rates_are_derived_for_whole_and_selected_scope(
     assert selected.route_match_rate == 0.5
 
 
+def test_selected_scope_normalizes_surrounding_whitespace(tmp_path: Path) -> None:
+    project = _project(tmp_path)
+    headers, rows = _read_result_table(project)
+    for row in rows:
+        row["run_id"] = f"  {row['run_id']}  "
+        row["candidate"] = f"  {row['candidate']}  "
+    _write_result_table(project, headers, rows)
+
+    summary = summarize_selected_eval_results(
+        project,
+        run_id=" run_002 ",
+        candidate=" gpt-4.1-mini ",
+    )
+
+    assert summary.row_count == 6
+    assert summary.route_match_rate == 0.5
+
+
 def test_direct_summaries_reject_invalid_results(tmp_path: Path) -> None:
     project, headers, row = _single_result_project(tmp_path)
     row["route_match"] = "true"
@@ -674,6 +731,22 @@ def test_pass_rate_remains_based_on_declared_passed(tmp_path: Path) -> None:
     assert summary is not None
     assert summary.route_match_rate == 1.0
     assert summary.pass_rate == 0.0
+
+
+@pytest.mark.parametrize("score", ["nan", "NaN", "inf", "-inf"])
+def test_nonfinite_scores_fail_validation(tmp_path: Path, score: str) -> None:
+    project, headers, row = _single_result_project(tmp_path)
+    row["score"] = score
+    _write_result_table(project, headers, [row])
+
+    result = validate_eval_results(project)
+
+    assert not result.valid
+    assert any(
+        issue.path.endswith("row[2].score")
+        and issue.message == "Must be numeric from 0 to 1."
+        for issue in result.issues
+    )
 
 
 def test_latest_run_uses_newest_timestamp_not_last_row(tmp_path: Path) -> None:

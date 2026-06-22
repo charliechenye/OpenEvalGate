@@ -7,6 +7,7 @@ import re
 from collections import Counter
 from dataclasses import dataclass, replace
 from datetime import date, datetime, timezone
+from math import isfinite
 from pathlib import Path
 
 from openevalgate.routing import load_routing_policy, routing_expectations
@@ -82,6 +83,8 @@ _NAIVE_DATETIME_PATTERN = re.compile(
 _URL_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
 _WINDOWS_DRIVE_PATTERN = re.compile(r"^[A-Za-z]:")
 
+_EvalResultRow = dict[str, str | None]
+
 
 @dataclass(frozen=True)
 class EvalResultsValidationResult:
@@ -153,11 +156,16 @@ class _NaiveReviewTimestampError(ValueError):
     pass
 
 
-def read_eval_results(path: str | Path) -> list[dict[str, str]]:
+def read_eval_results(path: str | Path) -> list[_EvalResultRow]:
     """Read eval result CSV rows."""
 
     with Path(path).open("r", encoding="utf-8", newline="") as handle:
         return list(csv.DictReader(handle))
+
+
+def _cell(row: _EvalResultRow, field: str) -> str:
+    value = row.get(field)
+    return value.strip() if isinstance(value, str) else ""
 
 
 def validate_eval_results(project_dir: str | Path) -> EvalResultsValidationResult:
@@ -211,7 +219,7 @@ def validate_eval_results(project_dir: str | Path) -> EvalResultsValidationResul
     for index, row in enumerate(rows, start=2):
         prefix = f"{results_path}:row[{index}]"
         for field in NONEMPTY_EVAL_RESULT_FIELDS:
-            if not row.get(field, "").strip():
+            if not _cell(row, field):
                 issues.append(
                     ValidationIssue(
                         f"{prefix}.{field}",
@@ -219,7 +227,7 @@ def validate_eval_results(project_dir: str | Path) -> EvalResultsValidationResul
                     )
                 )
 
-        reviewed_at = row.get("reviewed_at", "").strip()
+        reviewed_at = _cell(row, "reviewed_at")
         if reviewed_at:
             try:
                 _parse_review_timestamp(reviewed_at)
@@ -238,10 +246,10 @@ def validate_eval_results(project_dir: str | Path) -> EvalResultsValidationResul
                     )
                 )
 
-        run_id = row.get("run_id", "").strip()
-        case_id = row.get("case_id", "").strip()
-        candidate = row.get("candidate", "").strip()
-        trial_id = row.get("trial_id", "").strip()
+        run_id = _cell(row, "run_id")
+        case_id = _cell(row, "case_id")
+        candidate = _cell(row, "candidate")
+        trial_id = _cell(row, "trial_id")
         if run_id and candidate and case_id:
             identity = (run_id, candidate, trial_id, case_id)
             first_row = first_identity_rows.get(identity)
@@ -263,12 +271,12 @@ def validate_eval_results(project_dir: str | Path) -> EvalResultsValidationResul
             issues.append(ValidationIssue(f"{prefix}.case_id", f"Unknown eval case id: {case_id}."))
 
         for route_field in ("actual_route", "expected_route"):
-            route = row.get(route_field, "").strip()
+            route = _cell(row, route_field)
             if route not in EXPECTED_ROUTES:
                 issues.append(ValidationIssue(f"{prefix}.{route_field}", "Must be one of: block, escalate, revise, show."))
 
         for bool_field in ("route_match", "passed"):
-            value = row.get(bool_field, "").strip().lower()
+            value = _cell(row, bool_field).lower()
             if value not in {"true", "false"}:
                 issues.append(ValidationIssue(f"{prefix}.{bool_field}", "Must be true or false."))
 
@@ -278,9 +286,9 @@ def validate_eval_results(project_dir: str | Path) -> EvalResultsValidationResul
             if case is not None
             else ""
         )
-        result_expected_route = row.get("expected_route", "").strip()
-        actual_route = row.get("actual_route", "").strip()
-        declared_route_match = row.get("route_match", "").strip().lower()
+        result_expected_route = _cell(row, "expected_route")
+        actual_route = _cell(row, "actual_route")
+        declared_route_match = _cell(row, "route_match").lower()
         if (
             case is not None
             and case_expected_route in EXPECTED_ROUTES
@@ -308,16 +316,16 @@ def validate_eval_results(project_dir: str | Path) -> EvalResultsValidationResul
                 )
             )
 
-        score = row.get("score", "").strip()
+        score = _cell(row, "score")
         try:
             numeric_score = float(score)
         except ValueError:
             issues.append(ValidationIssue(f"{prefix}.score", "Must be numeric from 0 to 1."))
         else:
-            if numeric_score < 0 or numeric_score > 1:
+            if not isfinite(numeric_score) or not 0 <= numeric_score <= 1:
                 issues.append(ValidationIssue(f"{prefix}.score", "Must be numeric from 0 to 1."))
 
-        workflow_route = row.get("actual_workflow_route", "").strip()
+        workflow_route = _cell(row, "actual_workflow_route")
         if workflow_route and workflow_route not in WORKFLOW_ROUTES:
             issues.append(
                 ValidationIssue(
@@ -339,14 +347,14 @@ def validate_eval_results(project_dir: str | Path) -> EvalResultsValidationResul
         ):
             if bool_field not in fieldnames:
                 continue
-            value = row.get(bool_field, "").strip().lower()
+            value = _cell(row, bool_field).lower()
             if value and value not in {"true", "false"}:
                 issues.append(ValidationIssue(f"{prefix}.{bool_field}", "Must be true, false, or blank."))
 
         if (
             "destination_match" in fieldnames
-            and row.get("destination_match", "").strip().lower() == "true"
-            and not row.get("actual_destination", "").strip()
+            and _cell(row, "destination_match").lower() == "true"
+            and not _cell(row, "actual_destination")
         ):
             issues.append(
                 ValidationIssue(
@@ -355,7 +363,7 @@ def validate_eval_results(project_dir: str | Path) -> EvalResultsValidationResul
                 )
             )
 
-        actual_workflow_id = row.get("actual_workflow_id", "").strip()
+        actual_workflow_id = _cell(row, "actual_workflow_id")
         if actual_workflow_id and policy_workflows and actual_workflow_id not in policy_workflows:
             issues.append(
                 ValidationIssue(
@@ -363,7 +371,7 @@ def validate_eval_results(project_dir: str | Path) -> EvalResultsValidationResul
                     f"Unknown routing workflow id: {actual_workflow_id}.",
                 )
             )
-        actual_model_id = row.get("actual_model_id", "").strip()
+        actual_model_id = _cell(row, "actual_model_id")
         if actual_model_id and policy_models and actual_model_id not in policy_models:
             issues.append(
                 ValidationIssue(
@@ -372,7 +380,7 @@ def validate_eval_results(project_dir: str | Path) -> EvalResultsValidationResul
                 )
             )
 
-        output_path = row.get("observed_output_path", "").strip()
+        output_path = _cell(row, "observed_output_path")
         if output_path:
             output_issue = _validate_output_reference(root, output_path)
             if output_issue:
@@ -464,20 +472,24 @@ def summarize_eval_results(project_dir: str | Path) -> EvalResultsSummary | None
         )
 
     cases = list(cases_by_id.values())
-    candidates = sorted({row.get("candidate", "").strip() for row in rows if row.get("candidate", "").strip()})
-    failed_case_ids = sorted({row.get("case_id", "").strip() for row in rows if row.get("passed", "").strip().lower() == "false" and row.get("case_id", "").strip()})
-    failure_categories = Counter(
-        row.get("failure_category", "").strip()
+    candidates = sorted({_cell(row, "candidate") for row in rows if _cell(row, "candidate")})
+    failed_case_ids = sorted({
+        _cell(row, "case_id")
         for row in rows
-        if row.get("failure_category", "").strip()
+        if _cell(row, "passed").lower() == "false" and _cell(row, "case_id")
+    })
+    failure_categories = Counter(
+        _cell(row, "failure_category")
+        for row in rows
+        if _cell(row, "failure_category")
     )
     observed_output_paths = [
-        row.get("observed_output_path", "").strip()
+        _cell(row, "observed_output_path")
         for row in rows
-        if row.get("observed_output_path", "").strip()
+        if _cell(row, "observed_output_path")
     ]
 
-    passed_values = [row.get("passed", "").strip().lower() for row in rows]
+    passed_values = [_cell(row, "passed").lower() for row in rows]
     boundary_metrics = _boundary_metrics(cases, rows)
     escalation_metrics = _escalation_metrics(cases, rows)
     routing_metrics = _routing_metrics(root, rows)
@@ -536,16 +548,16 @@ def summarize_selected_eval_results(
         [
             row
             for row in read_eval_results(path)
-            if row.get("run_id", "") == run_id
-            and row.get("candidate", "") == candidate
+            if _cell(row, "run_id") == run_id.strip()
+            and _cell(row, "candidate") == candidate.strip()
         ]
         if path.is_file()
         else []
     )
     case_counts = Counter(
-        row.get("case_id", "").strip()
+        _cell(row, "case_id")
         for row in rows
-        if row.get("case_id", "").strip()
+        if _cell(row, "case_id")
     )
     cases = list(cases_by_id.values())
     escalation_case_ids = {
@@ -554,7 +566,7 @@ def summarize_selected_eval_results(
         if case.get("expected_route") == "escalate"
     }
     escalation_rows = [
-        row for row in rows if row.get("case_id", "").strip() in escalation_case_ids
+        row for row in rows if _cell(row, "case_id") in escalation_case_ids
     ]
     return SelectedEvalResultsSummary(
         row_count=len(rows),
@@ -628,7 +640,7 @@ def _validate_output_reference(project_dir: Path, value: str) -> str | None:
     candidate = resolved_root.joinpath(*components)
     try:
         resolved_candidate = candidate.resolve()
-    except (OSError, RuntimeError):
+    except (OSError, RuntimeError, ValueError):
         return "Referenced output file does not exist or is not a regular file."
 
     if not resolved_candidate.is_relative_to(resolved_root):
@@ -638,13 +650,13 @@ def _validate_output_reference(project_dir: Path, value: str) -> str | None:
     return None
 
 
-def _latest_run_id(rows: list[dict[str, str]]) -> str | None:
+def _latest_run_id(rows: list[_EvalResultRow]) -> str | None:
     """Select the newest reviewed run, breaking timestamp ties by run ID."""
 
     latest_by_run: dict[str, tuple[date, int, datetime]] = {}
     for row in rows:
-        run_id = row.get("run_id", "").strip()
-        reviewed_at = row.get("reviewed_at", "").strip()
+        run_id = _cell(row, "run_id")
+        reviewed_at = _cell(row, "reviewed_at")
         if not run_id or not reviewed_at:
             continue
         parsed = _parse_review_timestamp(reviewed_at)
@@ -671,23 +683,23 @@ def _true_rate(values: list[str]) -> float | None:
 
 
 def _derived_route_match_rate(
-    rows: list[dict[str, str]],
+    rows: list[_EvalResultRow],
     cases_by_id: dict[str, dict[str, object]],
 ) -> float | None:
     matches = [
-        row.get("actual_route", "").strip()
-        == str(cases_by_id[row.get("case_id", "").strip()].get("expected_route", "")).strip()
+        _cell(row, "actual_route")
+        == str(cases_by_id[_cell(row, "case_id")].get("expected_route", "")).strip()
         for row in rows
-        if row.get("case_id", "").strip() in cases_by_id
+        if _cell(row, "case_id") in cases_by_id
     ]
     return _bool_rate(matches)
 
 
-def _optional_true_rate(rows: list[dict[str, str]], field: str) -> float | None:
-    return _true_rate([row.get(field, "").strip().lower() for row in rows])
+def _optional_true_rate(rows: list[_EvalResultRow], field: str) -> float | None:
+    return _true_rate([_cell(row, field).lower() for row in rows])
 
 
-def _boundary_metrics(cases: list[dict[str, object]], rows: list[dict[str, str]]) -> dict[str, object]:
+def _boundary_metrics(cases: list[dict[str, object]], rows: list[_EvalResultRow]) -> dict[str, object]:
     boundary_cases = {
         str(case.get("id", "")): case
         for case in cases
@@ -701,7 +713,7 @@ def _boundary_metrics(cases: list[dict[str, object]], rows: list[dict[str, str]]
         if family_id:
             families.setdefault(family_id, set()).add(case_id)
 
-    result_case_ids = {row.get("case_id", "").strip() for row in rows}
+    result_case_ids = {_cell(row, "case_id") for row in rows}
     complete_families = {
         family_id: members
         for family_id, members in families.items()
@@ -709,19 +721,19 @@ def _boundary_metrics(cases: list[dict[str, object]], rows: list[dict[str, str]]
     }
     passing_families = 0
     for members in complete_families.values():
-        family_rows = [row for row in rows if row.get("case_id", "").strip() in members]
-        if family_rows and all(row.get("passed", "").strip().lower() == "true" for row in family_rows):
+        family_rows = [row for row in rows if _cell(row, "case_id") in members]
+        if family_rows and all(_cell(row, "passed").lower() == "true" for row in family_rows):
             passing_families += 1
 
     semantic_comparisons: list[bool] = []
-    grouped_rows: dict[tuple[str, str, str], dict[str, dict[str, str]]] = {}
+    grouped_rows: dict[tuple[str, str, str], dict[str, _EvalResultRow]] = {}
     for row in rows:
         key = (
-            row.get("run_id", "").strip(),
-            row.get("candidate", "").strip(),
-            row.get("trial_id", "").strip(),
+            _cell(row, "run_id"),
+            _cell(row, "candidate"),
+            _cell(row, "trial_id"),
         )
-        grouped_rows.setdefault(key, {})[row.get("case_id", "").strip()] = row
+        grouped_rows.setdefault(key, {})[_cell(row, "case_id")] = row
     for case_id, case in boundary_cases.items():
         boundary = case["boundary"]
         assert isinstance(boundary, dict)
@@ -733,30 +745,30 @@ def _boundary_metrics(cases: list[dict[str, object]], rows: list[dict[str, str]]
             anchor_row = grouped.get(anchor_case_id)
             if not variant_row or not anchor_row:
                 continue
-            variant_route = variant_row.get("actual_workflow_route", "").strip()
-            anchor_route = anchor_row.get("actual_workflow_route", "").strip()
+            variant_route = _cell(variant_row, "actual_workflow_route")
+            anchor_route = _cell(anchor_row, "actual_workflow_route")
             if variant_route and anchor_route:
                 semantic_comparisons.append(variant_route == anchor_route)
 
-    rows_by_case_run: dict[tuple[str, str, str], list[dict[str, str]]] = {}
+    rows_by_case_run: dict[tuple[str, str, str], list[_EvalResultRow]] = {}
     for row in rows:
-        case_id = row.get("case_id", "").strip()
+        case_id = _cell(row, "case_id")
         if case_id:
             key = (
                 case_id,
-                row.get("run_id", "").strip(),
-                row.get("candidate", "").strip(),
+                _cell(row, "run_id"),
+                _cell(row, "candidate"),
             )
             rows_by_case_run.setdefault(key, []).append(row)
     repeated_cases = {
         key: case_rows
         for key, case_rows in rows_by_case_run.items()
-        if len({row.get("trial_id", "").strip() for row in case_rows if row.get("trial_id", "").strip()}) >= 2
+        if len({_cell(row, "trial_id") for row in case_rows if _cell(row, "trial_id")}) >= 2
     }
     reliable_repeated_cases = sum(
         1
         for case_rows in repeated_cases.values()
-        if all(row.get("passed", "").strip().lower() == "true" for row in case_rows)
+        if all(_cell(row, "passed").lower() == "true" for row in case_rows)
     )
 
     return {
@@ -777,18 +789,18 @@ def _boundary_metrics(cases: list[dict[str, object]], rows: list[dict[str, str]]
 
 def _escalation_metrics(
     cases: list[dict[str, object]],
-    rows: list[dict[str, str]],
+    rows: list[_EvalResultRow],
 ) -> dict[str, float | None]:
     cases_by_id = {
         str(case.get("id", "")).strip(): case
         for case in cases
         if str(case.get("id", "")).strip()
     }
-    required_rows: list[dict[str, str]] = []
-    routine_rows: list[dict[str, str]] = []
+    required_rows: list[_EvalResultRow] = []
+    routine_rows: list[_EvalResultRow] = []
 
     for row in rows:
-        case = cases_by_id.get(row.get("case_id", "").strip())
+        case = cases_by_id.get(_cell(row, "case_id"))
         if case is None:
             continue
         expected_workflow_route = str(case.get("expected_workflow_route", "")).strip()
@@ -816,16 +828,16 @@ def _escalation_metrics(
     }
 
 
-def _row_escalated(row: dict[str, str]) -> bool:
-    workflow_route = row.get("actual_workflow_route", "").strip()
+def _row_escalated(row: _EvalResultRow) -> bool:
+    workflow_route = _cell(row, "actual_workflow_route")
     if workflow_route:
         return workflow_route in {"approval", "escalate"}
-    return row.get("actual_route", "").strip() == "escalate"
+    return _cell(row, "actual_route") == "escalate"
 
 
 def _handoff_true_rate(
     cases: list[dict[str, object]],
-    rows: list[dict[str, str]],
+    rows: list[_EvalResultRow],
     field: str,
 ) -> float | None:
     handoff_case_ids = {
@@ -835,16 +847,16 @@ def _handoff_true_rate(
     }
     return _true_rate(
         [
-            row.get(field, "").strip().lower()
+            _cell(row, field).lower()
             for row in rows
-            if row.get("case_id", "").strip() in handoff_case_ids
+            if _cell(row, "case_id") in handoff_case_ids
         ]
     )
 
 
 def _routing_metrics(
     project_dir: Path,
-    rows: list[dict[str, str]],
+    rows: list[_EvalResultRow],
 ) -> dict[str, float | None]:
     policy_path = project_dir / "routing_policy.yaml"
     if not policy_path.is_file():
@@ -870,12 +882,12 @@ def _routing_metrics(
     deterministic_compliance: list[bool] = []
 
     for row in rows:
-        case_id = row.get("case_id", "").strip()
+        case_id = _cell(row, "case_id")
         expected_workflow_id = case_workflows.get(case_id)
         if not expected_workflow_id:
             continue
         workflow = workflows.get(expected_workflow_id, {})
-        actual_workflow_id = row.get("actual_workflow_id", "").strip()
+        actual_workflow_id = _cell(row, "actual_workflow_id")
         if "actual_workflow_id" in row:
             assignment_matches.append(actual_workflow_id == expected_workflow_id)
 
@@ -883,7 +895,7 @@ def _routing_metrics(
         if not isinstance(assignment, dict):
             continue
         mode = assignment.get("mode")
-        actual_model_id = row.get("actual_model_id", "").strip()
+        actual_model_id = _cell(row, "actual_model_id")
         if "actual_model_id" in row:
             if mode == "none":
                 model_compliance.append(not actual_model_id)
@@ -895,7 +907,7 @@ def _routing_metrics(
                 }
                 model_compliance.append(bool(actual_model_id) and actual_model_id in approved)
 
-        observed_version = row.get("routing_policy_version", "").strip()
+        observed_version = _cell(row, "routing_policy_version")
         if "routing_policy_version" in row and version:
             version_matches.append(bool(observed_version) and observed_version == version)
 

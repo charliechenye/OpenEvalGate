@@ -135,6 +135,31 @@ def test_selected_scope_is_exact_and_empty_rates_stay_none(tmp_path: Path) -> No
     assert empty.pass_rate is None and empty.route_match_rate is None
 
 
+def test_controlled_scope_normalizes_result_identity_whitespace(
+    tmp_path: Path,
+) -> None:
+    project = _project(tmp_path)
+    _write_policy(project, _policy())
+    results_path = project / "eval_results.csv"
+    with results_path.open(encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        headers = list(reader.fieldnames or [])
+        rows = list(reader)
+    for row in rows:
+        row["run_id"] = f"  {row['run_id']}  "
+        row["candidate"] = f"  {row['candidate']}  "
+    with results_path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=headers, lineterminator="\n")
+        writer.writeheader()
+        writer.writerows(rows)
+
+    result = evaluate_behavioral_sufficiency(project)
+
+    assert result.selected_row_count == 6
+    assert "refund_abuse_history_002" in result.failed_critical_case_ids
+    assert "wrong_destination_fraud_012" in result.failed_critical_case_ids
+
+
 def test_coverage_distinguishes_missing_from_below_depth(tmp_path: Path) -> None:
     project = _project(tmp_path)
     data = _policy()

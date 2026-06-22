@@ -412,12 +412,12 @@ def _failed_critical_ids(
 ) -> tuple[str, ...]:
     if not scope or evidence_state != "available":
         return ()
-    from openevalgate.eval_results import read_eval_results
+    from openevalgate.eval_results import _cell, read_eval_results
     return tuple(sorted({
-        row.get("case_id", "").strip()
+        _cell(row, "case_id")
         for row in read_eval_results(root / "eval_results.csv")
-        if row.get("run_id", "") == scope.run_id
-        and row.get("candidate", "") == scope.candidate
-        and row.get("case_id", "").strip() in critical_ids
-        and row.get("passed", "").strip().lower() == "false"
+        if _cell(row, "run_id") == scope.run_id.strip()
+        and _cell(row, "candidate") == scope.candidate.strip()
+        and _cell(row, "case_id") in critical_ids
+        and _cell(row, "passed").lower() == "false"
     }))
