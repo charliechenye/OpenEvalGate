@@ -2,7 +2,7 @@
 
 ## Status
 
-**Partially complete.** The readiness-model separation, centralized hard-gate policy, fail-closed gate applicability, strict action-risk trust boundary, deterministic reporting, and associated regression tests are complete. Review modes, behavioral-sufficiency thresholds, result integrity, version pinning, and evidence provenance remain open.
+**Partially complete.** Review modes, controlled-launch behavioral sufficiency, centralized hard-gate policy, fail-closed gate applicability, and deterministic reporting are complete. Result integrity, version pinning, and evidence provenance remain open.
 
 ## Objective
 
@@ -38,11 +38,11 @@ Supported values:
 - `shadow_launch`
 - `controlled_launch`
 
-- [ ] Documentation mode validates the evidence package but does not issue a user-facing launch recommendation.
-- [ ] Shadow-launch mode requires empirical eval results and critical-slice coverage.
-- [ ] Controlled-launch mode requires empirical results, passing hard controls, observability, rollback, and owner signoff.
-- [ ] Reject unknown review modes.
-- [ ] Add migration behavior for existing projects without an explicit mode.
+- [x] Documentation mode is capped at documentation review.
+- [x] Shadow-launch mode permits bounded shadow evaluation without requiring results.
+- [x] Controlled-launch mode requires sufficient selected empirical results and passing hard controls.
+- [x] Reject unknown review modes.
+- [x] Add backward-compatible shadow behavior for projects without an explicit mode.
 
 ### Acceptance Criteria
 
@@ -113,18 +113,18 @@ Candidate metrics:
 - Prohibited-action rate.
 - Contrast-family reliability.
 
-- [ ] Define which metrics are informational, gating, or blocking.
-- [ ] Support per-project threshold overrides.
+- [x] Define initial pass-rate and route-match metrics as controlled-launch gates.
+- [x] Support per-project threshold configuration.
 - [ ] Support stricter thresholds by risk tier.
-- [ ] Define minimum denominators before a rate is considered meaningful.
-- [ ] Report `insufficient evidence` instead of treating missing values as good or bad performance.
-- [~] Preserve independent critical-control blockers regardless of aggregate score. Critical escalation regressions already do this; a general configurable critical-slice policy remains open.
+- [x] Require selected rows and explicit case-coverage denominators.
+- [x] Report unavailable evidence instead of substituting zero.
+- [x] Preserve critical-case failure overrides regardless of aggregate score.
 
 ### Acceptance Criteria
 
-- [ ] Every required critical-slice failure produces a named blocker.
+- [x] Every required critical-case failure prevents controlled launch.
 - [ ] A metric with insufficient samples cannot be presented as a reliable percentage.
-- [ ] Threshold values and evidence denominators appear in the report.
+- [x] Threshold values and evidence denominators appear in the report.
 
 ## P0.5 Strengthen Eval-Result Integrity
 
@@ -204,9 +204,9 @@ Iteration 1 is complete when:
 - [x] Reports separate evidence completeness, observed behavior, and critical-control status.
 - [x] Missing, empty, or invalid empirical results cannot produce a controlled-launch recommendation.
 - [x] Partial critical gates block advancement.
-- [ ] Critical metrics have explicit thresholds and denominators.
+- [x] Initial controlled-launch metrics have explicit thresholds and denominators.
 - [ ] Eval results are internally consistent and versioned.
 - [~] Blank or superficial hard-gate declarations cannot receive passing policy treatment; broader artifact-depth and provenance checks remain open.
 - [x] Centralized gate semantics are covered by regression tests.
 - [x] Canonical examples regenerate without undocumented manual edits.
-- [ ] Review modes and behavioral evidence sufficiency are implemented.
+- [x] Review modes and behavioral evidence sufficiency are implemented.

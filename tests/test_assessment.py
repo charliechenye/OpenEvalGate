@@ -1,191 +1,203 @@
+from dataclasses import replace
+
 import pytest
 
 from openevalgate.assessment import assess_launch, evidence_completeness_band
-from openevalgate.schema import HardBlocker
+from openevalgate.review_policy import BehavioralSufficiency, InvariantOutcome
+from openevalgate.schema import HardBlocker, ReviewMode
 
 
-ROLLBACK_BLOCKER = HardBlocker(
-    "missing_rollback",
-    "Rollback gate is missing or not passing.",
-    "Rollback gate",
-)
+BLOCKER = HardBlocker("missing_rollback", "Rollback is missing.", "Rollback gate")
 
 
-def test_complete_evidence_without_results_permits_shadow_evaluation_only() -> None:
-    result = assess_launch(
-        evidence_completeness_score=100,
-        project_evidence_valid=True,
-        behavioral_evidence_state="empty",
-        hard_blockers=[],
+def _sufficiency(
+    mode: ReviewMode | None = ReviewMode.SHADOW_LAUNCH,
+    *,
+    state: str = "available",
+    policy_present: bool = True,
+    policy_valid: bool = True,
+    selected_rows: int = 1,
+    sufficient: bool = True,
+    invariant_status: str = "pass",
+) -> BehavioralSufficiency:
+    return BehavioralSufficiency(
+        state, mode if policy_present and policy_valid else None, mode,
+        policy_present, policy_valid, "run" if selected_rows else "run",
+        "candidate" if selected_rows else "candidate", selected_rows,
+        1, 1 if selected_rows else 0, 1.0 if selected_rows else 0.0,
+        1 if selected_rows else 0, () if selected_rows else ("case",), (),
+        0, 0, None, (), (), (), sufficient, (),
+        (
+            InvariantOutcome("no_prohibited_actions", invariant_status, "reason"),
+            InvariantOutcome("all_critical_cases_pass", "not_applicable", "reason"),
+            InvariantOutcome("required_escalations_pass", "not_applicable", "reason"),
+        ),
+        True, invariant_status == "pass", sufficient, (),
+    )
+
+
+def _assess(sufficiency: BehavioralSufficiency, *, score: int = 100, valid: bool = True, blockers: list[HardBlocker] | None = None):
+    return assess_launch(
+        evidence_completeness_score=score,
+        project_evidence_valid=valid,
+        behavioral_sufficiency=sufficiency,
+        hard_blockers=blockers or [],
+    )
+
+
+def test_documentation_mode_is_capped() -> None:
+    result = _assess(_sufficiency(ReviewMode.DOCUMENTATION))
+    assert result.maximum_permitted_stage == "Documentation review"
+    assert result.recommendation == "Documentation review complete"
+    assert result.critical_control_status != "Pass"
+
+
+def test_documentation_mode_ignores_failed_informational_invariant() -> None:
+    result = _assess(
+        _sufficiency(
+            ReviewMode.DOCUMENTATION,
+            sufficient=False,
+            invariant_status="fail",
+        )
+    )
+
+    assert result.maximum_permitted_stage == "Documentation review"
+    assert result.recommendation == "Documentation review complete"
+    assert result.critical_control_status == "No known blockers detected"
+
+
+def test_incomplete_documentation_requires_remediation() -> None:
+    result = _assess(_sufficiency(ReviewMode.DOCUMENTATION), score=84)
+    assert result.maximum_permitted_stage == "Documentation remediation"
+    assert result.recommendation == "Not ready to complete documentation review"
+
+
+@pytest.mark.parametrize("state", ["not_provided", "empty"])
+def test_shadow_mode_allows_missing_or_empty_results(state: str) -> None:
+    result = _assess(_sufficiency(state=state, selected_rows=0))
+    assert result.maximum_permitted_stage == "Shadow evaluation"
+    assert result.recommendation == "Ready for bounded shadow evaluation"
+    assert result.critical_control_status == "Not evaluated"
+
+
+def test_shadow_mode_rejects_invalid_results_and_blockers() -> None:
+    invalid = _assess(_sufficiency(state="invalid", selected_rows=0))
+    blocked = _assess(_sufficiency(), blockers=[BLOCKER])
+    assert invalid.maximum_permitted_stage == "Documentation remediation"
+    assert invalid.critical_control_status == "Not evaluated"
+    assert blocked.maximum_permitted_stage == "Documentation remediation"
+    assert blocked.recommendation == "Not ready for shadow evaluation"
+    assert blocked.critical_control_status == "Fail"
+
+
+def test_shadow_mode_ignores_failed_informational_invariant() -> None:
+    result = _assess(
+        _sufficiency(
+            ReviewMode.SHADOW_LAUNCH,
+            sufficient=False,
+            invariant_status="fail",
+        )
     )
 
     assert result.maximum_permitted_stage == "Shadow evaluation"
+    assert result.recommendation == "Ready for bounded shadow evaluation"
+    assert result.critical_control_status == "No known blockers detected"
+
+
+def test_invalid_policy_has_no_shadow_fallback() -> None:
+    invalid = replace(
+        _sufficiency(None), policy_present=True, policy_valid=False,
+        declared_mode=None, effective_mode=None, sufficient_for_requested_mode=False,
+    )
+    result = _assess(invalid)
+    assert result.maximum_permitted_stage == "Documentation remediation"
+    assert "Repair and revalidate review_policy.yaml." in result.recommended_next_actions
+
+
+@pytest.mark.parametrize("state", ["not_provided", "empty", "invalid"])
+def test_controlled_mode_requires_valid_results(state: str) -> None:
+    result = _assess(_sufficiency(ReviewMode.CONTROLLED_LAUNCH, state=state, selected_rows=0, sufficient=False))
+    assert result.maximum_permitted_stage == "Shadow evaluation"
+    assert result.recommendation == "Not ready for controlled launch"
+
+
+def test_controlled_mode_zero_scope_rows_fails_closed() -> None:
+    result = _assess(_sufficiency(ReviewMode.CONTROLLED_LAUNCH, selected_rows=0, sufficient=False))
+    assert result.maximum_permitted_stage == "Shadow evaluation with remediation"
+    assert "Provide matching result rows for the selected run and candidate." in result.recommended_next_actions
+
+
+def test_controlled_mode_failure_and_hard_blocker_precedence() -> None:
+    failed = _sufficiency(
+        ReviewMode.CONTROLLED_LAUNCH, sufficient=False, invariant_status="fail"
+    )
+    result = _assess(failed, blockers=[BLOCKER])
+    assert result.maximum_permitted_stage == "Shadow evaluation with remediation"
+    assert result.critical_control_status == "Fail"
+    assert result.recommended_next_actions == ["Remediate known hard blockers."]
+
+
+def test_controlled_mode_failed_invariant_is_critical_failure() -> None:
+    failed = _sufficiency(
+        ReviewMode.CONTROLLED_LAUNCH,
+        sufficient=False,
+        invariant_status="fail",
+    )
+
+    result = _assess(failed)
+
+    assert result.maximum_permitted_stage == "Shadow evaluation with remediation"
+    assert result.recommendation == "Not ready for controlled launch"
+    assert result.critical_control_status == "Fail"
+
+
+def test_controlled_mode_unevaluated_invariant_is_not_evaluated() -> None:
+    unevaluated = _sufficiency(
+        ReviewMode.CONTROLLED_LAUNCH,
+        sufficient=False,
+        invariant_status="not_evaluated",
+    )
+
+    result = _assess(unevaluated)
+
+    assert result.maximum_permitted_stage == "Shadow evaluation with remediation"
     assert result.recommendation == "Not ready for controlled launch"
     assert result.critical_control_status == "Not evaluated"
 
 
-def test_missing_results_with_blocker_requires_documentation_remediation() -> None:
-    result = assess_launch(
-        evidence_completeness_score=100,
-        project_evidence_valid=True,
-        behavioral_evidence_state="not_provided",
-        hard_blockers=[ROLLBACK_BLOCKER],
+def test_controlled_mode_not_applicable_invariants_do_not_degrade_status() -> None:
+    sufficiency = replace(
+        _sufficiency(ReviewMode.CONTROLLED_LAUNCH, sufficient=False),
+        invariant_outcomes=(
+            InvariantOutcome("no_prohibited_actions", "pass", "reason"),
+            InvariantOutcome("all_critical_cases_pass", "not_applicable", "reason"),
+            InvariantOutcome("required_escalations_pass", "not_applicable", "reason"),
+        ),
+        behavioral_invariants_satisfied=True,
     )
 
-    assert result.critical_control_status == "Fail"
+    result = _assess(sufficiency)
+
+    assert result.maximum_permitted_stage == "Shadow evaluation with remediation"
+    assert result.critical_control_status == "No known blockers detected"
+
+
+def test_controlled_mode_can_pass_only_when_every_requirement_passes() -> None:
+    result = _assess(_sufficiency(ReviewMode.CONTROLLED_LAUNCH))
+    assert result.maximum_permitted_stage == "Controlled launch"
+    assert result.recommendation == "Ready for bounded controlled launch"
+    assert result.critical_control_status == "Pass"
+
+
+def test_incomplete_control_evidence_has_highest_precedence() -> None:
+    result = _assess(_sufficiency(ReviewMode.CONTROLLED_LAUNCH), score=84)
     assert result.maximum_permitted_stage == "Documentation remediation"
     assert result.recommendation == "Not ready for shadow evaluation"
-
-
-def test_invalid_results_are_not_treated_as_missing() -> None:
-    result = assess_launch(
-        evidence_completeness_score=100,
-        project_evidence_valid=True,
-        behavioral_evidence_state="invalid",
-        hard_blockers=[],
-    )
-
-    assert result.behavioral_evidence_state == "invalid"
-    assert result.recommendation == "Not ready"
-    assert result.maximum_permitted_stage == "Documentation remediation"
-
-
-def test_valid_results_with_blocker_are_not_ready_for_controlled_launch() -> None:
-    result = assess_launch(
-        evidence_completeness_score=100,
-        project_evidence_valid=True,
-        behavioral_evidence_state="available",
-        hard_blockers=[ROLLBACK_BLOCKER],
-    )
-
-    assert result.critical_control_status == "Fail"
-    assert result.maximum_permitted_stage == "Shadow evaluation with remediation"
-    assert result.recommendation == "Not ready for controlled launch"
-
-
-def test_valid_results_without_blockers_remain_shadow_only() -> None:
-    result = assess_launch(
-        evidence_completeness_score=100,
-        project_evidence_valid=True,
-        behavioral_evidence_state="available",
-        hard_blockers=[],
-    )
-
-    assert result.critical_control_status == "No known blockers detected"
-    assert result.maximum_permitted_stage == "Shadow evaluation"
-    assert result.recommendation == "Controlled-launch readiness not yet determined"
-    assert result.recommended_next_actions == [
-        "Verify required-slice coverage and behavioral thresholds before controlled launch."
-    ]
-
-
-@pytest.mark.parametrize("score", [0, 49, 50, 84, 85, 100])
-def test_score_alone_cannot_make_missing_results_launch_ready(score: int) -> None:
-    result = assess_launch(
-        evidence_completeness_score=score,
-        project_evidence_valid=True,
-        behavioral_evidence_state="not_provided",
-        hard_blockers=[],
-    )
-
-    assert result.recommendation != "Ready for bounded controlled launch"
-
-
-def test_incomplete_evidence_package_takes_precedence() -> None:
-    result = assess_launch(
-        evidence_completeness_score=84,
-        project_evidence_valid=True,
-        behavioral_evidence_state="available",
-        hard_blockers=[],
-    )
-
-    assert result.maximum_permitted_stage == "Documentation remediation"
-    assert result.recommendation == "Not ready to advance beyond documentation remediation"
-
-
-def test_score_84_does_not_meet_control_evidence_threshold() -> None:
-    result = assess_launch(
-        evidence_completeness_score=84,
-        project_evidence_valid=True,
-        behavioral_evidence_state="available",
-        hard_blockers=[],
-    )
-
-    assert not result.control_evidence_completeness_threshold_met
-
-
-def test_score_85_meets_control_evidence_threshold_for_valid_project() -> None:
-    result = assess_launch(
-        evidence_completeness_score=85,
-        project_evidence_valid=True,
-        behavioral_evidence_state="available",
-        hard_blockers=[],
-    )
-
-    assert result.control_evidence_completeness_threshold_met
-    assert result.maximum_permitted_stage == "Shadow evaluation"
-
-
-def test_project_validation_error_makes_score_85_insufficient() -> None:
-    result = assess_launch(
-        evidence_completeness_score=85,
-        project_evidence_valid=False,
-        behavioral_evidence_state="available",
-        hard_blockers=[],
-    )
-
-    assert not result.control_evidence_completeness_threshold_met
-    assert result.maximum_permitted_stage == "Documentation remediation"
-
-
-def test_invalid_results_and_incomplete_package_accumulate_actions() -> None:
-    result = assess_launch(
-        evidence_completeness_score=84,
-        project_evidence_valid=False,
-        behavioral_evidence_state="invalid",
-        hard_blockers=[ROLLBACK_BLOCKER],
-    )
-
-    assert result.recommended_next_actions == [
-        "Repair and revalidate eval_results.csv.",
-        "Complete missing or invalid control-evidence requirements.",
-        "Remediate known hard blockers.",
-    ]
-
-
-@pytest.mark.parametrize(
-    ("score", "project_valid", "state", "blockers"),
-    [
-        (100, True, "available", []),
-        (100, True, "available", [ROLLBACK_BLOCKER]),
-        (100, True, "empty", []),
-        (84, True, "available", []),
-    ],
-)
-def test_no_assessment_path_authorizes_controlled_launch(
-    score: int,
-    project_valid: bool,
-    state: str,
-    blockers: list[HardBlocker],
-) -> None:
-    result = assess_launch(
-        evidence_completeness_score=score,
-        project_evidence_valid=project_valid,
-        behavioral_evidence_state=state,
-        hard_blockers=blockers,
-    )
-
-    assert result.recommendation != "Ready for bounded controlled launch"
-    assert result.maximum_permitted_stage != "Controlled launch"
-    assert result.critical_control_status != "Pass"
 
 
 @pytest.mark.parametrize(
     ("score", "expected"),
     [(100, "Substantially complete"), (85, "Substantially complete"), (84, "Material gaps"), (50, "Material gaps"), (49, "Incomplete")],
 )
-def test_evidence_completeness_bands_have_no_deployment_language(
-    score: int,
-    expected: str,
-) -> None:
+def test_evidence_completeness_bands(score: int, expected: str) -> None:
     assert evidence_completeness_band(score) == expected

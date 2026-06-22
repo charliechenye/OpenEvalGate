@@ -37,9 +37,9 @@ OpenEvalGate should be positioned as an **evidence-backed release-assurance fram
 - [x] Add a separate `Observed Behavioral Quality` section derived from `eval_results.csv`.
 - [x] Add a separate `Critical-Control Status` that distinguishes known failure, unevaluated behavior, and absence of currently detected blockers.
 - [x] Prevent the CLI from recommending `Ready for controlled launch` without empirical eval results.
-- [ ] Define minimum result coverage for shadow and controlled-launch reviews.
-- [ ] Add configurable thresholds for critical metrics.
-- [~] Make every required critical-slice failure override aggregate scores. Independent critical escalation failures already block advancement; a general configurable critical-slice policy remains open.
+- [x] Define configurable result coverage for controlled-launch reviews.
+- [x] Add configurable initial pass-rate and route-match thresholds.
+- [x] Make every required critical-case failure override aggregate scores.
 
 ### Fix hard-gate semantics
 
@@ -52,9 +52,9 @@ OpenEvalGate should be positioned as an **evidence-backed release-assurance fram
 
 ### Require execution evidence
 
-- [ ] Introduce explicit review modes: `documentation`, `shadow_launch`, and `controlled_launch`.
+- [x] Introduce explicit review modes: `documentation`, `shadow_launch`, and `controlled_launch`.
 - [x] Prevent missing, empty, or invalid `eval_results.csv` from producing a controlled-launch recommendation.
-- [ ] Require critical eval-slice coverage before controlled launch.
+- [x] Require complete critical eval-slice coverage before controlled launch.
 - [ ] Recompute route-match and policy-compliance fields rather than trusting user-entered booleans where possible.
 - [ ] Validate output references, timestamps, evaluator metadata, run metadata, and duplicate result keys.
 - [ ] Pin framework, eval-case, routing-policy, and escalation-contract versions in each run.

@@ -13,6 +13,7 @@ from openevalgate.launch_gate_review import (
     parse_launch_gate_review,
 )
 from openevalgate.routing import validate_routing_policy
+from openevalgate.review_policy import validate_review_policy
 from openevalgate.schema import ValidationIssue, validate_eval_cases
 
 
@@ -39,6 +40,7 @@ OPTIONAL_PROJECT_FILES = [
     "purpose_built_assistant_scope.md",
     "escalation_contract.yaml",
     "routing_policy.yaml",
+    "review_policy.yaml",
 ]
 
 
@@ -90,6 +92,9 @@ def check_project(project_dir: str | Path) -> ProjectCheckResult:
     if (root / "eval_results.csv").is_file():
         results_validation = validate_eval_results(root)
         issues.extend(results_validation.issues)
+
+    if (root / "review_policy.yaml").is_file():
+        issues.extend(validate_review_policy(root).issues)
 
     escalation_path = root / "escalation_contract.yaml"
     if escalation_path.is_file():

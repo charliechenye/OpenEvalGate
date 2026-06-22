@@ -224,7 +224,7 @@ Maintain two flagship narratives:
 - [ ] Passing critical controls.
 - [ ] No prohibited actions.
 - [ ] Valid rollback and owner signoff.
-- [ ] Controlled-launch recommendation after controlled-launch semantics exist.
+- [x] Deterministic controlled-launch recommendation semantics.
 
 ### Blocked example
 

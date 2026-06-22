@@ -8,10 +8,10 @@ This checklist distinguishes implemented repository capabilities from checks tha
 
 - [x] The report labels document coverage as evidence completeness rather than launch readiness.
 - [x] Evidence completeness, behavioral evidence, and critical-control status are separate.
-- [ ] The final launch recommendation is derived from review mode, empirical evidence, thresholds, and blockers.
+- [x] The final launch recommendation is derived from review mode, empirical evidence, thresholds, and blockers.
 - [x] A project without eval results cannot receive a controlled-launch recommendation.
-- [ ] Critical metrics display thresholds and denominators.
-- [ ] Insufficient evidence is reported explicitly for behavioral thresholds and denominators.
+- [x] Initial controlled-launch metrics display thresholds and denominators.
+- [x] Insufficient evidence is reported explicitly for behavioral thresholds and denominators.
 - [x] `partial` critical gates block advancement.
 - [x] `not_applicable` is permitted only by documented hard-gate policy.
 - [x] Hard-blocker messages match implementation behavior.
@@ -109,14 +109,14 @@ This checklist distinguishes implemented repository capabilities from checks tha
 
 ### Controlled-launch passing example
 
-- [ ] Behavioral evidence sufficiency is implemented.
+- [x] Behavioral evidence sufficiency is implemented.
 - [ ] Empirical result coverage meets configured requirements.
 - [ ] Critical thresholds and denominators pass.
 - [ ] No unresolved hard blocker exists.
 - [ ] Observability, rollback, and owner signoff pass.
-- [ ] The report produces a controlled-launch recommendation.
+- [x] The report has a deterministic controlled-launch recommendation path.
 
-A controlled-launch passing example is intentionally blocked on unfinished review-mode and behavioral-sufficiency policy. It must not be manufactured before those semantics exist.
+A canonical controlled-launch passing example remains intentionally pending.
 
 ### Blocked example
 

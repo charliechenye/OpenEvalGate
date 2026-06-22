@@ -6,9 +6,12 @@
 - **Evidence completeness score:** 37/100
 - **Evidence package band:** Incomplete
 - **Behavioral evidence status:** Evaluated — valid empirical rows are available.
+- **Declared review mode:** Not configured
+- **Effective review mode:** shadow_launch
+- **Sufficiency for effective review mode:** Sufficient
 - **Critical-control status:** Fail
 - **Maximum permitted stage:** Documentation remediation
-- **Final launch recommendation:** Not ready to advance beyond documentation remediation
+- **Final launch recommendation:** Not ready for shadow evaluation
 - **Recommended next actions:** Complete missing or invalid control-evidence requirements; Remediate known hard blockers.
 - **Hard blockers:** 7
 
@@ -114,7 +117,45 @@ Meeting this threshold does not override hard blockers or grant permission to be
 - Drift monitoring gate: partial
 - Rollback gate: partial
 
+## Review Mode and Behavioral Sufficiency
+- Review policy: Not provided
+- Declared review mode: Not configured
+- Effective review mode: shadow_launch
+- Selected run: Not configured
+- Selected candidate: Not configured
+- Selected result rows: Not evaluated
+- Expected eval cases: 11
+- Observed eval cases: Not evaluated
+- Case coverage: Not evaluated
+- Cases meeting minimum trial depth: Not evaluated
+- Missing eval cases: Not evaluated
+- Represented cases below trial depth: Not evaluated
+- Expected critical cases: 8
+- Observed critical cases: Not evaluated
+- Critical-case coverage: Not evaluated
+- Missing critical cases: Not evaluated
+- Critical cases below trial depth: Not evaluated
+- Failing critical cases: Not evaluated
+- Sufficiency for effective review mode: Yes
+
+| Metric | Actual | Requirement | Status |
+| --- | --- | --- | --- |
+| pass_rate | Not evaluated | Not configured | Not configured |
+| route_match_rate | Not evaluated | Not configured | Not configured |
+
+Controlled-launch behavioral invariants
+
+| Invariant | Status | Reason |
+| --- | --- | --- |
+| no_prohibited_actions | Not applicable | Prohibited-action evidence is unavailable. |
+| all_critical_cases_pass | Not applicable | No selected controlled-launch scope is configured. |
+| required_escalations_pass | Not applicable | No selected controlled-launch scope is configured. |
+
+These invariants are informational in the current review mode and do not authorize controlled launch.
+
 ## Observed Behavioral Quality
+This section summarizes all valid behavioral rows in the results file. Controlled-launch authorization, when requested, uses only the selected run and candidate shown above.
+
 **Evaluated — valid empirical rows are available.**
 
 - Total result rows: 4
@@ -183,4 +224,4 @@ Documentation remediation
 - Remediate known hard blockers.
 
 ## Final Launch Recommendation
-Not ready to advance beyond documentation remediation
+Not ready for shadow evaluation

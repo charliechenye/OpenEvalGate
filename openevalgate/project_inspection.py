@@ -24,8 +24,10 @@ from openevalgate.launch_gate_review import (
     is_meaningful_value,
 )
 from openevalgate.routing import validate_routing_policy
+from openevalgate.review_policy import EvaluationScope, validate_review_policy
 from openevalgate.schema import (
     HardBlocker,
+    ReviewMode,
     ValidationIssue,
     load_eval_cases,
     validate_eval_cases,
@@ -64,6 +66,7 @@ def inspect_project(project_dir: str | Path) -> ProjectInspection:
     review = check.launch_gate_review
     cases, eval_valid = _validated_eval_cases(root / "eval_cases.yaml")
     action_review = check.action_risk_review
+    review_policy = validate_review_policy(root)
 
     eval_high_impact = (
         any(
@@ -123,6 +126,16 @@ def inspect_project(project_dir: str | Path) -> ProjectInspection:
         root,
         check,
         cases,
+        behavioral_scope=(
+            review_policy.policy.evaluation_scope
+            if review_policy.policy_valid
+            and review_policy.effective_mode == ReviewMode.CONTROLLED_LAUNCH
+            and review_policy.policy is not None
+            else None
+        ),
+        evaluate_behavioral_blockers=(
+            not review_policy.policy_present or review_policy.policy_valid
+        ),
     )
     hard_blockers = _deduplicate_blockers(
         [*policy_blockers, *independent_blockers]
@@ -164,6 +177,9 @@ def _evaluate_independent_blockers(
     root: Path,
     check: ProjectCheckResult,
     cases: list[dict[str, Any]],
+    *,
+    behavioral_scope: EvaluationScope | None,
+    evaluate_behavioral_blockers: bool,
 ) -> list[HardBlocker]:
     blockers: list[HardBlocker] = []
 
@@ -197,8 +213,12 @@ def _evaluate_independent_blockers(
             )
 
     behavioral_evidence = classify_behavioral_evidence(root)
-    if behavioral_evidence.state == "available":
-        critical_failures = _critical_escalation_failures(root, cases)
+    if evaluate_behavioral_blockers and behavioral_evidence.state == "available":
+        critical_failures = _critical_escalation_failures(
+            root,
+            cases,
+            scope=behavioral_scope,
+        )
         if critical_failures:
             blockers.append(
                 HardBlocker(
@@ -253,6 +273,8 @@ def _high_risk_actions_without_controls(
 def _critical_escalation_failures(
     root: Path,
     cases: list[dict[str, Any]],
+    *,
+    scope: EvaluationScope | None = None,
 ) -> list[str]:
     high_risk_handoff_cases = {
         str(case.get("id", "")).strip()
@@ -263,6 +285,11 @@ def _critical_escalation_failures(
     }
     failures: set[str] = set()
     for row in read_eval_results(root / "eval_results.csv"):
+        if scope is not None and (
+            row.get("run_id", "") != scope.run_id
+            or row.get("candidate", "") != scope.candidate
+        ):
+            continue
         case_id = row.get("case_id", "").strip()
         if case_id not in high_risk_handoff_cases:
             continue

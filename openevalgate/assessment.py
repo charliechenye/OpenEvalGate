@@ -2,84 +2,118 @@
 
 from __future__ import annotations
 
-from openevalgate.schema import HardBlocker, LaunchAssessment
+from openevalgate.review_policy import BehavioralSufficiency
+from openevalgate.schema import HardBlocker, LaunchAssessment, ReviewMode
 
 
 EVIDENCE_SUFFICIENCY_SCORE = 85
-BEHAVIORAL_EVIDENCE_STATES = {"not_provided", "empty", "invalid", "available"}
 
 
 def assess_launch(
     *,
     evidence_completeness_score: int,
     project_evidence_valid: bool,
-    behavioral_evidence_state: str,
+    behavioral_sufficiency: BehavioralSufficiency,
     hard_blockers: list[HardBlocker],
 ) -> LaunchAssessment:
-    """Apply the launch decision table to validated assessment inputs."""
+    """Apply mode-aware launch precedence to already evaluated inputs."""
 
-    if behavioral_evidence_state not in BEHAVIORAL_EVIDENCE_STATES:
-        raise ValueError(f"Unknown behavioral evidence state: {behavioral_evidence_state}")
-
-    control_evidence_completeness_threshold_met = (
+    sufficient_control = (
         evidence_completeness_score >= EVIDENCE_SUFFICIENCY_SCORE
         and project_evidence_valid
     )
-    critical_control_status = _critical_control_status(
-        behavioral_evidence_state,
-        hard_blockers,
-    )
-    next_actions: list[str] = []
+    mode = behavioral_sufficiency.effective_mode
+    state = behavioral_sufficiency.behavioral_evidence_state
+    actions: list[str] = []
 
-    if behavioral_evidence_state == "invalid":
-        next_actions.append("Repair and revalidate eval_results.csv.")
-    if not control_evidence_completeness_threshold_met:
-        next_actions.append("Complete missing or invalid control-evidence requirements.")
+    if not sufficient_control:
+        actions.append("Complete missing or invalid control-evidence requirements.")
+    if not behavioral_sufficiency.policy_valid:
+        actions.append("Repair and revalidate review_policy.yaml.")
+    if state == "invalid":
+        actions.append("Repair and revalidate eval_results.csv.")
     if hard_blockers:
-        next_actions.append("Remediate known hard blockers.")
+        actions.append("Remediate known hard blockers.")
 
-    if not control_evidence_completeness_threshold_met:
-        maximum_permitted_stage = "Documentation remediation"
-        recommendation = "Not ready to advance beyond documentation remediation"
-    elif behavioral_evidence_state == "invalid":
-        maximum_permitted_stage = "Documentation remediation"
-        recommendation = "Not ready"
-    elif behavioral_evidence_state in {"not_provided", "empty"}:
-        if hard_blockers:
-            maximum_permitted_stage = "Documentation remediation"
-            recommendation = "Not ready for shadow evaluation"
+    if mode == ReviewMode.DOCUMENTATION:
+        if sufficient_control:
+            stage, recommendation = "Documentation review", "Documentation review complete"
         else:
-            maximum_permitted_stage = "Shadow evaluation"
-            recommendation = "Not ready for controlled launch"
-            next_actions.append("Run shadow evaluations and provide valid empirical result rows.")
-    elif hard_blockers:
-        maximum_permitted_stage = "Shadow evaluation with remediation"
-        recommendation = "Not ready for controlled launch"
+            stage = "Documentation remediation"
+            recommendation = "Not ready to complete documentation review"
+    elif not sufficient_control:
+        stage, recommendation = "Documentation remediation", "Not ready for shadow evaluation"
+    elif not behavioral_sufficiency.policy_valid or mode is None:
+        stage, recommendation = "Documentation remediation", "Not ready for shadow evaluation"
+    elif mode == ReviewMode.SHADOW_LAUNCH:
+        if state == "invalid" or hard_blockers:
+            stage, recommendation = "Documentation remediation", "Not ready for shadow evaluation"
+        else:
+            stage, recommendation = "Shadow evaluation", "Ready for bounded shadow evaluation"
+            if state in {"not_provided", "empty"}:
+                actions.append("Run shadow evaluations and provide valid empirical result rows.")
     else:
-        maximum_permitted_stage = "Shadow evaluation"
-        recommendation = "Controlled-launch readiness not yet determined"
-        next_actions.append(
-            "Verify required-slice coverage and behavioral thresholds before controlled launch."
-        )
+        assert mode == ReviewMode.CONTROLLED_LAUNCH
+        if state in {"not_provided", "empty", "invalid"}:
+            stage, recommendation = "Shadow evaluation", "Not ready for controlled launch"
+        elif hard_blockers:
+            stage = "Shadow evaluation with remediation"
+            recommendation = "Not ready for controlled launch"
+        elif not behavioral_sufficiency.selected_run_id or not behavioral_sufficiency.selected_candidate:
+            stage = "Shadow evaluation with remediation"
+            recommendation = "Not ready for controlled launch"
+            actions.append("Provide a selected run and candidate for controlled-launch review.")
+        elif behavioral_sufficiency.selected_row_count == 0:
+            stage = "Shadow evaluation with remediation"
+            recommendation = "Not ready for controlled launch"
+            actions.append("Provide matching result rows for the selected run and candidate.")
+        elif not behavioral_sufficiency.sufficient_for_requested_mode:
+            stage = "Shadow evaluation with remediation"
+            recommendation = "Not ready for controlled launch"
+            _append_behavioral_actions(actions, behavioral_sufficiency)
+        else:
+            stage = "Controlled launch"
+            recommendation = "Ready for bounded controlled launch"
 
+    critical_status = _critical_control_status(
+        behavioral_sufficiency, hard_blockers, stage
+    )
     return LaunchAssessment(
         evidence_completeness_score=evidence_completeness_score,
         evidence_band=evidence_completeness_band(evidence_completeness_score),
-        control_evidence_completeness_threshold_met=(
-            control_evidence_completeness_threshold_met
-        ),
-        behavioral_evidence_state=behavioral_evidence_state,
-        critical_control_status=critical_control_status,
-        maximum_permitted_stage=maximum_permitted_stage,
+        control_evidence_completeness_threshold_met=sufficient_control,
+        behavioral_evidence_state=state,
+        declared_review_mode=behavioral_sufficiency.declared_mode,
+        effective_review_mode=mode,
+        behavioral_sufficiency=behavioral_sufficiency,
+        critical_control_status=critical_status,
+        maximum_permitted_stage=stage,
         recommendation=recommendation,
-        recommended_next_actions=next_actions,
+        recommended_next_actions=_deduplicate(actions),
         hard_blockers=hard_blockers,
     )
 
 
-def evidence_completeness_band(score: int) -> str:
-    """Describe evidence-package completeness without deployment semantics."""
+def _append_behavioral_actions(
+    actions: list[str], sufficiency: BehavioralSufficiency
+) -> None:
+    if sufficiency.missing_case_ids:
+        actions.append("Add result coverage for missing eval cases.")
+    if sufficiency.observed_cases_below_trial_depth:
+        actions.append("Add required trial depth for represented under-covered eval cases.")
+    if sufficiency.missing_critical_case_ids:
+        actions.append("Cover every required critical eval case.")
+    if sufficiency.critical_cases_below_trial_depth:
+        actions.append("Add required trial depth for critical eval cases.")
+    if sufficiency.failed_critical_case_ids:
+        actions.append("Remediate failing critical eval cases.")
+    if any(item.status in {"fail", "not_evaluated"} for item in sufficiency.invariant_outcomes):
+        actions.append("Resolve failed behavioral safety invariants.")
+    if any(item.status in {"fail", "not_evaluated"} for item in sufficiency.threshold_outcomes):
+        actions.append("Meet the configured behavioral thresholds.")
 
+
+def evidence_completeness_band(score: int) -> str:
     if score >= 85:
         return "Substantially complete"
     if score >= 50:
@@ -88,8 +122,6 @@ def evidence_completeness_band(score: int) -> str:
 
 
 def behavioral_evidence_display(state: str) -> str:
-    """Return the required human-readable behavioral-evidence wording."""
-
     displays = {
         "not_provided": "Not evaluated — no results provided.",
         "empty": "Not evaluated — results file contains no rows.",
@@ -103,11 +135,24 @@ def behavioral_evidence_display(state: str) -> str:
 
 
 def _critical_control_status(
-    behavioral_evidence_state: str,
-    hard_blockers: list[HardBlocker],
+    sufficiency: BehavioralSufficiency,
+    blockers: list[HardBlocker],
+    stage: str,
 ) -> str:
-    if hard_blockers:
+    if blockers:
         return "Fail"
-    if behavioral_evidence_state == "available":
-        return "No known blockers detected"
-    return "Not evaluated"
+    if stage == "Controlled launch":
+        return "Pass"
+    if sufficiency.behavioral_evidence_state in {"not_provided", "empty", "invalid"}:
+        return "Not evaluated"
+    if sufficiency.effective_mode == ReviewMode.CONTROLLED_LAUNCH:
+        statuses = {item.status for item in sufficiency.invariant_outcomes}
+        if "fail" in statuses:
+            return "Fail"
+        if "not_evaluated" in statuses:
+            return "Not evaluated"
+    return "No known blockers detected"
+
+
+def _deduplicate(actions: list[str]) -> list[str]:
+    return list(dict.fromkeys(actions))
