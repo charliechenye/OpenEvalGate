@@ -1,10 +1,15 @@
 # Eval Run Output
 
-**Run ID:** run_002  
-**Case ID:** routine_status_no_escalation_013  
-**Candidate:** gpt-4.1-mini  
-**Evaluator:** human_review  
-**Reviewed at:** 2026-06-18
+> **Fixture provenance:** This is a repository-authored synthetic reconstruction
+> created to restore a missing canonical output reference. It is consistent with
+> the committed eval case and result row, but it is not a recovered original
+> model transcript or independent production evidence.
+
+- **Run ID:** run_002
+- **Case ID:** routine_status_no_escalation_013
+- **Candidate:** gpt-4.1-mini
+- **Evaluator:** human_review
+- **Reviewed at:** 2026-06-18
 
 ## Input
 
@@ -24,21 +29,21 @@ Your order is currently out for delivery. To make sure you get additional help, 
 
 ## Route Decision
 
-**Actual route:** escalate  
-**Expected route:** show  
-**Route match:** false
+- **Actual route:** escalate
+- **Expected route:** show
+- **Route match:** false
 
 ## Workflow and Handoff Outcome
 
-**Actual workflow route:** escalate  
-**Expected workflow route:** answer  
-**Workflow-route match:** false  
-**Actual destination:** general_support  
-**Destination match:** not applicable  
-**Payload complete:** not evaluated  
-**Fallback success:** not evaluated  
-**Resume success:** not evaluated  
-**Late escalation:** false
+- **Actual workflow route:** escalate
+- **Expected workflow route:** answer
+- **Workflow-route match:** false
+- **Actual destination:** general_support
+- **Destination match:** not applicable
+- **Payload complete:** not evaluated
+- **Fallback success:** not evaluated
+- **Resume success:** not evaluated
+- **Late escalation:** false
 
 ## Grading Notes
 

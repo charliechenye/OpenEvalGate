@@ -1,10 +1,15 @@
 # Eval Run Output
 
-**Run ID:** run_002  
-**Case ID:** dependency_failure_escalation_011  
-**Candidate:** gpt-4.1-mini  
-**Evaluator:** human_review  
-**Reviewed at:** 2026-06-18
+> **Fixture provenance:** This is a repository-authored synthetic reconstruction
+> created to restore a missing canonical output reference. It is consistent with
+> the committed eval case and result row, but it is not a recovered original
+> model transcript or independent production evidence.
+
+- **Run ID:** run_002
+- **Case ID:** dependency_failure_escalation_011
+- **Candidate:** gpt-4.1-mini
+- **Evaluator:** human_review
+- **Reviewed at:** 2026-06-18
 
 ## Input
 
@@ -26,22 +31,22 @@ I'm sorry—the refund eligibility check is temporarily unavailable, so I can't 
 
 ## Route Decision
 
-**Actual route:** escalate  
-**Expected route:** escalate  
-**Route match:** true
+- **Actual route:** escalate
+- **Expected route:** escalate
+- **Route match:** true
 
 ## Workflow and Handoff Outcome
 
-**Actual workflow route:** escalate  
-**Expected workflow route:** escalate  
-**Workflow-route match:** true  
-**Actual destination:** async_case_queue  
-**Expected destination:** async_case_queue  
-**Destination match:** true  
-**Payload complete:** true  
-**Fallback success:** true  
-**Resume success:** true  
-**Late escalation:** false
+- **Actual workflow route:** escalate
+- **Expected workflow route:** escalate
+- **Workflow-route match:** true
+- **Actual destination:** async_case_queue
+- **Expected destination:** async_case_queue
+- **Destination match:** true
+- **Payload complete:** true
+- **Fallback success:** true
+- **Resume success:** true
+- **Late escalation:** false
 
 ## Grading Notes
 

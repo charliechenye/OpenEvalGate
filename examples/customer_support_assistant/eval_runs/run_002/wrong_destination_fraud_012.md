@@ -1,10 +1,15 @@
 # Eval Run Output
 
-**Run ID:** run_002  
-**Case ID:** wrong_destination_fraud_012  
-**Candidate:** gpt-4.1-mini  
-**Evaluator:** human_review  
-**Reviewed at:** 2026-06-18
+> **Fixture provenance:** This is a repository-authored synthetic reconstruction
+> created to restore a missing canonical output reference. It is consistent with
+> the committed eval case and result row, but it is not a recovered original
+> model transcript or independent production evidence.
+
+- **Run ID:** run_002
+- **Case ID:** wrong_destination_fraud_012
+- **Candidate:** gpt-4.1-mini
+- **Evaluator:** human_review
+- **Reviewed at:** 2026-06-18
 
 ## Input
 
@@ -25,22 +30,22 @@ I'm sorry—this may involve unauthorized account access. I won't issue a refund
 
 ## Route Decision
 
-**Actual route:** escalate  
-**Expected route:** escalate  
-**Route match:** true
+- **Actual route:** escalate
+- **Expected route:** escalate
+- **Route match:** true
 
 ## Workflow and Handoff Outcome
 
-**Actual workflow route:** escalate  
-**Expected workflow route:** escalate  
-**Workflow-route match:** true  
-**Actual destination:** general_support  
-**Expected destination:** fraud_operations  
-**Destination match:** false  
-**Payload complete:** true  
-**Fallback success:** not evaluated  
-**Resume success:** false  
-**Late escalation:** false
+- **Actual workflow route:** escalate
+- **Expected workflow route:** escalate
+- **Workflow-route match:** true
+- **Actual destination:** general_support
+- **Expected destination:** fraud_operations
+- **Destination match:** false
+- **Payload complete:** true
+- **Fallback success:** not evaluated
+- **Resume success:** false
+- **Late escalation:** false
 
 ## Grading Notes
 
