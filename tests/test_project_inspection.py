@@ -147,32 +147,39 @@ def test_disallowed_not_applicable_is_policy_issue_and_check_failure(
     assert inspection.launch_blocked
 
 
+@pytest.mark.parametrize(
+    ("state", "expected_has_tool_actions", "expected_check_valid"),
+    [
+        ("populated", True, True),
+        ("empty", False, True),
+        ("missing", None, False),
+        ("malformed", None, False),
+    ],
+    ids=["populated", "empty", "missing", "malformed"],
+)
 def test_action_matrix_context_is_true_false_or_unknown(
     tmp_path: Path,
+    state: str,
+    expected_has_tool_actions: bool | None,
+    expected_check_valid: bool,
 ) -> None:
-    populated = _copy_project(tmp_path / "populated")
-    assert inspect_project(populated).context.has_tool_actions is True
+    project = _copy_project(tmp_path)
+    matrix = project / "action_risk_matrix.csv"
+    if state == "empty":
+        header = matrix.read_text(encoding="utf-8").splitlines()[0]
+        matrix.write_text(header + "\n", encoding="utf-8")
+    elif state == "missing":
+        matrix.unlink()
+    elif state == "malformed":
+        matrix.write_text(
+            "action,risk_tier\nlookup,low\n",
+            encoding="utf-8",
+        )
 
-    empty = _copy_project(tmp_path / "empty")
-    matrix = empty / "action_risk_matrix.csv"
-    header = matrix.read_text(encoding="utf-8").splitlines()[0]
-    matrix.write_text(header + "\n", encoding="utf-8")
-    assert inspect_project(empty).context.has_tool_actions is False
+    inspection = inspect_project(project)
 
-    missing = _copy_project(tmp_path / "missing")
-    (missing / "action_risk_matrix.csv").unlink()
-    missing_inspection = inspect_project(missing)
-    assert missing_inspection.context.has_tool_actions is None
-    assert not missing_inspection.check.valid
-
-    malformed = _copy_project(tmp_path / "malformed")
-    (malformed / "action_risk_matrix.csv").write_text(
-        "action,risk_tier\nlookup,low\n",
-        encoding="utf-8",
-    )
-    malformed_inspection = inspect_project(malformed)
-    assert malformed_inspection.context.has_tool_actions is None
-    assert not malformed_inspection.check.valid
+    assert inspection.context.has_tool_actions is expected_has_tool_actions
+    assert inspection.check.valid is expected_check_valid
 
 
 def test_unreadable_action_matrix_makes_tool_scope_unknown(
@@ -526,6 +533,58 @@ def test_action_matrix_header_ambiguity_and_issue_order(
     ]
     assert "risk_tier" not in review.rows[0].raw_values
     assert "extra" not in review.rows[0].raw_values
+
+
+@pytest.mark.parametrize(
+    ("header", "row", "duplicate_field", "expected_risk_tier"),
+    [
+        (
+            (
+                "action,risk_tier,risk_tier,deterministic_gate,"
+                "human_review_required"
+            ),
+            "refund,low,high,,false",
+            "risk_tier",
+            None,
+        ),
+        (
+            (
+                "action,risk_tier,extra,extra,deterministic_gate,"
+                "human_review_required"
+            ),
+            "refund,high,a,b,,false",
+            "extra",
+            "high",
+        ),
+    ],
+    ids=["duplicate-risk-tier", "duplicate-unrelated-header"],
+)
+def test_duplicate_action_risk_headers_preserve_only_unambiguous_values(
+    tmp_path: Path,
+    header: str,
+    row: str,
+    duplicate_field: str,
+    expected_risk_tier: str | None,
+) -> None:
+    path = tmp_path / "action_risk_matrix.csv"
+    path.write_text(f"{header}\n{row}\n", encoding="utf-8")
+
+    review = inspect_action_risk_matrix(path)
+
+    assert not review.valid
+    assert any(
+        issue.message == f"Duplicate action-risk header: {duplicate_field}."
+        for issue in review.issues
+    )
+    if expected_risk_tier is None:
+        assert "risk_tier" not in review.rows[0].raw_values
+        assert "risk_tier" not in review.rows[0].normalized_values
+    else:
+        assert review.rows[0].raw_values["risk_tier"] == expected_risk_tier
+        assert (
+            review.rows[0].normalized_values["risk_tier"]
+            == expected_risk_tier
+        )
 
 
 def test_triplicate_header_emits_one_duplicate_issue_and_unique_extra_is_valid(

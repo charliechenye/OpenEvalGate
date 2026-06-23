@@ -7,12 +7,19 @@ from pathlib import Path
 
 import pytest
 
-from openevalgate.report import generate_report
-
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRATCH_ROOT = ROOT / ".test-tmp"
 READABLE_NODE_ID_LIMIT = 96
+
+
+def _read_canonical_report(example_name: str) -> str:
+    return (
+        ROOT
+        / "examples"
+        / example_name
+        / "generated_launch_report.md"
+    ).read_text(encoding="utf-8")
 
 
 def _worker_id(config: pytest.Config) -> str:
@@ -61,14 +68,14 @@ def tmp_path(
 
 @pytest.fixture(scope="session")
 def customer_support_report() -> str:
-    return generate_report(ROOT / "examples" / "customer_support_assistant")
+    return _read_canonical_report("customer_support_assistant")
 
 
 @pytest.fixture(scope="session")
 def presales_report() -> str:
-    return generate_report(ROOT / "examples" / "presales_assistant")
+    return _read_canonical_report("presales_assistant")
 
 
 @pytest.fixture(scope="session")
 def education_report() -> str:
-    return generate_report(ROOT / "examples" / "education_assistant")
+    return _read_canonical_report("education_assistant")

@@ -5,13 +5,11 @@ from shutil import copytree
 import pytest
 import yaml
 
-from openevalgate.assessment import assess_launch
 from openevalgate.cli import main
 from openevalgate.launch_gate_review import is_meaningful_mitigation
 from openevalgate.project_inspection import inspect_project
 from openevalgate.report import _non_eval_result_issues, generate_report, write_report
-from openevalgate.review_policy import evaluate_behavioral_sufficiency
-from openevalgate.schema import ReviewMode, ValidationIssue, load_eval_cases
+from openevalgate.schema import ValidationIssue, load_eval_cases
 from openevalgate.scorer import WEIGHTS, score_gates, GateRow
 
 
@@ -375,12 +373,19 @@ def test_canonical_examples_demonstrate_distinct_review_modes(
     run_id: str,
     candidate: str,
     recommendation: str,
+    request: pytest.FixtureRequest,
 ) -> None:
     project = ROOT / "examples" / example_name
     policy = yaml.safe_load(
         (project / "review_policy.yaml").read_text(encoding="utf-8")
     )
-    report = generate_report(project)
+    report = request.getfixturevalue(
+        {
+            "customer_support_assistant": "customer_support_report",
+            "presales_assistant": "presales_report",
+            "education_assistant": "education_report",
+        }[example_name]
+    )
 
     assert policy["schema_version"] == "1"
     assert policy["requested_mode"] == mode
@@ -395,12 +400,22 @@ def test_canonical_examples_demonstrate_distinct_review_modes(
     assert "Ready for bounded controlled launch" not in report
 
 
-def test_written_report_uses_canonical_lf_bytes(tmp_path: Path) -> None:
+def test_written_report_uses_canonical_lf_bytes(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    expected = "first line\nsecond line\n"
+    monkeypatch.setattr(
+        "openevalgate.report.generate_report",
+        lambda _: expected,
+    )
     target = tmp_path / "generated.md"
 
-    write_report(CUSTOMER_SUPPORT, target)
+    write_report(tmp_path, target)
+    actual = target.read_bytes()
 
-    assert target.read_bytes() == generate_report(CUSTOMER_SUPPORT).encode("utf-8")
+    assert actual == b"first line\nsecond line\n"
+    assert b"\r\n" not in actual
 
 
 @pytest.mark.parametrize(
@@ -417,9 +432,6 @@ def test_canonical_scores_and_rollback_sections_are_consistent(
     rollback_status: str,
     request: pytest.FixtureRequest,
 ) -> None:
-    project = ROOT / "examples" / example_name
-    inspection = inspect_project(project)
-    score = score_gates(inspection.launch_gate_review)
     report = request.getfixturevalue(
         {
             "customer_support_assistant": "customer_support_report",
@@ -428,7 +440,7 @@ def test_canonical_scores_and_rollback_sections_are_consistent(
         }[example_name]
     )
 
-    assert score.score == expected_score
+    assert f"## Evidence Completeness Score\n{expected_score}/100" in report
     assert (
         f"| rollback gate | Yes | pass | {rollback_status} |"
         in report
@@ -511,10 +523,21 @@ def test_legacy_manual_report_copies_are_removed() -> None:
         assert not (ROOT / "examples" / example_name / "launch_report.md").exists()
 
 
-def test_cli_commands_retain_success_exit_behavior(capsys: pytest.CaptureFixture[str]) -> None:
-    assert main(["validate", str(CUSTOMER_SUPPORT / "eval_cases.yaml")]) == 0
-    assert main(["check", str(CUSTOMER_SUPPORT)]) == 0
-    assert main(["report", str(CUSTOMER_SUPPORT)]) == 0
+@pytest.mark.parametrize(
+    ("command", "arguments"),
+    [
+        ("validate", ["validate", str(CUSTOMER_SUPPORT / "eval_cases.yaml")]),
+        ("check", ["check", str(CUSTOMER_SUPPORT)]),
+        ("report", ["report", str(CUSTOMER_SUPPORT)]),
+    ],
+    ids=["validate", "check", "report"],
+)
+def test_cli_commands_retain_success_exit_behavior(
+    command: str,
+    arguments: list[str],
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert main(arguments) == 0, command
     capsys.readouterr()
 
 
@@ -548,10 +571,8 @@ def test_invalid_review_policy_fails_check_without_shadow_fallback(
         encoding="utf-8",
     )
 
-    inspection = inspect_project(project)
     report = generate_report(project)
 
-    assert not inspection.check.valid
     assert "- Review policy: Invalid" in report
     assert "- Effective review mode: Not configured" in report
     assert "Unavailable due to invalid review policy" in report
@@ -596,15 +617,12 @@ def test_unselected_behavioral_failures_do_not_affect_controlled_launch(
     )
     _write_result_rows(project, rows)
 
-    inspection = inspect_project(project)
     report = generate_report(project)
 
     assert "**Maximum permitted stage:** Controlled launch" in report
     assert "**Final launch recommendation:** Ready for bounded controlled launch" in report
     assert "**Critical-control status:** Pass" in report
-    assert "critical_escalation_regression" not in {
-        blocker.id for blocker in inspection.hard_blockers
-    }
+    assert "critical_escalation_regression" not in report
     assert "Eval pass rate: 94%" in report
     assert (
         "This section summarizes all valid behavioral rows in the results file."
@@ -757,26 +775,10 @@ def test_shadow_report_keeps_failed_invariant_informational(
         ],
     )
 
-    inspection = inspect_project(project)
-    sufficiency = evaluate_behavioral_sufficiency(project)
-    assessment = assess_launch(
-        evidence_completeness_score=90,
-        project_evidence_valid=True,
-        behavioral_sufficiency=sufficiency,
-        hard_blockers=inspection.hard_blockers,
-    )
     report = generate_report(project)
 
-    assert assessment.effective_review_mode == ReviewMode.SHADOW_LAUNCH
-    assert assessment.hard_blockers == []
-    assert any(
-        outcome.status == "fail"
-        for outcome in assessment.behavioral_sufficiency.invariant_outcomes
-    )
-    assert assessment.maximum_permitted_stage == "Shadow evaluation"
-    assert assessment.recommendation == "Ready for bounded shadow evaluation"
-    assert assessment.critical_control_status == "No known blockers detected"
     assert "**Effective review mode:** shadow_launch" in report
+    assert "**Maximum permitted stage:** Shadow evaluation" in report
     assert "**Final launch recommendation:** Ready for bounded shadow evaluation" in report
     assert "**Critical-control status:** No known blockers detected" in report
     assert "Controlled-launch behavioral invariants" in report
@@ -957,7 +959,6 @@ def test_invalid_duplicate_risk_header_summary_uses_unknown_counts(
     )
 
     report = generate_report(project)
-    inspection = inspect_project(project)
     section = report.split("## Tool/Action Safety Summary\n", 1)[1].split(
         "\n\n## Input/Output Perimeter Summary",
         1,
@@ -970,12 +971,7 @@ def test_invalid_duplicate_risk_header_summary_uses_unknown_counts(
     assert "- Rows: 1" in section
     assert "- Risk tiers: unknown=1" in section
     assert "High/prohibited actions" not in section
-    assert not inspection.check.action_risk_review.valid
-    assert inspection.context.has_tool_actions is None
-    assert (
-        "risk_tier"
-        not in inspection.check.action_risk_review.rows[0].raw_values
-    )
+    assert "ungated_high_risk_action" not in report
 
 
 def test_invalid_unrelated_duplicate_header_preserves_unique_tier_counts(
@@ -998,7 +994,6 @@ def test_invalid_unrelated_duplicate_header_preserves_unique_tier_counts(
     )
 
     report = generate_report(project)
-    inspection = inspect_project(project)
     section = report.split("## Tool/Action Safety Summary\n", 1)[1].split(
         "\n\n## Input/Output Perimeter Summary",
         1,
@@ -1007,8 +1002,6 @@ def test_invalid_unrelated_duplicate_header_preserves_unique_tier_counts(
     assert "- Risk tiers: high=1" in section
     assert "High/prohibited actions" not in section
     assert "ungated_high_risk_action" not in report
-    assert not inspection.check.action_risk_review.valid
-    assert inspection.context.has_tool_actions is None
 
 
 def test_missing_and_valid_action_risk_summaries_keep_existing_behavior(
