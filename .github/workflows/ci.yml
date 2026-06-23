@@ -198,8 +198,10 @@ jobs:
         run: >-
           python -m pytest
           -n 4
-          --dist=worksteal
+          --dist=load
+          --maxschedchunk=1
           --durations=20
+          --durations-min=1.0
 
       - name: Set up Python 3.11
         if: steps.scope.outputs.run_expensive == 'true'
@@ -252,8 +254,10 @@ jobs:
         run: |
           python -m pytest \
             -n 4 \
-            --dist=worksteal \
-            --durations=20
+            --dist=load \
+            --maxschedchunk=1 \
+            --durations=20 \
+            --durations-min=1.0
           python -m compileall -q openevalgate
 
       - name: Validate canonical examples
