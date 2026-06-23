@@ -1,0 +1,315 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/charliechenye/OpenEvalGate/schemas/eval-run-manifest-v1.schema.json",
+  "title": "OpenEvalGate Eval-Run Manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run",
+    "candidate",
+    "producer",
+    "evaluation",
+    "inputs",
+    "outputs"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1"
+    },
+    "run": {
+      "$ref": "#/$defs/run"
+    },
+    "candidate": {
+      "$ref": "#/$defs/candidate"
+    },
+    "producer": {
+      "$ref": "#/$defs/versionedIdentity"
+    },
+    "evaluation": {
+      "$ref": "#/$defs/evaluation"
+    },
+    "inputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/resourceDescriptor"
+      }
+    },
+    "outputs": {
+      "$ref": "#/$defs/outputs"
+    },
+    "extensions": {
+      "type": "object"
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "digest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sha256"],
+      "properties": {
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "resourceDescriptor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "digest"],
+      "properties": {
+        "role": {
+          "$ref": "#/$defs/identifier"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "not": {
+            "pattern": "^(?:/|[A-Za-z]:[\\\\/])"
+          }
+        },
+        "uri": {
+          "type": "string",
+          "format": "uri"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "media_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "annotations": {
+          "type": "object"
+        }
+      },
+      "oneOf": [
+        {
+          "required": ["path"],
+          "not": {
+            "required": ["uri"]
+          }
+        },
+        {
+          "required": ["uri"],
+          "not": {
+            "required": ["path"]
+          }
+        }
+      ]
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "status", "started_at", "completed_at"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "status": {
+          "enum": ["complete", "failed", "aborted"]
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completed_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "version": {
+          "$ref": "#/$defs/identifier"
+        },
+        "manifest": {
+          "$ref": "#/$defs/resourceDescriptor"
+        },
+        "annotations": {
+          "type": "object"
+        }
+      }
+    },
+    "versionedIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "version": {
+          "$ref": "#/$defs/identifier"
+        }
+      }
+    },
+    "framework": {
+      "$ref": "#/$defs/versionedIdentity"
+    },
+    "componentEvaluator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "kind": {
+          "enum": ["human", "deterministic", "model_judge"]
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "configuration": {
+          "$ref": "#/$defs/resourceDescriptor"
+        }
+      }
+    },
+    "evaluator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role": {
+          "type": "string",
+          "minLength": 1
+        },
+        "configuration": {
+          "$ref": "#/$defs/resourceDescriptor"
+        },
+        "components": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "$ref": "#/$defs/componentEvaluator"
+          }
+        },
+        "decision_policy": {
+          "$ref": "#/$defs/resourceDescriptor"
+        }
+      }
+    },
+    "evaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "framework", "evaluator", "policy"],
+      "properties": {
+        "kind": {
+          "enum": ["human", "deterministic", "model_judge", "hybrid"]
+        },
+        "framework": {
+          "$ref": "#/$defs/framework"
+        },
+        "evaluator": {
+          "$ref": "#/$defs/evaluator"
+        },
+        "policy": {
+          "$ref": "#/$defs/resourceDescriptor"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "hybrid"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "evaluator": {
+                "required": ["components", "decision_policy"]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "enum": ["deterministic", "model_judge"]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "evaluator": {
+                "required": ["version", "configuration"]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "human"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "evaluator": {
+                "required": ["role"]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "outputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["results"],
+      "properties": {
+        "results": {
+          "$ref": "#/$defs/resourceDescriptor"
+        },
+        "artifact_index": {
+          "$ref": "#/$defs/resourceDescriptor"
+        },
+        "additional": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/resourceDescriptor"
+          }
+        }
+      }
+    }
+  }
+}
