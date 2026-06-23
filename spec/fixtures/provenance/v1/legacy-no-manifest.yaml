@@ -1,0 +1,23 @@
+fixture: legacy-no-manifest
+
+manifest: null
+
+verification:
+  legacy_project_eval_results_present: true
+  manifest_present: false
+  freshness_verifiable: false
+
+expected:
+  manifest_presence: legacy_absent
+  validity: unknown
+  freshness: unknown
+  recency: not_configured
+  assurance: declared
+  lifecycle: unknown
+  authorization:
+    documentation: allowed
+    shadow: allowed_with_warning
+    controlled_launch: blocked
+  findings:
+    - provenance_manifest_absent
+    - provenance_freshness_unknown
