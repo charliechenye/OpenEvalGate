@@ -123,7 +123,7 @@ jobs:
                 printf '  %q\n' "${path}"
                 case "${path}" in
                   docs/* | \
-                  TODO.md | CHANGELOG.md | CITATION.cff | \
+                  AGENTS.md | TODO.md | CHANGELOG.md | CITATION.cff | \
                   SECURITY.md | CODE_OF_CONDUCT.md | GOVERNANCE.md | SUPPORT.md | \
                   .github/ISSUE_TEMPLATE/* | .github/pull_request_template.md)
                     ;;
