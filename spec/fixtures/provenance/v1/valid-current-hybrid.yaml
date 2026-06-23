@@ -1,0 +1,82 @@
+fixture: valid-current-hybrid
+
+manifest:
+  schema_version: "1"
+  run:
+    id: run_003
+    status: complete
+    started_at: 2026-06-19T17:00:00Z
+    completed_at: 2026-06-19T17:20:00Z
+  candidate:
+    id: customer-support-agent
+    version: 2026.06.19-rc3
+  producer:
+    id: internal-eval-exporter
+    version: 2.4.0
+  evaluation:
+    kind: hybrid
+    framework:
+      id: internal-eval-runner
+      version: 5.2.1
+    evaluator:
+      id: release-review-v3
+      components:
+        - id: deterministic-route-checker
+          kind: deterministic
+          version: 3.1.0
+          configuration:
+            role: deterministic_evaluator_config
+            path: route-checker.yaml
+            digest:
+              sha256: 3333333333333333333333333333333333333333333333333333333333333333
+        - id: support-quality-review
+          kind: human
+      decision_policy:
+        role: evaluation_policy
+        path: hybrid-decision-policy.yaml
+        digest:
+          sha256: 4444444444444444444444444444444444444444444444444444444444444444
+    policy:
+      role: evaluation_policy
+      path: evaluation_policy.yaml
+      digest:
+        sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  inputs:
+    - role: eval_cases
+      path: eval_cases.yaml
+      digest:
+        sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+    - role: routing_policy
+      path: routing_policy.yaml
+      digest:
+        sha256: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+  outputs:
+    results:
+      role: eval_results
+      path: eval_results.csv
+      digest:
+        sha256: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+
+verification:
+  directory_run_id: run_003
+  result_row_run_ids: [run_003]
+  component_evaluators_resolved: true
+  decision_policy_digest_matches: true
+  all_required_files_exist: true
+  all_paths_contained: true
+  all_recorded_digests_match: true
+  release_target_candidate_id: customer-support-agent
+  release_target_candidate_version: 2026.06.19-rc3
+
+expected:
+  manifest_presence: present
+  validity: valid
+  freshness: current
+  recency: not_configured
+  assurance: verified
+  lifecycle: complete
+  authorization:
+    documentation: allowed
+    shadow: allowed
+    controlled_launch: eligible
+  findings: []
