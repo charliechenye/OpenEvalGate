@@ -8,7 +8,8 @@ It is not an eval runner, hosted governance platform, runtime guardrail, or comp
 
 ## Non-Negotiable Trust Invariants
 
-- Missing, invalid, duplicated, ambiguous, contradictory, or stale evidence must fail closed.
+- Missing, invalid, duplicated, ambiguous, or contradictory evidence must fail closed.
+- When provenance or freshness is evaluated, stale evidence must not authorize launch.
 - Diagnostic values must not silently become policy inputs.
 - Critical-control failures and hard blockers override aggregate scores.
 - A documentation score alone cannot authorize launch.
@@ -24,7 +25,7 @@ It is not an eval runner, hosted governance platform, runtime guardrail, or comp
 5. Implement one coherent change.
 6. Run focused validation while iterating.
 7. Run broader validation once, near completion, only when required by [docs/development/validation-matrix.md](docs/development/validation-matrix.md).
-8. Inspect the final diff before committing.
+8. Inspect the final diff; commit only when explicitly requested.
 
 ## Context And Token Discipline
 
@@ -46,7 +47,10 @@ These defaults save context; they are not excuses to omit evidence necessary for
 - No schema, blocker-ID, exit-code, report, scoring, or compatibility change outside the task.
 - No generated-report update unless semantic output intentionally changes.
 - No roadmap or release-status update unless explicitly included.
+- Do not create or amend a commit unless the task explicitly requests it.
 - No pushing unless explicitly requested.
+- If the branch, expected HEAD, or working-tree state is unexpected, stop and report it.
+- Do not reset, rebase, amend, discard, or overwrite unrelated work.
 
 ## Validation Routing
 
