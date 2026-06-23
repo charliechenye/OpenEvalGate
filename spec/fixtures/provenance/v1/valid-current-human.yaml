@@ -1,0 +1,98 @@
+fixture: valid-current-human
+
+manifest:
+  schema_version: "1"
+  run:
+    id: run_002
+    status: complete
+    started_at: 2026-06-18T17:00:00Z
+    completed_at: 2026-06-18T17:14:22Z
+  candidate:
+    id: customer-support-agent
+    version: 2026.06.18-rc2
+  producer:
+    id: internal-eval-exporter
+    version: 2.4.0
+  evaluation:
+    kind: human
+    framework:
+      id: internal-eval-runner
+      version: 5.2.1
+    evaluator:
+      id: support-quality-review
+      role: ai_quality_reviewer
+    policy:
+      role: evaluation_policy
+      path: evaluation_policy.yaml
+      digest:
+        sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  inputs:
+    - role: eval_cases
+      path: eval_cases.yaml
+      digest:
+        sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+    - role: review_policy
+      path: review_policy.yaml
+      digest:
+        sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+    - role: routing_policy
+      path: routing_policy.yaml
+      digest:
+        sha256: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+    - role: escalation_contract
+      path: escalation_contract.yaml
+      digest:
+        sha256: eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+  outputs:
+    results:
+      role: eval_results
+      path: eval_results.csv
+      digest:
+        sha256: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+    artifact_index:
+      role: artifact_index
+      path: artifact_index.yaml
+      digest:
+        sha256: 1111111111111111111111111111111111111111111111111111111111111111
+
+artifact_index:
+  schema_version: "1"
+  run_id: run_002
+  artifacts:
+    - artifact_type: transcript
+      run_id: run_002
+      case_id: dependency_failure_escalation_011
+      trial_id: trial_001
+      candidate_id: customer-support-agent
+      candidate_version: 2026.06.18-rc2
+      evaluator_id: support-quality-review
+      path: artifacts/dependency_failure_escalation_011.md
+      digest:
+        sha256: 2222222222222222222222222222222222222222222222222222222222222222
+
+verification:
+  directory_run_id: run_002
+  result_row_run_ids: [run_002]
+  result_candidate_id: customer-support-agent
+  result_candidate_version: 2026.06.18-rc2
+  result_evaluator_id: support-quality-review
+  all_required_files_exist: true
+  all_paths_contained: true
+  all_recorded_digests_match: true
+  release_target_candidate_id: customer-support-agent
+  release_target_candidate_version: 2026.06.18-rc2
+  evidence_age_policy_days: 30
+  evidence_age_days: 5
+
+expected:
+  manifest_presence: present
+  validity: valid
+  freshness: current
+  recency: acceptable
+  assurance: verified
+  lifecycle: complete
+  authorization:
+    documentation: allowed
+    shadow: allowed
+    controlled_launch: eligible
+  findings: []
