@@ -198,7 +198,7 @@ jobs:
         run: >-
           python -m pytest
           -n 4
-          --dist=worksteal
+          --dist=load
           --maxschedchunk=1
           --durations=20
           --durations-min=1.0
@@ -254,7 +254,7 @@ jobs:
         run: |
           python -m pytest \
             -n 4 \
-            --dist=worksteal \
+            --dist=load \
             --maxschedchunk=1 \
             --durations=20 \
             --durations-min=1.0
