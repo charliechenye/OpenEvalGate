@@ -1,0 +1,4 @@
+fixture: stale-policy-input
+expected:
+  freshness: stale
+  controlled_launch: blocked
