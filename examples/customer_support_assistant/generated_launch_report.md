@@ -6,6 +6,7 @@
 - **Evidence completeness score:** 90/100
 - **Evidence package band:** Substantially complete
 - **Behavioral evidence status:** Evaluated — valid empirical rows are available.
+- **Run identity status:** Legacy
 - **Declared review mode:** controlled_launch
 - **Effective review mode:** controlled_launch
 - **Sufficiency for effective review mode:** Insufficient
@@ -13,7 +14,12 @@
 - **Maximum permitted stage:** Shadow evaluation with remediation
 - **Final launch recommendation:** Not ready for controlled launch
 - **Recommended next actions:** Remediate known hard blockers.
-- **Hard blockers:** 2
+- **Hard blockers:** 3
+
+## Eval-Run Identity
+- Status: Legacy
+- Findings: none
+- Warning: No versioned run manifest was provided. Existing CSV evidence is being handled in legacy compatibility mode.
 
 ## Evidence Completeness Score
 90/100
@@ -37,6 +43,7 @@ Meeting this threshold does not override hard blockers or grant permission to be
 
 ## Hard Blockers
 - **missing_monitoring:** Observability gate requires `pass`; actual status is `partial`. Evidence: launch-gate evidence cell
+- **unversioned_eval_run:** Controlled-launch review requires a complete versioned eval-run identity. Evidence: run_manifest.yaml
 - **critical_escalation_regression:** High-risk escalation evidence contains under-escalation, wrong-destination, payload, or resume failures. Evidence: refund_abuse_history_002, wrong_destination_fraud_012
 
 ## Trust Preservation Summary
@@ -176,7 +183,7 @@ This section summarizes all valid behavioral rows in the results file. Controlle
 - Fallback success rate: 100%
 - Resume success rate: 33%
 - Late-escalation rate: 33%
-- Observed output paths: eval_runs/run_001/refund_boundary_case_001.md, eval_runs/run_001/refund_abuse_history_002.md, eval_runs/run_001/merchant_blame_adversarial_003.md, eval_runs/run_002/dependency_failure_escalation_011.md, eval_runs/run_002/wrong_destination_fraud_012.md, eval_runs/run_002/routine_status_no_escalation_013.md
+- Observed output paths: eval_runs/run_002/refund_boundary_case_001.md, eval_runs/run_002/refund_abuse_history_002.md, eval_runs/run_002/merchant_blame_adversarial_003.md, eval_runs/run_002/dependency_failure_escalation_011.md, eval_runs/run_002/wrong_destination_fraud_012.md, eval_runs/run_002/routine_status_no_escalation_013.md
 
 ## Critical-Control Status
 **Fail**
@@ -184,6 +191,7 @@ This section summarizes all valid behavioral rows in the results file. Controlle
 The following critical controls failed:
 
 - `missing_monitoring`
+- `unversioned_eval_run`
 - `critical_escalation_regression`
 
 ## Maximum Permitted Stage
@@ -191,6 +199,7 @@ Shadow evaluation with remediation
 
 ## Required Mitigations
 - Launch blocker: Observability gate requires `pass`; actual status is `partial`.
+- Launch blocker: Controlled-launch review requires a complete versioned eval-run identity.
 - Launch blocker: High-risk escalation evidence contains under-escalation, wrong-destination, payload, or resume failures.
 - Model arena gate: Add a final latency run before rollout.
 - Routing / capability allocation gate: Fix high-risk workflow assignment regressions and rerun routing slices.

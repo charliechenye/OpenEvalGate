@@ -809,3 +809,10 @@ outputs:
     assert inspection.run_identity_inspection.status == "complete"
     assert inspection.launch_blocked
     assert "missing_monitoring" in {blocker.id for blocker in inspection.hard_blockers}
+
+
+
+def test_legacy_controlled_launch_is_blocked_by_unversioned_eval_run() -> None:
+    inspection = inspect_project(CUSTOMER_SUPPORT)
+
+    assert "unversioned_eval_run" in {blocker.id for blocker in inspection.hard_blockers}

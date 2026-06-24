@@ -6,6 +6,7 @@
 - **Evidence completeness score:** 37/100
 - **Evidence package band:** Incomplete
 - **Behavioral evidence status:** Evaluated — valid empirical rows are available.
+- **Run identity status:** Legacy
 - **Declared review mode:** documentation
 - **Effective review mode:** documentation
 - **Sufficiency for effective review mode:** Sufficient
@@ -14,6 +15,11 @@
 - **Final launch recommendation:** Not ready to complete documentation review
 - **Recommended next actions:** Complete missing or invalid control-evidence requirements; Remediate known hard blockers.
 - **Hard blockers:** 7
+
+## Eval-Run Identity
+- Status: Legacy
+- Findings: none
+- Warning: No versioned run manifest was provided. Existing CSV evidence is being handled in legacy compatibility mode.
 
 ## Evidence Completeness Score
 37/100

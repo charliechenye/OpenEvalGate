@@ -64,6 +64,7 @@ def _check(args: argparse.Namespace) -> int:
         print(f"OK: {args.project_dir} contains required launch gate files.")
         if result.present_optional:
             print("Optional summaries found: " + ", ".join(result.present_optional))
+        print(f"Run identity status: {inspection.run_identity_inspection.status.value}")
         print("Artifact validation passed. This is not a launch recommendation.")
         return 0
 

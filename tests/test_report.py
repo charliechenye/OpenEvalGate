@@ -89,6 +89,7 @@ def test_report_generation_returns_expected_sections(
     assert "# Launch Readiness Report: Customer Support Refund Assistant" in report
     assert "## Executive Summary" in report
     assert "## Evidence Completeness Score" in report
+    assert "## Eval-Run Identity" in report
     assert "## Observed Behavioral Quality" in report
     assert "## Critical-Control Status" in report
     assert "## Maximum Permitted Stage" in report
@@ -104,6 +105,16 @@ def test_report_generation_returns_expected_sections(
     assert "Overall Readiness Score" not in report
 
 
+def test_report_identity_section_includes_legacy_warning(customer_support_report: str) -> None:
+    assert "- **Run identity status:** Legacy" in customer_support_report
+    assert "## Eval-Run Identity" in customer_support_report
+    assert (
+        "No versioned run manifest was provided. Existing CSV evidence is being handled in legacy compatibility mode."
+        in customer_support_report
+    )
+    assert "unversioned_eval_run" in customer_support_report
+
+
 def test_high_evidence_completeness_can_still_be_not_ready(
     customer_support_report: str,
 ) -> None:
@@ -112,6 +123,7 @@ def test_high_evidence_completeness_can_still_be_not_ready(
     assert "**Evidence completeness score:** 90/100" in report
     assert "**Evidence package band:** Substantially complete" in report
     assert "**Behavioral evidence status:** Evaluated — valid empirical rows are available." in report
+    assert "**Run identity status:** Legacy" in report
     assert "**Critical-control status:** Fail" in report
     assert "**Maximum permitted stage:** Shadow evaluation with remediation" in report
     assert "**Final launch recommendation:** Not ready for controlled launch" in report
@@ -538,7 +550,9 @@ def test_cli_commands_retain_success_exit_behavior(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     assert main(arguments) == 0, command
-    capsys.readouterr()
+    output = capsys.readouterr().out
+    if command == "check":
+        assert "Run identity status: legacy" in output
 
 
 def test_check_and_report_do_not_conflict_on_invalid_results(
@@ -585,6 +599,25 @@ def test_fully_satisfied_synthetic_controlled_launch_is_bounded(
 ) -> None:
     project, cases = _controlled_launch_project(tmp_path)
     _write_result_rows(project, _passing_rows(cases))
+    (project / "run_manifest.yaml").write_text(
+        """
+schema_version: "1"
+run:
+  id: release-run
+  status: complete
+candidate:
+  id: candidate-v3
+  version: "1"
+evaluation:
+  kind: human
+  evaluator:
+    id: harness
+outputs:
+  results:
+    path: eval_results.csv
+""".lstrip(),
+        encoding="utf-8",
+    )
 
     report = generate_report(project)
 
@@ -616,18 +649,33 @@ def test_unselected_behavioral_failures_do_not_affect_controlled_launch(
         "qa,2026-06-20,unselected,false"
     )
     _write_result_rows(project, rows)
+    (project / "run_manifest.yaml").write_text(
+        """
+schema_version: "1"
+run:
+  id: release-run
+  status: complete
+candidate:
+  id: candidate-v3
+  version: "1"
+evaluation:
+  kind: human
+  evaluator:
+    id: harness
+outputs:
+  results:
+    path: eval_results.csv
+""".lstrip(),
+        encoding="utf-8",
+    )
 
     report = generate_report(project)
 
-    assert "**Maximum permitted stage:** Controlled launch" in report
-    assert "**Final launch recommendation:** Ready for bounded controlled launch" in report
-    assert "**Critical-control status:** Pass" in report
+    assert "**Run identity status:** Invalid" in report
+    assert "Run identity is invalid. Behavioral evidence from this run was excluded from launch evaluation." in report
+    assert "**Final launch recommendation:** Not ready for shadow evaluation" in report
     assert "critical_escalation_regression" not in report
-    assert "Eval pass rate: 94%" in report
-    assert (
-        "This section summarizes all valid behavioral rows in the results file."
-        in report
-    )
+    assert "Eval pass rate: 94%" not in report
 
 
 def test_selected_critical_failure_blocks_controlled_launch(

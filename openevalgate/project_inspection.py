@@ -227,6 +227,33 @@ def _evaluate_independent_blockers(
                 )
             )
 
+    if behavioral_scope is not None:
+        if run_identity_inspection.status == RunIdentityStatus.LEGACY:
+            blockers.append(
+                HardBlocker(
+                    "unversioned_eval_run",
+                    "Controlled-launch review requires a complete versioned eval-run identity.",
+                    "run_manifest.yaml",
+                )
+            )
+        lifecycle_findings = {finding.id for finding in run_identity_inspection.findings}
+        if "provenance_lifecycle_failed" in lifecycle_findings:
+            blockers.append(
+                HardBlocker(
+                    "provenance_lifecycle_failed",
+                    "Controlled-launch review requires a completed eval-run lifecycle.",
+                    "run.status=failed",
+                )
+            )
+        if "provenance_lifecycle_incomplete" in lifecycle_findings:
+            blockers.append(
+                HardBlocker(
+                    "provenance_lifecycle_incomplete",
+                    "Controlled-launch review requires a completed eval-run lifecycle.",
+                    "run.status=aborted",
+                )
+            )
+
     behavioral_evidence = classify_behavioral_evidence(
         root,
         identity_inspection=run_identity_inspection,
