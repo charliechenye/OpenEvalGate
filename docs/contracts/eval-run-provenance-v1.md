@@ -1,38 +1,33 @@
 # Eval-Run Provenance Contract v1
 
-Status: proposed contract for OpenEvalGate `0.2.0`
+Status: proposed contract for a future OpenEvalGate release
 
 ## Purpose
 
-OpenEvalGate evaluates externally produced evidence for AI-assistant and agent launch decisions. Metrics are not decision-ready unless reviewers can determine which candidate, policies, evaluator, inputs, and outputs produced them—and whether those artifacts still match the release under review.
+OpenEvalGate evaluates externally produced evidence for AI-assistant and agent launch decisions. Metrics are not decision-ready unless reviewers can determine which candidate, policies, evaluator, inputs, and outputs produced them, and whether those artifacts still match the release under review.
 
-This contract defines a vendor-neutral, run-scoped evidence envelope that makes evaluation evidence attributable, immutable, internally consistent, and classifiable for later launch authorization.
+This contract defines a vendor-neutral, run-scoped evidence envelope for existing OpenEvalGate-compatible eval results. The central adoption rule is:
 
-> Evaluation evidence is decision-relevant only when it can be traced to the exact candidate and policy inputs that produced it, and when those inputs and outputs have not drifted since the run.
+> The provenance manifest wraps an existing compatible `eval_results.csv`. It does not require external eval systems to adopt new provenance columns or rewrite every row.
 
-The contract does not make OpenEvalGate an eval runner, hosted governance platform, runtime guardrail, or certification authority.
+The contract does not make OpenEvalGate an eval runner, hosted governance platform, runtime guardrail, or certification authority. PR 18 defines the contract only; runtime parsing, report rendering, controlled-launch enforcement, blockers, and authorization code are not implemented here.
 
 ## Scope
 
 Version 1 defines:
 
-- an immutable run directory;
-- `run_manifest.yaml` for run-level identity and pinned inputs;
-- a run-scoped `eval_results.csv` identity contract;
-- `artifact_index.yaml` for per-case output identity;
-- evaluator categories and minimum evidence;
-- resource descriptors and SHA-256 representation;
-- lifecycle, validity, freshness, recency, and assurance dimensions;
-- verifier-supplied release context;
-- bounded compatibility for projects without provenance;
-- controlled-launch provenance requirements;
-- executable conformance fixtures.
+- a run directory containing an existing compatible `eval_results.csv`;
+- `run_manifest.yaml` for run-level identity, lifecycle, evaluator identity, and optional pinned evidence;
+- optional `artifact_index.yaml` for machine-readable output artifact identity;
+- optional review context for current-release freshness and recency comparison;
+- lifecycle, validity, freshness, recency, assurance, and authorization vocabulary;
+- bounded compatibility for projects without a manifest.
 
-Version 1 does not implement runtime enforcement, signatures, remote attestation, candidate registries, vendor adapters, or OpenEvalGate report provenance.
+Version 1 does not define a new CSV row schema, remote attestation, vendor adapters, OpenEvalGate review provenance, runtime enforcement, or report output.
 
-## Run-scoped evidence envelope
+## Evidence Envelope
 
-Each run has its own authoritative result file:
+A typical run directory may look like:
 
 ```text
 eval_runs/
@@ -44,147 +39,95 @@ eval_runs/
       case_001.md
 ```
 
-A project-level aggregate `eval_results.csv` may remain as a legacy input or derived view, but it is not the immutable provenance subject for a versioned run.
+Directory names are not authoritative. The manifest declares the run-level identity, and existing CSV values are cross-checked against it.
 
-Directory names are not authoritative. Run, case, trial, candidate, producer, and evaluator identity must be declared in machine-readable fields and cross-checked.
+The existing OpenEvalGate `eval_results.csv` contract remains authoritative. This contract does not require new CSV columns, including:
 
-## Run manifest
-
-The normative schema is `schemas/eval-run-manifest-v1.schema.json`.
-
-Required top-level fields:
-
-- `schema_version`
-- `run`
-- `candidate`
-- `producer`
-- `evaluation`
-- `inputs`
-- `outputs`
-
-An optional `extensions` object is reserved for namespaced additions. Because version 1 schemas are strict, backward-compatible v1 extensions must live under `extensions`.
-
-### Run
-
-`run` contains:
-
-- `id`
-- `status`: `complete`, `failed`, or `aborted`
-- `started_at`
-- `completed_at`
-
-Timestamps are timezone-aware RFC 3339 strings. A completion timestamp must not be earlier than its start timestamp. Only a complete run may support launch authorization.
-
-### Candidate
-
-`candidate` contains a stable `id`, immutable `version`, and optional candidate-manifest descriptor.
-
-The candidate is the evaluated release unit, not merely a base-model alias. It may include model, prompt, tools, routing configuration, code, and runtime settings.
-
-For controlled launch, the release target must be independently supplied through review context and must match the run candidate. A future OpenEvalGate candidate registry or project-level candidate manifest may provide that context; the run manifest itself is not sufficient to prove that it matches the release target.
-
-### Producer
-
-`producer` identifies the process that created the envelope through an `id` and `version`.
-
-The producer is distinct from the eval framework and from OpenEvalGate. Validation must not imply that OpenEvalGate executed or witnessed the run.
-
-### Evaluation and evaluator kinds
-
-`evaluation.kind` is one of:
-
-- `human`
-- `deterministic`
-- `model_judge`
-- `hybrid`
-
-A human evaluator declares a stable role or pseudonymous ID and a pinned rubric or review policy.
-
-A deterministic evaluator declares implementation ID, version, and a configuration digest when configuration affects results.
-
-A model judge declares judge identity/version, rubric or prompt digest, material configuration, and deterministic parsing or aggregation policy where applicable.
-
-A hybrid evaluator declares component evaluators and a pinned aggregation or decision policy. Each component inherits the minimum requirements of its own evaluator kind. `hybrid` without complete component and policy identity is invalid.
-
-## Run-scoped result-row identity
-
-The normalized row schema is `schemas/eval-run-result-row-v1.schema.json`.
-
-A version 1 run-scoped `eval_results.csv` must include these non-empty columns:
-
-- `run_id`
-- `case_id`
-- `trial_id`
 - `candidate_id`
 - `candidate_version`
 - `evaluator_id`
-
-It may include:
-
 - `primary_output_artifact_id`
 
-Other behavioral columns remain governed by the existing eval-result contract.
+The existing CSV fields remain the compatibility surface for result rows, including:
 
-Legacy columns such as `candidate`, `evaluator`, and `observed_output_path` do not satisfy version 1 provenance identity by themselves. Implementations may display or migrate them, but must not infer immutable candidate version or evaluator identity from free-text aliases.
+- `run_id`
+- `candidate`
+- `evaluator`
+- `case_id`
+- `trial_id`
+- `observed_output_path`
 
-A result row is uniquely identified for provenance purposes by:
+`trial_id` remains optional under the existing CSV contract.
 
-```text
-(run_id, case_id, trial_id, candidate_id, candidate_version, evaluator_id)
-```
+## Run Manifest
 
-Duplicate provenance result identities are invalid.
+The normative schema is `schemas/eval-run-manifest-v1.schema.json`.
 
-`primary_output_artifact_id`, when supplied, must resolve to exactly one artifact-index entry. Additional artifacts may share the same result identity and are discovered through the artifact index.
+The base manifest identifies one run, one candidate ID and version, and one top-level evaluation identity. Multi-candidate run manifests are deferred.
 
-## Resource descriptors
+Manifest values are inherited by rows and artifacts instead of being repeated as new CSV provenance columns:
 
-Policy-relevant inputs and outputs use one descriptor shape:
+- immutable candidate ID and version;
+- producer identity, when supplied;
+- evaluation framework identity, when supplied;
+- evaluator identity and kind;
+- lifecycle status;
+- run timestamps, when supplied;
+- input and output descriptors, when supplied.
 
-```yaml
-role: review_policy
-path: review_policy.yaml
-media_type: application/yaml
-schema_version: "1"
-digest:
-  sha256: "9d9b2f2f9bcb8f44f9ad2de631f21d9075a40f4b7c4e6aefdf3cb60507d4f243"
-```
+Missing producer, framework, evaluation policy, timestamps, digests, inputs, candidate artifact, artifact index, or review context does not automatically make a manifest structurally invalid. Those fields affect assurance, freshness, recency, and controlled-launch eligibility.
 
-Required fields:
+## CSV Cross-Checks
 
-- `role`
-- at least one of `path` or `uri`
-- `digest.sha256`
+When a manifest is present, a verifier cross-checks existing CSV fields against manifest identity:
 
-A descriptor may include both `path` and `uri`: `uri` identifies the logical or external resource, while `path` identifies locally available verification bytes.
+- trim leading and trailing whitespace from CSV values before comparison;
+- compare aliases case-sensitively;
+- do not case-fold or Unicode-normalize in v1;
+- every non-empty CSV `run_id` must equal `run.id`;
+- CSV `candidate` must equal `candidate.id` or one `candidate.accepted_aliases` value;
+- CSV `evaluator` must equal `evaluation.evaluator.id` or one `evaluation.evaluator.accepted_aliases` value;
+- mismatches are contradictory provenance and make the historical envelope invalid.
 
-Optional fields include `name`, `media_type`, `schema_version`, and `annotations`. Unrecognized annotations are informational and must not authorize launch.
+Aliases are compatibility labels, not stable identities. Stable IDs remain authoritative. Alias rules:
 
-### Required input-role matrix
+- aliases must not contain leading or trailing whitespace;
+- aliases must contain at least one non-whitespace character;
+- aliases must be unique after trimming;
+- aliases equal to the stable ID are allowed but redundant.
 
-| Input role | Requirement |
-| --- | --- |
-| `eval_cases` | Always required. |
-| `evaluation_policy` or evaluator rubric | Always required. |
-| `candidate_manifest` | Required for controlled-launch eligibility. |
-| `review_policy` | Required when review policy selects or interprets evidence. |
-| `routing_policy` | Required when routing, workflow, destination, or model-assignment claims are evaluated. |
-| `escalation_contract` | Required when escalation, handoff, fallback, or resume claims are evaluated. |
-| `action_risk_matrix` | Required when tool or action authorization is evaluated. |
-| Dataset, fixture, model policy, evaluator configuration | Required when it can materially change evaluation behavior or interpretation. |
+## Evaluation Policy Fields
 
-Implementations must not require unrelated project files.
+`evaluation.policy` and hybrid `evaluation.evaluator.decision_policy` are distinct.
 
-### Required outputs
+`evaluation.policy` is an optional descriptor identifying the policy, protocol, or procedure governing the historical evaluation run as a whole. Examples include a review procedure, scoring policy, test execution protocol, or evaluation governance policy.
 
-`outputs` identifies:
+Hybrid `evaluation.evaluator.decision_policy` is a required descriptor for hybrid evaluators. It identifies the aggregation, arbitration, or adjudication rule that combines component evaluator results into a final result. Examples include human-review tie-break, deterministic-check override, weighted component aggregation, or unanimous-pass requirement.
 
-- `results`: the run-scoped `eval_results.csv`;
-- `artifact_index`: required when any result or evaluation claim references output artifacts.
+They may coexist. They are not aliases and must not be collapsed into one field.
 
-Additional outputs may be declared with resource descriptors.
+## Resource And File Evidence
 
-## Digest and path rules
+The schema separates fixed-purpose file descriptors from named input resources.
+
+File descriptors are used for candidate artifacts, result CSVs, artifact indexes, evaluator configuration artifacts, and fixed-purpose output or configuration files. They do not require a `role`.
+
+Named resource descriptors are used for manifest inputs and review-context inputs. They require `role`, keep roles extensible, and may require `name` for repeatable resources.
+
+Known singleton input roles may appear at most once:
+
+- `eval_cases`
+- `evaluation_policy`
+- `review_policy`
+- `routing_policy`
+- `escalation_contract`
+- `action_risk_matrix`
+
+Custom roles are allowed. Custom roles default to repeatable and require `name`. Repeatable resources match between historical evidence and current review context by `(role, name)`. Duplicate singleton roles are semantically invalid.
+
+URI-only evidence is valid declared evidence. Network retrieval is disabled by default. URI-only evidence cannot become locally verified unless an explicitly configured resolver supplies matching bytes. Resolver behavior is out of scope for PR 18.
+
+## Digest And Path Rules
 
 SHA-256 values:
 
@@ -193,184 +136,330 @@ SHA-256 values:
 - are not calculated after newline, Unicode, YAML, JSON, or CSV normalization;
 - change whenever file bytes change.
 
-Version 1 does not define an implicit recursive directory hash. Directory contents are represented by an explicit artifact index.
+Missing digests do not automatically make provenance invalid. They prevent verified assurance for the applicable evidence.
 
-Local paths must be relative to the file containing the descriptor, resolve within the verifier's allowed evidence root, and reference existing regular files when verified. Absolute paths, path escapes after resolution, and unconstrained symlinks are invalid.
+Local paths must be relative to the file containing the descriptor, resolve within the allowed evidence root, and reference existing regular files when verified. Absolute paths, path escapes after resolution, and symlinks are invalid when path safety is evaluated.
 
-A URI is declarative unless an explicit resolver supplies bytes. Network retrieval is disabled by default. URI-only evidence cannot reach `verified` assurance unless a trusted resolver supplies bytes matching the recorded digest.
-
-## Artifact index
+## Artifact Index
 
 The normative schema is `schemas/eval-run-artifact-index-v1.schema.json`.
 
-Each entry binds an output artifact to:
+`artifact_index.yaml` is optional. It is not required when the CSV contains all decision-relevant evidence and no external output artifact is reviewed as release evidence.
 
-- unique `artifact_id`
-- `artifact_type`
-- `run_id`
-- `case_id`
-- optional `trial_id`
-- `candidate_id`
-- `candidate_version`
-- `evaluator_id`
-- resource path and digest
+Artifact indexing rules:
 
-The entry must agree with the manifest and referenced result row. Human-readable artifacts may repeat these fields, but prose is not the authoritative identity source.
+- a non-empty CSV `observed_output_path` is allowed without an artifact index for legacy or declared evidence;
+- verified artifact provenance requires each applicable non-empty `observed_output_path` to resolve to exactly one artifact-index entry;
+- controlled-launch eligibility requires verified mapping for output artifacts that contribute to selected release evidence;
+- missing artifact indexing leaves artifact assurance incomplete; it is not automatically structural invalidity;
+- contradictory, ambiguous, unsafe, or digest-mismatched artifact mappings are invalid.
 
-Within one artifact index:
+Mapping is performed by normalizing the CSV `observed_output_path` relative to the run-scoped CSV, normalizing artifact-index paths relative to `artifact_index.yaml`, comparing resolved run-relative paths, and requiring exactly one matching artifact entry.
 
-- `artifact_id` values must be unique;
-- normalized artifact paths must be unique;
-- duplicate compound identities with the same `artifact_type` are invalid;
-- a result-row `primary_output_artifact_id` must resolve exactly once.
+Artifact identities inherit run, candidate, and top-level evaluator identity from the run manifest and artifact index. Artifact entries do not need to repeat candidate or evaluator identity. For hybrid evaluations, optional `evaluator_ref` may identify the top-level evaluator or one component.
 
-## Two verification comparisons
+## Review Context And Freshness
 
-Version 1 distinguishes internal envelope integrity from release-time freshness.
+Review context supplies current release state for comparison without putting mutable state inside the immutable historical run manifest.
 
-### Envelope verification
+`evaluation.policy`, `review_context.recency_policy`, and the governing OpenEvalGate review or authorization policy have different jobs:
 
-Envelope verification checks that historical run evidence is internally coherent:
+- `evaluation.policy` describes how the historical evaluation run was conducted.
+- `review_context.recency_policy` supplies the age threshold and observation time used to classify evidence as acceptable, expired, or unknown.
+- the governing OpenEvalGate review or authorization policy determines whether controlled launch may proceed when no recency limit has been configured.
 
-1. run-directory identity versus manifest `run.id`;
-2. manifest run identity versus every result row;
-3. candidate identity across manifest, results, and artifact index;
-4. evaluator identity across manifest, results, and artifact index;
-5. case/trial identity across results and artifact index;
-6. run output containment, existence, type, and digest;
-7. preserved run-input existence and digest;
-8. manifest-pinned result and artifact-index digests;
-9. uniqueness rules.
+Freshness rules:
 
-Failure of these checks makes provenance `invalid`.
+- invalid historical envelope -> `not_evaluated`;
+- no review context -> `unknown`;
+- required current comparison resource absent -> `unknown`;
+- current descriptor exists but lacks sufficient verified identity or digest information -> `unknown`;
+- valid historical envelope plus matching current identity and matching digest -> `current`;
+- valid historical envelope plus matching current identity and different digest -> `stale`;
+- candidate ID or version mismatch against the release target -> `stale`;
+- historical bytes not matching the historical recorded digest -> invalid, not stale.
 
-### Release-context comparison
+## Classification Vocabulary
 
-A verifier must separately receive review context containing:
+Provenance is classified across independent dimensions. These are the only v1 values.
 
-- release-target candidate ID and version;
-- current policy/input descriptors by role;
-- optional evidence-age policy.
+| Dimension | Values |
+| --- | --- |
+| Manifest presence | `present`, `legacy_absent` |
+| Validity | `valid`, `invalid`, `not_evaluated` |
+| Freshness | `current`, `stale`, `unknown`, `not_evaluated` |
+| Recency | `acceptable`, `expired`, `unknown`, `not_configured`, `not_evaluated` |
+| Assurance | `unavailable`, `declared`, `verified` |
+| Lifecycle | `complete`, `failed`, `incomplete`, `unknown` |
+| Documentation and shadow authorization | `allowed`, `allowed_with_warning`, `blocked` |
+| Controlled-launch authorization | `eligible`, `blocked` |
 
-Freshness compares the valid historical envelope against this current context. A digest or candidate difference discovered only in this comparison makes evidence `stale`, not internally invalid.
+Signed attestation is reserved for a future contract version and is not a v1 classification.
 
-The transport for review context is outside the run-envelope schema. Conformance fixtures use `review_context.yaml`. Future OpenEvalGate integration may derive it from project metadata, a candidate registry, or explicit command inputs.
+## Classification Precedence
 
-## Independent classification dimensions
+Classification follows these precedence rules:
 
-Provenance is not one overloaded status.
+1. Legacy evidence with no manifest:
 
-### Manifest presence
+   ```yaml
+   provenance:
+     manifest_presence: legacy_absent
+     validity: not_evaluated
+     freshness: not_evaluated
+     recency: not_evaluated
+     assurance: unavailable
+     lifecycle: unknown
+   ```
 
-- `present`
-- `legacy_absent`
+2. Invalid historical envelope:
 
-### Validity
+   ```yaml
+   provenance:
+     manifest_presence: present
+     validity: invalid
+     freshness: not_evaluated
+     recency: not_evaluated
+     assurance: unavailable
+   ```
 
-- `valid`
-- `invalid`
-- `not_evaluated`
+   Do not evaluate freshness or recency when the historical envelope is invalid.
 
-### Content freshness
+3. Valid envelope without review context:
 
-- `current`: a valid envelope matches release-target candidate and applicable current inputs
-- `stale`: a valid envelope differs from release-target candidate or applicable current inputs
-- `unknown`: freshness cannot be established
+   ```yaml
+   validity: valid
+   freshness: unknown
+   ```
 
-### Recency
+4. Valid envelope without recency policy:
 
-- `acceptable`
-- `expired`
-- `not_configured`
-- `unknown`
+   ```yaml
+   recency: not_configured
+   ```
 
-Old evidence is not automatically stale. Staleness is content drift; expiration is age-policy failure.
+5. Valid but stale evidence:
 
-### Assurance
+   ```yaml
+   validity: valid
+   freshness: stale
+   ```
 
-- `declared`: supplied but not independently checked
-- `verified`: required local identities, paths, and digests were checked
-- `attested`: reserved for future signed attestations
-- `unknown`
+   Recency remains independent and may be `acceptable`, `expired`, `unknown`, or `not_configured`.
 
-`verified` describes the performed verification level. A verifier may classify valid historical evidence as verified and stale when release-context comparison detects drift.
+6. Valid but expired evidence:
 
-### Lifecycle
+   ```yaml
+   validity: valid
+   freshness: current
+   recency: expired
+   ```
 
-- `complete`
-- `failed`
-- `aborted`
-- `unknown`
+7. Fully current evidence that may become eligible:
 
-Only a complete run may support launch authorization.
+   ```yaml
+   validity: valid
+   freshness: current
+   assurance: verified
+   lifecycle: complete
+   ```
 
-## Authorization outcomes
+   Recency must be `acceptable`, or `not_configured` only when the governing OpenEvalGate review or authorization policy explicitly permits proceeding without a configured evidence-age limit.
 
-The contract uses these outcomes:
+Recency precedence:
 
-- `allowed`
-- `allowed_with_warning`
-- `blocked`
-- `eligible`
+| Condition | Recency |
+| --- | --- |
+| Legacy evidence with no manifest | `not_evaluated` |
+| Invalid provenance envelope | `not_evaluated` |
+| Valid provenance with no recency policy | `not_configured` |
+| Recency policy exists, but required evidence is missing | `unknown` |
+| Computed age is within policy threshold | `acceptable` |
+| Computed age exceeds policy threshold | `expired` |
 
-`eligible` means provenance prerequisites pass; it does not itself authorize deployment. Other OpenEvalGate blockers and organizational approvals still apply.
+Provenance reports `recency: not_configured` when no age policy is configured. A future authorization implementation determines whether that state is acceptable for controlled launch. The default is blocked unless the governing OpenEvalGate review or authorization policy explicitly permits the absence of a configured evidence-age limit. That permission does not come from the historical run manifest, `evaluation.policy`, or the absence of `review_context.recency_policy`.
 
-Controlled-launch provenance is `eligible` only when:
+## Assurance
 
-- manifest presence is `present`;
-- validity is `valid`;
-- lifecycle is `complete`;
-- assurance is at least `verified`;
-- freshness is `current`;
-- recency is `acceptable` or `not_configured`;
-- candidate identity matches the release target;
-- all conditionally required inputs are pinned;
-- required result and artifact digests match;
-- no contradictory provenance exists.
+`unavailable` means no usable provenance assurance can be established because no run manifest exists, the manifest is schema-invalid, or the historical evidence envelope is semantically invalid. Examples include unsupported schema version, missing required manifest fields, historical digest mismatch, unsafe path, contradictory run identity, duplicate artifact identity, or duplicate singleton resource role.
 
-Scores, pass rates, documentation scores, or gate completion cannot override failed provenance requirements.
+`declared` means a structurally and semantically valid run manifest exists, but the complete applicable evidence envelope has not been integrity-verified. Examples include:
 
-Legacy evidence may support documentation review and bounded shadow analysis with an explicit warning, but it cannot make controlled-launch provenance eligible.
+- an applicable local descriptor lacks a digest;
+- results CSV is not digest-verified;
+- an applicable artifact is not indexed or digest-verified;
+- URI-only evidence has no configured resolver supplying verified bytes;
+- an applicable declared file has not been verified.
 
-A present-but-invalid manifest must not degrade into legacy mode.
+`verified` means the historical envelope is valid and all applicable evidence declared as part of it is integrity-verified. At minimum:
 
-## Legacy compatibility
+- every applicable local descriptor has a digest;
+- each digest matches finalized raw file bytes;
+- the results CSV digest matches;
+- artifact-index bytes match when the manifest declares an artifact index;
+- each applicable selected output artifact is uniquely mapped;
+- each applicable selected output artifact has a matching digest;
+- paths and identities are internally consistent;
+- URI-only evidence has verified bytes supplied by an explicitly configured resolver, or it prevents verified assurance.
 
-Projects without `run_manifest.yaml` remain readable during the `0.x` compatibility window:
+`verified` does not imply freshness is current, recency is acceptable, lifecycle is complete, or evidence is sufficient for controlled launch.
 
-- presence: `legacy_absent`
-- validity: `not_evaluated`
-- freshness: `unknown`
-- recency: `unknown` or `not_configured`
-- assurance: `declared`
-- lifecycle: `unknown`
-- documentation review: `allowed`
-- shadow review: `allowed_with_warning`
-- controlled-launch provenance: `blocked`
+## Lifecycle
 
-This compatibility does not apply to malformed or contradictory manifests.
+Lifecycle is derived from a recognized v1 manifest status:
 
-## Threat model and non-claims
+| Manifest condition | Lifecycle |
+| --- | --- |
+| `run.status: complete` | `complete` |
+| `run.status: failed` | `failed` |
+| `run.status: aborted` | `incomplete` |
+| Unsupported schema version | `unknown` |
+| No manifest | `unknown` |
 
-This contract can detect policy drift, candidate mismatch, modified or swapped artifacts, run/case/trial identity conflicts, missing evaluator configuration, incomplete lifecycle, and evidence that no longer applies to a release target.
+Recognized v1 schema with semantic invalidity may still report lifecycle from the valid parsed v1 status. Recognized v1 schema with another required field missing may report lifecycle from `run.status` when a valid parsed v1 status is available. Unsupported schema versions do not interpret `run.status` using v1 semantics. Unparseable YAML is out of scope for PR 18.
+
+Only `complete` lifecycle may support controlled launch, and only when all other provenance requirements pass.
+
+## Ordered Authorization Rules
+
+The authorization rules are ordered. Earlier rules take precedence over later rules.
+
+1. Invalid provenance:
+
+   ```yaml
+   authorization:
+     documentation: allowed_with_warning
+     shadow: blocked
+     controlled_launch: blocked
+   ```
+
+2. Failed or incomplete lifecycle:
+
+   ```yaml
+   authorization:
+     documentation: allowed_with_warning
+     shadow: blocked
+     controlled_launch: blocked
+   ```
+
+3. Stale evidence:
+
+   ```yaml
+   authorization:
+     documentation: allowed_with_warning
+     shadow: allowed_with_warning
+     controlled_launch: blocked
+   ```
+
+4. Expired evidence:
+
+   ```yaml
+   authorization:
+     documentation: allowed_with_warning
+     shadow: allowed_with_warning
+     controlled_launch: blocked
+   ```
+
+5. Recency unknown under a configured recency policy:
+
+   ```yaml
+   authorization:
+     documentation: allowed
+     shadow: allowed_with_warning
+     controlled_launch: blocked
+   ```
+
+6. Legacy evidence:
+
+   ```yaml
+   authorization:
+     documentation: allowed
+     shadow: allowed_with_warning
+     controlled_launch: blocked
+   ```
+
+7. Valid, declared, complete evidence:
+
+   ```yaml
+   authorization:
+     documentation: allowed
+     shadow: allowed
+     controlled_launch: blocked
+   ```
+
+   This includes the adoption-friendly case where freshness is `unknown` because no review context was supplied.
+
+8. Valid, verified evidence with freshness unknown:
+
+   ```yaml
+   authorization:
+     documentation: allowed
+     shadow: allowed_with_warning
+     controlled_launch: blocked
+   ```
+
+9. Valid, verified, current, complete evidence with acceptable recency:
+
+   ```yaml
+   authorization:
+     documentation: allowed
+     shadow: allowed
+     controlled_launch: eligible
+   ```
+
+10. Valid, verified, current, complete evidence with recency not configured:
+
+    Controlled launch is eligible only when the governing OpenEvalGate review or authorization policy explicitly permits proceeding without a configured evidence-age limit. Otherwise:
+
+    ```yaml
+    authorization:
+      documentation: allowed
+      shadow: allowed
+      controlled_launch: blocked
+    ```
+
+Documentation access means evidence may be inspected, not trusted. `allowed_with_warning` must not imply invalid evidence is trustworthy. A present-but-invalid manifest never falls back to legacy handling. A high evaluation score, documentation score, or pass rate cannot override provenance authorization limits.
+
+## Legacy Compatibility
+
+Projects without `run_manifest.yaml` remain readable during the compatibility window:
+
+```yaml
+provenance:
+  manifest_presence: legacy_absent
+  validity: not_evaluated
+  freshness: not_evaluated
+  recency: not_evaluated
+  assurance: unavailable
+  lifecycle: unknown
+
+authorization:
+  documentation: allowed
+  shadow: allowed_with_warning
+  controlled_launch: blocked
+```
+
+This compatibility does not apply to malformed, schema-invalid, or contradictory manifests.
+
+## Threat Model And Non-Claims
+
+This contract can detect policy drift, candidate mismatch, modified or swapped artifacts, run/case/trial identity conflicts, incomplete lifecycle, and evidence that no longer applies to a release target.
 
 It does not prove evaluator honesty, human participation, candidate-output authenticity, producer-host integrity, or that a digest record was not fabricated before recording.
 
 Version 1 is a locally verifiable evidence contract, not a cryptographically trusted attestation.
 
-## Versioning and extensions
+## Versioning And Extensions
 
-`schema_version` is a major-version string.
+`schema_version` is a major-version string. Version 1 consumers reject unsupported major versions. Strict schemas reject unknown standard fields. Backward-compatible v1 additions must be namespaced under explicit `extensions` fields where supported. Unknown extensions may be ignored only when doing so cannot increase authorization.
 
-Version 1 consumers must reject unsupported major versions. Strict schemas reject unknown standard fields. Backward-compatible v1 additions must be namespaced under `extensions`. Unknown extensions may be ignored only when doing so cannot increase authorization. Extensions must not weaken required fields or overwrite standard semantics.
-
-## Review provenance is separate
+## Review Provenance Is Separate
 
 Eval-run provenance records what produced evaluation evidence.
 
 A future review-provenance contract should record which OpenEvalGate version, review policy, command, and report inputs produced a release assessment. The OpenEvalGate version is intentionally not part of `run_manifest.yaml` unless OpenEvalGate itself acted as the external run producer.
 
-## Relationship to external standards
+## Relationship To External Standards
 
 | OpenEvalGate concept | Related external concept |
 | --- | --- |
@@ -390,17 +479,19 @@ References:
 - https://www.w3.org/TR/prov-o/
 - https://openlineage.io/docs/spec/run-cycle/
 
-## Conformance fixtures
+## Conformance Fixtures
 
-Self-contained fixture directories under `spec/fixtures/provenance/v1/` include real input, result, artifact, review-context, and expected-classification files. Recorded SHA-256 values are computed from fixture bytes.
+Self-contained fixture directories under `spec/fixtures/provenance/v1/` will include real input, result, artifact, review-context, and expected-classification files. Recorded SHA-256 values must be computed from fixture bytes.
 
-The fixture package covers valid human, deterministic, model-judge, and hybrid evaluation; stale policy input; candidate drift; output corruption; invalid identity; unsafe paths; failed lifecycle; expired evidence; unsupported schema version; duplicate artifact identity; and legacy evidence.
+The fixtures are normative contract examples, but PR 18 does not make production code execute them.
 
-## Implementation sequence
+## Implementation Sequence
 
-1. Parse manifests, run-scoped result rows, artifact indexes, and review context.
+Future implementation work is expected to:
+
+1. Parse manifests, existing compatible result CSVs, artifact indexes, and review context.
 2. Validate schema, identity, uniqueness, containment, lifecycle, and envelope digests.
-3. Classify presence, validity, freshness, recency, and assurance.
+3. Classify presence, validity, freshness, recency, assurance, lifecycle, and authorization.
 4. Surface classifications in reports.
 5. Connect provenance eligibility to controlled-launch authorization.
 
