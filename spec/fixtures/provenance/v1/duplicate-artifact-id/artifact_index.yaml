@@ -1,0 +1,17 @@
+schema_version: "1"
+run_id: run_002
+artifacts:
+  - artifact_id: duplicate_transcript
+    artifact_type: transcript
+    case_id: dependency_failure_escalation_011
+    trial_id: trial_001
+    path: artifacts/case_001.md
+    digest:
+      sha256: "2c88c822d8ef633cbea953aaa080a7e1a2f00a20f0c6e11b52c00e2231f3e8ed"
+  - artifact_id: duplicate_transcript
+    artifact_type: transcript
+    case_id: dependency_failure_escalation_011
+    trial_id: trial_001
+    path: artifacts/case_002.md
+    digest:
+      sha256: "c97585af685b31e8a030d619438608c84d0d0f312cf06fe28ea2834fab92abd4"

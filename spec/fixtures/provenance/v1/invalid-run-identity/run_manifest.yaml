@@ -1,0 +1,47 @@
+schema_version: "1"
+
+run:
+  id: run_002
+  status: complete
+  started_at: "2026-06-18T17:00:00Z"
+  completed_at: "2026-06-18T17:14:22Z"
+
+candidate:
+  id: customer-support-agent
+  version: "2026.06.18-rc2"
+  artifact:
+    path: inputs/candidate.yaml
+    digest:
+      sha256: "a59e780f6ca3cff5631892579011427d32f85c6120e8a8a4485a973e9c4a40b3"
+
+producer:
+  id: internal-eval-exporter
+  version: "2.4.0"
+
+evaluation:
+  kind: human
+  framework:
+    id: internal-eval-runner
+    version: "5.2.1"
+  evaluator:
+    id: support-quality-review
+  policy:
+    path: inputs/review_policy.yaml
+    digest:
+      sha256: "d7c3779c724dbf289c2d97c16d561e7a83418556bd569ab4ac8b776fc68e0e76"
+
+inputs:
+  - role: eval_cases
+    path: inputs/eval_cases.yaml
+    digest:
+      sha256: "e58f8bfcce4e56c619c2b4fc740bff012db849eca8ac29209cb3753e967c9fee"
+  - role: review_policy
+    path: inputs/review_policy.yaml
+    digest:
+      sha256: "d7c3779c724dbf289c2d97c16d561e7a83418556bd569ab4ac8b776fc68e0e76"
+
+outputs:
+  results:
+    path: eval_results.csv
+    digest:
+      sha256: "d224b942a6f7e5e2d6145004fff55646ba954fab8979dff11080142ca558f087"

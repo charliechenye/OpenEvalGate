@@ -1,0 +1,21 @@
+schema_version: "1"
+
+candidate:
+  id: customer-support-agent
+  version: "2026.06.18-rc2"
+  artifact:
+    path: current/candidate.yaml
+    digest:
+      sha256: "d6b882f9731f223b943ca292e0c9b6cf73e0e35fc75d401fca0b3b69cc452aef"
+
+inputs:
+  - role: review_policy
+    path: current/review_policy.yaml
+    digest:
+      sha256: "d7c3779c724dbf289c2d97c16d561e7a83418556bd569ab4ac8b776fc68e0e76"
+
+recency_policy:
+  max_age_days: 30
+  max_future_clock_skew_seconds: 300
+
+observed_at: "2026-06-23T18:00:00Z"

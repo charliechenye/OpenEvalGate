@@ -1,0 +1,10 @@
+schema_version: "1"
+run_id: run_002
+artifacts:
+  - artifact_id: transcript_wrong_case
+    artifact_type: transcript
+    case_id: other_case_999
+    trial_id: trial_001
+    path: artifacts/case_001.md
+    digest:
+      sha256: "b277d3994f3b06b90d0ebcf0e848e05c4653bfb02ad3266e5b988eeb1b757e91"
