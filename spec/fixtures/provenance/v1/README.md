@@ -38,10 +38,11 @@ provenance:
 
 authorization:
   documentation: allowed
-  shadow: allowed
+  shadow: allowed_with_warning
   controlled_launch: blocked
 
-findings: []
+findings:
+  - provenance_freshness_unknown
 ```
 
 Allowed schema-validation values are `valid`, `invalid`, `not_present`, and `not_applicable`.
@@ -55,7 +56,7 @@ Allowed provenance values are defined by the contract:
 - assurance: `unavailable`, `declared`, `verified`;
 - lifecycle: `complete`, `failed`, `incomplete`, `unknown`.
 
-Documentation and shadow authorization use `allowed`, `allowed_with_warning`, or `blocked`. Controlled launch uses `eligible` or `blocked`.
+Documentation and shadow authorization use `allowed`, `allowed_with_warning`, or `blocked`. Controlled launch uses `eligible` or `blocked`. Valid manifested evidence with unknown freshness receives documentation access, shadow access with warning, and blocked controlled launch.
 
 ## Inventory
 
@@ -65,6 +66,7 @@ Documentation and shadow authorization use `allowed`, `allowed_with_warning`, or
 | `candidate-alias-mismatch` | Schema-valid manifest contradicted by CSV candidate identity. |
 | `contradictory-duplicate-resource` | Fixed-purpose evaluation policy and canonical input mirror disagree. |
 | `duplicate-artifact-id` | Schema-valid artifact index with semantically duplicate artifact identity. |
+| `duplicate-current-resource` | Valid verified historical evidence with duplicate current counterparts for one singleton resource role. |
 | `duplicate-hybrid-component-id` | Hybrid evaluator components reuse the same component ID. |
 | `duplicate-normalized-artifact-path` | Artifact entries use distinct path text that normalizes to one artifact file. |
 | `duplicate-singleton-role` | Schema-valid inputs with semantically duplicate singleton role. |

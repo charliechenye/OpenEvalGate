@@ -156,6 +156,7 @@
           "provenance_duplicate_artifact_id",
           "provenance_duplicate_artifact_path",
           "provenance_duplicate_singleton_role",
+          "provenance_duplicate_current_resource",
           "provenance_duplicate_hybrid_component_id",
           "provenance_duplicate_resource_mismatch",
           "provenance_unsafe_path",

@@ -201,9 +201,9 @@ Artifact semantic rules are normative:
 - artifact files must exist and be regular files;
 - symlinks are prohibited;
 - digest mismatches are invalid;
-- every applicable CSV `observed_output_path` used for verified evidence must map to exactly one artifact entry.
+- every applicable CSV `observed_output_path` used for verified evidence must map to exactly one matching artifact entry.
 
-A non-empty CSV `observed_output_path` is allowed without an artifact index for legacy or declared evidence. Verified artifact provenance requires each applicable non-empty `observed_output_path` to resolve to exactly one artifact-index entry. Controlled-launch eligibility requires verified mapping for output artifacts that contribute to selected release evidence. Missing artifact indexing leaves artifact assurance incomplete; it is not automatically structural invalidity. Contradictory, ambiguous, unsafe, or digest-mismatched artifact mappings are invalid.
+A non-empty CSV `observed_output_path` is allowed without an artifact index for legacy or declared evidence. Verified artifact provenance requires each applicable non-empty `observed_output_path` to resolve to exactly one matching artifact entry. Controlled-launch eligibility requires verified mapping for output artifacts that contribute to selected release evidence. Missing artifact indexing leaves artifact assurance incomplete; it is not automatically structural invalidity. Contradictory, ambiguous, unsafe, or digest-mismatched artifact mappings are invalid.
 
 Mapping is performed by normalizing the CSV `observed_output_path` relative to the run-scoped CSV, normalizing artifact-index paths relative to `artifact_index.yaml`, comparing resolved run-relative paths, and requiring exactly one matching artifact entry.
 
@@ -239,7 +239,7 @@ The complete historical `inputs[]` set is the canonical freshness comparison sco
 - different digest means stale;
 - missing counterpart means overall freshness `unknown`;
 - insufficient locator, identity, or digest evidence means overall freshness `unknown`;
-- duplicate current counterparts make the review context invalid;
+- duplicate current counterparts make the review context invalid with `provenance_duplicate_current_resource`;
 - extra current resources that were not present historically do not make historical evidence stale.
 
 When review context is present, candidate ID and version are always compared. If historical `candidate.artifact` exists, current `candidate.artifact` is required for freshness to become `current`. Matching candidate artifact digest means current; different current candidate artifact digest means stale; missing or unverifiable current candidate artifact means unknown. If historical candidate artifact is absent, matching candidate ID and version are sufficient for candidate comparison. No review context means overall freshness `unknown`.
@@ -387,9 +387,10 @@ Finding identifiers are stable within contract major version 1. Future runtime o
 | `provenance_review_context_schema_invalid` | The immutable historical run envelope is valid, but the supplied `review_context.yaml` does not satisfy the v1 review-context schema; review-context invalidity. |
 | `provenance_review_context_digest_mismatch` | A current review-context descriptor has a recorded digest that does not match local bytes; review-context invalidity that preserves historical assurance. |
 | `provenance_artifact_index_schema_invalid` | An included `artifact_index.yaml` fails the artifact-index schema, including an empty index; historical-envelope invalidity. |
-| `provenance_artifact_identity_mismatch` | Artifact index run, case, trial, or evaluator reference contradicts manifest or CSV evidence; historical-envelope invalidity. |
+| `provenance_artifact_identity_mismatch` | The artifact index contradicts the manifest or CSV run, case, trial, or evaluator identity, or an applicable non-empty CSV `observed_output_path` does not resolve to exactly one matching artifact entry; historical-envelope invalidity. |
 | `provenance_duplicate_artifact_id` | Two artifact-index entries declare the same `artifact_id`; historical-envelope invalidity. |
 | `provenance_duplicate_artifact_path` | Two artifact-index entries resolve to the same normalized artifact path; historical-envelope invalidity. |
+| `provenance_duplicate_current_resource` | Two or more `review_context.inputs[]` entries resolve to the same current-resource comparison key: singleton resources share the same `role`, or repeatable/custom resources share the same `(role, name)`; review-context invalidity that preserves historical assurance. |
 | `provenance_duplicate_singleton_role` | Historical manifest inputs repeat a singleton resource role; historical-envelope invalidity. |
 | `provenance_duplicate_hybrid_component_id` | Hybrid evaluator components repeat a component ID; historical-envelope invalidity. |
 | `provenance_duplicate_resource_mismatch` | A fixed-purpose descriptor and its canonical `inputs[]` mirror cannot be proven equivalent or contradict locator/digest identity; historical-envelope invalidity. |

@@ -114,42 +114,57 @@ def norm_rel(root, rel):
     return full, None
 
 
+def manifest_descriptor_paths(manifest):
+    if not manifest:
+        return []
+    descriptors = []
+    candidate = manifest.get("candidate", {})
+    if isinstance(candidate.get("artifact"), dict):
+        descriptors.append(("candidate_artifact", candidate["artifact"]))
+
+    evaluation = manifest.get("evaluation", {})
+    if isinstance(evaluation.get("policy"), dict):
+        descriptors.append(("input", evaluation["policy"]))
+    evaluator = evaluation.get("evaluator", {})
+    if isinstance(evaluator.get("configuration"), dict):
+        descriptors.append(("input", evaluator["configuration"]))
+    if isinstance(evaluator.get("decision_policy"), dict):
+        descriptors.append(("input", evaluator["decision_policy"]))
+    for component in evaluator.get("components", []) or []:
+        if isinstance(component.get("configuration"), dict):
+            descriptors.append(("input", component["configuration"]))
+
+    for desc in manifest.get("inputs", []) or []:
+        descriptors.append(("input", desc))
+
+    outputs = manifest.get("outputs", {})
+    if isinstance(outputs.get("results"), dict):
+        descriptors.append(("results", outputs["results"]))
+    if isinstance(outputs.get("artifact_index"), dict):
+        descriptors.append(("artifact_index", outputs["artifact_index"]))
+    for desc in outputs.get("additional", []) or []:
+        descriptors.append(("output", desc))
+    return descriptors
+
+
+def review_context_descriptor_paths(review_context):
+    if not review_context:
+        return []
+    descriptors = []
+    candidate = review_context.get("candidate", {})
+    if isinstance(candidate.get("artifact"), dict):
+        descriptors.append(("candidate_artifact", candidate["artifact"]))
+    for desc in review_context.get("inputs", []) or []:
+        descriptors.append(("input", desc))
+    return descriptors
+
+
 def descriptor_paths(doc):
     if not doc:
         return []
-    found = []
-
-    def walk(value, context):
-        if isinstance(value, dict):
-            if "path" in value and ("digest" in value or "uri" in value or context in {"results", "artifact"}):
-                found.append((context, value))
-            for key, child in value.items():
-                next_context = context
-                if key == "results":
-                    next_context = "results"
-                elif key == "inputs":
-                    next_context = "input"
-                elif key == "artifact_index":
-                    next_context = "artifact_index"
-                elif key == "artifact":
-                    next_context = "candidate_artifact"
-                elif key in {"policy", "configuration", "decision_policy"}:
-                    next_context = "input"
-                walk(child, next_context)
-        elif isinstance(value, list):
-            for child in value:
-                walk(child, context)
-
-    walk(doc, "input")
-    # De-duplicate by object identity because recursive walk sees descriptors through parent dicts.
-    unique = []
-    seen = set()
-    for item in found:
-        oid = id(item[1])
-        if oid not in seen:
-            seen.add(oid)
-            unique.append(item)
-    return unique
+    if "run" in doc or "outputs" in doc or "evaluation" in doc:
+        return manifest_descriptor_paths(doc)
+    return review_context_descriptor_paths(doc)
 
 
 def resolve_descriptor(root, descriptor):
@@ -309,7 +324,7 @@ def validate_fixture(fixture, validators):
 
     run_root = fixture.resolve(strict=False)
     for context, desc in descriptor_paths(manifest):
-        digest_finding = "provenance_output_digest_mismatch" if context in {"results", "artifact_index"} else "provenance_input_digest_mismatch"
+        digest_finding = "provenance_output_digest_mismatch" if context in {"results", "artifact_index", "output"} else "provenance_input_digest_mismatch"
         verify_descriptor(run_root, context, desc, findings, digest_finding=digest_finding)
 
     if "provenance_unsafe_path" in findings or "provenance_local_file_missing" in findings or "provenance_input_digest_mismatch" in findings or "provenance_output_digest_mismatch" in findings:
@@ -395,7 +410,9 @@ def validate_fixture(fixture, validators):
         if len(norm_paths) != len(set(norm_paths)):
             findings.add("provenance_duplicate_artifact_path")
             return findings
-        artifacts_by_path = {p: a for p, a in zip(norm_paths, artifact_index.get("artifacts", []))}
+        artifact_entries_by_path = {}
+        for norm_path, artifact in zip(norm_paths, artifact_index.get("artifacts", [])):
+            artifact_entries_by_path.setdefault(norm_path, []).append(artifact)
         csv_root = fixture.resolve(strict=False)
         for row in rows:
             observed = row.get("observed_output_path", "").strip()
@@ -406,8 +423,12 @@ def validate_fixture(fixture, validators):
                 findings.add(issue)
                 return findings
             key = resolved.relative_to(run_root).as_posix()
-            artifact = artifacts_by_path.get(key)
-            if artifact and (artifact.get("case_id") != row.get("case_id") or artifact.get("trial_id") != row.get("trial_id")):
+            matches = artifact_entries_by_path.get(key, [])
+            if len(matches) != 1:
+                findings.add("provenance_artifact_identity_mismatch")
+                return findings
+            artifact = matches[0]
+            if artifact.get("case_id") != row.get("case_id") or artifact.get("trial_id") != row.get("trial_id"):
                 findings.add("provenance_artifact_identity_mismatch")
                 return findings
 
@@ -420,6 +441,12 @@ def validate_fixture(fixture, validators):
                 continue
             verify_descriptor(run_root, "review_context", desc, findings, digest_finding="provenance_review_context_digest_mismatch")
         if "provenance_review_context_digest_mismatch" in findings or "provenance_unsafe_path" in findings or "provenance_local_file_missing" in findings:
+            return findings
+        current_by_key = {}
+        for desc in review.get("inputs", []) or []:
+            current_by_key.setdefault(resource_key(desc), []).append(desc)
+        if any(len(matches) > 1 for matches in current_by_key.values()):
+            findings.add("provenance_duplicate_current_resource")
             return findings
         policy = review.get("recency_policy")
         observed = parse_dt(review.get("observed_at"))
@@ -473,6 +500,120 @@ def validate_fixture(fixture, validators):
                 findings.add("provenance_evidence_expired")
 
     return findings
+
+
+def test_path_only_descriptors_are_schema_location_discovered():
+    manifest = {
+        "candidate": {"artifact": {"path": "inputs/candidate.yaml"}},
+        "evaluation": {
+            "policy": {"path": "inputs/evaluation_policy.yaml"},
+            "evaluator": {"configuration": {"path": "inputs/evaluator_config.yaml"}},
+        },
+        "inputs": [{"role": "eval_cases", "path": "inputs/eval_cases.yaml"}],
+        "outputs": {
+            "results": {"path": "eval_results.csv"},
+            "additional": [{"path": "outputs/summary.txt"}],
+        },
+    }
+    review_context = {
+        "candidate": {"artifact": {"path": "current/candidate.yaml"}},
+        "inputs": [{"role": "eval_cases", "path": "current/eval_cases.yaml"}],
+    }
+
+    manifest_paths = {desc["path"] for _, desc in descriptor_paths(manifest)}
+    review_paths = {desc["path"] for _, desc in descriptor_paths(review_context)}
+
+    assert {
+        "inputs/candidate.yaml",
+        "inputs/evaluation_policy.yaml",
+        "inputs/evaluator_config.yaml",
+        "inputs/eval_cases.yaml",
+        "eval_results.csv",
+        "outputs/summary.txt",
+    } <= manifest_paths
+    assert {"current/candidate.yaml", "current/eval_cases.yaml"} <= review_paths
+
+
+def test_path_only_descriptors_are_referenced_checked_and_not_orphans(tmp_path):
+    fixture = tmp_path
+    files = {
+        "inputs/candidate.yaml": "candidate: local\n",
+        "inputs/evaluation_policy.yaml": "policy: local\n",
+        "inputs/evaluator_config.yaml": "config: local\n",
+        "inputs/eval_cases.yaml": "cases: local\n",
+        "outputs/summary.txt": "summary\n",
+        "current/eval_cases.yaml": "cases: local\n",
+        "eval_results.csv": ",".join(CSV_HEADERS) + "\n",
+    }
+    for rel, content in files.items():
+        target = fixture / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(content, encoding="utf-8")
+
+    (fixture / "run_manifest.yaml").write_text(
+        """
+schema_version: "1"
+run:
+  id: run_001
+  status: complete
+candidate:
+  id: candidate
+  version: "1"
+  artifact:
+    path: inputs/candidate.yaml
+evaluation:
+  kind: deterministic
+  evaluator:
+    id: deterministic-checker
+    version: "1"
+    configuration:
+      path: inputs/evaluator_config.yaml
+  policy:
+    path: inputs/evaluation_policy.yaml
+inputs:
+  - role: eval_cases
+    path: inputs/eval_cases.yaml
+outputs:
+  results:
+    path: eval_results.csv
+  additional:
+    - path: outputs/summary.txt
+""".lstrip(),
+        encoding="utf-8",
+    )
+    (fixture / "review_context.yaml").write_text(
+        """
+schema_version: "1"
+candidate:
+  id: candidate
+  version: "1"
+inputs:
+  - role: eval_cases
+    path: current/eval_cases.yaml
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    referenced = referenced_fixture_files(fixture)
+    for rel in files:
+        assert (fixture / rel).resolve(strict=False) in referenced
+
+    findings = set()
+    manifest = load_yaml(fixture / "run_manifest.yaml")
+    review_context = load_yaml(fixture / "review_context.yaml")
+    for context, desc in descriptor_paths(manifest):
+        verify_descriptor(fixture, context, desc, findings)
+    for context, desc in descriptor_paths(review_context):
+        verify_descriptor(fixture, context, desc, findings)
+    assert findings == set()
+
+    exempt = {"run_manifest.yaml", "review_context.yaml"}
+    orphans = [
+        p.relative_to(fixture).as_posix()
+        for p in fixture.rglob("*")
+        if p.is_file() and p.name not in exempt and p.resolve(strict=False) not in referenced
+    ]
+    assert orphans == []
 
 
 def test_schemas_are_draft_2020_12_valid(schemas):
