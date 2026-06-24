@@ -35,7 +35,7 @@ def _write_result_rows(path: Path, rows: list[dict[str, str]]) -> None:
                     "1",
                     "",
                     "",
-                    "",
+                    row.get("observed_output_path", ""),
                     "qa",
                     "2026-06-18",
                     "",
@@ -420,3 +420,137 @@ def test_selected_candidate_mismatch_is_invalid(tmp_path: Path) -> None:
 
     assert inspection.status == RunIdentityStatus.INVALID
     assert _finding_ids(inspection) == ["provenance_candidate_alias_mismatch"]
+
+
+def _write_output(path: Path, text: str = "output\n") -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+
+
+def test_matching_conventional_output_directory_is_complete(tmp_path: Path) -> None:
+    output = tmp_path / "eval_runs" / "run_001" / "case_001.md"
+    _write_output(output)
+    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "eval_runs/run_001/case_001.md"}])
+    _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.status == RunIdentityStatus.COMPLETE
+
+
+def test_mismatching_conventional_output_directory_is_invalid(tmp_path: Path) -> None:
+    output = tmp_path / "eval_runs" / "run_002" / "case_001.md"
+    _write_output(output)
+    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "eval_runs/run_002/case_001.md"}])
+    _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.status == RunIdentityStatus.INVALID
+    assert _finding_ids(inspection) == ["provenance_run_id_mismatch"]
+
+
+def test_safe_nonconventional_output_path_is_allowed(tmp_path: Path) -> None:
+    _write_output(tmp_path / "outputs" / "case_001.md")
+    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "outputs/case_001.md"}])
+    _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.status == RunIdentityStatus.COMPLETE
+
+
+def test_matching_markdown_metadata_styles_are_complete(tmp_path: Path) -> None:
+    _write_output(
+        tmp_path / "outputs" / "case_001.md",
+        "**Run ID:** run_001  \n**Case ID:** case_001  \n- **Candidate:** candidate\n- **Evaluator:** human-review\n",
+    )
+    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "outputs/case_001.md"}])
+    _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.status == RunIdentityStatus.COMPLETE
+
+
+def test_missing_markdown_metadata_is_allowed(tmp_path: Path) -> None:
+    _write_output(tmp_path / "outputs" / "case_001.md", "plain output\n")
+    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "outputs/case_001.md"}])
+    _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
+
+    assert inspect_run_identity(tmp_path).status == RunIdentityStatus.COMPLETE
+
+
+def test_mismatching_markdown_run_metadata_is_invalid(tmp_path: Path) -> None:
+    _write_output(tmp_path / "outputs" / "case_001.md", "Run ID: run_002\n")
+    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "outputs/case_001.md"}])
+    _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.status == RunIdentityStatus.INVALID
+    assert _finding_ids(inspection) == ["provenance_run_id_mismatch"]
+
+
+def test_mismatching_markdown_case_metadata_is_invalid(tmp_path: Path) -> None:
+    _write_output(tmp_path / "outputs" / "case_001.md", "Case ID: other_case\n")
+    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "outputs/case_001.md"}])
+    _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.status == RunIdentityStatus.INVALID
+    assert _finding_ids(inspection) == ["provenance_artifact_identity_mismatch"]
+
+
+def test_mismatching_markdown_candidate_metadata_is_invalid(tmp_path: Path) -> None:
+    _write_output(tmp_path / "outputs" / "case_001.md", "Candidate: other\n")
+    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "outputs/case_001.md"}])
+    _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.status == RunIdentityStatus.INVALID
+    assert _finding_ids(inspection) == ["provenance_candidate_alias_mismatch"]
+
+
+def test_mismatching_markdown_evaluator_metadata_is_invalid(tmp_path: Path) -> None:
+    _write_output(tmp_path / "outputs" / "case_001.md", "Evaluator: other\n")
+    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "outputs/case_001.md"}])
+    _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.status == RunIdentityStatus.INVALID
+    assert _finding_ids(inspection) == ["provenance_evaluator_alias_mismatch"]
+
+
+def test_conflicting_duplicate_markdown_metadata_is_invalid(tmp_path: Path) -> None:
+    _write_output(tmp_path / "outputs" / "case_001.md", "Case ID: case_001\nCase ID: other\n")
+    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "outputs/case_001.md"}])
+    _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.status == RunIdentityStatus.INVALID
+    assert _finding_ids(inspection) == ["provenance_artifact_identity_mismatch"]
+
+
+def test_undecodable_optional_markdown_metadata_is_unavailable(tmp_path: Path) -> None:
+    output = tmp_path / "outputs" / "case_001.md"
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_bytes(b"\xff\xfe\xfd")
+    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "outputs/case_001.md"}])
+    _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
+
+    assert inspect_run_identity(tmp_path).status == RunIdentityStatus.COMPLETE
+
+
+def test_legacy_output_identity_contradiction_is_invalid(tmp_path: Path) -> None:
+    _write_output(tmp_path / "eval_runs" / "run_002" / "case_001.md")
+    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "eval_runs/run_002/case_001.md"}])
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.status == RunIdentityStatus.INVALID
+    assert _finding_ids(inspection) == ["provenance_run_id_mismatch"]

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import re
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -53,6 +54,8 @@ class RunIdentity:
     framework_version: str | None
     results_path: Path
     artifact_index_path: Path | None
+    project_root: Path
+    evidence_root: Path
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -99,6 +102,12 @@ _ARTIFACT_INDEX_VALIDATOR = Draft202012Validator(
     load_schema(ARTIFACT_INDEX_SCHEMA_NAME),
     format_checker=FormatChecker(),
 )
+_METADATA_READ_LIMIT = 64 * 1024
+_METADATA_LABEL_PATTERN = re.compile(
+    r"^\s*(?:[-*]\s*)?(?:\*\*)?"
+    r"(?P<label>Run ID|Case ID|Candidate|Evaluator)"
+    r"\s*:\s*(?:\*\*)?\s*(?P<value>.*?)\s*$"
+)
 
 
 def inspect_run_identity(
@@ -139,19 +148,28 @@ def inspect_run_identity(
                     message="No versioned run manifest was provided.",
                 ),
             )
+        if root_results.is_file():
+            legacy_findings = _validate_legacy_output_identity(root, root_results)
+            return RunIdentityInspection(
+                status=RunIdentityStatus.INVALID if legacy_findings else RunIdentityStatus.LEGACY,
+                manifest_path=None,
+                identity=None,
+                findings=tuple(_sort_findings(legacy_findings)),
+                results_present=True,
+            )
         return RunIdentityInspection(
             status=RunIdentityStatus.LEGACY,
-            manifest_path=root_results if root_results.is_file() else None,
+            manifest_path=None,
             identity=None,
             findings=findings,
-            results_present=root_results.is_file(),
+            results_present=False,
         )
 
     loaded = _load_manifest(authoritative)
     if loaded[0] is None:
         return _invalid(authoritative, loaded[1])
     manifest = loaded[0]
-    identity, findings_tuple = _identity_from_manifest(authoritative, manifest)
+    identity, findings_tuple = _identity_from_manifest(root, authoritative, manifest)
     findings = list(findings_tuple)
     if identity is None:
         return _invalid(authoritative, list(findings_tuple))
@@ -179,7 +197,7 @@ def inspect_run_identity(
     if compare_root:
         root_loaded = _load_manifest(root_manifest)
         if root_loaded[0] is not None:
-            root_identity, root_findings = _identity_from_manifest(root_manifest, root_loaded[0])
+            root_identity, root_findings = _identity_from_manifest(root, root_manifest, root_loaded[0])
             if root_identity is not None and root_identity.run_id == identity.run_id:
                 if _identity_signature(root_identity) != _identity_signature(identity):
                     findings.append(
@@ -269,11 +287,21 @@ def _load_manifest(path: Path) -> tuple[dict[str, Any] | None, list[ProvenanceFi
 
 
 def _identity_from_manifest(
+    project_root: Path,
     path: Path,
     manifest: dict[str, Any],
 ) -> tuple[RunIdentity | None, list[ProvenanceFinding]]:
     findings: list[ProvenanceFinding] = []
     run = manifest["run"]
+    if path.parent.parent.name == "eval_runs" and path.parent.name != str(run["id"]):
+        findings.append(
+            ProvenanceFinding(
+                id="provenance_run_id_mismatch",
+                path=f"{path}:run.id",
+                message="Run-scoped manifest directory must match manifest run.id.",
+            )
+        )
+        return None, _sort_findings(findings)
     candidate = manifest["candidate"]
     evaluation = manifest["evaluation"]
     evaluator = evaluation["evaluator"]
@@ -350,6 +378,8 @@ def _identity_from_manifest(
         framework_version=str(framework["version"]) if "version" in framework else None,
         results_path=results_resolution.path,
         artifact_index_path=artifact_index_path,
+        project_root=project_root,
+        evidence_root=path.parent,
     )
     return identity, _sort_findings(findings)
 
@@ -402,7 +432,186 @@ def _validate_csv_identity(identity: RunIdentity) -> list[ProvenanceFinding]:
                     message="CSV row evaluator does not match manifest evaluator identity or aliases.",
                 )
             )
+        findings.extend(
+            _validate_output_identity(
+                identity.project_root,
+                identity.results_path,
+                identity.evidence_root,
+                row,
+                prefix,
+                manifest_identity=identity,
+            )
+        )
     return findings
+
+
+def _validate_legacy_output_identity(project_root: Path, results_path: Path) -> list[ProvenanceFinding]:
+    try:
+        with results_path.open("r", encoding="utf-8", newline="") as handle:
+            rows = list(csv.DictReader(handle))
+    except (csv.Error, OSError, UnicodeError) as exc:
+        return [
+            ProvenanceFinding(
+                id="provenance_manifest_schema_invalid",
+                path=str(results_path),
+                message=f"Could not read legacy results CSV: {exc}",
+            )
+        ]
+    findings: list[ProvenanceFinding] = []
+    for index, row in enumerate(rows, start=2):
+        findings.extend(
+            _validate_output_identity(
+                project_root,
+                results_path,
+                project_root,
+                row,
+                f"{results_path}:row[{index}]",
+                manifest_identity=None,
+            )
+        )
+    return findings
+
+
+def _validate_output_identity(
+    project_root: Path,
+    results_path: Path,
+    allowed_root: Path,
+    row: dict[str, Any],
+    row_path: str,
+    *,
+    manifest_identity: RunIdentity | None,
+) -> list[ProvenanceFinding]:
+    observed = _csv_cell(row, "observed_output_path")
+    if not observed:
+        return []
+    resolution = resolve_local_evidence_path(
+        results_path.parent,
+        observed,
+        allowed_root=allowed_root,
+        require_file=True,
+    )
+    if resolution.error is not None or resolution.path is None:
+        return [_path_finding(resolution.error or "unsafe", f"{row_path}.observed_output_path")]
+
+    findings: list[ProvenanceFinding] = []
+    findings.extend(_validate_conventional_output_directory(project_root, resolution.path, row, row_path, manifest_identity))
+    findings.extend(_validate_markdown_metadata(resolution.path, row, row_path, manifest_identity))
+    return findings
+
+
+def _validate_conventional_output_directory(
+    project_root: Path,
+    output_path: Path,
+    row: dict[str, Any],
+    row_path: str,
+    manifest_identity: RunIdentity | None,
+) -> list[ProvenanceFinding]:
+    try:
+        relative = output_path.resolve(strict=False).relative_to(project_root.resolve(strict=False))
+    except ValueError:
+        return []
+    parts = relative.parts
+    if len(parts) < 3 or parts[0] != "eval_runs":
+        return []
+    directory_run_id = parts[1]
+    row_run_id = _csv_cell(row, "run_id")
+    expected_run_id = manifest_identity.run_id if manifest_identity is not None else row_run_id
+    if directory_run_id != row_run_id or directory_run_id != expected_run_id:
+        return [
+            ProvenanceFinding(
+                id="provenance_run_id_mismatch",
+                path=f"{row_path}.observed_output_path",
+                message="Conventional output directory run ID contradicts CSV or manifest identity.",
+            )
+        ]
+    return []
+
+
+def _validate_markdown_metadata(
+    output_path: Path,
+    row: dict[str, Any],
+    row_path: str,
+    manifest_identity: RunIdentity | None,
+) -> list[ProvenanceFinding]:
+    metadata = _read_markdown_metadata(output_path)
+    if metadata is None:
+        return []
+    findings: list[ProvenanceFinding] = []
+    for label, values in metadata.items():
+        unique_values = sorted(set(values))
+        if len(unique_values) > 1:
+            findings.append(
+                ProvenanceFinding(
+                    id="provenance_artifact_identity_mismatch",
+                    path=f"{row_path}.observed_output_path",
+                    message=f"Output metadata has conflicting {label} values.",
+                )
+            )
+            continue
+        value = unique_values[0]
+        if label == "Run ID" and value != _csv_cell(row, "run_id"):
+            findings.append(
+                ProvenanceFinding(
+                    id="provenance_run_id_mismatch",
+                    path=f"{row_path}.observed_output_path",
+                    message="Output metadata Run ID contradicts CSV identity.",
+                )
+            )
+        elif label == "Case ID" and value != _csv_cell(row, "case_id"):
+            findings.append(
+                ProvenanceFinding(
+                    id="provenance_artifact_identity_mismatch",
+                    path=f"{row_path}.observed_output_path",
+                    message="Output metadata Case ID contradicts CSV identity.",
+                )
+            )
+        elif label == "Candidate":
+            allowed = {_csv_cell(row, "candidate")}
+            if manifest_identity is not None:
+                allowed = {manifest_identity.candidate_id, *manifest_identity.candidate_accepted_aliases}
+            if value not in allowed:
+                findings.append(
+                    ProvenanceFinding(
+                        id="provenance_candidate_alias_mismatch",
+                        path=f"{row_path}.observed_output_path",
+                        message="Output metadata Candidate contradicts CSV or manifest identity.",
+                    )
+                )
+        elif label == "Evaluator":
+            allowed = {_csv_cell(row, "evaluator")}
+            if manifest_identity is not None:
+                allowed = {manifest_identity.evaluator.evaluator_id, *manifest_identity.evaluator.accepted_aliases}
+            if value not in allowed:
+                findings.append(
+                    ProvenanceFinding(
+                        id="provenance_evaluator_alias_mismatch",
+                        path=f"{row_path}.observed_output_path",
+                        message="Output metadata Evaluator contradicts CSV or manifest identity.",
+                    )
+                )
+    return findings
+
+
+def _read_markdown_metadata(path: Path) -> dict[str, list[str]] | None:
+    if path.suffix.lower() != ".md":
+        return None
+    try:
+        payload = path.read_bytes()
+    except OSError:
+        return None
+    if len(payload) > _METADATA_READ_LIMIT or b"\x00" in payload:
+        return None
+    try:
+        text = payload.decode("utf-8")
+    except UnicodeDecodeError:
+        return None
+    metadata: dict[str, list[str]] = {}
+    for line in text.splitlines():
+        match = _METADATA_LABEL_PATTERN.match(line)
+        if not match:
+            continue
+        metadata.setdefault(match.group("label"), []).append(match.group("value").strip())
+    return metadata
 
 
 def _csv_cell(row: dict[str, Any], field: str) -> str:
