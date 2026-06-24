@@ -8,7 +8,7 @@ OpenEvalGate evaluates externally produced evidence for AI-assistant and agent l
 
 This contract defines a vendor-neutral, run-scoped evidence envelope for existing OpenEvalGate-compatible eval results. The provenance manifest wraps an existing compatible `eval_results.csv`. It does not require external eval systems to adopt new provenance columns or rewrite every row.
 
-PR 18 defines the contract, schemas, fixtures, and fixture-development validation. PR 19 implements the runtime identity subset: manifest schema loading, deterministic authoritative-manifest selection, selected run and candidate checks, evaluator identity checks, lifecycle findings, result CSV identity checks, output identity consistency, artifact-index identity checks, legacy distinction, report visibility, and controlled-launch blocking for legacy, invalid, failed, or incomplete identity evidence. Digest verification, verified assurance, freshness, recency, `review_context.yaml`, and complete contract authorization remain deferred.
+PR 18 defines the contract, schemas, fixtures, and fixture-development validation. PR 19 implements the runtime identity subset: manifest schema loading, deterministic authoritative-manifest selection, selected run and candidate checks, evaluator identity checks, lifecycle findings, result CSV identity checks, output identity consistency, artifact-index identity checks, missing-manifest detection, unbound-result exclusion, report visibility, and controlled-launch blocking for missing, invalid, failed, or incomplete identity evidence. Digest verification, verified assurance, freshness, recency, `review_context.yaml`, and complete contract authorization remain deferred.
 
 ## Scope
 
@@ -205,7 +205,7 @@ Artifact semantic rules are normative:
 - digest mismatches are invalid;
 - every applicable CSV `observed_output_path` used for verified evidence must map to exactly one matching artifact entry.
 
-A non-empty CSV `observed_output_path` is allowed without an artifact index for legacy or declared evidence. Verified artifact provenance requires each applicable non-empty `observed_output_path` to resolve to exactly one matching artifact entry. Controlled-launch eligibility requires verified mapping for output artifacts that contribute to selected release evidence. Missing artifact indexing leaves artifact assurance incomplete; it is not automatically structural invalidity. Contradictory, ambiguous, unsafe, or digest-mismatched artifact mappings are invalid.
+A non-empty CSV `observed_output_path` is allowed without an artifact index for declared evidence. Verified artifact provenance requires each applicable non-empty `observed_output_path` to resolve to exactly one matching artifact entry. Controlled-launch eligibility requires verified mapping for output artifacts that contribute to selected release evidence. Missing artifact indexing leaves artifact assurance incomplete; it is not automatically structural invalidity. Contradictory, ambiguous, unsafe, or digest-mismatched artifact mappings are invalid.
 
 Mapping is performed by normalizing the CSV `observed_output_path` relative to the run-scoped CSV, normalizing artifact-index paths relative to `artifact_index.yaml`, comparing resolved run-relative paths, and requiring exactly one matching artifact entry.
 
@@ -268,7 +268,7 @@ Provenance is classified across independent dimensions. These are the only v1 va
 
 | Dimension | Values |
 | --- | --- |
-| Manifest presence | `present`, `legacy_absent` |
+| Manifest presence | `present`, `absent` |
 | Validity | `valid`, `invalid`, `not_evaluated` |
 | Freshness | `current`, `stale`, `unknown`, `not_evaluated` |
 | Recency | `acceptable`, `expired`, `unknown`, `not_configured`, `not_evaluated` |
@@ -302,7 +302,7 @@ Signed attestation is reserved for a future contract version and is not a v1 cla
 
 | Condition | Recency |
 | --- | --- |
-| Legacy evidence with no manifest | `not_evaluated` |
+| Missing manifest | `not_evaluated` |
 | Invalid provenance envelope | `not_evaluated` |
 | Valid provenance with no recency policy | `not_configured` |
 | Recency policy exists, but required evidence is missing | `unknown` |
@@ -336,21 +336,19 @@ The authorization rules are ordered. Earlier rules take precedence over later ru
 3. Stale evidence: documentation `allowed_with_warning`, shadow `allowed_with_warning`, controlled launch `blocked`.
 4. Expired evidence: documentation `allowed_with_warning`, shadow `allowed_with_warning`, controlled launch `blocked`.
 5. Recency unknown under a configured recency policy: documentation `allowed`, shadow `allowed_with_warning`, controlled launch `blocked`.
-6. Legacy evidence: documentation `allowed`, shadow `allowed_with_warning`, controlled launch `blocked`.
+6. Missing manifest without result evidence: documentation `allowed`, shadow `allowed_with_warning`, controlled launch `blocked`.
 7. Valid manifested evidence with unknown freshness, whether historically declared or verified: documentation `allowed`, shadow `allowed_with_warning`, controlled launch `blocked`.
 8. Valid, declared, current, complete evidence: documentation `allowed`, shadow `allowed`, controlled launch `blocked`.
 9. Valid, verified, current, complete evidence with acceptable recency: documentation `allowed`, shadow `allowed`, controlled launch `eligible`.
 10. Valid, verified, current, complete evidence with recency not configured: controlled launch is eligible only when the governing OpenEvalGate review or authorization policy explicitly permits proceeding without a configured evidence-age limit. Otherwise documentation is `allowed`, shadow is `allowed`, and controlled launch is `blocked`.
 
-Documentation access means evidence may be inspected, not trusted. `allowed_with_warning` must not imply invalid evidence is trustworthy. A present-but-invalid manifest never falls back to legacy handling. A high evaluation score, documentation score, or pass rate cannot override provenance authorization limits.
+Documentation access means evidence may be inspected, not trusted. `allowed_with_warning` must not imply invalid evidence is trustworthy. A present-but-invalid manifest never falls back to manifestless handling. A high evaluation score, documentation score, or pass rate cannot override provenance authorization limits.
 
-## Legacy Compatibility
-
-Projects without `run_manifest.yaml` remain readable during the compatibility window:
+## Missing Manifest
 
 ```yaml
 provenance:
-  manifest_presence: legacy_absent
+  manifest_presence: absent
   validity: not_evaluated
   freshness: not_evaluated
   recency: not_evaluated
@@ -358,12 +356,14 @@ provenance:
   lifecycle: unknown
 
 authorization:
-  documentation: allowed
-  shadow: allowed_with_warning
+  documentation: blocked
+  shadow: blocked
   controlled_launch: blocked
 ```
 
-This compatibility does not apply to malformed, schema-invalid, or contradictory manifests.
+Projects without result evidence may remain in a missing, not-evaluated state. Projects with result evidence but no authoritative manifest are unbound and blocked.
+
+This missing-manifest classification does not apply to malformed, schema-invalid, or contradictory manifests.
 
 ## JSON Schema Validation Profile
 
@@ -377,7 +377,7 @@ Finding identifiers are stable within contract major version 1. Future runtime o
 
 | Finding ID | Exact trigger |
 | --- | --- |
-| `provenance_manifest_absent` | Legacy evidence has no `run_manifest.yaml`; associated with legacy manifest absence, not invalidity. |
+| `provenance_manifest_absent` | No authoritative `run_manifest.yaml` exists for the selected scope; associated with missing manifest presence, not manifest invalidity. |
 | `provenance_manifest_schema_invalid` | `run_manifest.yaml` declares v1 but fails the manifest schema for reasons other than URI-only results; historical-envelope invalidity. |
 | `provenance_unsupported_schema_version` | `run_manifest.yaml` declares an unsupported major schema version; historical-envelope invalidity with lifecycle `unknown`. |
 | `provenance_results_path_required` | `outputs.results` omits local `path` or is URI-only in v1; historical-envelope schema invalidity. |
@@ -459,9 +459,9 @@ Implemented runtime identity work:
 
 1. Parse manifests, existing compatible result CSVs, and artifact indexes.
 2. Validate schema, selected identity, uniqueness, containment, lifecycle, output metadata, and artifact-index identity.
-3. Classify runtime identity as `complete`, `legacy`, or `invalid`, with lifecycle reported separately.
+3. Classify runtime identity as `complete`, `missing`, or `invalid`, with lifecycle reported separately.
 4. Surface identity and lifecycle classifications in CLI status and reports.
-5. Block controlled launch for legacy, invalid, failed, or incomplete identity evidence.
+5. Block controlled launch for missing, invalid, failed, or incomplete identity evidence.
 
 Deferred work remains:
 

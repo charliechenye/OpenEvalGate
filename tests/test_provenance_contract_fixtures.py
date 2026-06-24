@@ -348,6 +348,8 @@ def validate_fixture(fixture, validators):
 
     if manifest is None:
         findings.add("provenance_manifest_absent")
+        if (fixture / "eval_results.csv").is_file():
+            findings.add("provenance_results_unbound")
         return findings
 
     if schema["manifest"] == "invalid":

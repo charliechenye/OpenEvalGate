@@ -4,7 +4,7 @@ schema_validation:
   review_context: not_present
 
 provenance:
-  manifest_presence: legacy_absent
+  manifest_presence: absent
   validity: not_evaluated
   freshness: not_evaluated
   recency: not_evaluated
@@ -12,9 +12,10 @@ provenance:
   lifecycle: unknown
 
 authorization:
-  documentation: allowed
-  shadow: allowed_with_warning
+  documentation: blocked
+  shadow: blocked
   controlled_launch: blocked
 
 findings:
   - provenance_manifest_absent
+  - provenance_results_unbound
