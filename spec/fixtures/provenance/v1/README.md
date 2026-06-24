@@ -81,7 +81,7 @@ Documentation and shadow authorization use `allowed`, `allowed_with_warning`, or
 | `future-clock-skew` | Verified historical envelope with current review observation contradicted by future clock skew. |
 | `invalid-artifact-identity` | Schema-valid artifact index contradicted by result case_id identity. |
 | `invalid-artifact-trial-identity` | Schema-valid artifact index contradicted by result trial_id identity. |
-| `invalid-dot-segment-path` | Schema-valid descriptor with a semantically unsafe path escape. A single dot . is no longer supported |
+| `invalid-dot-segment-path` | Manifest rejected because a local path contains a prohibited standalone `.` segment. |
 | `invalid-input-digest` | Schema-valid manifest with a historical input digest mismatch. |
 | `invalid-output-digest` | Schema-valid manifest with a result-output digest mismatch. |
 | `invalid-review-context-schema` | Valid verified historical envelope with a schema-invalid review context. |
@@ -100,7 +100,7 @@ Documentation and shadow authorization use `allowed`, `allowed_with_warning`, or
 | `stale-routing-policy` | Valid historical evidence whose current routing policy digest has drifted. |
 | `unsupported-schema-version` | Schema-invalid manifest with unsupported major schema version. |
 | `uri-only-results` | Manifest results descriptor is URI-only and therefore schema-invalid in v1. |
-| `valid-artifact-identity-omitted` | Verified. Show case that case_id and trial_id are optional. Copy from valid-current-human.  |
+| `valid-artifact-identity-omitted` | Verified current evidence whose artifact omits optional `case_id` and `trial_id` while mapping unambiguously by path.  |
 | `valid-current-deterministic` | Verified, current deterministic evaluator evidence. |
 | `valid-current-human` | Verified, current human-reviewed evidence with indexed artifact provenance. |
 | `valid-current-hybrid` | Verified, current hybrid evaluator evidence with top-level evaluator identity. |
