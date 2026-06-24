@@ -115,6 +115,40 @@ def test_report_identity_section_includes_legacy_warning(customer_support_report
     assert "unversioned_eval_run" in customer_support_report
 
 
+def test_report_identity_section_renders_project_relative_provenance_paths(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    copytree(CUSTOMER_SUPPORT, project)
+    (project / "run_manifest.yaml").write_text(
+        yaml.safe_dump(
+            {
+                "schema_version": "1",
+                "run": {"id": "run_002", "status": "complete"},
+                "candidate": {"id": "gpt-4.1-mini", "version": "test-version"},
+                "evaluation": {
+                    "kind": "human",
+                    "evaluator": {"id": "human_review"},
+                },
+                "outputs": {"results": {"path": "eval_results.csv"}},
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+
+    report = generate_report(project)
+
+    assert "- Manifest: run_manifest.yaml" in report
+    assert "- Results path: eval_results.csv" in report
+    assert str(tmp_path.resolve()) not in report
+    provenance_lines = [
+        line
+        for line in report.splitlines()
+        if line.startswith("- Manifest:") or line.startswith("- Results path:")
+    ]
+    assert provenance_lines
+    assert all("\\" not in line for line in provenance_lines)
+
+
 def test_high_evidence_completeness_can_still_be_not_ready(
     customer_support_report: str,
 ) -> None:

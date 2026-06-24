@@ -71,7 +71,7 @@ def generate_report(project_dir: str | Path) -> str:
         ),
         "",
         "## Eval-Run Identity",
-        _eval_run_identity_section(inspection.run_identity_inspection),
+        _eval_run_identity_section(inspection.run_identity_inspection, root),
         "",
         "## Evidence Completeness Score",
         f"{assessment.evidence_completeness_score}/100",
@@ -219,10 +219,10 @@ def _executive_summary(
     )
 
 
-def _eval_run_identity_section(inspection: RunIdentityInspection) -> str:
+def _eval_run_identity_section(inspection: RunIdentityInspection, root: Path) -> str:
     lines = [f"- Status: {_identity_status_display(inspection.status)}"]
     if inspection.manifest_path is not None:
-        lines.append(f"- Manifest: {inspection.manifest_path}")
+        lines.append(f"- Manifest: {_display_project_path(inspection.manifest_path, root)}")
     if inspection.identity is not None:
         identity = inspection.identity
         lines.extend(
@@ -233,7 +233,7 @@ def _eval_run_identity_section(inspection: RunIdentityInspection) -> str:
                 f"- Candidate version: {identity.candidate_version}",
                 f"- Evaluator kind: {identity.evaluator.kind}",
                 f"- Evaluator ID: {identity.evaluator.evaluator_id}",
-                f"- Results path: {identity.results_path}",
+                f"- Results path: {_display_project_path(identity.results_path, root)}",
             ]
         )
         if identity.evaluator.evaluator_version is not None:
@@ -254,6 +254,18 @@ def _eval_run_identity_section(inspection: RunIdentityInspection) -> str:
     else:
         lines.append("- Warning: Run identity is invalid. Behavioral evidence from this run was excluded from launch evaluation.")
     return "\n".join(lines)
+
+
+def _display_project_path(path: Path, root: Path) -> str:
+    resolved_root = root.resolve(strict=False)
+    resolved_path = path.resolve(strict=False)
+
+    try:
+        return resolved_path.relative_to(resolved_root).as_posix()
+    except ValueError:
+        if not path.is_absolute():
+            return path.as_posix()
+        return "<outside-project>"
 
 
 def _identity_status_display(status: RunIdentityStatus) -> str:
