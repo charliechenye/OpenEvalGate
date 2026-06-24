@@ -180,6 +180,45 @@ def read_csv_rows(path):
         return list(reader)
 
 
+
+def referenced_fixture_files(fixture):
+    referenced = set()
+
+    def add_path(root, rel):
+        resolved, issue = norm_rel(root, rel)
+        if not issue and resolved.exists():
+            referenced.add(resolved.resolve(strict=False))
+
+    manifest_path = fixture / "run_manifest.yaml"
+    if manifest_path.exists():
+        manifest = load_yaml(manifest_path)
+        for _, desc in descriptor_paths(manifest):
+            if "path" in desc:
+                add_path(fixture.resolve(strict=False), desc["path"])
+        results = manifest.get("outputs", {}).get("results", {}) if manifest else {}
+        if "path" in results and (fixture / results["path"]).exists():
+            for row in read_csv_rows(fixture / results["path"]):
+                observed = row.get("observed_output_path", "").strip()
+                if observed:
+                    add_path((fixture / results["path"]).parent.resolve(strict=False), observed)
+
+    artifact_path = fixture / "artifact_index.yaml"
+    if artifact_path.exists():
+        artifact_index = load_yaml(artifact_path)
+        for artifact in artifact_index.get("artifacts", []) or []:
+            if "path" in artifact:
+                add_path(artifact_path.parent.resolve(strict=False), artifact["path"])
+
+    review_path = fixture / "review_context.yaml"
+    if review_path.exists():
+        review = load_yaml(review_path)
+        for _, desc in descriptor_paths(review):
+            if "path" in desc:
+                add_path(review_path.parent.resolve(strict=False), desc["path"])
+
+    return referenced
+
+
 def resource_key(desc):
     role = desc.get("role")
     if role in SINGLETON_ROLES:
@@ -456,3 +495,23 @@ def test_fixture_documents_and_findings(fixture, validators):
     expected = load_yaml(fixture / "expected.yaml")
     findings = validate_fixture(fixture, validators)
     assert findings == set(expected["findings"]), fixture.name
+
+
+@pytest.mark.parametrize("fixture", fixture_dirs(), ids=lambda p: p.name)
+def test_fixture_has_no_orphan_evidence_files(fixture):
+    exempt_names = {
+        "expected.yaml",
+        "run_manifest.yaml",
+        "review_context.yaml",
+        "artifact_index.yaml",
+        "eval_results.csv",
+        "README.md",
+    }
+    referenced = referenced_fixture_files(fixture)
+    orphans = []
+    for path in fixture.rglob("*"):
+        if not path.is_file() or path.name in exempt_names:
+            continue
+        if path.resolve(strict=False) not in referenced:
+            orphans.append(path.relative_to(fixture).as_posix())
+    assert orphans == [], fixture.name
