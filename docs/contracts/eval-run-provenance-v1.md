@@ -144,7 +144,9 @@ Local paths must be relative to the file containing the descriptor, resolve with
 
 The normative schema is `schemas/eval-run-artifact-index-v1.schema.json`.
 
-`artifact_index.yaml` is optional. It is not required when the CSV contains all decision-relevant evidence and no external output artifact is reviewed as release evidence.
+`artifact_index.yaml` is optional. It is not required when the CSV contains all decision-relevant evidence and no external output artifact is reviewed as release evidence. When an artifact index is present, it must contain at least one artifact; an empty artifact index is schema-invalid.
+
+Each artifact entry requires `artifact_id`, `artifact_type`, and `path`. Optional fields include `case_id`, `trial_id`, `evaluator_ref`, `media_type`, `digest`, `annotations`, and `extensions`. If `trial_id` is present, `case_id` is required.
 
 Artifact indexing rules:
 
@@ -160,7 +162,9 @@ Artifact identities inherit run, candidate, and top-level evaluator identity fro
 
 ## Review Context And Freshness
 
-Review context supplies current release state for comparison without putting mutable state inside the immutable historical run manifest.
+The normative schema is `schemas/eval-run-review-context-v1.schema.json`.
+
+Review context supplies current release state for comparison without putting mutable state inside the immutable historical run manifest. A review context requires `schema_version`, `candidate.id`, and `candidate.version`. It may include `candidate.artifact`, `inputs`, `recency_policy`, `observed_at`, and `extensions`. If `recency_policy` is present, `observed_at` is required for deterministic recency evaluation.
 
 `evaluation.policy`, `review_context.recency_policy`, and the governing OpenEvalGate review or authorization policy have different jobs:
 

@@ -6,21 +6,14 @@
   "additionalProperties": false,
   "required": ["schema_version", "run_id", "artifacts"],
   "properties": {
-    "schema_version": {
-      "const": "1"
-    },
-    "run_id": {
-      "$ref": "#/$defs/identifier"
-    },
+    "schema_version": { "const": "1" },
+    "run_id": { "$ref": "#/$defs/identifier" },
     "artifacts": {
       "type": "array",
-      "items": {
-        "$ref": "#/$defs/artifact"
-      }
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/artifact" }
     },
-    "extensions": {
-      "type": "object"
-    }
+    "extensions": { "type": "object" }
   },
   "$defs": {
     "identifier": {
@@ -28,69 +21,41 @@
       "minLength": 1,
       "pattern": "\\S"
     },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "not": { "pattern": "^(?:/|[A-Za-z]:[\\\\/])" }
+    },
     "sha256": {
       "type": "string",
       "pattern": "^[0-9a-f]{64}$"
     },
+    "digest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sha256"],
+      "properties": {
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
     "artifact": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "artifact_type",
-        "run_id",
-        "case_id",
-        "candidate_id",
-        "candidate_version",
-        "evaluator_id",
-        "path",
-        "digest"
-      ],
+      "required": ["artifact_id", "artifact_type", "path"],
       "properties": {
-        "artifact_type": {
-          "$ref": "#/$defs/identifier"
-        },
-        "run_id": {
-          "$ref": "#/$defs/identifier"
-        },
-        "case_id": {
-          "$ref": "#/$defs/identifier"
-        },
-        "trial_id": {
-          "$ref": "#/$defs/identifier"
-        },
-        "candidate_id": {
-          "$ref": "#/$defs/identifier"
-        },
-        "candidate_version": {
-          "$ref": "#/$defs/identifier"
-        },
-        "evaluator_id": {
-          "$ref": "#/$defs/identifier"
-        },
-        "path": {
-          "type": "string",
-          "minLength": 1,
-          "not": {
-            "pattern": "^(?:/|[A-Za-z]:[\\\\/])"
-          }
-        },
-        "media_type": {
-          "type": "string",
-          "minLength": 1
-        },
-        "digest": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["sha256"],
-          "properties": {
-            "sha256": {
-              "$ref": "#/$defs/sha256"
-            }
-          }
-        },
-        "annotations": {
-          "type": "object"
-        }
+        "artifact_id": { "$ref": "#/$defs/identifier" },
+        "artifact_type": { "$ref": "#/$defs/identifier" },
+        "case_id": { "$ref": "#/$defs/identifier" },
+        "trial_id": { "$ref": "#/$defs/identifier" },
+        "evaluator_ref": { "$ref": "#/$defs/identifier" },
+        "path": { "$ref": "#/$defs/relativePath" },
+        "media_type": { "$ref": "#/$defs/identifier" },
+        "digest": { "$ref": "#/$defs/digest" },
+        "annotations": { "type": "object" },
+        "extensions": { "type": "object" }
+      },
+      "dependentRequired": {
+        "trial_id": ["case_id"]
       }
     }
   }
