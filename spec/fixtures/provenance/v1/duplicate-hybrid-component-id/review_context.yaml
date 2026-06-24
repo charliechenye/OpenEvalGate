@@ -1,0 +1,22 @@
+schema_version: "1"
+
+candidate:
+  id: customer-support-agent
+  version: "2026.06.18-rc2"
+
+inputs:
+  - role: eval_cases
+    path: current/eval_cases.yaml
+    digest:
+      sha256: "7ff2c68abb7b1f1b577ddc0d09b15a3c3537a677a4cfc1278aafe0c177ca7c0c"
+  - role: hybrid_decision_policy
+    name: combined-quality-review
+    path: current/hybrid_policy.yaml
+    digest:
+      sha256: "876c209022a1bbbd0ff2e831e0383d30c619775515c28717106fc7b142d99fe2"
+
+recency_policy:
+  max_age_days: 30
+  max_future_clock_skew_seconds: 300
+
+observed_at: "2026-06-23T18:00:00Z"

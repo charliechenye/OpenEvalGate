@@ -1,0 +1,27 @@
+schema_version: "1"
+run:
+  id: run_002
+  status: aborted
+  started_at: "2026-06-18T17:00:00Z"
+  completed_at: "2026-06-18T17:14:22Z"
+
+candidate:
+  id: customer-support-agent
+  version: "2026.06.18-rc2"
+
+evaluation:
+  kind: human
+  evaluator:
+    id: support-quality-review
+
+inputs:
+  - role: eval_cases
+    path: inputs/eval_cases.yaml
+    digest:
+      sha256: "7ff2c68abb7b1f1b577ddc0d09b15a3c3537a677a4cfc1278aafe0c177ca7c0c"
+
+outputs:
+  results:
+    path: eval_results.csv
+    digest:
+      sha256: "ee29bdd6c240dd47fe9f4acf8f4273f3bf12ae4208a626568b990431116a11b7"

@@ -57,6 +57,7 @@ dev = [
   "build>=1.2.2",
   "pytest>=8.0.0",
   "pytest-xdist>=3.6.1",
+  "jsonschema[format-nongpl]>=4.23",
 ]
 
 [project.urls]

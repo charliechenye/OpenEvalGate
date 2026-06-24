@@ -1,0 +1,20 @@
+schema_validation:
+  manifest: not_present
+  artifact_index: not_present
+  review_context: not_present
+
+provenance:
+  manifest_presence: legacy_absent
+  validity: not_evaluated
+  freshness: not_evaluated
+  recency: not_evaluated
+  assurance: unavailable
+  lifecycle: unknown
+
+authorization:
+  documentation: allowed
+  shadow: allowed_with_warning
+  controlled_launch: blocked
+
+findings:
+  - provenance_manifest_absent

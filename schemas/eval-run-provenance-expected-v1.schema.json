@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/charliechenye/OpenEvalGate/schemas/eval-run-provenance-expected-v1.schema.json",
+  "title": "OpenEvalGate Eval-Run Provenance Expected Classification v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_validation",
+    "provenance",
+    "authorization",
+    "findings"
+  ],
+  "properties": {
+    "schema_validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "manifest",
+        "artifact_index",
+        "review_context"
+      ],
+      "properties": {
+        "manifest": {
+          "enum": [
+            "valid",
+            "invalid",
+            "not_present",
+            "not_applicable"
+          ]
+        },
+        "artifact_index": {
+          "enum": [
+            "valid",
+            "invalid",
+            "not_present",
+            "not_applicable"
+          ]
+        },
+        "review_context": {
+          "enum": [
+            "valid",
+            "invalid",
+            "not_present",
+            "not_applicable"
+          ]
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "manifest_presence",
+        "validity",
+        "freshness",
+        "recency",
+        "assurance",
+        "lifecycle"
+      ],
+      "properties": {
+        "manifest_presence": {
+          "enum": [
+            "present",
+            "legacy_absent"
+          ]
+        },
+        "validity": {
+          "enum": [
+            "valid",
+            "invalid",
+            "not_evaluated"
+          ]
+        },
+        "freshness": {
+          "enum": [
+            "current",
+            "stale",
+            "unknown",
+            "not_evaluated"
+          ]
+        },
+        "recency": {
+          "enum": [
+            "acceptable",
+            "expired",
+            "unknown",
+            "not_configured",
+            "not_evaluated"
+          ]
+        },
+        "assurance": {
+          "enum": [
+            "unavailable",
+            "declared",
+            "verified"
+          ]
+        },
+        "lifecycle": {
+          "enum": [
+            "complete",
+            "failed",
+            "incomplete",
+            "unknown"
+          ]
+        }
+      }
+    },
+    "authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "documentation",
+        "shadow",
+        "controlled_launch"
+      ],
+      "properties": {
+        "documentation": {
+          "enum": [
+            "allowed",
+            "allowed_with_warning",
+            "blocked"
+          ]
+        },
+        "shadow": {
+          "enum": [
+            "allowed",
+            "allowed_with_warning",
+            "blocked"
+          ]
+        },
+        "controlled_launch": {
+          "enum": [
+            "eligible",
+            "blocked"
+          ]
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "provenance_manifest_absent",
+          "provenance_manifest_schema_invalid",
+          "provenance_unsupported_schema_version",
+          "provenance_results_path_required",
+          "provenance_run_id_mismatch",
+          "provenance_candidate_alias_mismatch",
+          "provenance_evaluator_alias_mismatch",
+          "provenance_input_digest_mismatch",
+          "provenance_output_digest_mismatch",
+          "provenance_review_context_schema_invalid",
+          "provenance_review_context_digest_mismatch",
+          "provenance_artifact_index_schema_invalid",
+          "provenance_artifact_identity_mismatch",
+          "provenance_duplicate_artifact_id",
+          "provenance_duplicate_artifact_path",
+          "provenance_duplicate_singleton_role",
+          "provenance_duplicate_current_resource",
+          "provenance_duplicate_historical_resource",
+          "provenance_duplicate_hybrid_component_id",
+          "provenance_duplicate_resource_mismatch",
+          "provenance_unsafe_path",
+          "provenance_local_file_missing",
+          "provenance_timestamp_order_invalid",
+          "provenance_future_timestamp_invalid",
+          "provenance_candidate_stale",
+          "provenance_evidence_stale",
+          "provenance_freshness_unknown",
+          "provenance_recency_unknown",
+          "provenance_evidence_expired",
+          "provenance_lifecycle_failed",
+          "provenance_lifecycle_incomplete"
+        ]
+      },
+      "uniqueItems": true
+    }
+  }
+}

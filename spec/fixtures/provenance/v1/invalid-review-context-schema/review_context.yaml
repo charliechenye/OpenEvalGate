@@ -1,0 +1,16 @@
+schema_version: "1"
+
+candidate:
+  id: customer-support-agent
+
+inputs:
+  - role: eval_cases
+    path: current/eval_cases.yaml
+    digest:
+      sha256: "7ff2c68abb7b1f1b577ddc0d09b15a3c3537a677a4cfc1278aafe0c177ca7c0c"
+
+recency_policy:
+  max_age_days: 30
+  max_future_clock_skew_seconds: 300
+
+observed_at: "2026-06-23T18:00:00Z"

@@ -120,13 +120,14 @@ The following are not required merely to make the repository public:
 
 ### B2. Add run provenance and freshness
 
-- [ ] Add explicit evaluator type: human, deterministic, model judge, or hybrid.
-- [ ] Record candidate version, run timestamps, framework version, and selected artifact versions or digests.
-- [ ] Pin eval-set, review-policy, routing-policy, and escalation-contract evidence where applicable.
-- [ ] Validate that referenced output-artifact metadata and directory identity agree with the result row's run, case, candidate, and evaluator fields.
-- [ ] Define provenance categories and display them in reports.
-- [ ] Define stale-evidence behavior when artifacts change after a run.
-- [ ] Require versioned, non-stale evidence for controlled-launch authorization while retaining bounded legacy support for documentation or shadow review.
+- [~] Define evaluator kinds and minimum evidence. Contract proposed; runtime validation pending.
+- [~] Define candidate identity, run lifecycle, timestamps, and resource descriptors. Contract proposed; runtime validation pending.
+- [~] Define provenance presence, validity, freshness, recency, assurance, lifecycle, and authorization classifications. Contract proposed with normative fixture expectations and fixture-integrity checks, including unsafe path and optional artifact-identity branches; runtime classification and reporting pending.
+- [~] Define stale-evidence behavior when current candidate or policy state differs from valid historical evidence. Contract proposed with selected invariant fixtures; runtime freshness comparison pending.
+- [ ] Parse and verify run provenance.
+- [ ] Validate at runtime that referenced output-artifact metadata and directory identity agree with result rows when optional artifact identity fields are supplied.
+- [ ] Display provenance classifications in reports.
+- [ ] Enforce controlled-launch provenance requirements.
 
 ### B3. Provide a minimal adoption path
 
@@ -138,7 +139,7 @@ The following are not required merely to make the repository public:
 ### B4. Add machine-consumable output
 
 - [ ] Add versioned JSON output for `check`, `validate`, and `report`.
-- [ ] Define stable finding and blocker identifiers in machine output.
+- [ ] Define stable finding and blocker identifiers in machine output. Provenance contract fixture IDs are proposed and schema-checked; general CLI JSON emission remains pending.
 - [ ] Document exit codes for validation failures, launch blockers, and internal errors.
 - [ ] Add an opt-in CI mode that fails when launch is blocked.
 - [ ] Defer SARIF until the finding model and JSON contract are stable.

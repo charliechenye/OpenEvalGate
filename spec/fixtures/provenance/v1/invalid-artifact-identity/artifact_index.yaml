@@ -1,0 +1,11 @@
+schema_version: "1"
+run_id: run_002
+artifacts:
+  - artifact_id: output_case_001
+    artifact_type: observed_output
+    case_id: case_999
+    trial_id: trial_001
+    evaluator_ref: support-quality-review
+    path: artifacts/case_001.md
+    digest:
+      sha256: "dfe2536c54e524fe51958cec0ffde9b3b8298ee91974b199ea9a39f0a3fa3b71"

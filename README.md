@@ -96,6 +96,12 @@ The framework distinguishes:
 
 The complete gate list, scoring weights, evidence bands, and hard-gate semantics are documented in [Launch Gates and Evidence Completeness Scoring](docs/launch-gates-and-evidence-scoring.md). Review modes, selected-run coverage, and controlled-launch behavioral sufficiency are documented in [Review Modes and Behavioral Sufficiency](docs/review-modes.md).
 
+## Proposed Eval-Run Provenance
+
+The proposed [Eval-Run Provenance Contract v1](docs/contracts/eval-run-provenance-v1.md) defines how a small `run_manifest.yaml` can wrap an existing OpenEvalGate-compatible `eval_results.csv`. Existing compatible CSVs do not need new provenance columns.
+
+PR 18 machine-checks provenance schema validity, fixture inventory, referenced files, recorded digests, orphan-file hygiene, and selected scenario invariants. The expected provenance and authorization classifications are normative fixture data. Runtime provenance parsing, complete classification, freshness comparison, report sections, blockers, and controlled-launch enforcement are not implemented yet; that work is reserved for PR 19 or later.
+
 ## Where OpenEvalGate Fits
 
 OpenEvalGate complements eval runners, observability platforms, runtime controls, security tooling, and internal review systems.

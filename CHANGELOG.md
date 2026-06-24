@@ -8,6 +8,8 @@ The project follows semantic versioning while it remains in alpha. Until a stabl
 
 ### Added
 
+- Proposed eval-run provenance contract, schemas, expected-classification schema, normative fixtures, and contract-development checks for fixture integrity and selected invariants; runtime parsing, complete classification, reporting, and enforcement are not implemented yet.
+- Expanded provenance contract fixture coverage for unsafe single-dot path segments and optional artifact identity fields, including positive omitted-identity mapping and negative wrong-trial mapping; runtime provenance execution remains pending.
 - Non-empty core eval-result validation, duplicate identity rejection, strict
   ISO review-timestamp validation, and safe project-relative output references.
 - Eval-case authority for expected routes and consistency validation for
