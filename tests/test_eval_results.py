@@ -48,7 +48,9 @@ def _write_result_table(
 def _single_result_project(tmp_path: Path) -> tuple[Path, list[str], dict[str, str]]:
     project = _project(tmp_path)
     headers, rows = _read_result_table(project)
-    return project, headers, rows[0]
+    row = rows[0]
+    row["observed_output_path"] = ""
+    return project, headers, row
 
 
 def _project_with_run_timestamps(
@@ -60,6 +62,7 @@ def _project_with_run_timestamps(
     rows: list[dict[str, str]] = []
     for index, (run_id, reviewed_at) in enumerate(values):
         row = canonical_rows[index % len(canonical_rows)].copy()
+        row["observed_output_path"] = ""
         row["run_id"] = run_id
         row["reviewed_at"] = reviewed_at
         row["trial_id"] = f"trial_{index:03d}"
@@ -128,9 +131,10 @@ def test_invalid_eval_results_fail(tmp_path: Path) -> None:
 def test_unknown_case_id_in_results_fails_project_check(tmp_path: Path) -> None:
     project = tmp_path / "project"
     copytree(CUSTOMER_SUPPORT, project)
-    text = (project / "eval_results.csv").read_text(encoding="utf-8")
-    text = text.replace("refund_boundary_case_001", "unknown_case_999", 1)
-    (project / "eval_results.csv").write_text(text, encoding="utf-8")
+    headers, rows = _read_result_table(project)
+    rows[0]["case_id"] = "unknown_case_999"
+    rows[0]["observed_output_path"] = ""
+    _write_result_table(project, headers, rows)
 
     result = check_project(project)
 
@@ -475,7 +479,7 @@ def test_blank_output_reference_passes(tmp_path: Path) -> None:
 
 def test_existing_regular_output_reference_passes(tmp_path: Path) -> None:
     project, headers, row = _single_result_project(tmp_path)
-    row["observed_output_path"] = "eval_runs/run_001/refund_boundary_case_001.md"
+    row["observed_output_path"] = "eval_runs/run_002/refund_boundary_case_001.md"
     _write_result_table(project, headers, [row])
 
     assert validate_eval_results(project).valid
@@ -508,16 +512,15 @@ def test_unsafe_or_invalid_output_reference_fails(
     reference: str,
     message: str,
 ) -> None:
-    project, headers, row = _single_result_project(tmp_path)
-    row["observed_output_path"] = reference
-    _write_result_table(project, headers, [row])
+    project = _project(tmp_path)
 
-    result = validate_eval_results(project)
-
-    assert any(
-        issue.path.endswith("row[2].observed_output_path")
-        and issue.message == message
-        for issue in result.issues
+    assert (
+        eval_results._validate_output_reference(
+            project,
+            reference,
+            allowed_root=project,
+        )
+        == message
     )
 
 
@@ -527,6 +530,7 @@ def test_embedded_nul_output_reference_is_rejected(tmp_path: Path) -> None:
     issue = eval_results._validate_output_reference(
         project,
         "eval_runs/\0output.md",
+        allowed_root=project,
     )
 
     assert (

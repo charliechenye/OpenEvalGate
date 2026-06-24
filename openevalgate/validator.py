@@ -8,6 +8,7 @@ from pathlib import Path
 from openevalgate.action_risk import ActionRiskReview, inspect_action_risk_matrix
 from openevalgate.escalation import validate_escalation_contract
 from openevalgate.eval_results import validate_eval_results
+from openevalgate.provenance import RunIdentityInspection, RunIdentityStatus, inspect_run_identity
 from openevalgate.launch_gate_review import (
     LaunchGateReview,
     parse_launch_gate_review,
@@ -41,6 +42,7 @@ OPTIONAL_PROJECT_FILES = [
     "escalation_contract.yaml",
     "routing_policy.yaml",
     "review_policy.yaml",
+    "run_manifest.yaml",
 ]
 
 
@@ -62,13 +64,19 @@ class ProjectCheckResult:
     action_risk_review: ActionRiskReview = field(
         default_factory=lambda: ActionRiskReview(False, False, [], [])
     )
+    run_identity_inspection: RunIdentityInspection | None = None
 
 
-def check_project(project_dir: str | Path) -> ProjectCheckResult:
+def check_project(
+    project_dir: str | Path,
+    *,
+    identity_inspection: RunIdentityInspection | None = None,
+) -> ProjectCheckResult:
     """Validate required launch gate files and eval schema for a project directory."""
 
     root = Path(project_dir)
     issues: list[ValidationIssue] = []
+    run_identity = identity_inspection
 
     if not root.exists() or not root.is_dir():
         return ProjectCheckResult(
@@ -79,7 +87,11 @@ def check_project(project_dir: str | Path) -> ProjectCheckResult:
             [ValidationIssue(str(root), "Project directory not found.")],
             LaunchGateReview([], [], frozenset(), []),
             ActionRiskReview(False, False, [], []),
+            None,
         )
+
+    if run_identity is None:
+        run_identity = inspect_run_identity(root)
 
     missing = [name for name in REQUIRED_PROJECT_FILES if not (root / name).is_file()]
     present_optional = [name for name in OPTIONAL_PROJECT_FILES if (root / name).is_file()]
@@ -89,9 +101,8 @@ def check_project(project_dir: str | Path) -> ProjectCheckResult:
         eval_result = validate_eval_cases(eval_path)
         issues.extend(eval_result.issues)
 
-    if (root / "eval_results.csv").is_file():
-        results_validation = validate_eval_results(root)
-        issues.extend(results_validation.issues)
+    results_validation = validate_eval_results(root, identity_inspection=run_identity)
+    issues.extend(results_validation.issues)
 
     if (root / "review_policy.yaml").is_file():
         issues.extend(validate_review_policy(root).issues)
@@ -123,4 +134,5 @@ def check_project(project_dir: str | Path) -> ProjectCheckResult:
         issues,
         launch_gate_review,
         action_risk_review,
+        run_identity,
     )

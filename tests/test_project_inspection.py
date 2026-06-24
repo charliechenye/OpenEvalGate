@@ -738,3 +738,74 @@ def _write_mixed_invalid_action_matrix(project: Path) -> None:
         + "\n",
         encoding="utf-8",
     )
+
+
+
+def test_invalid_run_identity_fails_project_validation(tmp_path: Path) -> None:
+    project = _copy_project(tmp_path)
+    (project / "eval_runs" / "run_002" / "run_manifest.yaml").write_text("schema_version: ['1'\n", encoding="utf-8")
+
+    inspection = inspect_project(project)
+
+    assert not inspection.check.valid
+    assert not inspection.valid
+    assert inspection.run_identity_inspection.status == "invalid"
+    assert any(issue.source == "provenance" for issue in inspection.check.issues)
+
+
+def test_invalid_run_identity_makes_behavioral_evidence_unavailable(tmp_path: Path) -> None:
+    project = _copy_project(tmp_path)
+    (project / "eval_runs" / "run_002" / "run_manifest.yaml").write_text("schema_version: ['1'\n", encoding="utf-8")
+
+    inspection = inspect_project(project)
+
+    assert inspection.run_identity_inspection.status == "invalid"
+    assert "critical_escalation_regression" not in {blocker.id for blocker in inspection.hard_blockers}
+
+
+def test_present_invalid_manifest_never_becomes_legacy(tmp_path: Path) -> None:
+    project = _copy_project(tmp_path)
+    (project / "eval_runs" / "run_002" / "run_manifest.yaml").write_text("schema_version: ['1'\n", encoding="utf-8")
+
+    inspection = inspect_project(project)
+
+    assert inspection.run_identity_inspection.status == "invalid"
+    assert inspection.run_identity_inspection.results_present is False
+
+
+def test_legacy_identity_remains_structurally_usable(tmp_path: Path) -> None:
+    project = _copy_project(tmp_path)
+
+    inspection = inspect_project(project)
+
+    assert inspection.check.valid
+    assert inspection.run_identity_inspection.status == "legacy"
+
+
+def test_complete_identity_does_not_remove_existing_blockers(tmp_path: Path) -> None:
+    project = _copy_project(tmp_path)
+    (project / "run_manifest.yaml").write_text(
+        """
+schema_version: "1"
+run:
+  id: run_002
+  status: complete
+candidate:
+  id: gpt-4.1-mini
+  version: "1"
+evaluation:
+  kind: human
+  evaluator:
+    id: human_review
+outputs:
+  results:
+    path: eval_results.csv
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    inspection = inspect_project(project)
+
+    assert inspection.run_identity_inspection.status == "complete"
+    assert inspection.launch_blocked
+    assert "missing_monitoring" in {blocker.id for blocker in inspection.hard_blockers}

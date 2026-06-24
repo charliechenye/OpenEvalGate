@@ -205,6 +205,7 @@ def test_invalid_row_outside_selected_scope_invalidates_whole_file(
     invalid_row = rows[0].copy()
     invalid_row["run_id"] = "other_run"
     invalid_row["candidate"] = "other_candidate"
+    invalid_row["observed_output_path"] = ""
     invalid_row["route_match"] = "true"
     rows.append(invalid_row)
     with results_path.open("w", encoding="utf-8", newline="") as handle:

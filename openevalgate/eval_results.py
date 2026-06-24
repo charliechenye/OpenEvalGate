@@ -11,6 +11,7 @@ from math import isfinite
 from pathlib import Path
 
 from openevalgate.local_paths import resolve_local_evidence_path
+from openevalgate.provenance import RunIdentityInspection, RunIdentityStatus, inspect_run_identity
 from openevalgate.routing import load_routing_policy, routing_expectations
 from openevalgate.schema import (
     EXPECTED_ROUTES,
@@ -166,12 +167,20 @@ def _cell(row: _EvalResultRow, field: str) -> str:
     return value.strip() if isinstance(value, str) else ""
 
 
-def validate_eval_results(project_dir: str | Path) -> EvalResultsValidationResult:
+def validate_eval_results(
+    project_dir: str | Path,
+    *,
+    identity_inspection: RunIdentityInspection | None = None,
+) -> EvalResultsValidationResult:
     """Validate optional eval_results.csv against eval cases and the result contract."""
 
     root = Path(project_dir)
-    results_path = root / "eval_results.csv"
-    if not results_path.is_file():
+    inspection = identity_inspection or inspect_run_identity(root)
+    if inspection.status == RunIdentityStatus.INVALID:
+        issues = _provenance_issues(inspection)
+        return EvalResultsValidationResult(False, issues, 0)
+    results_path = _authoritative_results_path(root, inspection)
+    if results_path is None or not results_path.is_file():
         return EvalResultsValidationResult(True, [], 0)
 
     issues: list[ValidationIssue] = []
@@ -380,7 +389,11 @@ def validate_eval_results(project_dir: str | Path) -> EvalResultsValidationResul
 
         output_path = _cell(row, "observed_output_path")
         if output_path:
-            output_issue = _validate_output_reference(root, output_path)
+            output_issue = _validate_output_reference(
+                results_path.parent,
+                output_path,
+                allowed_root=_output_allowed_root(root, inspection),
+            )
             if output_issue:
                 issues.append(
                     ValidationIssue(
@@ -393,22 +406,29 @@ def validate_eval_results(project_dir: str | Path) -> EvalResultsValidationResul
     return EvalResultsValidationResult(not issues, issues, len(rows))
 
 
-def classify_behavioral_evidence(project_dir: str | Path) -> BehavioralEvidence:
+def classify_behavioral_evidence(
+    project_dir: str | Path,
+    *,
+    identity_inspection: RunIdentityInspection | None = None,
+) -> BehavioralEvidence:
     """Classify eval results before any behavioral metrics are summarized."""
 
     root = Path(project_dir)
-    path = root / "eval_results.csv"
-    if not path.is_file():
+    inspection = identity_inspection or inspect_run_identity(root)
+    if inspection.status == RunIdentityStatus.INVALID:
+        return BehavioralEvidence("invalid", None, _provenance_issues(inspection))
+    path = _authoritative_results_path(root, inspection)
+    if path is None or not path.is_file():
         return BehavioralEvidence("not_provided", None, [])
 
-    validation = validate_eval_results(root)
+    validation = validate_eval_results(root, identity_inspection=inspection)
     if not validation.valid:
         return BehavioralEvidence("invalid", None, validation.issues)
     if validation.row_count == 0:
         return BehavioralEvidence("empty", None, [])
 
     try:
-        summary = summarize_eval_results(root)
+        summary = summarize_eval_results(root, identity_inspection=inspection)
     except (csv.Error, OSError, UnicodeError, ValueError) as exc:
         return BehavioralEvidence(
             "invalid",
@@ -424,15 +444,20 @@ def classify_behavioral_evidence(project_dir: str | Path) -> BehavioralEvidence:
     return BehavioralEvidence("available", summary, [])
 
 
-def summarize_eval_results(project_dir: str | Path) -> EvalResultsSummary | None:
+def summarize_eval_results(
+    project_dir: str | Path,
+    *,
+    identity_inspection: RunIdentityInspection | None = None,
+) -> EvalResultsSummary | None:
     """Summarize optional eval_results.csv for launch reports."""
 
     root = Path(project_dir)
-    path = root / "eval_results.csv"
-    if not path.is_file():
+    inspection = identity_inspection or inspect_run_identity(root)
+    path = _authoritative_results_path(root, inspection)
+    if path is None or not path.is_file():
         return None
 
-    validation = validate_eval_results(root)
+    validation = validate_eval_results(root, identity_inspection=inspection)
     if not validation.valid:
         raise ValueError("Cannot summarize invalid eval results.")
     cases_by_id = _valid_case_map(root / "eval_cases.yaml")
@@ -530,13 +555,15 @@ def summarize_selected_eval_results(
     *,
     run_id: str,
     candidate: str,
+    identity_inspection: RunIdentityInspection | None = None,
 ) -> SelectedEvalResultsSummary:
     """Summarize only rows matching the selected run and candidate."""
 
     root = Path(project_dir)
-    path = root / "eval_results.csv"
-    if path.is_file():
-        validation = validate_eval_results(root)
+    inspection = identity_inspection or inspect_run_identity(root)
+    path = _authoritative_results_path(root, inspection)
+    if path is not None and path.is_file():
+        validation = validate_eval_results(root, identity_inspection=inspection)
         if not validation.valid:
             raise ValueError("Cannot summarize invalid eval results.")
     cases_by_id = _valid_case_map(root / "eval_cases.yaml")
@@ -549,7 +576,7 @@ def summarize_selected_eval_results(
             if _cell(row, "run_id") == run_id.strip()
             and _cell(row, "candidate") == candidate.strip()
         ]
-        if path.is_file()
+        if path is not None and path.is_file()
         else []
     )
     case_counts = Counter(
@@ -620,11 +647,40 @@ def _parse_review_timestamp(value: str) -> _ParsedReviewTimestamp:
     )
 
 
-def _validate_output_reference(project_dir: Path, value: str) -> str | None:
+def _authoritative_results_path(
+    root: Path,
+    inspection: RunIdentityInspection,
+) -> Path | None:
+    if inspection.status == RunIdentityStatus.COMPLETE and inspection.identity is not None:
+        return inspection.identity.results_path
+    if inspection.status == RunIdentityStatus.LEGACY and inspection.results_present:
+        return root / "eval_results.csv"
+    return None
+
+
+def _output_allowed_root(root: Path, inspection: RunIdentityInspection) -> Path:
+    if inspection.status == RunIdentityStatus.COMPLETE and inspection.identity is not None:
+        return inspection.identity.evidence_root
+    return root
+
+
+def _provenance_issues(inspection: RunIdentityInspection) -> list[ValidationIssue]:
+    return [
+        ValidationIssue(finding.path, finding.message, source="provenance")
+        for finding in inspection.findings
+    ]
+
+
+def _validate_output_reference(
+    base_dir: Path,
+    value: str,
+    *,
+    allowed_root: Path,
+) -> str | None:
     result = resolve_local_evidence_path(
-        project_dir,
+        base_dir,
         value,
-        allowed_root=project_dir,
+        allowed_root=allowed_root,
         require_file=True,
     )
     if result.error is None:

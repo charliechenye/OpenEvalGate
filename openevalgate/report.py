@@ -35,8 +35,14 @@ def generate_report(project_dir: str | Path) -> str:
     check = inspection.check
     cases = _safe_load_cases(root / "eval_cases.yaml")
     gates = inspection.launch_gate_review.valid_rows
-    behavioral_evidence = classify_behavioral_evidence(root)
-    behavioral_sufficiency = evaluate_behavioral_sufficiency(root)
+    behavioral_evidence = classify_behavioral_evidence(
+        root,
+        identity_inspection=inspection.run_identity_inspection,
+    )
+    behavioral_sufficiency = evaluate_behavioral_sufficiency(
+        root,
+        identity_inspection=inspection.run_identity_inspection,
+    )
     blockers = inspection.hard_blockers
     score = score_gates(inspection.launch_gate_review)
     project_evidence_valid = (

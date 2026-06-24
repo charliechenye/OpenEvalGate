@@ -171,10 +171,14 @@ def validate_review_policy(project_dir: str | Path) -> ReviewPolicyResult:
     return ReviewPolicyResult(True, True, mode, mode, "review_policy", policy, ())
 
 
-def evaluate_behavioral_sufficiency(project_dir: str | Path) -> BehavioralSufficiency:
+def evaluate_behavioral_sufficiency(
+    project_dir: str | Path,
+    *,
+    identity_inspection: Any | None = None,
+) -> BehavioralSufficiency:
     root = Path(project_dir)
     policy_result = validate_review_policy(root)
-    evidence = classify_behavioral_evidence(root)
+    evidence = classify_behavioral_evidence(root, identity_inspection=identity_inspection)
     cases: list[dict[str, Any]] = []
     eval_path = root / "eval_cases.yaml"
     if eval_path.is_file() and validate_eval_cases(eval_path).valid:
@@ -187,7 +191,10 @@ def evaluate_behavioral_sufficiency(project_dir: str | Path) -> BehavioralSuffic
     coverage_policy = policy_result.policy.coverage if policy_result.policy else None
     selected = (
         summarize_selected_eval_results(
-            root, run_id=scope.run_id, candidate=scope.candidate
+            root,
+            run_id=scope.run_id,
+            candidate=scope.candidate,
+            identity_inspection=identity_inspection,
         )
         if scope and evidence.state == "available"
         else None
