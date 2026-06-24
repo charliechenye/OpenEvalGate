@@ -88,9 +88,14 @@ def norm_rel(root, rel, allowed_root=None):
         return None, "provenance_unsafe_path"
     if "\\" in rel or "//" in rel or rel.endswith("/") or re.match(r"^[A-Za-z]:", rel):
         return None, "provenance_unsafe_path"
-    raw = PurePosixPath(rel)
-    if raw.is_absolute() or any(part in {"", ".", ".."} for part in raw.parts):
+
+    segments = rel.split("/")
+    if any(part in {"", ".", ".."} for part in segments):
         return None, "provenance_unsafe_path"
+    raw = PurePosixPath(rel)
+    if raw.is_absolute():
+        return None, "provenance_unsafe_path"
+
     root = Path(root)
     allowed = Path(allowed_root or root).resolve(strict=False)
     candidate = root
