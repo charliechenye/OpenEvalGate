@@ -4,41 +4,69 @@
   "title": "OpenEvalGate Eval-Run Manifest v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "run", "candidate", "evaluation", "outputs"],
+  "required": [
+    "schema_version",
+    "run",
+    "candidate",
+    "evaluation",
+    "outputs"
+  ],
   "properties": {
-    "schema_version": { "const": "1" },
-    "run": { "$ref": "#/$defs/run" },
-    "candidate": { "$ref": "#/$defs/candidate" },
-    "producer": { "$ref": "#/$defs/versionedIdentity" },
-    "evaluation": { "$ref": "#/$defs/evaluation" },
+    "schema_version": {
+      "const": "1"
+    },
+    "run": {
+      "$ref": "#/$defs/run"
+    },
+    "candidate": {
+      "$ref": "#/$defs/candidate"
+    },
+    "producer": {
+      "$ref": "#/$defs/versionedIdentity"
+    },
+    "evaluation": {
+      "$ref": "#/$defs/evaluation"
+    },
     "inputs": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/namedResourceDescriptor" }
+      "items": {
+        "$ref": "#/$defs/namedResourceDescriptor"
+      }
     },
-    "outputs": { "$ref": "#/$defs/outputs" },
-    "extensions": { "type": "object" }
+    "outputs": {
+      "$ref": "#/$defs/outputs"
+    },
+    "extensions": {
+      "type": "object"
+    }
   },
   "$defs": {
     "identifier": {
       "type": "string",
-      "minLength": 1,
-      "pattern": "\\S"
+      "pattern": "^\\S(?:[^\\r\\n]*\\S)?$"
     },
     "alias": {
       "type": "string",
-      "minLength": 1,
-      "pattern": "^\\S(?:.*\\S)?$"
+      "pattern": "^\\S(?:[^\\r\\n]*\\S)?$"
     },
     "aliases": {
       "type": "array",
-      "items": { "$ref": "#/$defs/alias" },
+      "items": {
+        "$ref": "#/$defs/alias"
+      },
       "uniqueItems": true
+    },
+    "mediaType": {
+      "type": "string",
+      "pattern": "^[^\\r\\n]+$"
     },
     "relativePath": {
       "type": "string",
-      "minLength": 1,
-      "not": { "pattern": "^(?:/|[A-Za-z]:[\\\\/])" }
+      "pattern": "^\\S(?:[^\\r\\n]*\\S)?$",
+      "not": {
+        "pattern": "^(?:/|[A-Za-z]:[\\\\/])"
+      }
     },
     "sha256": {
       "type": "string",
@@ -47,23 +75,56 @@
     "digest": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["sha256"],
+      "required": [
+        "sha256"
+      ],
       "properties": {
-        "sha256": { "$ref": "#/$defs/sha256" }
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
       }
     },
     "fileDescriptor": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "path": { "$ref": "#/$defs/relativePath" },
-        "uri": { "type": "string", "format": "uri" },
-        "digest": { "$ref": "#/$defs/digest" },
-        "extensions": { "type": "object" }
+        "path": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "uri": {
+          "type": "string",
+          "format": "uri"
+        },
+        "digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "extensions": {
+          "type": "object"
+        }
       },
       "anyOf": [
-        { "required": ["path"] },
-        { "required": ["uri"] }
+        {
+          "required": [
+            "path"
+          ]
+        },
+        {
+          "required": [
+            "uri"
+          ]
+        }
+      ]
+    },
+    "resultsDescriptor": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/fileDescriptor"
+        },
+        {
+          "required": [
+            "path"
+          ]
+        }
       ]
     },
     "knownSingletonRole": {
@@ -79,206 +140,456 @@
     "namedResourceDescriptor": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["role"],
+      "required": [
+        "role"
+      ],
       "properties": {
-        "role": { "$ref": "#/$defs/identifier" },
-        "name": { "$ref": "#/$defs/identifier" },
-        "path": { "$ref": "#/$defs/relativePath" },
-        "uri": { "type": "string", "format": "uri" },
-        "digest": { "$ref": "#/$defs/digest" },
-        "extensions": { "type": "object" }
+        "role": {
+          "$ref": "#/$defs/identifier"
+        },
+        "name": {
+          "$ref": "#/$defs/identifier"
+        },
+        "path": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "uri": {
+          "type": "string",
+          "format": "uri"
+        },
+        "digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "extensions": {
+          "type": "object"
+        }
       },
       "allOf": [
         {
           "anyOf": [
-            { "required": ["path"] },
-            { "required": ["uri"] }
+            {
+              "required": [
+                "path"
+              ]
+            },
+            {
+              "required": [
+                "uri"
+              ]
+            }
           ]
         },
         {
           "if": {
-            "required": ["role"],
+            "required": [
+              "role"
+            ],
             "properties": {
               "role": {
-                "not": { "$ref": "#/$defs/knownSingletonRole" }
+                "not": {
+                  "enum": [
+                    "eval_cases",
+                    "evaluation_policy",
+                    "review_policy",
+                    "routing_policy",
+                    "escalation_contract",
+                    "action_risk_matrix"
+                  ]
+                }
               }
             }
           },
-          "then": { "required": ["name"] }
+          "then": {
+            "required": [
+              "name"
+            ]
+          }
         }
       ]
     },
     "run": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "status"],
+      "required": [
+        "id",
+        "status"
+      ],
       "properties": {
-        "id": { "$ref": "#/$defs/identifier" },
-        "status": { "enum": ["complete", "failed", "aborted"] },
-        "started_at": { "type": "string", "format": "date-time" },
-        "completed_at": { "type": "string", "format": "date-time" },
-        "extensions": { "type": "object" }
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "status": {
+          "enum": [
+            "complete",
+            "failed",
+            "aborted"
+          ]
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "extensions": {
+          "type": "object"
+        }
       }
     },
     "candidate": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "version"],
+      "required": [
+        "id",
+        "version"
+      ],
       "properties": {
-        "id": { "$ref": "#/$defs/identifier" },
-        "version": { "$ref": "#/$defs/identifier" },
-        "accepted_aliases": { "$ref": "#/$defs/aliases" },
-        "artifact": { "$ref": "#/$defs/fileDescriptor" },
-        "annotations": { "type": "object" },
-        "extensions": { "type": "object" }
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "version": {
+          "$ref": "#/$defs/identifier"
+        },
+        "accepted_aliases": {
+          "$ref": "#/$defs/aliases"
+        },
+        "artifact": {
+          "$ref": "#/$defs/fileDescriptor"
+        },
+        "annotations": {
+          "type": "object"
+        },
+        "extensions": {
+          "type": "object"
+        }
       }
     },
     "versionedIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "version"],
+      "required": [
+        "id",
+        "version"
+      ],
       "properties": {
-        "id": { "$ref": "#/$defs/identifier" },
-        "version": { "$ref": "#/$defs/identifier" },
-        "extensions": { "type": "object" }
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "version": {
+          "$ref": "#/$defs/identifier"
+        },
+        "extensions": {
+          "type": "object"
+        }
       }
     },
     "humanEvaluator": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id"],
+      "required": [
+        "id"
+      ],
       "properties": {
-        "id": { "$ref": "#/$defs/identifier" },
-        "role": { "$ref": "#/$defs/identifier" },
-        "accepted_aliases": { "$ref": "#/$defs/aliases" },
-        "configuration": { "$ref": "#/$defs/fileDescriptor" },
-        "extensions": { "type": "object" }
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "role": {
+          "$ref": "#/$defs/identifier"
+        },
+        "accepted_aliases": {
+          "$ref": "#/$defs/aliases"
+        },
+        "configuration": {
+          "$ref": "#/$defs/fileDescriptor"
+        },
+        "extensions": {
+          "type": "object"
+        }
       }
     },
     "deterministicEvaluator": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "version"],
+      "required": [
+        "id",
+        "version"
+      ],
       "properties": {
-        "id": { "$ref": "#/$defs/identifier" },
-        "version": { "$ref": "#/$defs/identifier" },
-        "accepted_aliases": { "$ref": "#/$defs/aliases" },
-        "configuration": { "$ref": "#/$defs/fileDescriptor" },
-        "extensions": { "type": "object" }
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "version": {
+          "$ref": "#/$defs/identifier"
+        },
+        "accepted_aliases": {
+          "$ref": "#/$defs/aliases"
+        },
+        "configuration": {
+          "$ref": "#/$defs/fileDescriptor"
+        },
+        "extensions": {
+          "type": "object"
+        }
       }
     },
     "modelJudgeEvaluator": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "version"],
+      "required": [
+        "id",
+        "version"
+      ],
       "properties": {
-        "id": { "$ref": "#/$defs/identifier" },
-        "version": { "$ref": "#/$defs/identifier" },
-        "accepted_aliases": { "$ref": "#/$defs/aliases" },
-        "configuration": { "$ref": "#/$defs/fileDescriptor" },
-        "extensions": { "type": "object" }
-      }
-    },
-    "hybridEvaluator": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["id", "components", "decision_policy"],
-      "properties": {
-        "id": { "$ref": "#/$defs/identifier" },
-        "accepted_aliases": { "$ref": "#/$defs/aliases" },
-        "components": {
-          "type": "array",
-          "minItems": 1,
-          "items": {
-            "oneOf": [
-              { "$ref": "#/$defs/humanComponentEvaluator" },
-              { "$ref": "#/$defs/deterministicComponentEvaluator" },
-              { "$ref": "#/$defs/modelJudgeComponentEvaluator" }
-            ]
-          }
+        "id": {
+          "$ref": "#/$defs/identifier"
         },
-        "decision_policy": { "$ref": "#/$defs/fileDescriptor" },
-        "extensions": { "type": "object" }
+        "version": {
+          "$ref": "#/$defs/identifier"
+        },
+        "accepted_aliases": {
+          "$ref": "#/$defs/aliases"
+        },
+        "configuration": {
+          "$ref": "#/$defs/fileDescriptor"
+        },
+        "extensions": {
+          "type": "object"
+        }
       }
     },
     "humanComponentEvaluator": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "kind"],
+      "required": [
+        "id",
+        "kind"
+      ],
       "properties": {
-        "id": { "$ref": "#/$defs/identifier" },
-        "kind": { "const": "human" },
-        "configuration": { "$ref": "#/$defs/fileDescriptor" },
-        "extensions": { "type": "object" }
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "kind": {
+          "const": "human"
+        },
+        "configuration": {
+          "$ref": "#/$defs/fileDescriptor"
+        },
+        "extensions": {
+          "type": "object"
+        }
       }
     },
     "deterministicComponentEvaluator": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "kind", "version"],
+      "required": [
+        "id",
+        "kind",
+        "version"
+      ],
       "properties": {
-        "id": { "$ref": "#/$defs/identifier" },
-        "kind": { "const": "deterministic" },
-        "version": { "$ref": "#/$defs/identifier" },
-        "configuration": { "$ref": "#/$defs/fileDescriptor" },
-        "extensions": { "type": "object" }
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "kind": {
+          "const": "deterministic"
+        },
+        "version": {
+          "$ref": "#/$defs/identifier"
+        },
+        "configuration": {
+          "$ref": "#/$defs/fileDescriptor"
+        },
+        "extensions": {
+          "type": "object"
+        }
       }
     },
     "modelJudgeComponentEvaluator": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "kind", "version"],
+      "required": [
+        "id",
+        "kind",
+        "version"
+      ],
       "properties": {
-        "id": { "$ref": "#/$defs/identifier" },
-        "kind": { "const": "model_judge" },
-        "version": { "$ref": "#/$defs/identifier" },
-        "configuration": { "$ref": "#/$defs/fileDescriptor" },
-        "extensions": { "type": "object" }
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "kind": {
+          "const": "model_judge"
+        },
+        "version": {
+          "$ref": "#/$defs/identifier"
+        },
+        "configuration": {
+          "$ref": "#/$defs/fileDescriptor"
+        },
+        "extensions": {
+          "type": "object"
+        }
+      }
+    },
+    "hybridEvaluator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "components",
+        "decision_policy"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "accepted_aliases": {
+          "$ref": "#/$defs/aliases"
+        },
+        "components": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/humanComponentEvaluator"
+              },
+              {
+                "$ref": "#/$defs/deterministicComponentEvaluator"
+              },
+              {
+                "$ref": "#/$defs/modelJudgeComponentEvaluator"
+              }
+            ]
+          }
+        },
+        "decision_policy": {
+          "$ref": "#/$defs/fileDescriptor"
+        },
+        "extensions": {
+          "type": "object"
+        }
       }
     },
     "evaluation": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["kind", "evaluator"],
+      "required": [
+        "kind",
+        "evaluator"
+      ],
       "properties": {
-        "kind": { "enum": ["human", "deterministic", "model_judge", "hybrid"] },
-        "framework": { "$ref": "#/$defs/versionedIdentity" },
+        "kind": {
+          "enum": [
+            "human",
+            "deterministic",
+            "model_judge",
+            "hybrid"
+          ]
+        },
+        "framework": {
+          "$ref": "#/$defs/versionedIdentity"
+        },
         "evaluator": true,
-        "policy": { "$ref": "#/$defs/fileDescriptor" },
-        "extensions": { "type": "object" }
+        "policy": {
+          "$ref": "#/$defs/fileDescriptor"
+        },
+        "extensions": {
+          "type": "object"
+        }
       },
       "allOf": [
         {
-          "if": { "properties": { "kind": { "const": "human" } } },
-          "then": { "properties": { "evaluator": { "$ref": "#/$defs/humanEvaluator" } } }
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "human"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "evaluator": {
+                "$ref": "#/$defs/humanEvaluator"
+              }
+            }
+          }
         },
         {
-          "if": { "properties": { "kind": { "const": "deterministic" } } },
-          "then": { "properties": { "evaluator": { "$ref": "#/$defs/deterministicEvaluator" } } }
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "deterministic"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "evaluator": {
+                "$ref": "#/$defs/deterministicEvaluator"
+              }
+            }
+          }
         },
         {
-          "if": { "properties": { "kind": { "const": "model_judge" } } },
-          "then": { "properties": { "evaluator": { "$ref": "#/$defs/modelJudgeEvaluator" } } }
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "model_judge"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "evaluator": {
+                "$ref": "#/$defs/modelJudgeEvaluator"
+              }
+            }
+          }
         },
         {
-          "if": { "properties": { "kind": { "const": "hybrid" } } },
-          "then": { "properties": { "evaluator": { "$ref": "#/$defs/hybridEvaluator" } } }
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "hybrid"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "evaluator": {
+                "$ref": "#/$defs/hybridEvaluator"
+              }
+            }
+          }
         }
       ]
     },
     "outputs": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["results"],
+      "required": [
+        "results"
+      ],
       "properties": {
-        "results": { "$ref": "#/$defs/fileDescriptor" },
-        "artifact_index": { "$ref": "#/$defs/fileDescriptor" },
+        "results": {
+          "$ref": "#/$defs/resultsDescriptor"
+        },
+        "artifact_index": {
+          "$ref": "#/$defs/fileDescriptor"
+        },
         "additional": {
           "type": "array",
           "minItems": 1,
-          "items": { "$ref": "#/$defs/fileDescriptor" }
+          "items": {
+            "$ref": "#/$defs/fileDescriptor"
+          }
         },
-        "extensions": { "type": "object" }
+        "extensions": {
+          "type": "object"
+        }
       }
     }
   }

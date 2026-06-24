@@ -122,7 +122,7 @@ Initial contract categories are manifest presence, validity, freshness, recency,
 ### Acceptance criteria
 
 - [ ] The report identifies the exact run, candidate, framework, and artifact versions used for the decision.
-- [~] Contract fixtures define stale candidate and policy evidence; runtime reporting of stale or mismatched evidence remains pending.
+- [~] Contract fixtures define and validate stale candidate, stale input, recency, lifecycle, artifact, and invalidity branches; runtime reporting of stale or mismatched evidence remains pending.
 - [ ] Declared evidence is visibly different from verified evidence, and invalid evidence cannot be treated as legacy evidence.
 - [ ] Controlled launch cannot be authorized using an unpinned or stale selected run.
 

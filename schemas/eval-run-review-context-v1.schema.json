@@ -4,35 +4,75 @@
   "title": "OpenEvalGate Eval-Run Review Context v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "candidate"],
+  "required": [
+    "schema_version",
+    "candidate"
+  ],
   "properties": {
-    "schema_version": { "const": "1" },
-    "candidate": { "$ref": "#/$defs/candidate" },
+    "schema_version": {
+      "const": "1"
+    },
+    "candidate": {
+      "$ref": "#/$defs/candidate"
+    },
     "inputs": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/namedResourceDescriptor" }
+      "items": {
+        "$ref": "#/$defs/namedResourceDescriptor"
+      }
     },
-    "recency_policy": { "$ref": "#/$defs/recencyPolicy" },
-    "observed_at": { "type": "string", "format": "date-time" },
-    "extensions": { "type": "object" }
+    "recency_policy": {
+      "$ref": "#/$defs/recencyPolicy"
+    },
+    "observed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "extensions": {
+      "type": "object"
+    }
   },
   "allOf": [
     {
-      "if": { "required": ["recency_policy"] },
-      "then": { "required": ["observed_at"] }
+      "if": {
+        "required": [
+          "recency_policy"
+        ]
+      },
+      "then": {
+        "required": [
+          "observed_at"
+        ]
+      }
     }
   ],
   "$defs": {
     "identifier": {
       "type": "string",
-      "minLength": 1,
-      "pattern": "\\S"
+      "pattern": "^\\S(?:[^\\r\\n]*\\S)?$"
+    },
+    "alias": {
+      "type": "string",
+      "pattern": "^\\S(?:[^\\r\\n]*\\S)?$"
+    },
+    "aliases": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/alias"
+      },
+      "uniqueItems": true
+    },
+    "mediaType": {
+      "type": "string",
+      "pattern": "^[^\\r\\n]+$"
     },
     "relativePath": {
       "type": "string",
-      "minLength": 1,
-      "not": { "pattern": "^(?:/|[A-Za-z]:[\\\\/])" }
+      "pattern": "^\\S(?:[^\\r\\n]*\\S)?$",
+      "not": {
+        "pattern": "^(?:/|[A-Za-z]:[\\\\/])"
+      }
     },
     "sha256": {
       "type": "string",
@@ -41,23 +81,44 @@
     "digest": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["sha256"],
+      "required": [
+        "sha256"
+      ],
       "properties": {
-        "sha256": { "$ref": "#/$defs/sha256" }
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
       }
     },
     "fileDescriptor": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "path": { "$ref": "#/$defs/relativePath" },
-        "uri": { "type": "string", "format": "uri" },
-        "digest": { "$ref": "#/$defs/digest" },
-        "extensions": { "type": "object" }
+        "path": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "uri": {
+          "type": "string",
+          "format": "uri"
+        },
+        "digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "extensions": {
+          "type": "object"
+        }
       },
       "anyOf": [
-        { "required": ["path"] },
-        { "required": ["uri"] }
+        {
+          "required": [
+            "path"
+          ]
+        },
+        {
+          "required": [
+            "uri"
+          ]
+        }
       ]
     },
     "knownSingletonRole": {
@@ -73,50 +134,102 @@
     "namedResourceDescriptor": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["role"],
+      "required": [
+        "role"
+      ],
       "properties": {
-        "role": { "$ref": "#/$defs/identifier" },
-        "name": { "$ref": "#/$defs/identifier" },
-        "path": { "$ref": "#/$defs/relativePath" },
-        "uri": { "type": "string", "format": "uri" },
-        "digest": { "$ref": "#/$defs/digest" },
-        "extensions": { "type": "object" }
+        "role": {
+          "$ref": "#/$defs/identifier"
+        },
+        "name": {
+          "$ref": "#/$defs/identifier"
+        },
+        "path": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "uri": {
+          "type": "string",
+          "format": "uri"
+        },
+        "digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "extensions": {
+          "type": "object"
+        }
       },
       "allOf": [
         {
           "anyOf": [
-            { "required": ["path"] },
-            { "required": ["uri"] }
+            {
+              "required": [
+                "path"
+              ]
+            },
+            {
+              "required": [
+                "uri"
+              ]
+            }
           ]
         },
         {
           "if": {
-            "required": ["role"],
+            "required": [
+              "role"
+            ],
             "properties": {
               "role": {
-                "not": { "$ref": "#/$defs/knownSingletonRole" }
+                "not": {
+                  "enum": [
+                    "eval_cases",
+                    "evaluation_policy",
+                    "review_policy",
+                    "routing_policy",
+                    "escalation_contract",
+                    "action_risk_matrix"
+                  ]
+                }
               }
             }
           },
-          "then": { "required": ["name"] }
+          "then": {
+            "required": [
+              "name"
+            ]
+          }
         }
       ]
     },
     "candidate": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "version"],
+      "required": [
+        "id",
+        "version"
+      ],
       "properties": {
-        "id": { "$ref": "#/$defs/identifier" },
-        "version": { "$ref": "#/$defs/identifier" },
-        "artifact": { "$ref": "#/$defs/fileDescriptor" },
-        "extensions": { "type": "object" }
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "version": {
+          "$ref": "#/$defs/identifier"
+        },
+        "artifact": {
+          "$ref": "#/$defs/fileDescriptor"
+        },
+        "extensions": {
+          "type": "object"
+        }
       }
     },
     "recencyPolicy": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["max_age_days"],
+      "required": [
+        "max_age_days",
+        "max_future_clock_skew_seconds"
+      ],
       "properties": {
         "max_age_days": {
           "type": "integer",
@@ -126,7 +239,9 @@
           "type": "integer",
           "minimum": 0
         },
-        "extensions": { "type": "object" }
+        "extensions": {
+          "type": "object"
+        }
       }
     }
   }

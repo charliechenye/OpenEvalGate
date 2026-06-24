@@ -100,7 +100,7 @@ The complete gate list, scoring weights, evidence bands, and hard-gate semantics
 
 The proposed [Eval-Run Provenance Contract v1](docs/contracts/eval-run-provenance-v1.md) defines how a small `run_manifest.yaml` can wrap an existing OpenEvalGate-compatible `eval_results.csv`. Existing compatible CSVs do not need new provenance columns.
 
-The contract and fixtures are proposed examples for future implementation. Runtime provenance parsing, freshness comparison, report sections, blockers, and controlled-launch enforcement are not implemented yet.
+The contract schemas and normative fixtures are machine-validated for contract consistency. Runtime provenance parsing, freshness comparison, report sections, blockers, and controlled-launch enforcement are not implemented yet.
 
 ## Where OpenEvalGate Fits
 
