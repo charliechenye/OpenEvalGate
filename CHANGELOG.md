@@ -66,7 +66,6 @@ The project follows semantic versioning while it remains in alpha. Until a stabl
 
 ### Added
 
-- Proposed eval-run provenance contract, schemas, and contract fixtures; runtime parsing and enforcement are not implemented yet.
 - Deterministic launch-recommendation semantics.
 - Centralized policy evaluation for eight launch-blocking hard gates.
 - Tri-state applicability for conditional gates.

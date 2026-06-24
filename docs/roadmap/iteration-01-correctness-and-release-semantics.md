@@ -123,7 +123,7 @@ Initial contract categories are manifest presence, validity, freshness, recency,
 
 - [ ] The report identifies the exact run, candidate, framework, and artifact versions used for the decision.
 - [~] Contract fixtures define stale candidate and policy evidence; runtime reporting of stale or mismatched evidence remains pending.
-- [ ] Self-attested evidence is visibly different from tool-validated or human-approved evidence.
+- [ ] Declared evidence is visibly different from verified evidence, and invalid evidence cannot be treated as legacy evidence.
 - [ ] Controlled launch cannot be authorized using an unpinned or stale selected run.
 
 ## Deferred Correctness Work
