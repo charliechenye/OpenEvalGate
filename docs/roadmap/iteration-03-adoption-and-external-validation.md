@@ -20,7 +20,7 @@ The `0.2.0` theme is **evidence integrity and minimal adoption**.
 - [ ] Recompute or consistency-check derived route, workflow, destination, and policy fields.
 - [ ] Reject duplicate result records.
 - [ ] Validate timestamps, selected scope, candidate references, and observed-output references.
-- [~] Add explicit run provenance and evaluator type. Contract proposed; runtime parsing pending.
+- [~] Add explicit run provenance and evaluator type. Contract proposed with fixture-integrity checks; runtime parsing pending.
 - [~] Define framework, input, result, and artifact descriptor rules. Contract proposed; digest verification pending.
 - [~] Define stale-evidence and recency behavior. Contract proposed; runtime freshness comparison pending.
 - [ ] Require versioned, non-stale selected evidence for controlled-launch authorization.

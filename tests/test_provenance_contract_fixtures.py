@@ -1,3 +1,12 @@
+"""Contract-development checks for eval-run provenance fixtures.
+
+This module validates provenance schemas, fixture integrity, referenced evidence,
+recorded digests, orphan-file hygiene, and selected scenario invariants. It is
+not the production provenance parser or classifier. PR 19 will implement complete
+classification, finding precedence, authorization evaluation, and full comparison
+against the normative expected outputs.
+"""
+
 import csv
 import hashlib
 import json
@@ -195,12 +204,21 @@ def referenced_fixture_files(fixture):
         for _, desc in descriptor_paths(manifest):
             if "path" in desc:
                 add_path(fixture.resolve(strict=False), desc["path"])
-        results = manifest.get("outputs", {}).get("results", {}) if manifest else {}
+        outputs = manifest.get("outputs", {}) if manifest else {}
+        results = outputs.get("results", {})
+        if "path" in results:
+            add_path(fixture.resolve(strict=False), results["path"])
+        artifact_index = outputs.get("artifact_index", {})
+        if "path" in artifact_index:
+            add_path(fixture.resolve(strict=False), artifact_index["path"])
         if "path" in results and (fixture / results["path"]).exists():
             for row in read_csv_rows(fixture / results["path"]):
                 observed = row.get("observed_output_path", "").strip()
                 if observed:
                     add_path((fixture / results["path"]).parent.resolve(strict=False), observed)
+
+    if not manifest_path.exists() and (fixture / "eval_results.csv").exists():
+        referenced.add((fixture / "eval_results.csv").resolve(strict=False))
 
     artifact_path = fixture / "artifact_index.yaml"
     if artifact_path.exists():
@@ -395,7 +413,7 @@ def validate_fixture(fixture, validators):
 
     if review is not None:
         if schema["review_context"] == "invalid":
-            findings.add("provenance_manifest_schema_invalid")
+            findings.add("provenance_review_context_schema_invalid")
             return findings
         for desc in [review.get("candidate", {}).get("artifact"), *(review.get("inputs", []) or [])]:
             if not desc:
@@ -417,8 +435,7 @@ def validate_fixture(fixture, validators):
         findings.add("provenance_lifecycle_incomplete")
 
     if review is None:
-        if expected["provenance"]["freshness"] == "unknown" and expected["provenance"]["assurance"] == "verified":
-            findings.add("provenance_freshness_unknown")
+        findings.add("provenance_freshness_unknown")
         return findings
 
     # Freshness comparison.
@@ -503,8 +520,6 @@ def test_fixture_has_no_orphan_evidence_files(fixture):
         "expected.yaml",
         "run_manifest.yaml",
         "review_context.yaml",
-        "artifact_index.yaml",
-        "eval_results.csv",
         "README.md",
     }
     referenced = referenced_fixture_files(fixture)

@@ -13,7 +13,8 @@ provenance:
 
 authorization:
   documentation: allowed
-  shadow: allowed
+  shadow: allowed_with_warning
   controlled_launch: blocked
 
-findings: []
+findings:
+  - provenance_freshness_unknown

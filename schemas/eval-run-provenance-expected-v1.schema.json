@@ -149,6 +149,7 @@
           "provenance_evaluator_alias_mismatch",
           "provenance_input_digest_mismatch",
           "provenance_output_digest_mismatch",
+          "provenance_review_context_schema_invalid",
           "provenance_review_context_digest_mismatch",
           "provenance_artifact_index_schema_invalid",
           "provenance_artifact_identity_mismatch",

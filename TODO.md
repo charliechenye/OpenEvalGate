@@ -122,8 +122,8 @@ The following are not required merely to make the repository public:
 
 - [~] Define evaluator kinds and minimum evidence. Contract proposed; runtime validation pending.
 - [~] Define candidate identity, run lifecycle, timestamps, and resource descriptors. Contract proposed; runtime validation pending.
-- [~] Define provenance presence, validity, freshness, recency, assurance, lifecycle, and authorization classifications. Contract proposed and fixture-validated; reporting pending.
-- [~] Define stale-evidence behavior when current candidate or policy state differs from valid historical evidence. Contract proposed and fixture-validated; runtime freshness comparison pending.
+- [~] Define provenance presence, validity, freshness, recency, assurance, lifecycle, and authorization classifications. Contract proposed with normative fixture expectations and fixture-integrity checks; runtime classification and reporting pending.
+- [~] Define stale-evidence behavior when current candidate or policy state differs from valid historical evidence. Contract proposed with selected invariant fixtures; runtime freshness comparison pending.
 - [ ] Parse and verify run provenance.
 - [ ] Validate that referenced output-artifact metadata and directory identity agree with the result row's run, case, candidate, and evaluator fields.
 - [ ] Display provenance classifications in reports.
@@ -139,7 +139,7 @@ The following are not required merely to make the repository public:
 ### B4. Add machine-consumable output
 
 - [ ] Add versioned JSON output for `check`, `validate`, and `report`.
-- [ ] Define stable finding and blocker identifiers in machine output. Provenance contract fixture IDs are proposed and validated; general CLI JSON emission remains pending.
+- [ ] Define stable finding and blocker identifiers in machine output. Provenance contract fixture IDs are proposed and schema-checked; general CLI JSON emission remains pending.
 - [ ] Document exit codes for validation failures, launch blockers, and internal errors.
 - [ ] Add an opt-in CI mode that fails when launch is blocked.
 - [ ] Defer SARIF until the finding model and JSON contract are stable.

@@ -15,7 +15,7 @@ The proposed eval-run provenance contract is paired with four Draft 2020-12 sche
 - `schemas/eval-run-review-context-v1.schema.json` for `review_context.yaml`.
 - `schemas/eval-run-provenance-expected-v1.schema.json` for fixture `expected.yaml` classifications and registered finding IDs.
 
-Fixture expectations under `spec/fixtures/provenance/v1/` are machine-validated by `tests/test_provenance_contract_fixtures.py`. This validation is contract-development coverage; it does not implement production provenance parsing or CLI output.
+Fixture expectations under `spec/fixtures/provenance/v1/` are schema-validated and fixture-integrity checked by `tests/test_provenance_contract_fixtures.py`. PR 18 validation covers schemas, inventory, referenced files, recorded digests, orphan-file hygiene, and selected scenario invariants. Complete provenance classification, authorization evaluation, runtime freshness behavior, reporting, and CLI output remain PR 19 or later work.
 
 ## Contract principles
 

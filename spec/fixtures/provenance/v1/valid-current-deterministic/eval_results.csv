@@ -1,2 +1,2 @@
 run_id,case_id,candidate,evaluator,actual_route,expected_route,route_match,passed,score,failure_category,failure_reason,observed_output_path,reviewed_by,reviewed_at,notes,trial_id
-run_002,case_001,customer-support-agent,support-quality-review,support,support,true,true,1.0,,,,qa-reviewer,2026-06-18T17:13:00Z,,trial_001
+run_002,case_001,customer-support-agent,deterministic-route-checker,support,support,true,true,1.0,,,,qa-reviewer,2026-06-18T17:13:00Z,,trial_001

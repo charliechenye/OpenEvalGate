@@ -59,7 +59,7 @@ Maintain two flagship narratives.
 - [ ] Passing configured thresholds and behavioral invariants.
 - [ ] No unresolved hard blocker or prohibited action.
 - [ ] Passing observability, rollback, and owner signoff.
-- [~] Proposed selected-run provenance contract exists; runtime validation remains pending.
+- [~] Proposed selected-run provenance contract and fixture-integrity checks exist; runtime validation remains pending.
 - [ ] Deterministic controlled-launch recommendation.
 
 ### Blocked controlled-launch example

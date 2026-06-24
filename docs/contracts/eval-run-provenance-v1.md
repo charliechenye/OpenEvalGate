@@ -335,8 +335,8 @@ The authorization rules are ordered. Earlier rules take precedence over later ru
 4. Expired evidence: documentation `allowed_with_warning`, shadow `allowed_with_warning`, controlled launch `blocked`.
 5. Recency unknown under a configured recency policy: documentation `allowed`, shadow `allowed_with_warning`, controlled launch `blocked`.
 6. Legacy evidence: documentation `allowed`, shadow `allowed_with_warning`, controlled launch `blocked`.
-7. Valid, declared, complete evidence: documentation `allowed`, shadow `allowed`, controlled launch `blocked`. This includes the adoption-friendly case where freshness is `unknown` because no review context was supplied.
-8. Valid, verified evidence with freshness unknown: documentation `allowed`, shadow `allowed_with_warning`, controlled launch `blocked`.
+7. Valid manifested evidence with unknown freshness, whether historically declared or verified: documentation `allowed`, shadow `allowed_with_warning`, controlled launch `blocked`.
+8. Valid, declared, current, complete evidence: documentation `allowed`, shadow `allowed`, controlled launch `blocked`.
 9. Valid, verified, current, complete evidence with acceptable recency: documentation `allowed`, shadow `allowed`, controlled launch `eligible`.
 10. Valid, verified, current, complete evidence with recency not configured: controlled launch is eligible only when the governing OpenEvalGate review or authorization policy explicitly permits proceeding without a configured evidence-age limit. Otherwise documentation is `allowed`, shadow is `allowed`, and controlled launch is `blocked`.
 
@@ -373,36 +373,37 @@ Identifier-like fields use a pattern equivalent to `^\S(?:[^\r\n]*\S)?$` to reje
 
 Finding identifiers are stable within contract major version 1. Future runtime output may emit these IDs, and fixtures may require exact IDs. Removing or changing an ID requires a contract-version compatibility decision. This registry does not mean general CLI JSON output is implemented.
 
-Registered v1 finding IDs:
-
-- `provenance_manifest_absent`
-- `provenance_manifest_schema_invalid`
-- `provenance_unsupported_schema_version`
-- `provenance_results_path_required`
-- `provenance_run_id_mismatch`
-- `provenance_candidate_alias_mismatch`
-- `provenance_evaluator_alias_mismatch`
-- `provenance_input_digest_mismatch`
-- `provenance_output_digest_mismatch`
-- `provenance_review_context_digest_mismatch`
-- `provenance_artifact_index_schema_invalid`
-- `provenance_artifact_identity_mismatch`
-- `provenance_duplicate_artifact_id`
-- `provenance_duplicate_artifact_path`
-- `provenance_duplicate_singleton_role`
-- `provenance_duplicate_hybrid_component_id`
-- `provenance_duplicate_resource_mismatch`
-- `provenance_unsafe_path`
-- `provenance_local_file_missing`
-- `provenance_timestamp_order_invalid`
-- `provenance_future_timestamp_invalid`
-- `provenance_candidate_stale`
-- `provenance_evidence_stale`
-- `provenance_freshness_unknown`
-- `provenance_recency_unknown`
-- `provenance_evidence_expired`
-- `provenance_lifecycle_failed`
-- `provenance_lifecycle_incomplete`
+| Finding ID | Exact trigger |
+| --- | --- |
+| `provenance_manifest_absent` | Legacy evidence has no `run_manifest.yaml`; associated with legacy manifest absence, not invalidity. |
+| `provenance_manifest_schema_invalid` | `run_manifest.yaml` declares v1 but fails the manifest schema for reasons other than URI-only results; historical-envelope invalidity. |
+| `provenance_unsupported_schema_version` | `run_manifest.yaml` declares an unsupported major schema version; historical-envelope invalidity with lifecycle `unknown`. |
+| `provenance_results_path_required` | `outputs.results` omits local `path` or is URI-only in v1; historical-envelope schema invalidity. |
+| `provenance_run_id_mismatch` | CSV `run_id`, after trimming, does not equal manifest `run.id`; historical-envelope invalidity. |
+| `provenance_candidate_alias_mismatch` | CSV `candidate`, after trimming, matches neither manifest `candidate.id` nor an accepted alias; historical-envelope invalidity. |
+| `provenance_evaluator_alias_mismatch` | CSV `evaluator`, after trimming, matches neither top-level evaluator ID nor an accepted alias; historical-envelope invalidity. |
+| `provenance_input_digest_mismatch` | Historical manifest input or fixed-purpose historical input descriptor has a recorded digest that does not match local bytes; historical-envelope invalidity. |
+| `provenance_output_digest_mismatch` | Historical results, artifact index, or output artifact descriptor has a recorded digest that does not match local bytes; historical-envelope invalidity. |
+| `provenance_review_context_schema_invalid` | The immutable historical run envelope is valid, but the supplied `review_context.yaml` does not satisfy the v1 review-context schema; review-context invalidity. |
+| `provenance_review_context_digest_mismatch` | A current review-context descriptor has a recorded digest that does not match local bytes; review-context invalidity that preserves historical assurance. |
+| `provenance_artifact_index_schema_invalid` | An included `artifact_index.yaml` fails the artifact-index schema, including an empty index; historical-envelope invalidity. |
+| `provenance_artifact_identity_mismatch` | Artifact index run, case, trial, or evaluator reference contradicts manifest or CSV evidence; historical-envelope invalidity. |
+| `provenance_duplicate_artifact_id` | Two artifact-index entries declare the same `artifact_id`; historical-envelope invalidity. |
+| `provenance_duplicate_artifact_path` | Two artifact-index entries resolve to the same normalized artifact path; historical-envelope invalidity. |
+| `provenance_duplicate_singleton_role` | Historical manifest inputs repeat a singleton resource role; historical-envelope invalidity. |
+| `provenance_duplicate_hybrid_component_id` | Hybrid evaluator components repeat a component ID; historical-envelope invalidity. |
+| `provenance_duplicate_resource_mismatch` | A fixed-purpose descriptor and its canonical `inputs[]` mirror cannot be proven equivalent or contradict locator/digest identity; historical-envelope invalidity. |
+| `provenance_unsafe_path` | A historical or current local path is absolute, escapes its evidence root, resolves through a symlink, or is otherwise unsafe; historical-envelope or review-context invalidity depending on the descriptor. |
+| `provenance_local_file_missing` | A referenced historical local file is absent or not a regular file; historical-envelope invalidity. Current local-file absence is review-context invalidity under the same ID unless a more specific future ID is introduced. |
+| `provenance_timestamp_order_invalid` | Recognized v1 manifest has both `run.started_at` and `run.completed_at`, and start is after completion; historical-envelope invalidity. |
+| `provenance_future_timestamp_invalid` | Historical completion time is beyond `review_context.observed_at + max_future_clock_skew_seconds`; review-context invalidity preserving historical assurance. |
+| `provenance_candidate_stale` | Current candidate ID, version, or comparable candidate artifact digest differs from historical evidence; valid drift. |
+| `provenance_evidence_stale` | A matched current input/resource digest differs from historical evidence; valid drift. |
+| `provenance_freshness_unknown` | Valid manifested evidence cannot be fully compared with current release state because review context is absent, a current counterpart is missing, identity/digest evidence is insufficient, candidate artifact comparison is unavailable, or a release-sensitive fixed-purpose descriptor lacks its freshness mirror; incomplete comparison. |
+| `provenance_recency_unknown` | A recency policy is configured but deterministic age cannot be computed, such as missing historical completion time; recency status. |
+| `provenance_evidence_expired` | Deterministic evidence age exceeds configured `max_age_days`; recency status. |
+| `provenance_lifecycle_failed` | Recognized v1 manifest has `run.status: failed`; lifecycle status. |
+| `provenance_lifecycle_incomplete` | Recognized v1 manifest has a nonterminal status such as `run.status: aborted`; lifecycle status. |
 
 ## Threat Model And Non-Claims
 
@@ -444,7 +445,7 @@ References:
 
 ## Conformance Fixtures
 
-Self-contained fixture directories under `spec/fixtures/provenance/v1/` include real input, result, artifact, review-context, and expected-classification files. Recorded SHA-256 values are computed from fixture bytes. Expected classifications are validated by `schemas/eval-run-provenance-expected-v1.schema.json` and `tests/test_provenance_contract_fixtures.py`.
+Self-contained fixture directories under `spec/fixtures/provenance/v1/` include real input, result, artifact, review-context, and expected-classification files. Recorded SHA-256 values are computed from fixture bytes. PR 18 machine-checks schema validity, fixture inventory, referenced files, recorded digests, orphan-file hygiene, and selected scenario invariants. The expected provenance and authorization classifications are normative fixture data; PR 19 will implement the production classifier and compare complete runtime outputs against these expectations.
 
 The fixtures are normative contract examples, but PR 18 does not make production code execute them.
 

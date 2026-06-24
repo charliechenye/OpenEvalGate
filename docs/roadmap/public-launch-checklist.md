@@ -16,7 +16,7 @@ Public visibility is not the same as publishing OpenEvalGate `0.2.0`, releasing 
 - [x] Unknown conditional applicability is fail-closed.
 - [x] Invalid action-risk evidence cannot satisfy policy.
 - [x] Core eval-result identity, expected-route, duplicate, timestamp, and supplied-output-reference errors cannot silently influence a controlled-launch decision.
-- [~] Provenance and freshness contract is proposed; enriched workflow, handoff, runtime provenance validation, freshness enforcement, and artifact-version checks remain pending for controlled launch.
+- [~] Provenance and freshness contract is proposed with fixture-integrity checks; enriched workflow, handoff, runtime provenance validation, freshness enforcement, and artifact-version checks remain pending for controlled launch.
 
 ## 2. Public Positioning and Non-Claims
 

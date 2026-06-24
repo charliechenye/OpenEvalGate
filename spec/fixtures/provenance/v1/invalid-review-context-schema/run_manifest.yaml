@@ -10,10 +10,9 @@ candidate:
   version: "2026.06.18-rc2"
 
 evaluation:
-  kind: deterministic
+  kind: human
   evaluator:
-    id: deterministic-route-checker
-    version: "1"
+    id: support-quality-review
 
 inputs:
   - role: eval_cases
@@ -25,4 +24,4 @@ outputs:
   results:
     path: eval_results.csv
     digest:
-      sha256: "b8f915ed18a2839c1ce395a6a23563bff388f8bd1b09870d7e696c2d5af4c220"
+      sha256: "ee29bdd6c240dd47fe9f4acf8f4273f3bf12ae4208a626568b990431116a11b7"

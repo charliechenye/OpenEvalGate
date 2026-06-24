@@ -10,27 +10,26 @@ candidate:
   version: "2026.06.18-rc2"
 
 evaluation:
-  kind: deterministic
+  kind: human
   evaluator:
-    id: deterministic-route-checker
-    version: "1"
-    configuration:
-      path: inputs/routing_policy.yaml
-      digest:
-        sha256: "febbbe41c6d8bedeea73707269440b17f302d1dce51d7cfa11b4432e98e217ef"
+    id: support-quality-review
+  policy:
+    path: inputs/evaluation_policy.yaml
+    digest:
+      sha256: "82893462ed9e6979c5cb4a5f0d158ee82539785a3a5d8fc0859c097eda4ecc47"
 
 inputs:
   - role: eval_cases
     path: inputs/eval_cases.yaml
     digest:
       sha256: "7ff2c68abb7b1f1b577ddc0d09b15a3c3537a677a4cfc1278aafe0c177ca7c0c"
-  - role: routing_policy
-    path: inputs/routing_policy.yaml
+  - role: evaluation_policy
+    path: inputs/evaluation_policy.yaml
     digest:
-      sha256: "febbbe41c6d8bedeea73707269440b17f302d1dce51d7cfa11b4432e98e217ef"
+      sha256: "82893462ed9e6979c5cb4a5f0d158ee82539785a3a5d8fc0859c097eda4ecc47"
 
 outputs:
   results:
     path: eval_results.csv
     digest:
-      sha256: "b8f915ed18a2839c1ce395a6a23563bff388f8bd1b09870d7e696c2d5af4c220"
+      sha256: "ee29bdd6c240dd47fe9f4acf8f4273f3bf12ae4208a626568b990431116a11b7"
