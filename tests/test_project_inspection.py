@@ -62,7 +62,7 @@ def _write_handoff_result_variant(
     *,
     failing_case_id: str | None,
     clear_output_paths: bool,
-) -> None: 
+) -> None:
     with source.open("r", encoding="utf-8", newline="") as handle:
         reader = csv.DictReader(handle)
         headers = list(reader.fieldnames or [])
@@ -114,8 +114,8 @@ def _prepare_scoped_handoff_results(
     project: Path,
     *,
     root_fails: bool,
-    scoped_fails: bool, 
-) -> Path: 
+    scoped_fails: bool,
+) -> Path:
     root_results = project / "eval_results.csv"
 
     _write_handoff_result_variant(
@@ -138,7 +138,7 @@ def _prepare_scoped_handoff_results(
         "run": {"id": SCOPED_RUN_ID, "status": "complete",},
         "candidate": {"id": SCOPED_CANDIDATE, "version": "project-inspection-test-v1",},
         "evaluation": {"kind": "human", "evaluator": {"id": SCOPED_EVALUATOR,}, },
-        "outputs": { "results": { "path": "eval_results.csv", }, }, 
+        "outputs": { "results": { "path": "eval_results.csv", }, },
     }
 
     (run_dir / "run_manifest.yaml").write_text(
@@ -916,7 +916,7 @@ def test_legacy_controlled_launch_is_blocked_by_unversioned_eval_run() -> None:
 
 @pytest.mark.parametrize(
     ("root_fails", "scoped_fails", "expect_escalation_blocker",),
-    [pytest.param( True, False, False, id="root-fails-scoped-passes", ), 
+    [pytest.param( True, False, False, id="root-fails-scoped-passes", ),
      pytest.param( False, True, True, id="root-passes-scoped-fails", ), ],
 )
 def test_scoped_manifest_results_control_escalation_blocker(
