@@ -67,6 +67,7 @@ Documentation and shadow authorization use `allowed`, `allowed_with_warning`, or
 | `contradictory-duplicate-resource` | Fixed-purpose evaluation policy and canonical input mirror disagree. |
 | `duplicate-artifact-id` | Schema-valid artifact index with semantically duplicate artifact identity. |
 | `duplicate-current-resource` | Valid verified historical evidence with duplicate current counterparts for one singleton resource role. |
+| `duplicate-historical-resource` | Schema-valid inputs with duplicate repeatable historical resource keys. |
 | `duplicate-hybrid-component-id` | Hybrid evaluator components reuse the same component ID. |
 | `duplicate-normalized-artifact-path` | Artifact entries use distinct path text that normalizes to one artifact file. |
 | `duplicate-singleton-role` | Schema-valid inputs with semantically duplicate singleton role. |
@@ -76,6 +77,7 @@ Documentation and shadow authorization use `allowed`, `allowed_with_warning`, or
 | `failed-run` | Valid evidence from a failed run lifecycle. |
 | `freshness-unknown-missing-current-candidate-artifact` | Verified historical candidate artifact with no current candidate artifact counterpart. |
 | `freshness-unknown-missing-current-input` | Verified historical input with no current input counterpart. |
+| `freshness-unknown-missing-canonical-mirror` | Verified fixed-purpose evaluator configuration lacks its canonical freshness mirror. |
 | `future-clock-skew` | Verified historical envelope with current review observation contradicted by future clock skew. |
 | `invalid-artifact-identity` | Schema-valid artifact index contradicted by result case/trial identity. |
 | `invalid-input-digest` | Schema-valid manifest with a historical input digest mismatch. |

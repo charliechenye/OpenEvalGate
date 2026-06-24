@@ -14,19 +14,19 @@ evaluation:
   evaluator:
     id: deterministic-route-checker
     version: "1"
+    configuration:
+      path: inputs/deterministic_config.yaml
+      digest:
+        sha256: "4219add91c774df6d8a907137a90a734ccb38889dc6b132023cfb1e9fb8f8268"
 
 inputs:
   - role: eval_cases
     path: inputs/eval_cases.yaml
     digest:
-      sha256: "7ff2c68abb7b1f1b577ddc0d09b15a3c3537a677a4cfc1278aafe0c177ca7c0c"
-  - role: routing_policy
-    path: inputs/routing_policy.yaml
-    digest:
-      sha256: "febbbe41c6d8bedeea73707269440b17f302d1dce51d7cfa11b4432e98e217ef"
+      sha256: "c08be46db4895f74b830aff0c2ab17c24a10cc3acc0400874fdb574515204c57"
 
 outputs:
   results:
     path: eval_results.csv
     digest:
-      sha256: "b8f915ed18a2839c1ce395a6a23563bff388f8bd1b09870d7e696c2d5af4c220"
+      sha256: "e7085456ad39cef5830e2e352cdafa37371dc8d07a4c8a845e9ad74f9e570516"

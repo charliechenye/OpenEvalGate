@@ -26,7 +26,7 @@ Version 1 does not define a new CSV row schema, remote attestation, vendor adapt
 
 ## Existing CSV Compatibility
 
-The existing OpenEvalGate `eval_results.csv` contract remains authoritative. This contract does not require new CSV columns, including:
+The existing OpenEvalGate `eval_results.csv` contract remains authoritative. Fixture CSVs remain compatible with that contract: required columns may appear in any order, supported optional columns and parser-accepted extra columns are allowed, and duplicate column names are invalid because they are ambiguous. This contract does not require new CSV columns, including:
 
 - `candidate_id`
 - `candidate_version`
@@ -81,7 +81,7 @@ Known singleton input roles are:
 - `escalation_contract`
 - `action_risk_matrix`
 
-Roles are extensible. Custom roles are allowed, default to repeatable, and require `name`. Known singleton roles may appear at most once. Duplicate singleton roles are semantically invalid. Repeatable resources match between historical evidence and current review context by `(role, name)`.
+Roles are extensible. Custom roles are allowed, default to repeatable, and require `name`. Known singleton roles may appear at most once. Duplicate singleton roles are semantically invalid. Repeatable or custom historical resources with the same `(role, name)` are also semantically invalid. Repeatable resources match between historical evidence and current review context by `(role, name)`.
 
 URI-only descriptors are valid declared evidence except for `outputs.results`. Network retrieval is disabled by default. URI-only evidence cannot become locally verified unless an explicitly configured resolver supplies matching bytes. Resolver behavior is out of scope for PR 18.
 
@@ -156,6 +156,8 @@ Local path resolution is normative:
 | Review-context candidate and input paths | Directory containing `review_context.yaml` |
 | CSV `observed_output_path` | Directory containing the run-scoped CSV |
 
+Descriptor paths use portable POSIX-style relative syntax: `/` is the only path separator; backslashes are invalid; POSIX absolute paths, Windows drive-qualified or drive-relative paths, UNC-style paths, `..` path segments, `.` path segments, and ambiguous empty path segments are invalid. Symlinks are checked component by component before canonical resolution, so both final-component symlinks and intermediate-directory symlinks are prohibited even when they point back inside the evidence root.
+
 After resolution:
 
 - run-envelope paths must remain within the run directory;
@@ -195,7 +197,7 @@ Artifact semantic rules are normative:
 - `artifact_id` values must be unique;
 - normalized artifact paths must be unique;
 - `trial_id` requires `case_id`;
-- artifact `case_id` and `trial_id` must agree with applicable CSV result evidence;
+- artifact `case_id` and `trial_id` must agree with applicable CSV result evidence; CSV `case_id` is trimmed before comparison, and absent artifact `trial_id` and blank CSV `trial_id` are equivalent;
 - `evaluator_ref`, when present, must resolve to the top-level evaluator ID or one component ID of a hybrid evaluator;
 - artifact paths must resolve safely and remain contained;
 - artifact files must exist and be regular files;
@@ -250,7 +252,7 @@ A valid envelope may be classified `freshness: current` only when the candidate 
 
 The provenance model distinguishes four states:
 
-1. Historical-envelope invalidity. The immutable run evidence is invalid, including manifest schema failure, historical digest mismatch, invalid historical path, missing historical local file, CSV identity contradiction, artifact-index contradiction, duplicate historical resource identity, or timestamp-order failure inside the historical manifest. Classification uses `validity: invalid`, `freshness: not_evaluated`, `recency: not_evaluated`, and `assurance: unavailable`. Lifecycle may reflect a recognized valid v1 `run.status` when available, except unsupported schema versions use `lifecycle: unknown`.
+1. Historical-envelope invalidity. The immutable run evidence is invalid, including manifest schema failure, historical digest mismatch, invalid historical path, missing historical local file, CSV identity contradiction, artifact-index contradiction, duplicate historical resource identity, duplicate repeatable/custom historical resource keys, or timestamp-order failure inside the historical manifest. Classification uses `validity: invalid`, `freshness: not_evaluated`, `recency: not_evaluated`, and `assurance: unavailable`. Lifecycle may reflect a recognized valid v1 `run.status` when available, except unsupported schema versions use `lifecycle: unknown`.
 
 2. Review-context invalidity. The historical envelope is valid, but the current comparison context is structurally or semantically invalid, including review-context schema failure, duplicate current counterparts, unsafe current path, missing current local file, current descriptor digest mismatch, or future clock-skew contradiction. Classification uses `validity: invalid`, `freshness: not_evaluated`, and `recency: not_evaluated`, while preserving historical assurance and lifecycle.
 
@@ -391,6 +393,7 @@ Finding identifiers are stable within contract major version 1. Future runtime o
 | `provenance_duplicate_artifact_id` | Two artifact-index entries declare the same `artifact_id`; historical-envelope invalidity. |
 | `provenance_duplicate_artifact_path` | Two artifact-index entries resolve to the same normalized artifact path; historical-envelope invalidity. |
 | `provenance_duplicate_current_resource` | Two or more `review_context.inputs[]` entries resolve to the same current-resource comparison key: singleton resources share the same `role`, or repeatable/custom resources share the same `(role, name)`; review-context invalidity that preserves historical assurance. |
+| `provenance_duplicate_historical_resource` | Two or more historical `run_manifest.inputs[]` entries resolve to the same repeatable/custom resource key `(role, name)`; historical-envelope invalidity. Duplicate known singleton roles continue to use `provenance_duplicate_singleton_role`. |
 | `provenance_duplicate_singleton_role` | Historical manifest inputs repeat a singleton resource role; historical-envelope invalidity. |
 | `provenance_duplicate_hybrid_component_id` | Hybrid evaluator components repeat a component ID; historical-envelope invalidity. |
 | `provenance_duplicate_resource_mismatch` | A fixed-purpose descriptor and its canonical `inputs[]` mirror cannot be proven equivalent or contradict locator/digest identity; historical-envelope invalidity. |

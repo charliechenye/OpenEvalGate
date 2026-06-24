@@ -12,11 +12,12 @@ import hashlib
 import json
 import re
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 import pytest
 import yaml
 from jsonschema import Draft202012Validator, FormatChecker
+from openevalgate.eval_results import OPTIONAL_EVAL_RESULT_COLUMNS, REQUIRED_EVAL_RESULT_COLUMNS
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE_ROOT = ROOT / "spec" / "fixtures" / "provenance" / "v1"
@@ -34,24 +35,8 @@ SINGLETON_ROLES = {
     "escalation_contract",
     "action_risk_matrix",
 }
-CSV_HEADERS = [
-    "run_id",
-    "case_id",
-    "candidate",
-    "evaluator",
-    "actual_route",
-    "expected_route",
-    "route_match",
-    "passed",
-    "score",
-    "failure_category",
-    "failure_reason",
-    "observed_output_path",
-    "reviewed_by",
-    "reviewed_at",
-    "notes",
-    "trial_id",
-]
+PROVENANCE_CSV_COLUMNS = {"run_id", "case_id", "candidate", "evaluator", "observed_output_path"}
+BASE_CSV_HEADERS = [*REQUIRED_EVAL_RESULT_COLUMNS, "trial_id"]
 
 
 def load_yaml(path):
@@ -98,21 +83,30 @@ def parse_dt(value):
     return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(timezone.utc)
 
 
-def norm_rel(root, rel):
-    raw = Path(rel)
-    if raw.is_absolute() or re.match(r"^[A-Za-z]:[\\/]", rel):
+def norm_rel(root, rel, allowed_root=None):
+    if not isinstance(rel, str) or not rel:
         return None, "provenance_unsafe_path"
-    parts = raw.parts
-    if ".." in parts:
+    if "\\" in rel or "//" in rel or rel.endswith("/") or re.match(r"^[A-Za-z]:", rel):
         return None, "provenance_unsafe_path"
-    full = (root / raw).resolve(strict=False)
-    allowed = root.resolve(strict=False)
+    raw = PurePosixPath(rel)
+    if raw.is_absolute() or any(part in {"", ".."} for part in raw.parts):
+        return None, "provenance_unsafe_path"
+    root = Path(root)
+    allowed = Path(allowed_root or root).resolve(strict=False)
+    candidate = root
+    for part in raw.parts:
+        candidate = candidate / part
+        try:
+            if candidate.is_symlink():
+                return None, "provenance_unsafe_path"
+        except OSError:
+            return None, "provenance_unsafe_path"
+    full = root.joinpath(*raw.parts).resolve(strict=False)
     try:
         full.relative_to(allowed)
     except ValueError:
         return None, "provenance_unsafe_path"
     return full, None
-
 
 def manifest_descriptor_paths(manifest):
     if not manifest:
@@ -167,24 +161,29 @@ def descriptor_paths(doc):
     return review_context_descriptor_paths(doc)
 
 
-def resolve_descriptor(root, descriptor):
+def resolve_descriptor(root, descriptor, allowed_root=None):
     if "path" not in descriptor:
         return None, None
-    return norm_rel(root, descriptor["path"])
+    return norm_rel(root, descriptor["path"], allowed_root=allowed_root)
 
 
-def verify_descriptor(root, context, descriptor, findings, missing_finding="provenance_local_file_missing", digest_finding=None):
+def verify_descriptor(
+    root,
+    context,
+    descriptor,
+    findings,
+    missing_finding="provenance_local_file_missing",
+    digest_finding=None,
+    allowed_root=None,
+):
     if "path" not in descriptor:
         return
-    path, issue = resolve_descriptor(root, descriptor)
+    path, issue = resolve_descriptor(root, descriptor, allowed_root=allowed_root)
     if issue:
         findings.add(issue)
         return
     if not path.exists() or not path.is_file():
         findings.add(missing_finding)
-        return
-    if path.is_symlink():
-        findings.add("provenance_unsafe_path")
         return
     if "digest" in descriptor:
         expected = descriptor["digest"].get("sha256")
@@ -197,60 +196,88 @@ def verify_descriptor(root, context, descriptor, findings, missing_finding="prov
                 findings.add("provenance_input_digest_mismatch")
 
 
+def validate_csv_headers(fieldnames, path="<csv>"):
+    fieldnames = fieldnames or []
+    duplicates = {name for name in fieldnames if fieldnames.count(name) > 1}
+    assert not duplicates, f"Duplicate CSV headers in {path}: {sorted(duplicates)}"
+    missing = [column for column in REQUIRED_EVAL_RESULT_COLUMNS if column not in fieldnames]
+    missing += [column for column in PROVENANCE_CSV_COLUMNS if column not in fieldnames and column not in missing]
+    assert not missing, f"Missing CSV headers in {path}: {missing}"
+
+
 def read_csv_rows(path):
     with path.open("r", encoding="utf-8", newline="") as f:
         reader = csv.DictReader(f)
-        assert reader.fieldnames == CSV_HEADERS, f"Unexpected CSV headers in {path}: {reader.fieldnames}"
+        validate_csv_headers(reader.fieldnames, path)
         return list(reader)
 
+
+def normalized_optional(value):
+    if value is None:
+        return None
+    stripped = str(value).strip()
+    return stripped or None
+
+
+def run_relative(path, run_root):
+    return path.resolve(strict=False).relative_to(run_root.resolve(strict=False)).as_posix()
+
+
+def resolve_results_path(manifest_path, manifest):
+    results = manifest.get("outputs", {}).get("results", {}) if manifest else {}
+    if "path" not in results:
+        return None, None
+    return resolve_descriptor(manifest_path.parent, results, allowed_root=manifest_path.parent)
+
+
+def resolve_artifact_index_path(manifest_path, manifest):
+    artifact_index = manifest.get("outputs", {}).get("artifact_index", {}) if manifest else {}
+    if "path" not in artifact_index:
+        return None, None
+    return resolve_descriptor(manifest_path.parent, artifact_index, allowed_root=manifest_path.parent)
 
 
 def referenced_fixture_files(fixture):
     referenced = set()
 
-    def add_path(root, rel):
-        resolved, issue = norm_rel(root, rel)
+    def add_path(root, rel, allowed_root=None):
+        resolved, issue = norm_rel(root, rel, allowed_root=allowed_root)
         if not issue and resolved.exists():
             referenced.add(resolved.resolve(strict=False))
 
     manifest_path = fixture / "run_manifest.yaml"
     if manifest_path.exists():
         manifest = load_yaml(manifest_path)
+        run_root = manifest_path.parent.resolve(strict=False)
         for _, desc in descriptor_paths(manifest):
             if "path" in desc:
-                add_path(fixture.resolve(strict=False), desc["path"])
-        outputs = manifest.get("outputs", {}) if manifest else {}
-        results = outputs.get("results", {})
-        if "path" in results:
-            add_path(fixture.resolve(strict=False), results["path"])
-        artifact_index = outputs.get("artifact_index", {})
-        if "path" in artifact_index:
-            add_path(fixture.resolve(strict=False), artifact_index["path"])
-        if "path" in results and (fixture / results["path"]).exists():
-            for row in read_csv_rows(fixture / results["path"]):
+                add_path(manifest_path.parent, desc["path"], allowed_root=run_root)
+        results_path, issue = resolve_results_path(manifest_path, manifest)
+        if results_path and not issue and results_path.exists():
+            for row in read_csv_rows(results_path):
                 observed = row.get("observed_output_path", "").strip()
                 if observed:
-                    add_path((fixture / results["path"]).parent.resolve(strict=False), observed)
+                    add_path(results_path.parent, observed, allowed_root=run_root)
+
+        artifact_path, issue = resolve_artifact_index_path(manifest_path, manifest)
+        if artifact_path and not issue and artifact_path.exists():
+            artifact_index = load_yaml(artifact_path)
+            for artifact in artifact_index.get("artifacts", []) or []:
+                if "path" in artifact:
+                    add_path(artifact_path.parent, artifact["path"], allowed_root=run_root)
 
     if not manifest_path.exists() and (fixture / "eval_results.csv").exists():
         referenced.add((fixture / "eval_results.csv").resolve(strict=False))
 
-    artifact_path = fixture / "artifact_index.yaml"
-    if artifact_path.exists():
-        artifact_index = load_yaml(artifact_path)
-        for artifact in artifact_index.get("artifacts", []) or []:
-            if "path" in artifact:
-                add_path(artifact_path.parent.resolve(strict=False), artifact["path"])
-
     review_path = fixture / "review_context.yaml"
     if review_path.exists():
         review = load_yaml(review_path)
+        review_root = review_path.parent.resolve(strict=False)
         for _, desc in descriptor_paths(review):
             if "path" in desc:
-                add_path(review_path.parent.resolve(strict=False), desc["path"])
+                add_path(review_path.parent, desc["path"], allowed_root=review_root)
 
     return referenced
-
 
 def resource_key(desc):
     role = desc.get("role")
@@ -266,10 +293,10 @@ def same_digest(a, b):
 def norm_descriptor_path(run_root, desc):
     if "path" not in desc:
         return None
-    resolved, issue = resolve_descriptor(run_root, desc)
+    resolved, issue = resolve_descriptor(run_root, desc, allowed_root=run_root)
     if issue:
         return None
-    return resolved.relative_to(run_root.resolve(strict=False)).as_posix()
+    return run_relative(resolved, run_root)
 
 
 def canonical_mirrors(manifest):
@@ -287,22 +314,31 @@ def canonical_mirrors(manifest):
             mirrors.append((component["configuration"], ("evaluator_component_configuration", component.get("id"))))
     return mirrors
 
+def contains_unsafe_local_path(doc):
+    for _, desc in descriptor_paths(doc):
+        if "path" in desc and norm_rel(Path("."), desc["path"])[1] == "provenance_unsafe_path":
+            return True
+    return False
+
+
 
 def validate_fixture(fixture, validators):
     expected = load_yaml(fixture / "expected.yaml")
     findings = set()
+    manifest_path = fixture / "run_manifest.yaml"
+    review_path = fixture / "review_context.yaml"
+    manifest = load_yaml(manifest_path) if manifest_path.exists() else None
+    artifact_path, artifact_path_issue = (None, None)
+    if manifest is not None:
+        artifact_path, artifact_path_issue = resolve_artifact_index_path(manifest_path, manifest)
     schema = {
-        "manifest": schema_status(fixture / "run_manifest.yaml", validators["manifest"]),
-        "artifact_index": schema_status(fixture / "artifact_index.yaml", validators["artifact_index"]),
-        "review_context": schema_status(fixture / "review_context.yaml", validators["review_context"]),
+        "manifest": schema_status(manifest_path, validators["manifest"]),
+        "artifact_index": schema_status(artifact_path, validators["artifact_index"]) if artifact_path else "not_present",
+        "review_context": schema_status(review_path, validators["review_context"]),
     }
     assert schema == expected["schema_validation"], fixture.name
 
-    manifest_path = fixture / "run_manifest.yaml"
-    artifact_path = fixture / "artifact_index.yaml"
-    review_path = fixture / "review_context.yaml"
-    manifest = load_yaml(manifest_path) if manifest_path.exists() else None
-    artifact_index = load_yaml(artifact_path) if artifact_path.exists() else None
+    artifact_index = load_yaml(artifact_path) if artifact_path and artifact_path.exists() else None
     review = load_yaml(review_path) if review_path.exists() else None
 
     if manifest is None:
@@ -314,38 +350,46 @@ def validate_fixture(fixture, validators):
             findings.add("provenance_unsupported_schema_version")
         elif "outputs" in manifest and "results" in manifest.get("outputs", {}) and "path" not in manifest["outputs"]["results"]:
             findings.add("provenance_results_path_required")
+        elif contains_unsafe_local_path(manifest):
+            findings.add("provenance_unsafe_path")
         else:
             findings.add("provenance_manifest_schema_invalid")
+        return findings
+
+    if artifact_path_issue:
+        findings.add(artifact_path_issue)
         return findings
 
     if schema["artifact_index"] == "invalid":
         findings.add("provenance_artifact_index_schema_invalid")
         return findings
 
-    run_root = fixture.resolve(strict=False)
+    run_root = manifest_path.parent.resolve(strict=False)
     for context, desc in descriptor_paths(manifest):
         digest_finding = "provenance_output_digest_mismatch" if context in {"results", "artifact_index", "output"} else "provenance_input_digest_mismatch"
-        verify_descriptor(run_root, context, desc, findings, digest_finding=digest_finding)
+        verify_descriptor(manifest_path.parent, context, desc, findings, digest_finding=digest_finding, allowed_root=run_root)
 
-    if "provenance_unsafe_path" in findings or "provenance_local_file_missing" in findings or "provenance_input_digest_mismatch" in findings or "provenance_output_digest_mismatch" in findings:
+    if findings & {"provenance_unsafe_path", "provenance_local_file_missing", "provenance_input_digest_mismatch", "provenance_output_digest_mismatch"}:
         return findings
 
     inputs = manifest.get("inputs", []) or []
-    singleton_counts = {}
-    for desc in inputs:
-        role = desc.get("role")
-        if role in SINGLETON_ROLES:
-            singleton_counts[role] = singleton_counts.get(role, 0) + 1
-    if any(count > 1 for count in singleton_counts.values()):
-        findings.add("provenance_duplicate_singleton_role")
-        return findings
-
     input_by_key = {}
     for desc in inputs:
         input_by_key.setdefault(resource_key(desc), []).append(desc)
+    for key, matches in input_by_key.items():
+        if len(matches) <= 1:
+            continue
+        if key[0] in SINGLETON_ROLES:
+            findings.add("provenance_duplicate_singleton_role")
+        else:
+            findings.add("provenance_duplicate_historical_resource")
+        return findings
+
+    missing_canonical_mirror = False
     for fixed, key in canonical_mirrors(manifest):
         mirrors = input_by_key.get(key, [])
         if not mirrors:
+            missing_canonical_mirror = True
             continue
         mirror = mirrors[0]
         mismatch = False
@@ -372,7 +416,11 @@ def validate_fixture(fixture, validators):
         findings.add("provenance_timestamp_order_invalid")
         return findings
 
-    rows = read_csv_rows(fixture / manifest["outputs"]["results"]["path"])
+    results_path, issue = resolve_results_path(manifest_path, manifest)
+    if issue:
+        findings.add(issue)
+        return findings
+    rows = read_csv_rows(results_path)
     candidate_allowed = {manifest["candidate"]["id"], *manifest["candidate"].get("accepted_aliases", [])}
     evaluator_allowed = {evaluator["id"], *evaluator.get("accepted_aliases", [])}
     for row in rows:
@@ -394,15 +442,15 @@ def validate_fixture(fixture, validators):
         if len(ids) != len(set(ids)):
             findings.add("provenance_duplicate_artifact_id")
             return findings
-        artifact_root = fixture.resolve(strict=False)
+        artifact_root = artifact_path.parent.resolve(strict=False)
         norm_paths = []
         for artifact in artifact_index.get("artifacts", []):
-            verify_descriptor(artifact_root, "artifact", artifact, findings, digest_finding="provenance_output_digest_mismatch")
-            path, issue = resolve_descriptor(artifact_root, artifact)
+            verify_descriptor(artifact_root, "artifact", artifact, findings, digest_finding="provenance_output_digest_mismatch", allowed_root=run_root)
+            path, issue = resolve_descriptor(artifact_root, artifact, allowed_root=run_root)
             if issue:
                 findings.add(issue)
             elif path:
-                norm_paths.append(path.relative_to(run_root).as_posix())
+                norm_paths.append(run_relative(path, run_root))
             if artifact.get("evaluator_ref") and artifact["evaluator_ref"] not in {evaluator["id"], *component_ids}:
                 findings.add("provenance_artifact_identity_mismatch")
         if findings:
@@ -413,22 +461,21 @@ def validate_fixture(fixture, validators):
         artifact_entries_by_path = {}
         for norm_path, artifact in zip(norm_paths, artifact_index.get("artifacts", [])):
             artifact_entries_by_path.setdefault(norm_path, []).append(artifact)
-        csv_root = fixture.resolve(strict=False)
         for row in rows:
             observed = row.get("observed_output_path", "").strip()
             if not observed:
                 continue
-            resolved, issue = norm_rel(csv_root, observed)
+            resolved, issue = norm_rel(results_path.parent, observed, allowed_root=run_root)
             if issue:
                 findings.add(issue)
                 return findings
-            key = resolved.relative_to(run_root).as_posix()
+            key = run_relative(resolved, run_root)
             matches = artifact_entries_by_path.get(key, [])
             if len(matches) != 1:
                 findings.add("provenance_artifact_identity_mismatch")
                 return findings
             artifact = matches[0]
-            if artifact.get("case_id") != row.get("case_id") or artifact.get("trial_id") != row.get("trial_id"):
+            if artifact.get("case_id") != row.get("case_id", "").strip() or normalized_optional(artifact.get("trial_id")) != normalized_optional(row.get("trial_id")):
                 findings.add("provenance_artifact_identity_mismatch")
                 return findings
 
@@ -436,11 +483,12 @@ def validate_fixture(fixture, validators):
         if schema["review_context"] == "invalid":
             findings.add("provenance_review_context_schema_invalid")
             return findings
+        review_root = review_path.parent.resolve(strict=False)
         for desc in [review.get("candidate", {}).get("artifact"), *(review.get("inputs", []) or [])]:
             if not desc:
                 continue
-            verify_descriptor(run_root, "review_context", desc, findings, digest_finding="provenance_review_context_digest_mismatch")
-        if "provenance_review_context_digest_mismatch" in findings or "provenance_unsafe_path" in findings or "provenance_local_file_missing" in findings:
+            verify_descriptor(review_path.parent, "review_context", desc, findings, digest_finding="provenance_review_context_digest_mismatch", allowed_root=review_root)
+        if findings & {"provenance_review_context_digest_mismatch", "provenance_unsafe_path", "provenance_local_file_missing"}:
             return findings
         current_by_key = {}
         for desc in review.get("inputs", []) or []:
@@ -466,6 +514,8 @@ def validate_fixture(fixture, validators):
         return findings
 
     # Freshness comparison.
+    if missing_canonical_mirror:
+        findings.add("provenance_freshness_unknown")
     if review["candidate"].get("id") != manifest["candidate"]["id"] or review["candidate"].get("version") != manifest["candidate"].get("version"):
         findings.add("provenance_candidate_stale")
     elif "artifact" in manifest.get("candidate", {}):
@@ -500,7 +550,6 @@ def validate_fixture(fixture, validators):
                 findings.add("provenance_evidence_expired")
 
     return findings
-
 
 def test_path_only_descriptors_are_schema_location_discovered():
     manifest = {
@@ -543,7 +592,7 @@ def test_path_only_descriptors_are_referenced_checked_and_not_orphans(tmp_path):
         "inputs/eval_cases.yaml": "cases: local\n",
         "outputs/summary.txt": "summary\n",
         "current/eval_cases.yaml": "cases: local\n",
-        "eval_results.csv": ",".join(CSV_HEADERS) + "\n",
+        "eval_results.csv": ",".join(BASE_CSV_HEADERS) + "\n",
     }
     for rel, content in files.items():
         target = fixture / rel
@@ -614,6 +663,142 @@ inputs:
         if p.is_file() and p.name not in exempt and p.resolve(strict=False) not in referenced
     ]
     assert orphans == []
+
+
+
+def _symlink_or_skip(link, target, *, target_is_directory=False):
+    try:
+        link.symlink_to(target, target_is_directory=target_is_directory)
+    except (OSError, NotImplementedError) as exc:
+        pytest.skip(f"symlink creation unavailable on this platform: {exc}")
+
+
+def test_path_validation_rejects_final_component_symlink(tmp_path):
+    target = tmp_path / "target.txt"
+    target.write_text("inside\n", encoding="utf-8")
+    link = tmp_path / "link.txt"
+    _symlink_or_skip(link, target)
+    assert norm_rel(tmp_path, "link.txt") == (None, "provenance_unsafe_path")
+
+
+def test_path_validation_rejects_intermediate_directory_symlink(tmp_path):
+    real_dir = tmp_path / "real"
+    real_dir.mkdir()
+    (real_dir / "file.txt").write_text("inside\n", encoding="utf-8")
+    link_dir = tmp_path / "linked"
+    _symlink_or_skip(link_dir, real_dir, target_is_directory=True)
+    assert norm_rel(tmp_path, "linked/file.txt") == (None, "provenance_unsafe_path")
+
+
+def test_path_validation_rejects_symlink_to_inside_fixture(tmp_path):
+    target = tmp_path / "safe" / "target.txt"
+    target.parent.mkdir()
+    target.write_text("inside\n", encoding="utf-8")
+    link = tmp_path / "safe-link.txt"
+    _symlink_or_skip(link, target)
+    assert norm_rel(tmp_path, "safe-link.txt") == (None, "provenance_unsafe_path")
+
+
+def test_path_validation_rejects_symlink_to_outside_fixture(tmp_path):
+    outside = tmp_path.parent / f"{tmp_path.name}-outside.txt"
+    outside.write_text("outside\n", encoding="utf-8")
+    link = tmp_path / "outside-link.txt"
+    _symlink_or_skip(link, outside)
+    assert norm_rel(tmp_path, "outside-link.txt") == (None, "provenance_unsafe_path")
+
+
+@pytest.mark.parametrize("unsafe", ["/absolute.txt", "C:/absolute.txt", "C:relative.txt", "//server/share/file.txt", r"dir\\file.txt", "inputs/../file.txt"])
+def test_path_validation_rejects_portable_unsafe_forms(tmp_path, unsafe):
+    assert norm_rel(tmp_path, unsafe) == (None, "provenance_unsafe_path")
+
+
+def test_path_validation_accepts_ordinary_safe_nested_path(tmp_path):
+    target = tmp_path / "nested" / "safe.txt"
+    target.parent.mkdir()
+    target.write_text("safe\n", encoding="utf-8")
+    resolved, issue = norm_rel(tmp_path, "nested/safe.txt")
+    assert issue is None
+    assert resolved == target.resolve(strict=False)
+
+
+def test_nested_resolution_roots_follow_declaring_file(tmp_path):
+    fixture = tmp_path
+    results = fixture / "evidence" / "eval_results.csv"
+    artifact_index_path = fixture / "evidence" / "metadata" / "artifact_index.yaml"
+    artifact = fixture / "evidence" / "metadata" / "artifacts" / "case_001.md"
+    current = fixture / "review" / "current" / "eval_cases.yaml"
+    for target, content in [
+        (results, ",".join(BASE_CSV_HEADERS) + "\nrun_001,case_001,candidate,reviewer,support,support,true,true,1.0,,,,qa,2026-06-18T17:13:00Z,,\n"),
+        (artifact_index_path, "schema_version: '1'\nrun_id: run_001\nartifacts:\n  - artifact_id: output-001\n    artifact_type: text\n    path: artifacts/case_001.md\n"),
+        (artifact, "output\n"),
+        (current, "cases: current\n"),
+    ]:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(content, encoding="utf-8")
+
+    manifest = {"outputs": {"results": {"path": "evidence/eval_results.csv"}, "artifact_index": {"path": "evidence/metadata/artifact_index.yaml"}}}
+    manifest_path = fixture / "run_manifest.yaml"
+    manifest_path.write_text("placeholder\n", encoding="utf-8")
+    resolved_results, issue = resolve_results_path(manifest_path, manifest)
+    assert issue is None
+    assert resolved_results == results.resolve(strict=False)
+    resolved_index, issue = resolve_artifact_index_path(manifest_path, manifest)
+    assert issue is None
+    assert resolved_index == artifact_index_path.resolve(strict=False)
+
+    loaded_index = load_yaml(artifact_index_path)
+    resolved_artifact, issue = resolve_descriptor(artifact_index_path.parent, loaded_index["artifacts"][0], allowed_root=fixture)
+    assert issue is None
+    assert resolved_artifact == artifact.resolve(strict=False)
+    resolved_observed, issue = norm_rel(results.parent, "metadata/artifacts/case_001.md", allowed_root=fixture)
+    assert issue is None
+    assert resolved_observed == artifact.resolve(strict=False)
+    review_context = {"candidate": {"id": "candidate", "version": "1"}, "inputs": [{"role": "eval_cases", "path": "current/eval_cases.yaml"}]}
+    review_path = fixture / "review" / "review_context.yaml"
+    resolved_current, issue = resolve_descriptor(review_path.parent, review_context["inputs"][0], allowed_root=review_path.parent)
+    assert issue is None
+    assert resolved_current == current.resolve(strict=False)
+
+
+def _write_csv(path, headers):
+    path.write_text(",".join(headers) + "\n", encoding="utf-8")
+
+
+def test_csv_headers_accept_required_columns_in_different_order(tmp_path):
+    headers = list(reversed(REQUIRED_EVAL_RESULT_COLUMNS))
+    path = tmp_path / "eval_results.csv"
+    _write_csv(path, headers)
+    assert read_csv_rows(path) == []
+
+
+def test_csv_headers_accept_known_optional_and_extra_columns(tmp_path):
+    headers = [*REQUIRED_EVAL_RESULT_COLUMNS, *OPTIONAL_EVAL_RESULT_COLUMNS, "project_specific_extra"]
+    path = tmp_path / "eval_results.csv"
+    _write_csv(path, headers)
+    assert read_csv_rows(path) == []
+
+
+def test_csv_headers_reject_missing_required_column(tmp_path):
+    headers = [column for column in REQUIRED_EVAL_RESULT_COLUMNS if column != "candidate"]
+    path = tmp_path / "eval_results.csv"
+    _write_csv(path, headers)
+    with pytest.raises(AssertionError, match="Missing CSV headers"):
+        read_csv_rows(path)
+
+
+def test_csv_headers_reject_duplicate_column_names(tmp_path):
+    headers = [*REQUIRED_EVAL_RESULT_COLUMNS, "run_id"]
+    path = tmp_path / "eval_results.csv"
+    _write_csv(path, headers)
+    with pytest.raises(AssertionError, match="Duplicate CSV headers"):
+        read_csv_rows(path)
+
+
+def test_blank_csv_trial_id_matches_absent_artifact_trial_id(tmp_path):
+    rows = [{"case_id": " case_001 ", "trial_id": ""}]
+    artifact = {"case_id": "case_001"}
+    assert artifact.get("case_id") == rows[0].get("case_id", "").strip()
+    assert normalized_optional(artifact.get("trial_id")) == normalized_optional(rows[0].get("trial_id"))
 
 
 def test_schemas_are_draft_2020_12_valid(schemas):

@@ -1,5 +1,5 @@
 schema_validation:
-  manifest: invalid
+  manifest: valid
   artifact_index: not_present
   review_context: valid
 
@@ -17,4 +17,4 @@ authorization:
   controlled_launch: blocked
 
 findings:
-  - provenance_unsafe_path
+  - provenance_duplicate_historical_resource
