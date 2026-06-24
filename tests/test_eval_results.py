@@ -473,19 +473,9 @@ def test_blank_output_reference_passes(tmp_path: Path) -> None:
     assert validate_eval_results(project).valid
 
 
-@pytest.mark.parametrize(
-    "reference",
-    [
-        "eval_runs/run_001/refund_boundary_case_001.md",
-        r"eval_runs\run_001\refund_boundary_case_001.md",
-    ],
-)
-def test_existing_regular_output_reference_passes(
-    tmp_path: Path,
-    reference: str,
-) -> None:
+def test_existing_regular_output_reference_passes(tmp_path: Path) -> None:
     project, headers, row = _single_result_project(tmp_path)
-    row["observed_output_path"] = reference
+    row["observed_output_path"] = "eval_runs/run_001/refund_boundary_case_001.md"
     _write_result_table(project, headers, [row])
 
     assert validate_eval_results(project).valid
@@ -495,18 +485,22 @@ def test_existing_regular_output_reference_passes(
     ("reference", "message"),
     [
         ("missing/output.md", "Referenced output file does not exist or is not a regular file."),
-        ("eval_runs/", "Referenced output file does not exist or is not a regular file."),
+        ("eval_runs/", "Must be a project-relative filesystem path."),
         ("/etc/passwd", "Must be a project-relative filesystem path."),
         (r"C:\private\output.md", "Must be a project-relative filesystem path."),
         ("C:/private/output.md", "Must be a project-relative filesystem path."),
         (r"\\server\share\output.md", "Must be a project-relative filesystem path."),
         (r"\eval_runs\run_001\refund_boundary_case_001.md", "Must be a project-relative filesystem path."),
+        (r"eval_runs\run_001\refund_boundary_case_001.md", "Must be a project-relative filesystem path."),
         ("https://example.com/output.md", "Must be a project-relative filesystem path."),
         ("file:///tmp/output.md", "Must be a project-relative filesystem path."),
         ("../outside.md", "Parent-directory traversal is not allowed."),
-        (r"..\outside.md", "Parent-directory traversal is not allowed."),
+        (r"..\outside.md", "Must be a project-relative filesystem path."),
         ("eval_runs/../../outside.md", "Parent-directory traversal is not allowed."),
-        (r"eval_runs\..\..\outside.md", "Parent-directory traversal is not allowed."),
+        (r"eval_runs\..\..\outside.md", "Must be a project-relative filesystem path."),
+        (".", "Parent-directory traversal is not allowed."),
+        ("./output.md", "Parent-directory traversal is not allowed."),
+        ("eval_runs/./output.md", "Parent-directory traversal is not allowed."),
     ],
 )
 def test_unsafe_or_invalid_output_reference_fails(
@@ -541,7 +535,7 @@ def test_embedded_nul_output_reference_is_rejected(tmp_path: Path) -> None:
     )
 
 
-def test_output_reference_symlink_escape_fails(tmp_path: Path) -> None:
+def test_output_reference_final_symlink_fails(tmp_path: Path) -> None:
     project, headers, row = _single_result_project(tmp_path)
     outside = tmp_path / "outside.md"
     outside.write_text("outside\n", encoding="utf-8")
@@ -556,12 +550,12 @@ def test_output_reference_symlink_escape_fails(tmp_path: Path) -> None:
     result = validate_eval_results(project)
 
     assert any(
-        issue.message == "Resolved path must remain inside the project directory."
+        issue.message == "Referenced output file does not exist or is not a regular file."
         for issue in result.issues
     )
 
 
-def test_output_reference_internal_symlink_passes(tmp_path: Path) -> None:
+def test_output_reference_internal_symlink_fails(tmp_path: Path) -> None:
     project, headers, row = _single_result_project(tmp_path)
     target = project / "eval_runs" / "run_001" / "refund_boundary_case_001.md"
     link = project / "eval_runs" / "internal-link.md"
@@ -572,7 +566,12 @@ def test_output_reference_internal_symlink_passes(tmp_path: Path) -> None:
     row["observed_output_path"] = "eval_runs/internal-link.md"
     _write_result_table(project, headers, [row])
 
-    assert validate_eval_results(project).valid
+    result = validate_eval_results(project)
+
+    assert any(
+        issue.message == "Referenced output file does not exist or is not a regular file."
+        for issue in result.issues
+    )
 
 
 def test_result_expected_route_must_match_eval_case(tmp_path: Path) -> None:

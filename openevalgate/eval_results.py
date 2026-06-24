@@ -10,6 +10,7 @@ from datetime import date, datetime, timezone
 from math import isfinite
 from pathlib import Path
 
+from openevalgate.local_paths import resolve_local_evidence_path
 from openevalgate.routing import load_routing_policy, routing_expectations
 from openevalgate.schema import (
     EXPECTED_ROUTES,
@@ -80,9 +81,6 @@ _AWARE_DATETIME_PATTERN = re.compile(
 _NAIVE_DATETIME_PATTERN = re.compile(
     r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?$"
 )
-_URL_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
-_WINDOWS_DRIVE_PATTERN = re.compile(r"^[A-Za-z]:")
-
 _EvalResultRow = dict[str, str | None]
 
 
@@ -623,29 +621,21 @@ def _parse_review_timestamp(value: str) -> _ParsedReviewTimestamp:
 
 
 def _validate_output_reference(project_dir: Path, value: str) -> str | None:
-    if (
-        _URL_PATTERN.match(value)
-        or value.startswith(("/", "\\"))
-        or _WINDOWS_DRIVE_PATTERN.match(value)
-    ):
-        return "Must be a project-relative filesystem path."
-
-    components = re.split(r"[\\/]+", value)
-    if ".." in components:
+    result = resolve_local_evidence_path(
+        project_dir,
+        value,
+        allowed_root=project_dir,
+        require_file=True,
+    )
+    if result.error is None:
+        return None
+    if result.error == "traversal":
         return "Parent-directory traversal is not allowed."
-
-    resolved_root = project_dir.resolve()
-    candidate = resolved_root.joinpath(*components)
-    try:
-        resolved_candidate = candidate.resolve()
-    except (OSError, RuntimeError, ValueError):
-        return "Referenced output file does not exist or is not a regular file."
-
-    if not resolved_candidate.is_relative_to(resolved_root):
+    if result.error == "escape":
         return "Resolved path must remain inside the project directory."
-    if not resolved_candidate.is_file():
+    if result.error in {"missing", "symlink"}:
         return "Referenced output file does not exist or is not a regular file."
-    return None
+    return "Must be a project-relative filesystem path."
 
 
 def _latest_run_id(rows: list[_EvalResultRow]) -> str | None:
