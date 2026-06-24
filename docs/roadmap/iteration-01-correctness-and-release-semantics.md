@@ -38,7 +38,7 @@ Supported modes:
 - [x] Controlled-launch mode requires selected empirical evidence and passing controls.
 - [x] Missing or invalid results cannot authorize controlled launch.
 - [x] Unknown review modes are rejected.
-- [x] Legacy projects without explicit mode receive bounded backward-compatible behavior.
+- [x] Projects without explicit mode receive bounded behavior according to review-policy defaults.
 
 ### Centralize hard-gate policy
 
@@ -108,7 +108,7 @@ Required concepts:
 - [x] Parse and enforce selected run evidence against current project result rows, output identity, and declared artifact index identity.
 - [ ] Surface stale evidence in reports after freshness comparison is implemented.
 - [~] Require versioned evidence for controlled-launch authorization. Complete runtime identity and non-failed lifecycle are required; non-stale evidence waits on freshness and recency implementation.
-- [x] Retain bounded legacy support for documentation and shadow review while blocking legacy evidence from controlled launch.
+- [x] Require manifest-backed result evidence and block unbound CSV evidence from validation, metrics, and launch decisions.
 
 ### Distinguish evidence provenance
 
@@ -123,7 +123,7 @@ Initial contract categories are manifest presence, validity, freshness, recency,
 
 - [x] The report identifies runtime identity status, lifecycle, run, candidate, evaluator, framework, results path, and artifact-index path used for the decision when available.
 - [~] Contract fixtures define stale candidate, stale input, recency, lifecycle, artifact, unsafe-path, optional artifact-identity, and invalidity branches; runtime identity projection is covered, while freshness and recency reporting remain pending.
-- [~] Legacy, complete, and invalid identity are visibly different, and invalid evidence cannot be treated as legacy evidence. Declared-versus-verified assurance remains deferred until digest verification.
+- [~] Missing, complete, and invalid identity are visibly different, and unbound or invalid evidence cannot be used as behavioral evidence. Declared-versus-verified assurance remains deferred until digest verification.
 - [~] Controlled launch cannot be authorized using unversioned selected-run identity or failed/incomplete lifecycle. Stale-run blocking remains deferred until freshness comparison is implemented.
 
 ## Deferred Correctness Work

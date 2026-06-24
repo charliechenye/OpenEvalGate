@@ -100,9 +100,32 @@ The complete gate list, scoring weights, evidence bands, and hard-gate semantics
 
 The [Eval-Run Provenance Contract v1](docs/contracts/eval-run-provenance-v1.md) defines how a small `run_manifest.yaml` can wrap an existing OpenEvalGate-compatible `eval_results.csv`. Existing compatible CSVs do not need new provenance columns.
 
-OpenEvalGate now classifies selected eval-run identity as `complete`, `legacy`, or `invalid`. `complete` means the run, candidate, evaluator, result CSV, output paths, recognized output metadata, and declared artifact-index identities are coherent. It does not mean the run lifecycle is complete, rows exist, the run passed, digests were verified, evidence is fresh or recent, behavioral evidence is sufficient, or controlled launch is authorized.
+OpenEvalGate classifies selected eval-run identity as `complete`, `missing`, or `invalid`. `complete` means the run, candidate, evaluator, result CSV, output paths, recognized output metadata, and declared artifact-index identities are coherent. It does not mean the run lifecycle is complete, rows exist, the run passed, digests were verified, evidence is fresh or recent, behavioral evidence is sufficient, or controlled launch is authorized.
 
-Controlled launch requires complete versioned run identity. Legacy evidence can still be inspected for documentation or shadow review, but it is visibly distinguished and cannot authorize controlled launch. Invalid identity evidence is excluded from behavioral summaries and launch decisions. Digest verification, verified assurance, freshness and recency comparison, and `review_context.yaml` enforcement remain deferred.
+Projects may omit empirical results while documenting controls. Once `eval_results.csv` is present, an authoritative `run_manifest.yaml` is required; manifestless CSV evidence is excluded from validation, metrics, coverage, invariants, blockers, and launch decisions. No new CSV columns are required. Artifact indexes remain optional. Digest verification, verified assurance, freshness and recency comparison, automatic provenance initialization, and `review_context.yaml` enforcement remain deferred.
+
+Minimal manifest:
+
+```yaml
+schema_version: "1"
+
+run:
+  id: run_001
+  status: complete
+
+candidate:
+  id: candidate_name
+  version: candidate_version
+
+evaluation:
+  kind: human
+  evaluator:
+    id: human_review
+
+outputs:
+  results:
+    path: eval_results.csv
+```
 
 ## Where OpenEvalGate Fits
 

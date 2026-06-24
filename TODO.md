@@ -122,7 +122,7 @@ The following are not required merely to make the repository public:
 
 - [x] Define evaluator kinds and minimum evidence in the v1 contract and enforce evaluator identity at runtime.
 - [~] Define candidate identity, run lifecycle, timestamps, and resource descriptors. Runtime identity and lifecycle classification are implemented; digest verification and freshness resource comparison remain deferred.
-- [~] Define provenance presence, validity, freshness, recency, assurance, lifecycle, and authorization classifications. Runtime identity status, lifecycle status, legacy distinction, and controlled-launch identity blocking are implemented; freshness, recency, verified assurance, and `review_context.yaml` remain deferred.
+- [~] Define provenance presence, validity, freshness, recency, assurance, lifecycle, and authorization classifications. Runtime identity status, lifecycle status, missing-manifest detection, unbound-result exclusion, and controlled-launch identity blocking are implemented; freshness, recency, verified assurance, and `review_context.yaml` remain deferred.
 - [~] Define stale-evidence behavior when current candidate or policy state differs from valid historical evidence. Contract proposed with selected invariant fixtures; runtime freshness comparison remains deferred.
 - [x] Parse and enforce selected run identity against manifests and compatible result CSVs.
 - [x] Validate at runtime that referenced output-artifact metadata and directory identity agree with result rows when optional artifact identity fields are supplied.
@@ -131,6 +131,7 @@ The following are not required merely to make the repository public:
 
 ### B3. Provide a minimal adoption path
 
+- [ ] Add a provenance initialization command that generates a minimal run manifest and an optional artifact index from existing result evidence.
 - [ ] Add `openevalgate init <project> --profile minimal`, or package an equivalently deterministic minimal scaffold.
 - [ ] Keep the initial profile set small; defer speculative profile breadth until user demand is demonstrated.
 - [ ] Add a five-minute installed-wheel quickstart for Linux/macOS and Windows PowerShell.

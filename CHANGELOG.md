@@ -8,7 +8,7 @@ The project follows semantic versioning while it remains in alpha. Until a stabl
 
 ### Added
 
-- Runtime eval-run identity inspection for `run_manifest.yaml`, selected review-policy scope, manifest-backed result CSV identity, conventional output-directory identity, recognized Markdown output metadata, optional artifact-index identity, lifecycle findings, and legacy/no-results classification.
+- Runtime eval-run identity inspection for `run_manifest.yaml`, selected review-policy scope, manifest-backed result CSV identity, conventional output-directory identity, recognized Markdown output metadata, optional artifact-index identity, lifecycle findings, and missing/no-results classification, and unbound-result exclusion.
 - Explicit packaged runtime provenance schemas, with wheel and source-distribution checks that compare packaged resources byte-for-byte against the normative top-level schemas.
 - Expanded provenance contract fixture coverage for unsafe single-dot path segments and optional artifact identity fields, including positive omitted-identity mapping, negative wrong-trial mapping, and runtime fixture projection coverage.
 - Non-empty core eval-result validation, duplicate identity rejection, strict
@@ -39,6 +39,9 @@ The project follows semantic versioning while it remains in alpha. Until a stabl
 
 ### Changed
 
+- Result-bearing projects now require manifest-backed eval-run identity; manifestless CSV evidence is excluded from validation, metrics, and launch decisions.
+- Canonical examples now include complete versioned run manifests.
+- Runtime identity states are now complete, missing, or invalid.
 - Route-match metrics are derived from actual routes and authoritative eval
   cases instead of trusting the declared CSV boolean.
 - Invalid result or eval-run identity evidence is rejected by whole-file and selected-scope
@@ -57,8 +60,8 @@ The project follows semantic versioning while it remains in alpha. Until a stabl
   or shadow review critical-control status to `Fail`.
 - Controlled-launch behavioral blockers and authorization now use only the
   selected run and candidate; reports distinguish unevaluated selection,
-  invalid policy, invalid results, identity status, lifecycle status, legacy
-  evidence, and informational full-file metrics.
+  invalid policy, invalid results, identity status, lifecycle status, missing provenance,
+  unbound-result exclusion, and informational full-file metrics.
 - Canonical report reproduction is revalidated byte-for-byte through the installed wheel.
 - Generated Markdown reports now use canonical LF line endings across platforms to preserve byte-for-byte reproducibility.
 - Public package metadata now identifies the maintainer and project URLs.

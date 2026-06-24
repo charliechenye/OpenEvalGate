@@ -20,7 +20,7 @@ Version 1 defines:
 - optional `review_context.yaml` for current-release freshness and recency comparison;
 - an `expected.yaml` fixture contract for normative examples;
 - lifecycle, validity, freshness, recency, assurance, finding, and authorization vocabulary;
-- bounded compatibility for projects without a manifest.
+- missing-manifest and unbound-result classifications.
 
 Version 1 does not define a new CSV row schema, remote attestation, vendor adapters, or OpenEvalGate review provenance. The implemented runtime subset reports identity and lifecycle status only; complete digest-backed provenance, freshness, recency, verified assurance, and full authorization output remain deferred.
 
