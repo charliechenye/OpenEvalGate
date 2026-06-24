@@ -16,5 +16,5 @@ authorization:
   shadow: blocked
   controlled_launch: blocked
 
-findings: 
+findings:
   - provenance_artifact_identity_mismatch

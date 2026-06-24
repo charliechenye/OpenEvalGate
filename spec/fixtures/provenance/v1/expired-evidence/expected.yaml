@@ -16,5 +16,5 @@ authorization:
   shadow: allowed_with_warning
   controlled_launch: blocked
 
-findings: 
+findings:
   - provenance_evidence_expired
