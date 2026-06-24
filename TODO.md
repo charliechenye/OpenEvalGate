@@ -120,13 +120,14 @@ The following are not required merely to make the repository public:
 
 ### B2. Add run provenance and freshness
 
-- [ ] Add explicit evaluator type: human, deterministic, model judge, or hybrid.
-- [ ] Record candidate version, run timestamps, framework version, and selected artifact versions or digests.
-- [ ] Pin eval-set, review-policy, routing-policy, and escalation-contract evidence where applicable.
+- [~] Define evaluator kinds and minimum evidence. Contract proposed; runtime validation pending.
+- [~] Define candidate identity, run lifecycle, timestamps, and resource descriptors. Contract proposed; runtime validation pending.
+- [~] Define provenance presence, validity, freshness, recency, assurance, lifecycle, and authorization classifications. Contract proposed; reporting pending.
+- [~] Define stale-evidence behavior when current candidate or policy state differs from valid historical evidence. Contract proposed; runtime freshness comparison pending.
+- [ ] Parse and verify run provenance.
 - [ ] Validate that referenced output-artifact metadata and directory identity agree with the result row's run, case, candidate, and evaluator fields.
-- [ ] Define provenance categories and display them in reports.
-- [ ] Define stale-evidence behavior when artifacts change after a run.
-- [ ] Require versioned, non-stale evidence for controlled-launch authorization while retaining bounded legacy support for documentation or shadow review.
+- [ ] Display provenance classifications in reports.
+- [ ] Enforce controlled-launch provenance requirements.
 
 ### B3. Provide a minimal adoption path
 
