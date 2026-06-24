@@ -211,6 +211,7 @@ def inspect_run_identity(
                 findings.extend(root_findings)
 
     findings.extend(_validate_csv_identity(identity))
+    findings.extend(_validate_artifact_index_identity(identity))
 
     sorted_findings = _sort_findings(findings)
     invalid_findings = [f for f in sorted_findings if f.id not in _lifecycle_finding_ids()]
@@ -392,8 +393,7 @@ def _validate_csv_identity(identity: RunIdentity) -> list[ProvenanceFinding]:
     }
     candidate_allowed = {identity.candidate_id, *identity.candidate_accepted_aliases}
     try:
-        with identity.results_path.open("r", encoding="utf-8", newline="") as handle:
-            rows = list(csv.DictReader(handle))
+        rows = _read_csv_rows(identity.results_path)
     except (csv.Error, OSError, UnicodeError) as exc:
         return [
             ProvenanceFinding(
@@ -443,6 +443,151 @@ def _validate_csv_identity(identity: RunIdentity) -> list[ProvenanceFinding]:
             )
         )
     return findings
+
+
+def _validate_artifact_index_identity(identity: RunIdentity) -> list[ProvenanceFinding]:
+    if identity.artifact_index_path is None:
+        return []
+    try:
+        data = yaml.safe_load(identity.artifact_index_path.read_text(encoding="utf-8"))
+    except Exception as exc:  # noqa: BLE001
+        return [
+            ProvenanceFinding(
+                id="provenance_artifact_index_schema_invalid",
+                path=str(identity.artifact_index_path),
+                message=f"Could not parse artifact index: {exc}",
+            )
+        ]
+    errors = sorted(_ARTIFACT_INDEX_VALIDATOR.iter_errors(data), key=lambda item: list(item.path))
+    if not isinstance(data, dict) or errors:
+        message = "Artifact index must be a YAML object." if not isinstance(data, dict) else errors[0].message
+        return [
+            ProvenanceFinding(
+                id="provenance_artifact_index_schema_invalid",
+                path=str(identity.artifact_index_path),
+                message=message,
+            )
+        ]
+
+    findings: list[ProvenanceFinding] = []
+    if data.get("run_id") != identity.run_id:
+        findings.append(
+            ProvenanceFinding(
+                id="provenance_artifact_identity_mismatch",
+                path=f"{identity.artifact_index_path}:run_id",
+                message="Artifact index run_id does not match manifest run.id.",
+            )
+        )
+
+    artifacts = data.get("artifacts", []) or []
+    artifact_ids = [str(artifact["artifact_id"]) for artifact in artifacts]
+    if len(artifact_ids) != len(set(artifact_ids)):
+        findings.append(
+            ProvenanceFinding(
+                id="provenance_duplicate_artifact_id",
+                path=f"{identity.artifact_index_path}:artifacts",
+                message="Artifact IDs must be unique.",
+            )
+        )
+
+    evaluator_refs = {
+        identity.evaluator.evaluator_id,
+        *identity.evaluator.component_ids,
+    }
+    entries_by_path: dict[str, list[dict[str, Any]]] = {}
+    normalized_paths: list[str] = []
+    for artifact in artifacts:
+        artifact_path = str(artifact["path"])
+        resolution = resolve_local_evidence_path(
+            identity.artifact_index_path.parent,
+            artifact_path,
+            allowed_root=identity.evidence_root,
+            require_file=True,
+        )
+        if resolution.error is not None or resolution.path is None:
+            findings.append(_path_finding(resolution.error or "unsafe", f"{identity.artifact_index_path}:artifacts.path"))
+            continue
+        normalized = _relative_to_root(resolution.path, identity.evidence_root)
+        normalized_paths.append(normalized)
+        entries_by_path.setdefault(normalized, []).append(artifact)
+        evaluator_ref = artifact.get("evaluator_ref")
+        if evaluator_ref and str(evaluator_ref) not in evaluator_refs:
+            findings.append(
+                ProvenanceFinding(
+                    id="provenance_artifact_identity_mismatch",
+                    path=f"{identity.artifact_index_path}:artifacts.evaluator_ref",
+                    message="Artifact evaluator_ref does not match the manifest evaluator identity.",
+                )
+            )
+
+    if len(normalized_paths) != len(set(normalized_paths)):
+        findings.append(
+            ProvenanceFinding(
+                id="provenance_duplicate_artifact_path",
+                path=f"{identity.artifact_index_path}:artifacts.path",
+                message="Artifact paths must be unique after normalization.",
+            )
+        )
+
+    if any(f.id in {"provenance_unsafe_path", "provenance_local_file_missing"} for f in findings):
+        return findings
+
+    for index, row in enumerate(_read_csv_rows(identity.results_path), start=2):
+        observed = _csv_cell(row, "observed_output_path")
+        if not observed:
+            continue
+        row_path = f"{identity.results_path}:row[{index}].observed_output_path"
+        resolution = resolve_local_evidence_path(
+            identity.results_path.parent,
+            observed,
+            allowed_root=identity.evidence_root,
+            require_file=True,
+        )
+        if resolution.error is not None or resolution.path is None:
+            continue
+        key = _relative_to_root(resolution.path, identity.evidence_root)
+        matches = entries_by_path.get(key, [])
+        if len(matches) != 1:
+            findings.append(
+                ProvenanceFinding(
+                    id="provenance_artifact_identity_mismatch",
+                    path=row_path,
+                    message="CSV output path must map to exactly one artifact-index entry.",
+                )
+            )
+            continue
+        artifact = matches[0]
+        artifact_case = _optional_identity(artifact.get("case_id"))
+        artifact_trial = _optional_identity(artifact.get("trial_id"))
+        row_case = _optional_identity(row.get("case_id"))
+        row_trial = _optional_identity(row.get("trial_id"))
+        if (artifact_case is not None and artifact_case != row_case) or (
+            artifact_trial is not None and artifact_trial != row_trial
+        ):
+            findings.append(
+                ProvenanceFinding(
+                    id="provenance_artifact_identity_mismatch",
+                    path=row_path,
+                    message="Artifact-index case or trial identity contradicts CSV identity.",
+                )
+            )
+    return findings
+
+
+def _read_csv_rows(path: Path) -> list[dict[str, str]]:
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        return list(csv.DictReader(handle))
+
+
+def _relative_to_root(path: Path, root: Path) -> str:
+    return path.resolve(strict=False).relative_to(root.resolve(strict=False)).as_posix()
+
+
+def _optional_identity(value: Any) -> str | None:
+    if value is None:
+        return None
+    stripped = str(value).strip()
+    return stripped or None
 
 
 def _validate_legacy_output_identity(project_root: Path, results_path: Path) -> list[ProvenanceFinding]:

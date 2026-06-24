@@ -8,7 +8,7 @@ from openevalgate.provenance import RunIdentityStatus, inspect_run_identity
 CSV_HEADER = (
     "run_id,case_id,candidate,evaluator,actual_route,expected_route,"
     "route_match,passed,score,failure_category,failure_reason,"
-    "observed_output_path,reviewed_by,reviewed_at,notes\n"
+    "observed_output_path,reviewed_by,reviewed_at,notes,trial_id\n"
 )
 
 
@@ -39,6 +39,7 @@ def _write_result_rows(path: Path, rows: list[dict[str, str]]) -> None:
                     "qa",
                     "2026-06-18",
                     "",
+                    row.get("trial_id", ""),
                 ]
             )
         )
@@ -427,6 +428,25 @@ def _write_output(path: Path, text: str = "output\n") -> None:
     path.write_text(text, encoding="utf-8")
 
 
+def _manifest_with_artifact_index() -> dict:
+    return _base_manifest(
+        outputs={
+            "results": {"path": "eval_results.csv"},
+            "artifact_index": {"path": "artifact_index.yaml"},
+        }
+    )
+
+
+def _write_artifact_index(path: Path, artifacts: list[dict], *, run_id: str = "run_001") -> None:
+    path.write_text(
+        yaml.safe_dump(
+            {"schema_version": "1", "run_id": run_id, "artifacts": artifacts},
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+
+
 def test_matching_conventional_output_directory_is_complete(tmp_path: Path) -> None:
     output = tmp_path / "eval_runs" / "run_001" / "case_001.md"
     _write_output(output)
@@ -554,3 +574,233 @@ def test_legacy_output_identity_contradiction_is_invalid(tmp_path: Path) -> None
 
     assert inspection.status == RunIdentityStatus.INVALID
     assert _finding_ids(inspection) == ["provenance_run_id_mismatch"]
+
+
+def test_no_artifact_index_remains_complete(tmp_path: Path) -> None:
+    _write_result_rows(tmp_path / "eval_results.csv", [{"case_id": "case_001"}])
+    _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
+
+    assert inspect_run_identity(tmp_path).status == RunIdentityStatus.COMPLETE
+
+
+def test_valid_artifact_index_is_complete(tmp_path: Path) -> None:
+    _write_output(tmp_path / "artifacts" / "case_001.md")
+    _write_result_rows(
+        tmp_path / "eval_results.csv",
+        [{"case_id": "case_001", "trial_id": "trial_001", "observed_output_path": "artifacts/case_001.md"}],
+    )
+    _write_artifact_index(
+        tmp_path / "artifact_index.yaml",
+        [
+            {
+                "artifact_id": "artifact-001",
+                "artifact_type": "markdown",
+                "path": "artifacts/case_001.md",
+                "case_id": "case_001",
+                "trial_id": "trial_001",
+                "evaluator_ref": "human-review",
+            }
+        ],
+    )
+    _write_manifest(tmp_path / "run_manifest.yaml", _manifest_with_artifact_index())
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.status == RunIdentityStatus.COMPLETE
+
+
+def test_schema_invalid_artifact_index_is_invalid(tmp_path: Path) -> None:
+    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": ""}])
+    (tmp_path / "artifact_index.yaml").write_text(
+        yaml.safe_dump({"schema_version": "1", "run_id": "run_001", "artifacts": []}),
+        encoding="utf-8",
+    )
+    _write_manifest(tmp_path / "run_manifest.yaml", _manifest_with_artifact_index())
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.status == RunIdentityStatus.INVALID
+    assert _finding_ids(inspection) == ["provenance_artifact_index_schema_invalid"]
+
+
+def test_artifact_index_run_mismatch_is_invalid(tmp_path: Path) -> None:
+    _write_output(tmp_path / "artifacts" / "case_001.md")
+    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "artifacts/case_001.md"}])
+    _write_artifact_index(
+        tmp_path / "artifact_index.yaml",
+        [{"artifact_id": "artifact-001", "artifact_type": "markdown", "path": "artifacts/case_001.md"}],
+        run_id="run_002",
+    )
+    _write_manifest(tmp_path / "run_manifest.yaml", _manifest_with_artifact_index())
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.status == RunIdentityStatus.INVALID
+    assert "provenance_artifact_identity_mismatch" in _finding_ids(inspection)
+
+
+def test_duplicate_artifact_id_is_invalid(tmp_path: Path) -> None:
+    _write_output(tmp_path / "artifacts" / "case_001.md")
+    _write_output(tmp_path / "artifacts" / "case_002.md")
+    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "artifacts/case_001.md"}])
+    _write_artifact_index(
+        tmp_path / "artifact_index.yaml",
+        [
+            {"artifact_id": "dup", "artifact_type": "markdown", "path": "artifacts/case_001.md"},
+            {"artifact_id": "dup", "artifact_type": "markdown", "path": "artifacts/case_002.md"},
+        ],
+    )
+    _write_manifest(tmp_path / "run_manifest.yaml", _manifest_with_artifact_index())
+
+    assert "provenance_duplicate_artifact_id" in _finding_ids(inspect_run_identity(tmp_path))
+
+
+def test_duplicate_normalized_artifact_path_is_invalid(tmp_path: Path) -> None:
+    _write_output(tmp_path / "artifacts" / "case_001.md")
+    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "artifacts/case_001.md"}])
+    _write_artifact_index(
+        tmp_path / "artifact_index.yaml",
+        [
+            {"artifact_id": "a", "artifact_type": "markdown", "path": "artifacts/case_001.md"},
+            {"artifact_id": "b", "artifact_type": "markdown", "path": "artifacts/case_001.md"},
+        ],
+    )
+    _write_manifest(tmp_path / "run_manifest.yaml", _manifest_with_artifact_index())
+
+    assert "provenance_duplicate_artifact_path" in _finding_ids(inspect_run_identity(tmp_path))
+
+
+def test_artifact_index_allows_omitted_case_and_trial_identity(tmp_path: Path) -> None:
+    _write_output(tmp_path / "artifacts" / "case_001.md")
+    _write_result_rows(tmp_path / "eval_results.csv", [{"case_id": "case_001", "trial_id": "", "observed_output_path": "artifacts/case_001.md"}])
+    _write_artifact_index(
+        tmp_path / "artifact_index.yaml",
+        [{"artifact_id": "artifact-001", "artifact_type": "markdown", "path": "artifacts/case_001.md"}],
+    )
+    _write_manifest(tmp_path / "run_manifest.yaml", _manifest_with_artifact_index())
+
+    assert inspect_run_identity(tmp_path).status == RunIdentityStatus.COMPLETE
+
+
+def test_artifact_index_case_mismatch_is_invalid(tmp_path: Path) -> None:
+    _write_output(tmp_path / "artifacts" / "case_001.md")
+    _write_result_rows(tmp_path / "eval_results.csv", [{"case_id": "case_001", "observed_output_path": "artifacts/case_001.md"}])
+    _write_artifact_index(
+        tmp_path / "artifact_index.yaml",
+        [{"artifact_id": "artifact-001", "artifact_type": "markdown", "path": "artifacts/case_001.md", "case_id": "other"}],
+    )
+    _write_manifest(tmp_path / "run_manifest.yaml", _manifest_with_artifact_index())
+
+    assert "provenance_artifact_identity_mismatch" in _finding_ids(inspect_run_identity(tmp_path))
+
+
+def test_artifact_index_trial_mismatch_is_invalid(tmp_path: Path) -> None:
+    _write_output(tmp_path / "artifacts" / "case_001.md")
+    _write_result_rows(tmp_path / "eval_results.csv", [{"case_id": "case_001", "trial_id": "trial_001", "observed_output_path": "artifacts/case_001.md"}])
+    _write_artifact_index(
+        tmp_path / "artifact_index.yaml",
+        [{"artifact_id": "artifact-001", "artifact_type": "markdown", "path": "artifacts/case_001.md", "case_id": "case_001", "trial_id": "trial_002"}],
+    )
+    _write_manifest(tmp_path / "run_manifest.yaml", _manifest_with_artifact_index())
+
+    assert "provenance_artifact_identity_mismatch" in _finding_ids(inspect_run_identity(tmp_path))
+
+
+def test_valid_hybrid_component_evaluator_ref_is_complete(tmp_path: Path) -> None:
+    _write_output(tmp_path / "artifacts" / "case_001.md")
+    _write_output(tmp_path / "policy.yaml")
+    _write_result_rows(
+        tmp_path / "eval_results.csv",
+        [{"observed_output_path": "artifacts/case_001.md", "evaluator": "hybrid"}],
+    )
+    _write_artifact_index(
+        tmp_path / "artifact_index.yaml",
+        [{"artifact_id": "artifact-001", "artifact_type": "markdown", "path": "artifacts/case_001.md", "evaluator_ref": "det"}],
+    )
+    manifest = _manifest_with_artifact_index()
+    manifest["evaluation"] = {
+        "kind": "hybrid",
+        "evaluator": {
+            "id": "hybrid",
+            "components": [{"id": "det", "kind": "deterministic", "version": "1"}],
+            "decision_policy": {"path": "policy.yaml"},
+        },
+    }
+    _write_manifest(tmp_path / "run_manifest.yaml", manifest)
+
+    assert inspect_run_identity(tmp_path).status == RunIdentityStatus.COMPLETE
+
+
+def test_invalid_artifact_evaluator_ref_is_invalid(tmp_path: Path) -> None:
+    _write_output(tmp_path / "artifacts" / "case_001.md")
+    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "artifacts/case_001.md"}])
+    _write_artifact_index(
+        tmp_path / "artifact_index.yaml",
+        [{"artifact_id": "artifact-001", "artifact_type": "markdown", "path": "artifacts/case_001.md", "evaluator_ref": "other"}],
+    )
+    _write_manifest(tmp_path / "run_manifest.yaml", _manifest_with_artifact_index())
+
+    assert "provenance_artifact_identity_mismatch" in _finding_ids(inspect_run_identity(tmp_path))
+
+
+def test_artifact_mapping_must_be_unambiguous(tmp_path: Path) -> None:
+    _write_output(tmp_path / "artifacts" / "case_001.md")
+    _write_output(tmp_path / "artifacts" / "other.md")
+    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "artifacts/case_001.md"}])
+    _write_artifact_index(
+        tmp_path / "artifact_index.yaml",
+        [{"artifact_id": "artifact-001", "artifact_type": "markdown", "path": "artifacts/other.md"}],
+    )
+    _write_manifest(tmp_path / "run_manifest.yaml", _manifest_with_artifact_index())
+
+    assert "provenance_artifact_identity_mismatch" in _finding_ids(inspect_run_identity(tmp_path))
+
+
+def test_unsafe_artifact_path_is_invalid(tmp_path: Path) -> None:
+    _write_output(tmp_path / "artifacts" / "target.md")
+    link = tmp_path / "artifacts" / "link.md"
+    try:
+        link.symlink_to(tmp_path / "artifacts" / "target.md")
+    except (NotImplementedError, OSError):
+        return
+    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "artifacts/target.md"}])
+    _write_artifact_index(
+        tmp_path / "artifact_index.yaml",
+        [{"artifact_id": "artifact-001", "artifact_type": "markdown", "path": "artifacts/link.md"}],
+    )
+    _write_manifest(tmp_path / "run_manifest.yaml", _manifest_with_artifact_index())
+
+    assert "provenance_local_file_missing" in _finding_ids(inspect_run_identity(tmp_path))
+
+
+def test_missing_artifact_file_is_invalid(tmp_path: Path) -> None:
+    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": ""}])
+    _write_artifact_index(
+        tmp_path / "artifact_index.yaml",
+        [{"artifact_id": "artifact-001", "artifact_type": "markdown", "path": "artifacts/missing.md"}],
+    )
+    _write_manifest(tmp_path / "run_manifest.yaml", _manifest_with_artifact_index())
+
+    assert "provenance_local_file_missing" in _finding_ids(inspect_run_identity(tmp_path))
+
+
+def test_digest_mismatch_is_deferred_for_identity(tmp_path: Path) -> None:
+    _write_output(tmp_path / "artifacts" / "case_001.md")
+    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "artifacts/case_001.md"}])
+    _write_artifact_index(
+        tmp_path / "artifact_index.yaml",
+        [
+            {
+                "artifact_id": "artifact-001",
+                "artifact_type": "markdown",
+                "path": "artifacts/case_001.md",
+                "digest": {"sha256": "0" * 64},
+            }
+        ],
+    )
+    _write_manifest(tmp_path / "run_manifest.yaml", _manifest_with_artifact_index())
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.status == RunIdentityStatus.COMPLETE
+    assert not any("digest" in finding.id for finding in inspection.findings)
