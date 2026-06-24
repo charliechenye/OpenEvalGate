@@ -331,8 +331,16 @@ def _critical_escalation_failures(
         and isinstance(case.get("expected_handoff"), dict)
     }
     failures: set[str] = set()
-    results_path = _inspection_results_path(root, run_identity_inspection)
-    if results_path is None:
+    if run_identity_inspection is None:
+        fallback_path = root / "eval_results.csv"
+        results_path = fallback_path if fallback_path.is_file() else None
+    else:
+        results_path = (
+            None
+            if run_identity_inspection.status == RunIdentityStatus.INVALID
+            else run_identity_inspection.results_path
+        )
+    if results_path is None or not results_path.is_file():
         return []
     for row in read_eval_results(results_path):
         if scope is not None and (
@@ -356,20 +364,6 @@ def _critical_escalation_failures(
         if failed_control:
             failures.add(case_id)
     return sorted(failures)
-
-
-def _inspection_results_path(
-    root: Path,
-    inspection: RunIdentityInspection | None,
-) -> Path | None:
-    if inspection is None:
-        path = root / "eval_results.csv"
-        return path if path.is_file() else None
-    if inspection.status == RunIdentityStatus.COMPLETE and inspection.identity is not None:
-        return inspection.identity.results_path
-    if inspection.status == RunIdentityStatus.LEGACY and inspection.results_present:
-        return root / "eval_results.csv"
-    return None
 
 
 def _deduplicate_blockers(

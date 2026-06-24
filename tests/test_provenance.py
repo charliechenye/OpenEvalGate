@@ -2,6 +2,7 @@ from pathlib import Path
 
 import yaml
 
+from openevalgate.eval_results import classify_behavioral_evidence
 from openevalgate.provenance import RunIdentityStatus, inspect_run_identity
 
 
@@ -77,6 +78,7 @@ def test_no_manifest_with_results_is_legacy(tmp_path: Path) -> None:
     inspection = inspect_run_identity(tmp_path)
 
     assert inspection.status == RunIdentityStatus.LEGACY
+    assert inspection.results_path == tmp_path / "eval_results.csv"
     assert inspection.results_present is True
     assert inspection.identity is None
 
@@ -85,6 +87,7 @@ def test_no_manifest_without_results_is_legacy_not_provided(tmp_path: Path) -> N
     inspection = inspect_run_identity(tmp_path)
 
     assert inspection.status == RunIdentityStatus.LEGACY
+    assert inspection.results_path is None
     assert inspection.results_present is False
     assert _finding_ids(inspection) == ["provenance_manifest_absent"]
 
@@ -96,10 +99,25 @@ def test_valid_root_manifest_is_complete(tmp_path: Path) -> None:
     inspection = inspect_run_identity(tmp_path)
 
     assert inspection.status == RunIdentityStatus.COMPLETE
+    assert inspection.results_path == (tmp_path / "eval_results.csv").resolve(strict=False)
+    assert inspection.results_present is True
     assert inspection.identity is not None
     assert inspection.identity.run_id == "run_001"
     assert inspection.identity.candidate_id == "candidate"
     assert inspection.identity.evaluator.evaluator_id == "human-review"
+
+
+def test_results_present_is_inspection_snapshot(tmp_path: Path) -> None:
+    _write_results(tmp_path / "eval_results.csv")
+    _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.results_path == (tmp_path / "eval_results.csv").resolve(strict=False)
+    assert inspection.results_present is True
+
+    inspection.results_path.unlink()
+
+    assert inspection.results_present is True
 
 
 def test_valid_selected_run_manifest_is_authoritative(tmp_path: Path) -> None:
@@ -111,6 +129,8 @@ def test_valid_selected_run_manifest_is_authoritative(tmp_path: Path) -> None:
 
     assert inspection.status == RunIdentityStatus.COMPLETE
     assert inspection.manifest_path == run_dir / "run_manifest.yaml"
+    assert inspection.results_path == (run_dir / "eval_results.csv").resolve(strict=False)
+    assert inspection.results_present is True
     assert inspection.identity is not None
     assert inspection.identity.results_path == (run_dir / "eval_results.csv").resolve(strict=False)
 
@@ -131,6 +151,8 @@ def test_malformed_yaml_is_invalid(tmp_path: Path) -> None:
     inspection = inspect_run_identity(tmp_path)
 
     assert inspection.status == RunIdentityStatus.INVALID
+    assert inspection.results_path is None
+    assert inspection.results_present is False
     assert _finding_ids(inspection) == ["provenance_manifest_schema_invalid"]
     assert "Could not parse" in inspection.findings[0].message
 
@@ -379,7 +401,12 @@ def test_manifest_backed_csv_rejects_mixed_runs(tmp_path: Path) -> None:
     inspection = inspect_run_identity(tmp_path)
 
     assert inspection.status == RunIdentityStatus.INVALID
+    assert inspection.results_path == (tmp_path / "eval_results.csv").resolve(strict=False)
+    assert inspection.results_present is True
     assert _finding_ids(inspection) == ["provenance_run_id_mismatch"]
+    evidence = classify_behavioral_evidence(tmp_path, identity_inspection=inspection)
+    assert evidence.state == "invalid"
+    assert evidence.summary is None
 
 
 def test_manifest_backed_csv_rejects_mixed_candidates(tmp_path: Path) -> None:
@@ -573,7 +600,12 @@ def test_legacy_output_identity_contradiction_is_invalid(tmp_path: Path) -> None
     inspection = inspect_run_identity(tmp_path)
 
     assert inspection.status == RunIdentityStatus.INVALID
+    assert inspection.results_path == tmp_path / "eval_results.csv"
+    assert inspection.results_present is True
     assert _finding_ids(inspection) == ["provenance_run_id_mismatch"]
+    evidence = classify_behavioral_evidence(tmp_path, identity_inspection=inspection)
+    assert evidence.state == "invalid"
+    assert evidence.summary is None
 
 
 def test_no_artifact_index_remains_complete(tmp_path: Path) -> None:

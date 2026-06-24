@@ -179,6 +179,19 @@ def evaluate_behavioral_sufficiency(
     root = Path(project_dir)
     policy_result = validate_review_policy(root)
     evidence = classify_behavioral_evidence(root, identity_inspection=identity_inspection)
+    if identity_inspection is not None:
+        selected_results_path = (
+            identity_inspection.results_path
+            if evidence.state == "available"
+            else None
+        )
+    else:
+        legacy_root_results = root / "eval_results.csv"
+        selected_results_path = (
+            legacy_root_results
+            if evidence.state == "available" and legacy_root_results.is_file()
+            else None
+        )
     cases: list[dict[str, Any]] = []
     eval_path = root / "eval_cases.yaml"
     if eval_path.is_file() and validate_eval_cases(eval_path).valid:
@@ -212,7 +225,12 @@ def evaluate_behavioral_sufficiency(
     critical_below = tuple(sorted(
         case_id for case_id in observed_critical if counts.get(case_id, 0) < minimum_trials
     ))
-    failed_critical = _failed_critical_ids(root, scope, critical_ids, evidence.state)
+    failed_critical = _failed_critical_ids(
+        scope,
+        critical_ids,
+        evidence.state,
+        results_path=selected_results_path,
+    )
     case_coverage = len(observed) / len(expected_ids) if expected_ids else None
     critical_coverage = (
         len(observed_critical) / len(critical_ids) if critical_ids else None
@@ -412,17 +430,18 @@ def _invariant_outcomes(
 
 
 def _failed_critical_ids(
-    root: Path,
     scope: EvaluationScope | None,
     critical_ids: tuple[str, ...],
     evidence_state: str,
+    *,
+    results_path: Path | None,
 ) -> tuple[str, ...]:
-    if not scope or evidence_state != "available":
+    if not scope or evidence_state != "available" or results_path is None:
         return ()
     from openevalgate.eval_results import _cell, read_eval_results
     return tuple(sorted({
         _cell(row, "case_id")
-        for row in read_eval_results(root / "eval_results.csv")
+        for row in read_eval_results(results_path)
         if _cell(row, "run_id") == scope.run_id.strip()
         and _cell(row, "candidate") == scope.candidate.strip()
         and _cell(row, "case_id") in critical_ids

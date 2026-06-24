@@ -179,7 +179,7 @@ def validate_eval_results(
     if inspection.status == RunIdentityStatus.INVALID:
         issues = _provenance_issues(inspection)
         return EvalResultsValidationResult(False, issues, 0)
-    results_path = _authoritative_results_path(root, inspection)
+    results_path = _usable_results_path(inspection)
     if results_path is None or not results_path.is_file():
         return EvalResultsValidationResult(True, [], 0)
 
@@ -417,7 +417,7 @@ def classify_behavioral_evidence(
     inspection = identity_inspection or inspect_run_identity(root)
     if inspection.status == RunIdentityStatus.INVALID:
         return BehavioralEvidence("invalid", None, _provenance_issues(inspection))
-    path = _authoritative_results_path(root, inspection)
+    path = _usable_results_path(inspection)
     if path is None or not path.is_file():
         return BehavioralEvidence("not_provided", None, [])
 
@@ -453,7 +453,7 @@ def summarize_eval_results(
 
     root = Path(project_dir)
     inspection = identity_inspection or inspect_run_identity(root)
-    path = _authoritative_results_path(root, inspection)
+    path = _usable_results_path(inspection)
     if path is None or not path.is_file():
         return None
 
@@ -561,7 +561,7 @@ def summarize_selected_eval_results(
 
     root = Path(project_dir)
     inspection = identity_inspection or inspect_run_identity(root)
-    path = _authoritative_results_path(root, inspection)
+    path = _usable_results_path(inspection)
     if path is not None and path.is_file():
         validation = validate_eval_results(root, identity_inspection=inspection)
         if not validation.valid:
@@ -647,15 +647,10 @@ def _parse_review_timestamp(value: str) -> _ParsedReviewTimestamp:
     )
 
 
-def _authoritative_results_path(
-    root: Path,
-    inspection: RunIdentityInspection,
-) -> Path | None:
-    if inspection.status == RunIdentityStatus.COMPLETE and inspection.identity is not None:
-        return inspection.identity.results_path
-    if inspection.status == RunIdentityStatus.LEGACY and inspection.results_present:
-        return root / "eval_results.csv"
-    return None
+def _usable_results_path(inspection: RunIdentityInspection) -> Path | None:
+    if inspection.status == RunIdentityStatus.INVALID:
+        return None
+    return inspection.results_path
 
 
 def _output_allowed_root(root: Path, inspection: RunIdentityInspection) -> Path:

@@ -64,15 +64,13 @@ class RunIdentityInspection:
     manifest_path: Path | None
     identity: RunIdentity | None
     findings: tuple[ProvenanceFinding, ...]
-    results_present: bool
+    results_path: Path | None
 
     @property
-    def authoritative_results_path(self) -> Path | None:
-        if self.status == RunIdentityStatus.COMPLETE and self.identity is not None:
-            return self.identity.results_path
-        if self.status == RunIdentityStatus.LEGACY and self.results_present:
-            return self.manifest_path
-        return None
+    def results_present(self) -> bool:
+        """Whether a results file was present when identity was inspected."""
+
+        return self.results_path is not None
 
 
 _FINDING_ORDER = {
@@ -155,24 +153,24 @@ def inspect_run_identity(
                 manifest_path=None,
                 identity=None,
                 findings=tuple(_sort_findings(legacy_findings)),
-                results_present=True,
+                results_path=root_results,
             )
         return RunIdentityInspection(
             status=RunIdentityStatus.LEGACY,
             manifest_path=None,
             identity=None,
             findings=findings,
-            results_present=False,
+            results_path=None,
         )
 
     loaded = _load_manifest(authoritative)
     if loaded[0] is None:
         return _invalid(authoritative, loaded[1])
     manifest = loaded[0]
-    identity, findings_tuple = _identity_from_manifest(root, authoritative, manifest)
+    identity, findings_tuple, resolved_results_path = _identity_from_manifest(root, authoritative, manifest)
     findings = list(findings_tuple)
     if identity is None:
-        return _invalid(authoritative, list(findings_tuple))
+        return _invalid(authoritative, list(findings_tuple), results_path=resolved_results_path)
 
     if selected_run and identity.run_id != selected_run:
         findings.append(
@@ -197,7 +195,7 @@ def inspect_run_identity(
     if compare_root:
         root_loaded = _load_manifest(root_manifest)
         if root_loaded[0] is not None:
-            root_identity, root_findings = _identity_from_manifest(root, root_manifest, root_loaded[0])
+            root_identity, root_findings, _ = _identity_from_manifest(root, root_manifest, root_loaded[0])
             if root_identity is not None and root_identity.run_id == identity.run_id:
                 if _identity_signature(root_identity) != _identity_signature(identity):
                     findings.append(
@@ -220,7 +218,7 @@ def inspect_run_identity(
         manifest_path=authoritative,
         identity=None if invalid_findings else identity,
         findings=sorted_findings,
-        results_present=identity.results_path.is_file(),
+        results_path=identity.results_path,
     )
 
 
@@ -291,7 +289,7 @@ def _identity_from_manifest(
     project_root: Path,
     path: Path,
     manifest: dict[str, Any],
-) -> tuple[RunIdentity | None, list[ProvenanceFinding]]:
+) -> tuple[RunIdentity | None, list[ProvenanceFinding], Path | None]:
     findings: list[ProvenanceFinding] = []
     run = manifest["run"]
     if path.parent.parent.name == "eval_runs" and path.parent.name != str(run["id"]):
@@ -302,7 +300,7 @@ def _identity_from_manifest(
                 message="Run-scoped manifest directory must match manifest run.id.",
             )
         )
-        return None, _sort_findings(findings)
+        return None, list(_sort_findings(findings)), None
     candidate = manifest["candidate"]
     evaluation = manifest["evaluation"]
     evaluator = evaluation["evaluator"]
@@ -317,7 +315,7 @@ def _identity_from_manifest(
                 message="Hybrid evaluator component IDs must be unique.",
             )
         )
-        return None, _sort_findings(findings)
+        return None, list(_sort_findings(findings)), None
 
     results_resolution = resolve_local_evidence_path(
         path.parent,
@@ -327,7 +325,7 @@ def _identity_from_manifest(
     )
     if results_resolution.error is not None:
         findings.append(_path_finding(results_resolution.error, f"{path}:outputs.results.path"))
-        return None, _sort_findings(findings)
+        return None, list(_sort_findings(findings)), None
 
     artifact_index_path: Path | None = None
     artifact_index = manifest["outputs"].get("artifact_index")
@@ -340,7 +338,7 @@ def _identity_from_manifest(
         )
         if artifact_resolution.error is not None:
             findings.append(_path_finding(artifact_resolution.error, f"{path}:outputs.artifact_index.path"))
-            return None, _sort_findings(findings)
+            return None, list(_sort_findings(findings)), results_resolution.path
         artifact_index_path = artifact_resolution.path
 
     run_status = str(run["status"])
@@ -382,7 +380,7 @@ def _identity_from_manifest(
         project_root=project_root,
         evidence_root=path.parent,
     )
-    return identity, _sort_findings(findings)
+    return identity, list(_sort_findings(findings)), identity.results_path
 
 
 def _validate_csv_identity(identity: RunIdentity) -> list[ProvenanceFinding]:
@@ -797,13 +795,18 @@ def _identity_signature(identity: RunIdentity) -> tuple[Any, ...]:
     )
 
 
-def _invalid(path: Path, findings: list[ProvenanceFinding]) -> RunIdentityInspection:
+def _invalid(
+    path: Path,
+    findings: list[ProvenanceFinding],
+    *,
+    results_path: Path | None = None,
+) -> RunIdentityInspection:
     return RunIdentityInspection(
         status=RunIdentityStatus.INVALID,
         manifest_path=path,
         identity=None,
         findings=tuple(_sort_findings(findings)),
-        results_present=False,
+        results_path=results_path,
     )
 
 
