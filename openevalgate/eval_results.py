@@ -665,10 +665,21 @@ def _output_allowed_root(root: Path, inspection: RunIdentityInspection) -> Path:
 
 
 def _provenance_issues(inspection: RunIdentityInspection) -> list[ValidationIssue]:
-    return [
-        ValidationIssue(finding.path, finding.message, source="provenance")
-        for finding in inspection.findings
-    ]
+    issues: list[ValidationIssue] = []
+    for finding in inspection.findings:
+        issues.append(ValidationIssue(finding.path, finding.message, source="provenance"))
+        if (
+            finding.id == "provenance_local_file_missing"
+            and finding.path.endswith(".observed_output_path")
+        ):
+            issues.append(
+                ValidationIssue(
+                    finding.path,
+                    "Referenced output file does not exist or is not a regular file.",
+                    source="eval_results",
+                )
+            )
+    return issues
 
 
 def _validate_output_reference(
