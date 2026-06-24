@@ -28,4 +28,4 @@ outputs:
   artifact_index:
     path: artifact_index.yaml
     digest:
-      sha256: "f1d45a19fe5f99ae0cb90d5108f31d3c7b7ddedbcaa8dc8f6a37956f4a257bd9"
+      sha256: "c91cb8d1818bd260ba8c8ec13cc645b9bd72c4bea0a75841ac7c9423885f79d1"

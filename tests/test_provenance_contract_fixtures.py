@@ -732,6 +732,9 @@ def test_path_validation_accepts_ordinary_safe_nested_path(tmp_path):
     assert issue is None
     assert resolved == target.resolve(strict=False)
 
+@pytest.mark.parametrize("unsafe", [".", "./file.txt", "inputs/./file.txt", "inputs/."])
+def test_path_validation_rejects_dot_segments(tmp_path, unsafe):
+    assert norm_rel(tmp_path, unsafe) == (None, "provenance_unsafe_path")
 
 def test_nested_resolution_roots_follow_declaring_file(tmp_path):
     fixture = tmp_path
@@ -829,6 +832,21 @@ def test_format_assertions_are_enabled(validators):
     assert any("date-time" in m for m in messages)
     assert any("uri" in m for m in messages)
 
+@pytest.mark.parametrize("unsafe", [".", "./file.txt", "inputs/./file.txt", "inputs/."])
+def test_relative_path_schemas_reject_dot_segments(schemas, unsafe):
+    for schema_name in ("manifest", "artifact_index", "review_context"):
+        validator = Draft202012Validator(
+            schemas[schema_name]["$defs"]["relativePath"]
+        )
+        assert list(validator.iter_errors(unsafe))
+
+@pytest.mark.parametrize("safe", [".hidden", "inputs/.hidden", "inputs/.config/file.yaml"])
+def test_relative_path_schemas_allow_hidden_names(schemas, safe):
+    for schema_name in ("manifest", "artifact_index", "review_context"):
+        validator = Draft202012Validator(
+            schemas[schema_name]["$defs"]["relativePath"]
+        )
+        assert list(validator.iter_errors(safe)) == []
 
 def test_fixture_inventory_matches_readme():
     dirs = {p.name for p in fixture_dirs()}
