@@ -90,7 +90,7 @@ def norm_rel(root, rel, allowed_root=None):
         return None, "provenance_unsafe_path"
     raw = PurePosixPath(rel)
     if raw.is_absolute() or any(part in {"", ".", ".."} for part in raw.parts):
-        return None, "provenance_unsafe_path" 
+        return None, "provenance_unsafe_path"
     root = Path(root)
     allowed = Path(allowed_root or root).resolve(strict=False)
     candidate = root
@@ -475,7 +475,7 @@ def validate_fixture(fixture, validators):
                 findings.add("provenance_artifact_identity_mismatch")
                 return findings
             artifact = matches[0]
-                        
+
             artifact_case_id = normalized_optional(artifact.get("case_id"))
             csv_case_id = normalized_optional(row.get("case_id"))
 
