@@ -1,0 +1,53 @@
+schema_version: "1"
+
+run:
+  id: run_002
+  status: complete
+  started_at: "2026-06-18T17:00:00Z"
+  completed_at: "2026-06-18T17:14:22Z"
+
+candidate:
+  id: customer-support-agent
+  version: "2026.06.18-rc2"
+  artifact:
+    path: inputs/candidate.yaml
+    digest:
+      sha256: "a59e780f6ca3cff5631892579011427d32f85c6120e8a8a4485a973e9c4a40b3"
+
+producer:
+  id: internal-eval-exporter
+  version: "2.4.0"
+
+evaluation:
+  kind: deterministic
+  framework:
+    id: internal-eval-runner
+    version: "5.2.1"
+  evaluator:
+    id: deterministic-route-checker
+    version: "1"
+    configuration:
+      path: inputs/routing_policy.yaml
+      digest:
+        sha256: "f904237ad9c97251cf334e92c9b79bad9cbcebc9a6aa17af71b0b94afc6bac63"
+
+  policy:
+    path: inputs/evaluation_policy.yaml
+    digest:
+      sha256: "b9f8360ace191362c29c7fdb4e36cf8f715c5ac51b980beb399a457964447fe2"
+
+inputs:
+  - role: eval_cases
+    path: inputs/eval_cases.yaml
+    digest:
+      sha256: "e58f8bfcce4e56c619c2b4fc740bff012db849eca8ac29209cb3753e967c9fee"
+  - role: routing_policy
+    path: inputs/routing_policy.yaml
+    digest:
+      sha256: "f904237ad9c97251cf334e92c9b79bad9cbcebc9a6aa17af71b0b94afc6bac63"
+
+outputs:
+  results:
+    path: eval_results.csv
+    digest:
+      sha256: "e4e1faac5a65ecc2802008f8c5d4813b58744bf83a93a4e94283a5f66ec903ad"

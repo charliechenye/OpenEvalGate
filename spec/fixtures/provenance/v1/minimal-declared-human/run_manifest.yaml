@@ -1,0 +1,18 @@
+schema_version: "1"
+
+run:
+  id: run_002
+  status: complete
+
+candidate:
+  id: customer-support-agent
+  version: "2026.06.18-rc2"
+
+evaluation:
+  kind: human
+  evaluator:
+    id: support-quality-review
+
+outputs:
+  results:
+    path: eval_results.csv
