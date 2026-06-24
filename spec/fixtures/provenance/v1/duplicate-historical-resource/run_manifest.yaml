@@ -19,20 +19,20 @@ inputs:
   - role: eval_cases
     path: inputs/eval_cases.yaml
     digest:
-      sha256: "c08be46db4895f74b830aff0c2ab17c24a10cc3acc0400874fdb574515204c57"
+      sha256: "7ff2c68abb7b1f1b577ddc0d09b15a3c3537a677a4cfc1278aafe0c177ca7c0c"
   - role: evaluator_configuration
     name: quality-judge
     path: inputs/judge_config_a.yaml
     digest:
-      sha256: "d4224f57bbc138cf882fa81e8468fae5c4cf35ae87318466e74dfd2c8ca01dbb"
+      sha256: "6468a5ef6b2c3d517b5e00478eed93a8c9562ba2a4d10e73ddc11929f8a5d360"
   - role: evaluator_configuration
     name: quality-judge
     path: inputs/judge_config_b.yaml
     digest:
-      sha256: "aa3afb74a53b3e6700ea8efb020dc21bc619c5ebb2bbe463a5d199f6b766d1ef"
+      sha256: "de1176ce322bff5408a6d9e51ade566604352f2bf856b7cd2f4af001456f27f2"
 
 outputs:
   results:
     path: eval_results.csv
     digest:
-      sha256: "3d9dc09a60803c0dfbb82d25f2e185fab54bec80847df27471b29d2753c1cd5e"
+      sha256: "e42d2c8f39f7c882aa8dc37f2f6b3c5de9dc3f62085a128159ddd4014b7489f2"

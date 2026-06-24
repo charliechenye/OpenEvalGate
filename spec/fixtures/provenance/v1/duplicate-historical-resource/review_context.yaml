@@ -8,7 +8,7 @@ inputs:
   - role: eval_cases
     path: current/eval_cases.yaml
     digest:
-      sha256: "c08be46db4895f74b830aff0c2ab17c24a10cc3acc0400874fdb574515204c57"
+      sha256: "7ff2c68abb7b1f1b577ddc0d09b15a3c3537a677a4cfc1278aafe0c177ca7c0c"
 
 recency_policy:
   max_age_days: 30
