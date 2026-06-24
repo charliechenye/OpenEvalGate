@@ -4,6 +4,7 @@ from pathlib import Path
 
 import yaml
 
+from openevalgate.provenance import RunIdentityStatus, inspect_run_identity
 from openevalgate.schema import load_eval_cases, validate_eval_cases
 
 
@@ -41,6 +42,17 @@ def test_example_boundary_suites_are_complete_and_valid() -> None:
             assert case["expected_trajectory"]["required_events"], case["id"]
             assert case["expected_trajectory"]["prohibited_events"], case["id"]
             assert case["expected_end_state"]["assertions"], case["id"]
+
+
+def test_canonical_examples_have_manifest_backed_run_identity() -> None:
+    for project_name in EXAMPLE_PROJECTS:
+        project = ROOT / "examples" / project_name
+        inspection = inspect_run_identity(project)
+
+        assert inspection.status == RunIdentityStatus.COMPLETE, project_name
+        assert inspection.results_path == (project / "eval_results.csv").resolve(strict=False)
+        assert inspection.identity is not None, project_name
+        assert not (project / "artifact_index.yaml").exists(), project_name
 
 
 def test_escalation_contract_triggers_and_destinations_have_eval_coverage() -> None:

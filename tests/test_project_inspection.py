@@ -125,6 +125,10 @@ def _prepare_scoped_handoff_results(
         clear_output_paths=False,
     )
 
+    root_manifest = project / "run_manifest.yaml"
+    if root_manifest.exists():
+        root_manifest.unlink()
+
     run_dir = project / "eval_runs" / SCOPED_RUN_ID
     scoped_results = run_dir / "eval_results.csv"
     _write_handoff_result_variant(
@@ -870,8 +874,9 @@ def test_present_invalid_manifest_never_becomes_legacy(tmp_path: Path) -> None:
     assert inspection.run_identity_inspection.results_present is False
 
 
-def test_legacy_identity_remains_structurally_usable(tmp_path: Path) -> None:
+def test_manifestless_identity_remains_structurally_usable(tmp_path: Path) -> None:
     project = _copy_project(tmp_path)
+    (project / "run_manifest.yaml").unlink()
 
     inspection = inspect_project(project)
 
@@ -909,8 +914,11 @@ outputs:
 
 
 
-def test_legacy_controlled_launch_is_blocked_by_unversioned_eval_run() -> None:
-    inspection = inspect_project(CUSTOMER_SUPPORT)
+def test_manifestless_controlled_launch_is_blocked_by_unversioned_eval_run(tmp_path: Path) -> None:
+    project = _copy_project(tmp_path)
+    (project / "run_manifest.yaml").unlink()
+
+    inspection = inspect_project(project)
 
     assert "unversioned_eval_run" in {blocker.id for blocker in inspection.hard_blockers}
 

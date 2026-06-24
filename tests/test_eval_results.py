@@ -25,6 +25,9 @@ CUSTOMER_SUPPORT = ROOT / "examples" / "customer_support_assistant"
 def _project(tmp_path: Path) -> Path:
     project = tmp_path / "project"
     copytree(CUSTOMER_SUPPORT, project)
+    manifest = project / "run_manifest.yaml"
+    if manifest.exists():
+        manifest.unlink()
     return project
 
 
@@ -80,8 +83,7 @@ def test_valid_eval_results_pass() -> None:
 
 
 def test_missing_eval_results_are_not_provided(tmp_path: Path) -> None:
-    project = tmp_path / "project"
-    copytree(CUSTOMER_SUPPORT, project)
+    project = _project(tmp_path)
     (project / "eval_results.csv").unlink()
 
     evidence = classify_behavioral_evidence(project)
@@ -103,8 +105,7 @@ def test_header_only_eval_results_are_empty(tmp_path: Path) -> None:
 
 
 def test_invalid_eval_results_fail(tmp_path: Path) -> None:
-    project = tmp_path / "project"
-    copytree(CUSTOMER_SUPPORT, project)
+    project = _project(tmp_path)
     (project / "eval_results.csv").write_text(
         "\n".join(
             [
@@ -143,8 +144,7 @@ def test_unknown_case_id_in_results_fails_project_check(tmp_path: Path) -> None:
 
 
 def test_enriched_eval_results_validate_and_calculate_boundary_metrics(tmp_path: Path) -> None:
-    project = tmp_path / "project"
-    copytree(CUSTOMER_SUPPORT, project)
+    project = _project(tmp_path)
     cases = yaml.safe_load((project / "eval_cases.yaml").read_text(encoding="utf-8"))["eval_cases"]
     anchor = cases[0]
     variant = cases[1]
@@ -229,8 +229,7 @@ def test_escalation_metrics_are_calculated_from_enriched_results() -> None:
 
 
 def test_invalid_enriched_result_values_fail(tmp_path: Path) -> None:
-    project = tmp_path / "project"
-    copytree(CUSTOMER_SUPPORT, project)
+    project = _project(tmp_path)
     path = project / "eval_results.csv"
     path.write_text(
         "\n".join(

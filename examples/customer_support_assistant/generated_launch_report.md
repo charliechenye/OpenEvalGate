@@ -6,7 +6,7 @@
 - **Evidence completeness score:** 90/100
 - **Evidence package band:** Substantially complete
 - **Behavioral evidence status:** Evaluated — valid empirical rows are available.
-- **Run identity status:** Legacy
+- **Run identity status:** Complete
 - **Declared review mode:** controlled_launch
 - **Effective review mode:** controlled_launch
 - **Sufficiency for effective review mode:** Insufficient
@@ -14,12 +14,20 @@
 - **Maximum permitted stage:** Shadow evaluation with remediation
 - **Final launch recommendation:** Not ready for controlled launch
 - **Recommended next actions:** Remediate known hard blockers.
-- **Hard blockers:** 3
+- **Hard blockers:** 2
 
 ## Eval-Run Identity
-- Status: Legacy
+- Status: Complete
+- Manifest: run_manifest.yaml
+- Run ID: run_002
+- Lifecycle: complete
+- Candidate: gpt-4.1-mini
+- Candidate version: customer-support-example-v1
+- Evaluator kind: human
+- Evaluator ID: human_review
+- Results path: eval_results.csv
 - Findings: none
-- Warning: No versioned run manifest was provided. Existing CSV evidence is being handled in legacy compatibility mode.
+- Limitation: Run and output identity checks passed. Digests and release freshness were not evaluated.
 
 ## Evidence Completeness Score
 90/100
@@ -43,7 +51,6 @@ Meeting this threshold does not override hard blockers or grant permission to be
 
 ## Hard Blockers
 - **missing_monitoring:** Observability gate requires `pass`; actual status is `partial`. Evidence: launch-gate evidence cell
-- **unversioned_eval_run:** Controlled-launch review requires a complete versioned eval-run identity. Evidence: run_manifest.yaml
 - **critical_escalation_regression:** High-risk escalation evidence contains under-escalation, wrong-destination, payload, or resume failures. Evidence: refund_abuse_history_002, wrong_destination_fraud_012
 
 ## Trust Preservation Summary
@@ -191,7 +198,6 @@ This section summarizes all valid behavioral rows in the results file. Controlle
 The following critical controls failed:
 
 - `missing_monitoring`
-- `unversioned_eval_run`
 - `critical_escalation_regression`
 
 ## Maximum Permitted Stage
@@ -199,7 +205,6 @@ Shadow evaluation with remediation
 
 ## Required Mitigations
 - Launch blocker: Observability gate requires `pass`; actual status is `partial`.
-- Launch blocker: Controlled-launch review requires a complete versioned eval-run identity.
 - Launch blocker: High-risk escalation evidence contains under-escalation, wrong-destination, payload, or resume failures.
 - Model arena gate: Add a final latency run before rollout.
 - Routing / capability allocation gate: Fix high-risk workflow assignment regressions and rerun routing slices.

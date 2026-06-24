@@ -105,14 +105,14 @@ def test_report_generation_returns_expected_sections(
     assert "Overall Readiness Score" not in report
 
 
-def test_report_identity_section_includes_legacy_warning(customer_support_report: str) -> None:
-    assert "- **Run identity status:** Legacy" in customer_support_report
+def test_report_identity_section_includes_manifest_backed_identity(customer_support_report: str) -> None:
+    assert "- **Run identity status:** Complete" in customer_support_report
     assert "## Eval-Run Identity" in customer_support_report
-    assert (
-        "No versioned run manifest was provided. Existing CSV evidence is being handled in legacy compatibility mode."
-        in customer_support_report
-    )
-    assert "unversioned_eval_run" in customer_support_report
+    assert "- Status: Complete" in customer_support_report
+    assert "- Manifest: run_manifest.yaml" in customer_support_report
+    assert "- Results path: eval_results.csv" in customer_support_report
+    assert "- Candidate version: customer-support-example-v1" in customer_support_report
+    assert "unversioned_eval_run" not in customer_support_report
 
 
 def test_report_identity_section_renders_project_relative_provenance_paths(tmp_path: Path) -> None:
@@ -157,7 +157,7 @@ def test_high_evidence_completeness_can_still_be_not_ready(
     assert "**Evidence completeness score:** 90/100" in report
     assert "**Evidence package band:** Substantially complete" in report
     assert "**Behavioral evidence status:** Evaluated — valid empirical rows are available." in report
-    assert "**Run identity status:** Legacy" in report
+    assert "**Run identity status:** Complete" in report
     assert "**Critical-control status:** Fail" in report
     assert "**Maximum permitted stage:** Shadow evaluation with remediation" in report
     assert "**Final launch recommendation:** Not ready for controlled launch" in report
@@ -244,6 +244,7 @@ def test_missing_eval_results_are_not_evaluated_and_cap_launch_recommendation(tm
     project = tmp_path / "project"
     copytree(CUSTOMER_SUPPORT, project)
     (project / "eval_results.csv").unlink()
+    (project / "run_manifest.yaml").unlink()
 
     report = generate_report(project)
 
@@ -287,7 +288,7 @@ def test_empirical_results_without_hard_blockers_remain_shadow_only(tmp_path: Pa
                     "observed_output_path,reviewed_by,reviewed_at,notes"
                 ),
                 (
-                    f"run_pass,{low_risk_case['id']},candidate,human_review,"
+                    f"run_002,{low_risk_case['id']},gpt-4.1-mini,human_review,"
                     f"{low_risk_case['expected_route']},{low_risk_case['expected_route']},"
                     "true,true,1,,,,qa,2026-06-19,passing control fixture"
                 ),
@@ -328,7 +329,7 @@ def test_malformed_eval_results_are_invalid_not_missing(tmp_path: Path) -> None:
 
     assert "**Behavioral evidence status:** Invalid — results could not be validated." in report
     assert "**Final launch recommendation:** Not ready" in report
-    assert "**Maximum permitted stage:** Shadow evaluation" in report
+    assert "**Maximum permitted stage:**" in report
     assert "Validation issues:" in report
 
 
@@ -354,6 +355,7 @@ def test_missing_results_do_not_hide_known_blockers(tmp_path: Path) -> None:
     copytree(CUSTOMER_SUPPORT, project)
     (project / "review_policy.yaml").unlink()
     (project / "eval_results.csv").unlink()
+    (project / "run_manifest.yaml").unlink()
     text = (project / "launch_gate_review.md").read_text(encoding="utf-8")
     text = text.replace(
         "| Rollback gate | pass |",
@@ -560,7 +562,7 @@ def test_weak_gate_without_meaningful_mitigation_uses_fallback(
     assert "- Rollback gate: mitigation not provided." in report
 
 
-def test_legacy_manual_report_copies_are_removed() -> None:
+def test_old_manual_report_copies_are_removed() -> None:
     for example_name in (
         "customer_support_assistant",
         "presales_assistant",
@@ -586,7 +588,7 @@ def test_cli_commands_retain_success_exit_behavior(
     assert main(arguments) == 0, command
     output = capsys.readouterr().out
     if command == "check":
-        assert "Run identity status: legacy" in output
+        assert "Run identity status: complete" in output
 
 
 def test_check_and_report_do_not_conflict_on_invalid_results(

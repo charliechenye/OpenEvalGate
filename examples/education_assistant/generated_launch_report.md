@@ -6,7 +6,7 @@
 - **Evidence completeness score:** 34/100
 - **Evidence package band:** Incomplete
 - **Behavioral evidence status:** Evaluated — valid empirical rows are available.
-- **Run identity status:** Legacy
+- **Run identity status:** Complete
 - **Declared review mode:** shadow_launch
 - **Effective review mode:** shadow_launch
 - **Sufficiency for effective review mode:** Sufficient
@@ -17,9 +17,17 @@
 - **Hard blockers:** 6
 
 ## Eval-Run Identity
-- Status: Legacy
+- Status: Complete
+- Manifest: run_manifest.yaml
+- Run ID: run_001
+- Lifecycle: complete
+- Candidate: education_candidate
+- Candidate version: education-example-v1
+- Evaluator kind: human
+- Evaluator ID: human_review
+- Results path: eval_results.csv
 - Findings: none
-- Warning: No versioned run manifest was provided. Existing CSV evidence is being handled in legacy compatibility mode.
+- Limitation: Run and output identity checks passed. Digests and release freshness were not evaluated.
 
 ## Evidence Completeness Score
 34/100
