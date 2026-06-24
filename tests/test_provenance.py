@@ -17,6 +17,34 @@ def _write_results(path: Path) -> None:
     path.write_text(CSV_HEADER, encoding="utf-8")
 
 
+def _write_result_rows(path: Path, rows: list[dict[str, str]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    body = []
+    for row in rows:
+        body.append(
+            ",".join(
+                [
+                    row.get("run_id", "run_001"),
+                    row.get("case_id", "case_001"),
+                    row.get("candidate", "candidate"),
+                    row.get("evaluator", "human-review"),
+                    "show",
+                    "show",
+                    "true",
+                    "true",
+                    "1",
+                    "",
+                    "",
+                    "",
+                    "qa",
+                    "2026-06-18",
+                    "",
+                ]
+            )
+        )
+    path.write_text(CSV_HEADER + "\n".join(body) + "\n", encoding="utf-8")
+
+
 def _base_manifest(**overrides):
     manifest = {
         "schema_version": "1",
@@ -293,3 +321,102 @@ def test_lifecycle_aborted_remains_identity_complete(tmp_path: Path) -> None:
 
     assert inspection.status == RunIdentityStatus.COMPLETE
     assert _finding_ids(inspection) == ["provenance_lifecycle_incomplete"]
+
+
+def test_csv_rows_match_manifest_identity_exactly(tmp_path: Path) -> None:
+    _write_result_rows(tmp_path / "eval_results.csv", [{"case_id": "case_001"}])
+    _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.status == RunIdentityStatus.COMPLETE
+    assert inspection.identity is not None
+    assert inspection.identity.candidate_id == "candidate"
+
+
+def test_csv_rows_accept_candidate_and_evaluator_aliases(tmp_path: Path) -> None:
+    _write_result_rows(
+        tmp_path / "eval_results.csv",
+        [{"candidate": "candidate-alias", "evaluator": "reviewer"}],
+    )
+    _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.status == RunIdentityStatus.COMPLETE
+    assert inspection.identity is not None
+    assert inspection.identity.candidate_id == "candidate"
+    assert inspection.identity.evaluator.evaluator_id == "human-review"
+
+
+def test_csv_row_identity_is_trimmed(tmp_path: Path) -> None:
+    _write_result_rows(
+        tmp_path / "eval_results.csv",
+        [{"run_id": " run_001 ", "candidate": " candidate ", "evaluator": " human-review "}],
+    )
+    _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.status == RunIdentityStatus.COMPLETE
+
+
+def test_csv_row_identity_is_case_sensitive(tmp_path: Path) -> None:
+    _write_result_rows(tmp_path / "eval_results.csv", [{"candidate": "Candidate"}])
+    _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.status == RunIdentityStatus.INVALID
+    assert _finding_ids(inspection) == ["provenance_candidate_alias_mismatch"]
+
+
+def test_manifest_backed_csv_rejects_mixed_runs(tmp_path: Path) -> None:
+    _write_result_rows(tmp_path / "eval_results.csv", [{"run_id": "run_001"}, {"run_id": "run_002"}])
+    _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.status == RunIdentityStatus.INVALID
+    assert _finding_ids(inspection) == ["provenance_run_id_mismatch"]
+
+
+def test_manifest_backed_csv_rejects_mixed_candidates(tmp_path: Path) -> None:
+    _write_result_rows(tmp_path / "eval_results.csv", [{"candidate": "candidate"}, {"candidate": "other"}])
+    _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.status == RunIdentityStatus.INVALID
+    assert _finding_ids(inspection) == ["provenance_candidate_alias_mismatch"]
+
+
+def test_manifest_backed_csv_rejects_mixed_evaluators(tmp_path: Path) -> None:
+    _write_result_rows(tmp_path / "eval_results.csv", [{"evaluator": "human-review"}, {"evaluator": "other"}])
+    _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.status == RunIdentityStatus.INVALID
+    assert _finding_ids(inspection) == ["provenance_evaluator_alias_mismatch"]
+
+
+def test_selected_run_mismatch_is_invalid(tmp_path: Path) -> None:
+    run_dir = tmp_path / "eval_runs" / "other_run"
+    _write_result_rows(run_dir / "eval_results.csv", [{"run_id": "run_001"}])
+    _write_manifest(run_dir / "run_manifest.yaml", _base_manifest())
+
+    inspection = inspect_run_identity(tmp_path, selected_run_id="other_run")
+
+    assert inspection.status == RunIdentityStatus.INVALID
+    assert _finding_ids(inspection) == ["provenance_run_id_mismatch"]
+
+
+def test_selected_candidate_mismatch_is_invalid(tmp_path: Path) -> None:
+    _write_result_rows(tmp_path / "eval_results.csv", [{"candidate": "candidate"}])
+    _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
+
+    inspection = inspect_run_identity(tmp_path, selected_run_id="run_001", selected_candidate="other")
+
+    assert inspection.status == RunIdentityStatus.INVALID
+    assert _finding_ids(inspection) == ["provenance_candidate_alias_mismatch"]

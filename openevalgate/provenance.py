@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import csv
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -191,6 +192,8 @@ def inspect_run_identity(
             elif root_findings:
                 findings.extend(root_findings)
 
+    findings.extend(_validate_csv_identity(identity))
+
     sorted_findings = _sort_findings(findings)
     invalid_findings = [f for f in sorted_findings if f.id not in _lifecycle_finding_ids()]
     return RunIdentityInspection(
@@ -349,6 +352,62 @@ def _identity_from_manifest(
         artifact_index_path=artifact_index_path,
     )
     return identity, _sort_findings(findings)
+
+
+def _validate_csv_identity(identity: RunIdentity) -> list[ProvenanceFinding]:
+    findings: list[ProvenanceFinding] = []
+    evaluator_allowed = {
+        identity.evaluator.evaluator_id,
+        *identity.evaluator.accepted_aliases,
+    }
+    candidate_allowed = {identity.candidate_id, *identity.candidate_accepted_aliases}
+    try:
+        with identity.results_path.open("r", encoding="utf-8", newline="") as handle:
+            rows = list(csv.DictReader(handle))
+    except (csv.Error, OSError, UnicodeError) as exc:
+        return [
+            ProvenanceFinding(
+                id="provenance_manifest_schema_invalid",
+                path=str(identity.results_path),
+                message=f"Could not read manifest results CSV: {exc}",
+            )
+        ]
+
+    for index, row in enumerate(rows, start=2):
+        row_run_id = _csv_cell(row, "run_id")
+        row_candidate = _csv_cell(row, "candidate")
+        row_evaluator = _csv_cell(row, "evaluator")
+        prefix = f"{identity.results_path}:row[{index}]"
+        if row_run_id != identity.run_id:
+            findings.append(
+                ProvenanceFinding(
+                    id="provenance_run_id_mismatch",
+                    path=f"{prefix}.run_id",
+                    message="CSV row run_id does not match manifest run.id.",
+                )
+            )
+        if row_candidate not in candidate_allowed:
+            findings.append(
+                ProvenanceFinding(
+                    id="provenance_candidate_alias_mismatch",
+                    path=f"{prefix}.candidate",
+                    message="CSV row candidate does not match manifest candidate identity or aliases.",
+                )
+            )
+        if row_evaluator not in evaluator_allowed:
+            findings.append(
+                ProvenanceFinding(
+                    id="provenance_evaluator_alias_mismatch",
+                    path=f"{prefix}.evaluator",
+                    message="CSV row evaluator does not match manifest evaluator identity or aliases.",
+                )
+            )
+    return findings
+
+
+def _csv_cell(row: dict[str, Any], field: str) -> str:
+    value = row.get(field)
+    return value.strip() if isinstance(value, str) else ""
 
 
 def _path_finding(error: str, path: str) -> ProvenanceFinding:
