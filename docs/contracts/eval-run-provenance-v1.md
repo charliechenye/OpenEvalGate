@@ -1,6 +1,6 @@
 # Eval-Run Provenance Contract v1
 
-Status: proposed contract for a future OpenEvalGate release
+Status: proposed contract; runtime identity subset implemented
 
 ## Purpose
 
@@ -8,7 +8,7 @@ OpenEvalGate evaluates externally produced evidence for AI-assistant and agent l
 
 This contract defines a vendor-neutral, run-scoped evidence envelope for existing OpenEvalGate-compatible eval results. The provenance manifest wraps an existing compatible `eval_results.csv`. It does not require external eval systems to adopt new provenance columns or rewrite every row.
 
-PR 18 defines the contract, schemas, fixtures, and fixture-development validation only. It does not implement production provenance parsing, report rendering, CLI behavior, controlled-launch enforcement, blockers, recommendation logic, or authorization code.
+PR 18 defines the contract, schemas, fixtures, and fixture-development validation. PR 19 implements the runtime identity subset: manifest schema loading, deterministic authoritative-manifest selection, selected run and candidate checks, evaluator identity checks, lifecycle findings, result CSV identity checks, output identity consistency, artifact-index identity checks, legacy distinction, report visibility, and controlled-launch blocking for legacy, invalid, failed, or incomplete identity evidence. Digest verification, verified assurance, freshness, recency, `review_context.yaml`, and complete contract authorization remain deferred.
 
 ## Scope
 
@@ -22,7 +22,7 @@ Version 1 defines:
 - lifecycle, validity, freshness, recency, assurance, finding, and authorization vocabulary;
 - bounded compatibility for projects without a manifest.
 
-Version 1 does not define a new CSV row schema, remote attestation, vendor adapters, OpenEvalGate review provenance, runtime enforcement, or report output.
+Version 1 does not define a new CSV row schema, remote attestation, vendor adapters, or OpenEvalGate review provenance. The implemented runtime subset reports identity and lifecycle status only; complete digest-backed provenance, freshness, recency, verified assurance, and full authorization output remain deferred.
 
 ## Existing CSV Compatibility
 
@@ -449,18 +449,25 @@ References:
 
 ## Conformance Fixtures
 
-Self-contained fixture directories under `spec/fixtures/provenance/v1/` include real input, result, artifact, review-context, and expected-classification files. Recorded SHA-256 values are computed from fixture bytes. PR 18 machine-checks schema validity, fixture inventory, referenced files, recorded digests, orphan-file hygiene, and selected scenario invariants. The expected provenance and authorization classifications are normative fixture data; PR 19 will implement the production classifier and compare complete runtime outputs against these expectations.
+Self-contained fixture directories under `spec/fixtures/provenance/v1/` include real input, result, artifact, review-context, and expected-classification files. Recorded SHA-256 values are computed from fixture bytes. PR 18 machine-checks schema validity, fixture inventory, referenced files, recorded digests, orphan-file hygiene, and selected scenario invariants. PR 19 projects those fixtures into the implemented runtime identity subset, while complete provenance, freshness, recency, assurance, and authorization outputs remain normative future work.
 
-The fixtures are normative contract examples, but PR 18 does not make production code execute them.
+The fixtures are normative contract examples. Runtime tests now cover identity-relevant fixture projections, but deliberately defer digest mismatch, stale evidence, recency, freshness, verified assurance, and review-context expectations.
 
 ## Implementation Sequence
 
-Future implementation work is expected to:
+Implemented runtime identity work:
 
-1. Parse manifests, existing compatible result CSVs, artifact indexes, and review context.
-2. Validate schema, identity, uniqueness, containment, lifecycle, and envelope digests.
-3. Classify presence, validity, freshness, recency, assurance, lifecycle, and authorization.
-4. Surface classifications in reports.
-5. Connect provenance eligibility to controlled-launch authorization.
+1. Parse manifests, existing compatible result CSVs, and artifact indexes.
+2. Validate schema, selected identity, uniqueness, containment, lifecycle, output metadata, and artifact-index identity.
+3. Classify runtime identity as `complete`, `legacy`, or `invalid`, with lifecycle reported separately.
+4. Surface identity and lifecycle classifications in CLI status and reports.
+5. Block controlled launch for legacy, invalid, failed, or incomplete identity evidence.
+
+Deferred work remains:
+
+1. Verify manifest, input, result, artifact-index, and artifact digests.
+2. Classify verified assurance, freshness, recency, and complete contract authorization.
+3. Parse and enforce `review_context.yaml` for current-release comparison.
+4. Extend report output beyond runtime identity and lifecycle status.
 
 Each implementation step must preserve fail-closed behavior.

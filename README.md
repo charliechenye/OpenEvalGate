@@ -96,11 +96,13 @@ The framework distinguishes:
 
 The complete gate list, scoring weights, evidence bands, and hard-gate semantics are documented in [Launch Gates and Evidence Completeness Scoring](docs/launch-gates-and-evidence-scoring.md). Review modes, selected-run coverage, and controlled-launch behavioral sufficiency are documented in [Review Modes and Behavioral Sufficiency](docs/review-modes.md).
 
-## Proposed Eval-Run Provenance
+## Runtime Eval-Run Identity
 
-The proposed [Eval-Run Provenance Contract v1](docs/contracts/eval-run-provenance-v1.md) defines how a small `run_manifest.yaml` can wrap an existing OpenEvalGate-compatible `eval_results.csv`. Existing compatible CSVs do not need new provenance columns.
+The [Eval-Run Provenance Contract v1](docs/contracts/eval-run-provenance-v1.md) defines how a small `run_manifest.yaml` can wrap an existing OpenEvalGate-compatible `eval_results.csv`. Existing compatible CSVs do not need new provenance columns.
 
-PR 18 machine-checks provenance schema validity, fixture inventory, referenced files, recorded digests, orphan-file hygiene, and selected scenario invariants. The expected provenance and authorization classifications are normative fixture data. Runtime provenance parsing, complete classification, freshness comparison, report sections, blockers, and controlled-launch enforcement are not implemented yet; that work is reserved for PR 19 or later.
+OpenEvalGate now classifies selected eval-run identity as `complete`, `legacy`, or `invalid`. `complete` means the run, candidate, evaluator, result CSV, output paths, recognized output metadata, and declared artifact-index identities are coherent. It does not mean the run lifecycle is complete, rows exist, the run passed, digests were verified, evidence is fresh or recent, behavioral evidence is sufficient, or controlled launch is authorized.
+
+Controlled launch requires complete versioned run identity. Legacy evidence can still be inspected for documentation or shadow review, but it is visibly distinguished and cannot authorize controlled launch. Invalid identity evidence is excluded from behavioral summaries and launch decisions. Digest verification, verified assurance, freshness and recency comparison, and `review_context.yaml` enforcement remain deferred.
 
 ## Where OpenEvalGate Fits
 
@@ -154,7 +156,7 @@ OpenEvalGate is an early, pre-1.0 framework with practitioner-defined defaults a
 - It does not execute candidate models, call LLM APIs, or evaluate live behavior by itself.
 - It does not replace eval runners, observability systems, runtime guardrails, security controls, or organizational approval.
 - It validates submitted artifacts and declared evidence; it does not independently verify that every claim in those artifacts is true, current, or complete.
-- The current implementation validates core result identities, expected-route consistency, duplicate identities, review timestamps, supplied output references, and basic route-match derivation. It does not yet fully validate evidence provenance, evidence freshness, artifact-version pinning, enriched workflow-route claims, handoff claims, or every routing-policy and model-policy field.
+- The current implementation validates core result identities, selected eval-run identity, expected-route consistency, duplicate identities, review timestamps, supplied output references, output identity metadata, artifact-index identity, and basic route-match derivation. It does not yet verify provenance digests, evidence freshness or recency, artifact-version pinning beyond declared runtime identity, enriched workflow-route claims, handoff claims, or every routing-policy and model-policy field.
 - A recommendation is only as reliable as the quality, completeness, provenance, and freshness of the supplied evidence.
 - A passing check, high evidence score, or bounded recommendation does not guarantee safe, reliable, compliant, or successful deployment.
 - It does not certify compliance or provide legal, regulatory, security, or risk-management certification.
