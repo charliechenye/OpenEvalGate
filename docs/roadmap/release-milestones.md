@@ -72,7 +72,7 @@ Ship the first substantive public-alpha release around **evidence integrity and 
 
 - internally consistent eval-result validation;
 - duplicate, timestamp, reference, and output-path validation;
-- proposed run provenance contract and fixture-integrity checks, followed by runtime artifact digest verification and freshness behavior;
+- proposed run provenance contract and fixture-integrity checks for selected path, artifact-identity, digest, lifecycle, freshness, and recency branches, followed by runtime artifact digest verification and freshness behavior;
 - controlled-launch evidence pinned to an explicit run;
 - a minimal installed-wheel onboarding path;
 - versioned JSON output and documented exit behavior;

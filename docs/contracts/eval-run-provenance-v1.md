@@ -197,7 +197,7 @@ Artifact semantic rules are normative:
 - `artifact_id` values must be unique;
 - normalized artifact paths must be unique;
 - `trial_id` requires `case_id`;
-- artifact `case_id` and `trial_id` must agree with applicable CSV result evidence; CSV `case_id` is trimmed before comparison, and absent artifact `trial_id` and blank CSV `trial_id` are equivalent;
+- artifact `case_id` and `trial_id`, when supplied, must agree with applicable CSV result evidence; CSV `case_id` is trimmed before comparison, and absent artifact `trial_id` and blank CSV `trial_id` are equivalent;
 - `evaluator_ref`, when present, must resolve to the top-level evaluator ID or one component ID of a hybrid evaluator;
 - artifact paths must resolve safely and remain contained;
 - artifact files must exist and be regular files;

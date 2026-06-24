@@ -122,10 +122,10 @@ The following are not required merely to make the repository public:
 
 - [~] Define evaluator kinds and minimum evidence. Contract proposed; runtime validation pending.
 - [~] Define candidate identity, run lifecycle, timestamps, and resource descriptors. Contract proposed; runtime validation pending.
-- [~] Define provenance presence, validity, freshness, recency, assurance, lifecycle, and authorization classifications. Contract proposed with normative fixture expectations and fixture-integrity checks; runtime classification and reporting pending.
+- [~] Define provenance presence, validity, freshness, recency, assurance, lifecycle, and authorization classifications. Contract proposed with normative fixture expectations and fixture-integrity checks, including unsafe path and optional artifact-identity branches; runtime classification and reporting pending.
 - [~] Define stale-evidence behavior when current candidate or policy state differs from valid historical evidence. Contract proposed with selected invariant fixtures; runtime freshness comparison pending.
 - [ ] Parse and verify run provenance.
-- [ ] Validate that referenced output-artifact metadata and directory identity agree with the result row's run, case, candidate, and evaluator fields.
+- [ ] Validate at runtime that referenced output-artifact metadata and directory identity agree with result rows when optional artifact identity fields are supplied.
 - [ ] Display provenance classifications in reports.
 - [ ] Enforce controlled-launch provenance requirements.
 
