@@ -1,12 +1,12 @@
 schema_version: "1"
 run_id: run_002
 artifacts:
-  - artifact_id: transcript_dependency_failure_001
-    artifact_type: transcript
-    case_id: dependency_failure_escalation_011
+  - artifact_id: output_case_001
+    artifact_type: observed_output
+    case_id: case_001
     trial_id: trial_001
     evaluator_ref: support-quality-review
     path: artifacts/case_001.md
-    media_type: text/markdown
+    media_type: text/plain; charset=utf-8
     digest:
-      sha256: "09777369fa7187e3dcfafeef02e26af54313d825fe6b3bfaf163fc6f9a227e0c"
+      sha256: "dfe2536c54e524fe51958cec0ffde9b3b8298ee91974b199ea9a39f0a3fa3b71"

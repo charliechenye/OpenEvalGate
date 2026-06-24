@@ -1,10 +1,11 @@
 schema_version: "1"
 run_id: run_002
 artifacts:
-  - artifact_id: transcript_wrong_case
-    artifact_type: transcript
-    case_id: other_case_999
+  - artifact_id: output_case_001
+    artifact_type: observed_output
+    case_id: case_999
     trial_id: trial_001
+    evaluator_ref: support-quality-review
     path: artifacts/case_001.md
     digest:
-      sha256: "b277d3994f3b06b90d0ebcf0e848e05c4653bfb02ad3266e5b988eeb1b757e91"
+      sha256: "dfe2536c54e524fe51958cec0ffde9b3b8298ee91974b199ea9a39f0a3fa3b71"

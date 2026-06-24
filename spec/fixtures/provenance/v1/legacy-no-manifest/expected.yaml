@@ -16,4 +16,5 @@ authorization:
   shadow: allowed_with_warning
   controlled_launch: blocked
 
-findings: [provenance_manifest_absent]
+findings:
+  - provenance_manifest_absent

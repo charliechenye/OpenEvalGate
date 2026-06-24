@@ -1,3 +1,1 @@
-# Transcript
-
-The assistant escalated after dependency failure.
+Observed answer for case_001.

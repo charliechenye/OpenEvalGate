@@ -3,10 +3,17 @@ schema_version: "1"
 candidate:
   id: customer-support-agent
   version: "2026.06.18-rc2"
-  artifact:
-    path: current/candidate.yaml
+
+inputs:
+  - role: eval_cases
+    path: current/eval_cases.yaml
     digest:
-      sha256: "a59e780f6ca3cff5631892579011427d32f85c6120e8a8a4485a973e9c4a40b3"
+      sha256: "7ff2c68abb7b1f1b577ddc0d09b15a3c3537a677a4cfc1278aafe0c177ca7c0c"
+  - role: evaluator_configuration
+    name: quality-judge
+    path: current/judge_config.yaml
+    digest:
+      sha256: "5feadcd3e4003cd222c19dc315ccc632e8667ef090736a3e0359fe428cb4eb28"
 
 recency_policy:
   max_age_days: 30

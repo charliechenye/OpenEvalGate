@@ -1,5 +1,4 @@
 schema_version: "1"
-
 run:
   id: run_002
   status: complete
@@ -9,26 +8,11 @@ run:
 candidate:
   id: customer-support-agent
   version: "2026.06.18-rc2"
-  accepted_aliases:
-    - support-agent-rc2
-  artifact:
-    path: inputs/candidate.yaml
-    digest:
-      sha256: "a59e780f6ca3cff5631892579011427d32f85c6120e8a8a4485a973e9c4a40b3"
-
-producer:
-  id: internal-eval-exporter
-  version: "2.4.0"
 
 evaluation:
   kind: hybrid
-  framework:
-    id: internal-eval-runner
-    version: "5.2.1"
   evaluator:
     id: combined-quality-review
-    accepted_aliases:
-      - hybrid-review
     components:
       - id: deterministic-checks
         kind: deterministic
@@ -38,21 +22,21 @@ evaluation:
     decision_policy:
       path: inputs/hybrid_policy.yaml
       digest:
-        sha256: "0b250e47e68c4f1a641c55801344cce6b9894755644a9122d1d6321af9298b42"
-
-  policy:
-    path: inputs/evaluation_policy.yaml
-    digest:
-      sha256: "a1a6083ea71d7af492ebc09b8a950dff558d0ebc3935e394edf5534049a0a903"
+        sha256: "876c209022a1bbbd0ff2e831e0383d30c619775515c28717106fc7b142d99fe2"
 
 inputs:
   - role: eval_cases
     path: inputs/eval_cases.yaml
     digest:
-      sha256: "e58f8bfcce4e56c619c2b4fc740bff012db849eca8ac29209cb3753e967c9fee"
+      sha256: "7ff2c68abb7b1f1b577ddc0d09b15a3c3537a677a4cfc1278aafe0c177ca7c0c"
+  - role: hybrid_decision_policy
+    name: combined-quality-review
+    path: inputs/hybrid_policy.yaml
+    digest:
+      sha256: "876c209022a1bbbd0ff2e831e0383d30c619775515c28717106fc7b142d99fe2"
 
 outputs:
   results:
     path: eval_results.csv
     digest:
-      sha256: "54c88fce551359b73141ada9eac192f3c5c00a5083ab1c834462e470ba65f53d"
+      sha256: "474c287878d9a7dab863d880d7e5facf65c4a12613ea4e1c1e315fa9da6ec006"

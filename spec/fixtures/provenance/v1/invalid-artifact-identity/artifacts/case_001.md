@@ -1,3 +1,1 @@
-# Transcript
-
-Artifact belongs to another case in the index.
+Observed answer for case_001.

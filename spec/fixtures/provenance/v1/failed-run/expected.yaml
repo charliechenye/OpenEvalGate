@@ -17,4 +17,4 @@ authorization:
   controlled_launch: blocked
 
 findings:
-  - provenance_run_failed
+  - provenance_lifecycle_failed

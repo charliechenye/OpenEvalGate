@@ -1,3 +1,0 @@
-cases:
-  - id: dependency_failure_escalation_011
-    expected_route: escalate
