@@ -20,9 +20,9 @@ The `0.2.0` theme is **evidence integrity and minimal adoption**.
 - [ ] Recompute or consistency-check derived route, workflow, destination, and policy fields.
 - [ ] Reject duplicate result records.
 - [ ] Validate timestamps, selected scope, candidate references, and observed-output references.
-- [ ] Add explicit run provenance and evaluator type.
-- [ ] Pin framework and applicable artifact versions or digests.
-- [ ] Define stale-evidence behavior.
+- [~] Add explicit run provenance and evaluator type. Contract proposed; runtime parsing pending.
+- [~] Define framework, input, result, and artifact descriptor rules. Contract proposed; digest verification pending.
+- [~] Define stale-evidence and recency behavior. Contract proposed; runtime freshness comparison pending.
 - [ ] Require versioned, non-stale selected evidence for controlled-launch authorization.
 
 ### Minimal onboarding
@@ -229,7 +229,7 @@ Begin the `1.0.0` release process only when:
 - [ ] Public schemas and migration behavior are stable.
 - [ ] CLI commands, exit codes, and machine-readable output are stable.
 - [ ] Hard-blocker IDs, applicability rules, and recommendation meanings are stable.
-- [ ] Provenance and freshness rules are operational.
+- [ ] Provenance and freshness rules are operational. The contract is proposed, but runtime verification and enforcement remain pending.
 - [ ] Compatibility fixtures cover supported previous schemas.
 - [ ] Multiple independent users have completed the workflow.
 - [ ] At least one external contribution and one real integration exist.

@@ -16,7 +16,7 @@ This iteration should not expand product scope. It should harden the public surf
 
 1. Public positioning and limitations.
 2. Eval-result integrity.
-3. Run provenance and version pinning.
+3. Proposed run provenance contract and version-pinning path.
 4. Passing and blocked reference examples.
 5. Governance, support, attribution, and compatibility policies.
 6. CI quality and security hardening.
@@ -59,7 +59,7 @@ Maintain two flagship narratives.
 - [ ] Passing configured thresholds and behavioral invariants.
 - [ ] No unresolved hard blocker or prohibited action.
 - [ ] Passing observability, rollback, and owner signoff.
-- [ ] Valid selected-run provenance.
+- [~] Proposed selected-run provenance contract exists; runtime validation remains pending.
 - [ ] Deterministic controlled-launch recommendation.
 
 ### Blocked controlled-launch example

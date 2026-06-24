@@ -2,7 +2,7 @@
 
 ## Status
 
-**Core semantics complete; evidence integrity remains open.** Review modes, controlled-launch behavioral sufficiency, centralized hard-gate policy, fail-closed applicability, and deterministic reporting are implemented. The remaining work is to make empirical evidence internally consistent, attributable to exact artifact versions, and resistant to stale or self-contradictory inputs.
+**Core semantics complete; provenance contract proposed; runtime evidence integrity remains open.** Review modes, controlled-launch behavioral sufficiency, centralized hard-gate policy, fail-closed applicability, deterministic reporting, and the proposed eval-run provenance contract are documented. The remaining work is to parse and verify provenance at runtime, make empirical evidence attributable to exact artifact versions, and prevent stale or self-contradictory inputs from authorizing launch.
 
 This iteration supports two milestones:
 
@@ -92,36 +92,29 @@ These items protect the central public claim that OpenEvalGate produces determin
 
 ### Add versioned run provenance
 
-Introduce explicit run evidence, whether through a run manifest or an equivalently structured contract.
+Introduce explicit run evidence through the proposed eval-run provenance contract. The contract wraps an existing compatible `eval_results.csv`; runtime parsing and enforcement remain pending.
 
 Required concepts:
 
-- run ID and timestamps;
+- run ID, lifecycle, and optional timestamps;
 - candidate ID and version;
-- OpenEvalGate version;
-- evaluator type and version;
-- selected eval-set version or digest;
-- selected review-policy version or digest;
-- routing-policy and escalation-contract versions or digests when applicable;
-- result artifact reference.
+- evaluator type and version where applicable;
+- selected eval-set, review-policy, routing-policy, escalation-contract, or action-risk evidence when applicable;
+- result CSV and optional artifact-index references;
+- current release context for freshness and recency comparison.
 
-- [ ] Define evaluator type: human, deterministic, model judge, or hybrid.
-- [ ] Pin selected framework and artifact versions or digests.
-- [ ] Verify selected run evidence against current project artifacts.
+- [~] Define evaluator type: human, deterministic, model judge, or hybrid. Contract proposed; runtime validation pending.
+- [~] Define candidate identity, lifecycle, descriptors, artifact indexing, freshness, recency, and assurance. Contract proposed; runtime validation pending.
+- [ ] Parse and verify selected run evidence against current project artifacts.
 - [ ] Surface stale or mismatched evidence in reports.
 - [ ] Require versioned, non-stale evidence for controlled-launch authorization.
-- [ ] Retain bounded legacy support for documentation and shadow review.
+- [~] Retain bounded legacy support for documentation and shadow review. Contract proposed; runtime behavior pending.
 
 ### Distinguish evidence provenance
 
-Initial categories:
+Initial contract categories are manifest presence, validity, freshness, recency, assurance, lifecycle, and authorization. Signed attestation and richer review provenance are reserved for future contracts.
 
-- `self_attested`
-- `tool_validated`
-- `externally_generated`
-- `human_approved`
-
-- [ ] Add provenance to structured evidence where it changes interpretation.
+- [~] Add provenance classifications to structured evidence where they change interpretation. Contract proposed; runtime integration pending.
 - [ ] Report provenance for the selected controlled-launch evidence.
 - [ ] Require stronger provenance for controlled-launch hard controls.
 - [~] Prevent blank or placeholder hard-gate evidence from satisfying centralized hard gates; broader artifact-depth validation remains open.
@@ -129,7 +122,7 @@ Initial categories:
 ### Acceptance criteria
 
 - [ ] The report identifies the exact run, candidate, framework, and artifact versions used for the decision.
-- [ ] A changed eval set, routing policy, escalation contract, or review policy is visible as stale or mismatched evidence.
+- [~] Contract fixtures define stale candidate and policy evidence; runtime reporting of stale or mismatched evidence remains pending.
 - [ ] Self-attested evidence is visibly different from tool-validated or human-approved evidence.
 - [ ] Controlled launch cannot be authorized using an unpinned or stale selected run.
 
@@ -159,7 +152,7 @@ Iteration 1 is complete when:
 - [x] Partial critical gates block advancement.
 - [x] Initial controlled-launch thresholds and denominators are explicit.
 - [x] Core eval results are internally consistent and duplicate-safe.
-- [ ] Controlled-launch evidence is versioned and freshness-aware.
-- [ ] Selected evidence provenance is visible.
+- [~] Controlled-launch provenance and freshness contract is proposed; runtime enforcement remains pending.
+- [~] Selected evidence provenance vocabulary is proposed; report visibility remains pending.
 - [x] Centralized gate semantics are covered by regression tests.
 - [x] Canonical examples regenerate without undocumented manual edits.
