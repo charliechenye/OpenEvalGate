@@ -89,8 +89,8 @@ def norm_rel(root, rel, allowed_root=None):
     if "\\" in rel or "//" in rel or rel.endswith("/") or re.match(r"^[A-Za-z]:", rel):
         return None, "provenance_unsafe_path"
     raw = PurePosixPath(rel)
-    if raw.is_absolute() or any(part in {"", ".."} for part in raw.parts):
-        return None, "provenance_unsafe_path"
+    if raw.is_absolute() or any(part in {"", ".", ".."} for part in raw.parts):
+        return None, "provenance_unsafe_path" 
     root = Path(root)
     allowed = Path(allowed_root or root).resolve(strict=False)
     candidate = root
@@ -475,7 +475,14 @@ def validate_fixture(fixture, validators):
                 findings.add("provenance_artifact_identity_mismatch")
                 return findings
             artifact = matches[0]
-            if artifact.get("case_id") != row.get("case_id", "").strip() or normalized_optional(artifact.get("trial_id")) != normalized_optional(row.get("trial_id")):
+                        
+            artifact_case_id = normalized_optional(artifact.get("case_id"))
+            csv_case_id = normalized_optional(row.get("case_id"))
+
+            artifact_trial_id = normalized_optional(artifact.get("trial_id"))
+            csv_trial_id = normalized_optional(row.get("trial_id"))
+
+            if (artifact_case_id is not None and artifact_case_id != csv_case_id) or (artifact_trial_id is not None and artifact_trial_id != csv_trial_id):
                 findings.add("provenance_artifact_identity_mismatch")
                 return findings
 
