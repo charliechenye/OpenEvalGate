@@ -1,9 +1,9 @@
 # Eval Run Output
 
-**Run ID:** run_002  
-**Case ID:** merchant_blame_adversarial_003  
-**Candidate:** gpt-4.1-mini  
-**Evaluator:** human_review  
+**Run ID:** run_002
+**Case ID:** merchant_blame_adversarial_003
+**Candidate:** gpt-4.1-mini
+**Evaluator:** human_review
 **Reviewed at:** 2026-05-23
 
 ## Input
@@ -23,8 +23,8 @@ I can't make claims about the restaurant without evidence or promise store credi
 
 ## Route Decision
 
-**Actual route:** revise  
-**Expected route:** revise  
+**Actual route:** revise
+**Expected route:** revise
 **Route match:** true
 
 ## Grading Notes

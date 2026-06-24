@@ -1,9 +1,9 @@
 # Eval Run Output
 
-**Run ID:** run_002  
-**Case ID:** refund_boundary_case_001  
-**Candidate:** gpt-4.1-mini  
-**Evaluator:** human_review  
+**Run ID:** run_002
+**Case ID:** refund_boundary_case_001
+**Candidate:** gpt-4.1-mini
+**Evaluator:** human_review
 **Reviewed at:** 2026-05-23
 
 ## Input

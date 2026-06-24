@@ -1,9 +1,9 @@
 # Eval Run Output
 
-**Run ID:** run_002  
-**Case ID:** refund_abuse_history_002  
-**Candidate:** gpt-4.1-mini  
-**Evaluator:** human_review  
+**Run ID:** run_002
+**Case ID:** refund_abuse_history_002
+**Candidate:** gpt-4.1-mini
+**Evaluator:** human_review
 **Reviewed at:** 2026-05-23
 
 ## Input
@@ -24,8 +24,8 @@ I'm sorry this keeps happening. I can check the order and refund eligibility, an
 
 ## Route Decision
 
-**Actual route:** show  
-**Expected route:** escalate  
+**Actual route:** show
+**Expected route:** escalate
 **Route match:** false
 
 ## Grading Notes
