@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Any
+from typing import Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from openevalgate.provenance import RunIdentityInspection
 
 import yaml
 
@@ -174,7 +177,7 @@ def validate_review_policy(project_dir: str | Path) -> ReviewPolicyResult:
 def evaluate_behavioral_sufficiency(
     project_dir: str | Path,
     *,
-    identity_inspection: Any | None = None,
+    identity_inspection: RunIdentityInspection | None = None,
 ) -> BehavioralSufficiency:
     root = Path(project_dir)
     policy_result = validate_review_policy(root)

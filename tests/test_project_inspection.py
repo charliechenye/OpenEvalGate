@@ -3,6 +3,7 @@ from shutil import copytree
 
 import yaml
 import pytest
+import csv
 
 from openevalgate.action_risk import (
     ActionRiskReview,
@@ -21,6 +22,10 @@ from openevalgate.validator import check_project
 ROOT = Path(__file__).resolve().parents[1]
 CUSTOMER_SUPPORT = ROOT / "examples" / "customer_support_assistant"
 
+SCOPED_RUN_ID = "run_002"
+SCOPED_CANDIDATE = "gpt-4.1-mini"
+SCOPED_EVALUATOR = "human_review"
+HIGH_RISK_HANDOFF_CASE_ID = "refund_abuse_history_002"
 
 def _copy_project(tmp_path: Path) -> Path:
     project = tmp_path / "project"
@@ -50,6 +55,98 @@ def _remove_gate(project: Path, gate: str) -> None:
     ]
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
+
+def _write_handoff_result_variant(
+    source: Path,
+    target: Path,
+    *,
+    failing_case_id: str | None,
+    clear_output_paths: bool,
+) -> None: 
+    with source.open("r", encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        headers = list(reader.fieldnames or [])
+        rows = list(reader)
+
+        found_failure_row = False
+
+        for row in rows:
+            # Normalize core route evidence to a passing baseline.
+            row["actual_route"] = row["expected_route"]
+            row["route_match"] = "true"
+            row["passed"] = "true"
+            row["score"] = "1"
+            row["failure_category"] = ""
+            row["failure_reason"] = ""
+
+            # Normalize every field inspected by # project_inspection._critical_escalation_failures().
+            row["workflow_route_match"] = "true"
+            row["destination_match"] = ""
+            row["payload_complete"] = ""
+            row["resume_success"] = ""
+
+            # Scoped result output references are relative to the run directory.
+            # Blank them so this test isolates result-source selection rather than output-artifact path validation.
+            if clear_output_paths:
+                row["observed_output_path"] = ""
+
+            if row["case_id"] == failing_case_id:
+                found_failure_row = True
+                row["workflow_route_match"] = "false"
+                row["passed"] = "false"
+                row["score"] = "0"
+                row["failure_category"] = "under_escalation"
+                row["failure_reason"] = (
+                    "Intentional high-risk handoff regression for source-selection "
+                    "testing."
+                )
+
+        if failing_case_id is not None and not found_failure_row:
+            raise AssertionError(f"Expected result row was not found: {failing_case_id}")
+
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with target.open("w", encoding="utf-8", newline="") as handle:
+            writer = csv.DictWriter(handle, fieldnames=headers, lineterminator="\n")
+            writer.writeheader()
+            writer.writerows(rows)
+
+def _prepare_scoped_handoff_results(
+    project: Path,
+    *,
+    root_fails: bool,
+    scoped_fails: bool, 
+) -> Path: 
+    root_results = project / "eval_results.csv"
+
+    _write_handoff_result_variant(
+        root_results,
+        root_results,
+        failing_case_id=(HIGH_RISK_HANDOFF_CASE_ID if root_fails else None),
+        clear_output_paths=False,
+    )
+
+    run_dir = project / "eval_runs" / SCOPED_RUN_ID
+    scoped_results = run_dir / "eval_results.csv"
+    _write_handoff_result_variant(
+        root_results,
+        scoped_results,
+        failing_case_id=(HIGH_RISK_HANDOFF_CASE_ID if scoped_fails else None),
+        clear_output_paths=True,
+    )
+    manifest = {
+        "schema_version": "1",
+        "run": {"id": SCOPED_RUN_ID, "status": "complete",},
+        "candidate": {"id": SCOPED_CANDIDATE, "version": "project-inspection-test-v1",},
+        "evaluation": {"kind": "human", "evaluator": {"id": SCOPED_EVALUATOR,}, },
+        "outputs": { "results": { "path": "eval_results.csv", }, }, 
+    }
+
+    (run_dir / "run_manifest.yaml").write_text(
+        yaml.safe_dump(manifest, sort_keys=False),
+        encoding="utf-8",
+    )
+
+    return scoped_results.resolve(strict=False)
 
 def test_valid_partial_declaration_passes_check_but_blocks_launch() -> None:
     inspection = inspect_project(CUSTOMER_SUPPORT)
@@ -816,3 +913,26 @@ def test_legacy_controlled_launch_is_blocked_by_unversioned_eval_run() -> None:
     inspection = inspect_project(CUSTOMER_SUPPORT)
 
     assert "unversioned_eval_run" in {blocker.id for blocker in inspection.hard_blockers}
+
+@pytest.mark.parametrize(
+    ("root_fails", "scoped_fails", "expect_escalation_blocker",),
+    [pytest.param( True, False, False, id="root-fails-scoped-passes", ), 
+     pytest.param( False, True, True, id="root-passes-scoped-fails", ), ],
+)
+def test_scoped_manifest_results_control_escalation_blocker(
+    tmp_path: Path,
+    root_fails: bool,
+    scoped_fails: bool,
+    expect_escalation_blocker: bool,
+) -> None:
+    project = _copy_project(tmp_path)
+    scoped_results = _prepare_scoped_handoff_results( project, root_fails=root_fails, scoped_fails=scoped_fails, )
+
+    inspection = inspect_project(project)
+    assert inspection.run_identity_inspection.status == "complete"
+    assert inspection.run_identity_inspection.results_path == scoped_results
+
+    blockers = {blocker.id: blocker for blocker in inspection.hard_blockers}
+    assert ("critical_escalation_regression" in blockers) is expect_escalation_blocker
+    if expect_escalation_blocker:
+        assert ( blockers["critical_escalation_regression"].evidence == HIGH_RISK_HANDOFF_CASE_ID )
