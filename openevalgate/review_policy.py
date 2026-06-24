@@ -15,6 +15,7 @@ from openevalgate.eval_results import (
     classify_behavioral_evidence,
     summarize_selected_eval_results,
 )
+from openevalgate.provenance import inspect_run_identity
 from openevalgate.schema import (
     ReviewMode,
     ValidationIssue,
@@ -181,20 +182,20 @@ def evaluate_behavioral_sufficiency(
 ) -> BehavioralSufficiency:
     root = Path(project_dir)
     policy_result = validate_review_policy(root)
-    evidence = classify_behavioral_evidence(root, identity_inspection=identity_inspection)
-    if identity_inspection is not None:
-        selected_results_path = (
-            identity_inspection.results_path
-            if evidence.state == "available"
-            else None
+    scope = policy_result.policy.evaluation_scope if policy_result.policy else None
+    inspection = identity_inspection
+    if inspection is None:
+        inspection = inspect_run_identity(
+            root,
+            selected_run_id=scope.run_id if scope else None,
+            selected_candidate=scope.candidate if scope else None,
         )
-    else:
-        legacy_root_results = root / "eval_results.csv"
-        selected_results_path = (
-            legacy_root_results
-            if evidence.state == "available" and legacy_root_results.is_file()
-            else None
-        )
+    evidence = classify_behavioral_evidence(root, identity_inspection=inspection)
+    selected_results_path = (
+        inspection.results_path
+        if evidence.state == "available"
+        else None
+    )
     cases: list[dict[str, Any]] = []
     eval_path = root / "eval_cases.yaml"
     if eval_path.is_file() and validate_eval_cases(eval_path).valid:
@@ -203,14 +204,13 @@ def evaluate_behavioral_sufficiency(
     critical_ids = tuple(sorted(
         str(case["id"]).strip() for case in cases if is_critical_eval_case(case)
     ))
-    scope = policy_result.policy.evaluation_scope if policy_result.policy else None
     coverage_policy = policy_result.policy.coverage if policy_result.policy else None
     selected = (
         summarize_selected_eval_results(
             root,
             run_id=scope.run_id,
             candidate=scope.candidate,
-            identity_inspection=identity_inspection,
+            identity_inspection=inspection,
         )
         if scope and evidence.state == "available"
         else None

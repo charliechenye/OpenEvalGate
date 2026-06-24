@@ -14,6 +14,7 @@ from openevalgate.eval_results import (
     summarize_selected_eval_results,
     validate_eval_results,
 )
+from openevalgate.provenance import inspect_run_identity
 from openevalgate.report import generate_report
 from openevalgate.validator import check_project
 
@@ -25,9 +26,6 @@ CUSTOMER_SUPPORT = ROOT / "examples" / "customer_support_assistant"
 def _project(tmp_path: Path) -> Path:
     project = tmp_path / "project"
     copytree(CUSTOMER_SUPPORT, project)
-    manifest = project / "run_manifest.yaml"
-    if manifest.exists():
-        manifest.unlink()
     return project
 
 
@@ -59,8 +57,9 @@ def _single_result_project(tmp_path: Path) -> tuple[Path, list[str], dict[str, s
 def _project_with_run_timestamps(
     tmp_path: Path,
     values: list[tuple[str, str]],
-) -> Path:
+):
     project = _project(tmp_path)
+    inspection = inspect_run_identity(project)
     headers, canonical_rows = _read_result_table(project)
     rows: list[dict[str, str]] = []
     for index, (run_id, reviewed_at) in enumerate(values):
@@ -71,7 +70,7 @@ def _project_with_run_timestamps(
         row["trial_id"] = f"trial_{index:03d}"
         rows.append(row)
     _write_result_table(project, headers, rows)
-    return project
+    return project, inspection
 
 
 def test_valid_eval_results_pass() -> None:
@@ -85,6 +84,7 @@ def test_valid_eval_results_pass() -> None:
 def test_missing_eval_results_are_not_provided(tmp_path: Path) -> None:
     project = _project(tmp_path)
     (project / "eval_results.csv").unlink()
+    (project / "run_manifest.yaml").unlink()
 
     evidence = classify_behavioral_evidence(project)
 
@@ -110,7 +110,7 @@ def test_invalid_eval_results_fail(tmp_path: Path) -> None:
         "\n".join(
             [
                 "run_id,case_id,candidate,evaluator,actual_route,expected_route,route_match,passed,score,failure_category,failure_reason,observed_output_path,reviewed_by,reviewed_at,notes",
-                "run_001,refund_boundary_case_001,gpt-4.1-mini,human_review,send,escalate,maybe,true,1.4,,,,ai_quality,2026-05-23,bad row",
+                "run_002,refund_boundary_case_001,gpt-4.1-mini,human_review,send,escalate,maybe,true,1.4,,,,ai_quality,2026-05-23,bad row",
             ]
         ),
         encoding="utf-8",
@@ -180,10 +180,10 @@ def test_enriched_eval_results_validate_and_calculate_boundary_metrics(tmp_path:
     variant_route = variant["expected_route"]
     variant_mismatch_route = "show" if variant_route != "show" else "escalate"
     rows = [
-        ["run_002", anchor["id"], "candidate", "harness", anchor_route, anchor_route, "true", "true", "1", "", "", "", "qa", "2026-06-18", "", "trial_1", "act", "true", "true", "true", "false"],
-        ["run_002", variant["id"], "candidate", "harness", variant_route, variant_route, "true", "true", "1", "", "", "", "qa", "2026-06-18", "", "trial_1", "act", "true", "true", "true", "false"],
-        ["run_002", anchor["id"], "candidate", "harness", anchor_route, anchor_route, "true", "true", "1", "", "", "", "qa", "2026-06-18", "", "trial_2", "act", "true", "true", "true", "false"],
-        ["run_002", variant["id"], "candidate", "harness", variant_mismatch_route, variant_route, "false", "false", "0", "route", "unstable", "", "qa", "2026-06-18", "", "trial_2", "answer", "false", "false", "false", "true"],
+        ["run_002", anchor["id"], "gpt-4.1-mini", "human_review", anchor_route, anchor_route, "true", "true", "1", "", "", "", "qa", "2026-06-18", "", "trial_1", "act", "true", "true", "true", "false"],
+        ["run_002", variant["id"], "gpt-4.1-mini", "human_review", variant_route, variant_route, "true", "true", "1", "", "", "", "qa", "2026-06-18", "", "trial_1", "act", "true", "true", "true", "false"],
+        ["run_002", anchor["id"], "gpt-4.1-mini", "human_review", anchor_route, anchor_route, "true", "true", "1", "", "", "", "qa", "2026-06-18", "", "trial_2", "act", "true", "true", "true", "false"],
+        ["run_002", variant["id"], "gpt-4.1-mini", "human_review", variant_mismatch_route, variant_route, "false", "false", "0", "route", "unstable", "", "qa", "2026-06-18", "", "trial_2", "answer", "false", "false", "false", "true"],
     ]
     with (project / "eval_results.csv").open("w", encoding="utf-8", newline="") as handle:
         writer = csv.writer(handle)
@@ -235,7 +235,7 @@ def test_invalid_enriched_result_values_fail(tmp_path: Path) -> None:
         "\n".join(
             [
                 "run_id,case_id,candidate,evaluator,actual_route,expected_route,route_match,passed,score,failure_category,failure_reason,observed_output_path,reviewed_by,reviewed_at,notes,trial_id,actual_workflow_route,workflow_route_match,trajectory_pass,end_state_pass,prohibited_action_occurred,destination_match,payload_complete",
-                "run_1,refund_boundary_case_001,candidate,harness,escalate,escalate,true,true,1,,,,qa,2026-06-18,,trial_1,execute,maybe,true,true,false,maybe,nope",
+                "run_002,refund_boundary_case_001,gpt-4.1-mini,human_review,escalate,escalate,true,true,1,,,,qa,2026-06-18,,trial_1,execute,maybe,true,true,false,maybe,nope",
             ]
         ),
         encoding="utf-8",
@@ -252,14 +252,15 @@ def test_invalid_enriched_result_values_fail(tmp_path: Path) -> None:
 
 def test_truncated_result_row_fails_closed(tmp_path: Path) -> None:
     project = _project(tmp_path)
+    inspection = inspect_run_identity(project)
     headers, _ = _read_result_table(project)
     (project / "eval_results.csv").write_text(
-        ",".join(headers) + "\nrun_001,refund_boundary_case_001\n",
+        ",".join(headers) + "\nrun_002,refund_boundary_case_001\n",
         encoding="utf-8",
     )
 
-    result = validate_eval_results(project)
-    evidence = classify_behavioral_evidence(project)
+    result = validate_eval_results(project, identity_inspection=inspection)
+    evidence = classify_behavioral_evidence(project, identity_inspection=inspection)
 
     assert not result.valid
     assert any(
@@ -279,10 +280,11 @@ def test_required_result_values_must_be_nonempty(
     blank: str,
 ) -> None:
     project, headers, row = _single_result_project(tmp_path)
+    inspection = inspect_run_identity(project)
     row[field] = blank
     _write_result_table(project, headers, [row])
 
-    result = validate_eval_results(project)
+    result = validate_eval_results(project, identity_inspection=inspection)
 
     assert not result.valid
     assert any(
@@ -442,7 +444,7 @@ def test_repeated_case_with_distinct_trial_ids_passes(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize("field", ["run_id", "candidate"])
-def test_same_case_and_trial_in_different_identity_scope_passes(
+def test_same_case_and_trial_in_different_identity_scope_is_rejected(
     tmp_path: Path,
     field: str,
 ) -> None:
@@ -451,7 +453,7 @@ def test_same_case_and_trial_in_different_identity_scope_passes(
     duplicate[field] = f"different_{field}"
     _write_result_table(project, headers, [row, duplicate])
 
-    assert validate_eval_results(project).valid
+    assert not validate_eval_results(project).valid
 
 
 @pytest.mark.parametrize("field", ["run_id", "candidate", "case_id"])
@@ -750,7 +752,7 @@ def test_nonfinite_scores_fail_validation(tmp_path: Path, score: str) -> None:
 
 
 def test_latest_run_uses_newest_timestamp_not_last_row(tmp_path: Path) -> None:
-    project = _project_with_run_timestamps(
+    project, inspection = _project_with_run_timestamps(
         tmp_path,
         [
             ("run_new", "2026-06-23"),
@@ -758,7 +760,7 @@ def test_latest_run_uses_newest_timestamp_not_last_row(tmp_path: Path) -> None:
         ],
     )
 
-    summary = summarize_eval_results(project)
+    summary = summarize_eval_results(project, identity_inspection=inspection)
 
     assert summary is not None
     assert summary.latest_run_id == "run_new"
@@ -767,7 +769,7 @@ def test_latest_run_uses_newest_timestamp_not_last_row(tmp_path: Path) -> None:
 def test_latest_run_uses_greatest_timestamp_within_each_run(
     tmp_path: Path,
 ) -> None:
-    project = _project_with_run_timestamps(
+    project, inspection = _project_with_run_timestamps(
         tmp_path,
         [
             ("run_a", "2026-06-20"),
@@ -776,7 +778,7 @@ def test_latest_run_uses_greatest_timestamp_within_each_run(
         ],
     )
 
-    summary = summarize_eval_results(project)
+    summary = summarize_eval_results(project, identity_inspection=inspection)
 
     assert summary is not None
     assert summary.latest_run_id == "run_a"
@@ -785,7 +787,7 @@ def test_latest_run_uses_greatest_timestamp_within_each_run(
 def test_later_recorded_date_beats_earlier_late_night_instant(
     tmp_path: Path,
 ) -> None:
-    project = _project_with_run_timestamps(
+    project, inspection = _project_with_run_timestamps(
         tmp_path,
         [
             ("run_date", "2026-06-23"),
@@ -793,14 +795,14 @@ def test_later_recorded_date_beats_earlier_late_night_instant(
         ],
     )
 
-    summary = summarize_eval_results(project)
+    summary = summarize_eval_results(project, identity_inspection=inspection)
 
     assert summary is not None
     assert summary.latest_run_id == "run_date"
 
 
 def test_same_date_datetime_orders_by_utc_instant(tmp_path: Path) -> None:
-    project = _project_with_run_timestamps(
+    project, inspection = _project_with_run_timestamps(
         tmp_path,
         [
             ("run_early", "2026-06-22T09:00:00-07:00"),
@@ -808,7 +810,7 @@ def test_same_date_datetime_orders_by_utc_instant(tmp_path: Path) -> None:
         ],
     )
 
-    summary = summarize_eval_results(project)
+    summary = summarize_eval_results(project, identity_inspection=inspection)
 
     assert summary is not None
     assert summary.latest_run_id == "run_late"
@@ -817,7 +819,7 @@ def test_same_date_datetime_orders_by_utc_instant(tmp_path: Path) -> None:
 def test_same_date_datetime_is_more_precise_than_date_only(
     tmp_path: Path,
 ) -> None:
-    project = _project_with_run_timestamps(
+    project, inspection = _project_with_run_timestamps(
         tmp_path,
         [
             ("run_date", "2026-06-22"),
@@ -825,14 +827,14 @@ def test_same_date_datetime_is_more_precise_than_date_only(
         ],
     )
 
-    summary = summarize_eval_results(project)
+    summary = summarize_eval_results(project, identity_inspection=inspection)
 
     assert summary is not None
     assert summary.latest_run_id == "run_datetime"
 
 
 def test_date_only_tie_uses_lexical_run_id(tmp_path: Path) -> None:
-    project = _project_with_run_timestamps(
+    project, inspection = _project_with_run_timestamps(
         tmp_path,
         [
             ("run_a", "2026-06-22"),
@@ -840,7 +842,7 @@ def test_date_only_tie_uses_lexical_run_id(tmp_path: Path) -> None:
         ],
     )
 
-    summary = summarize_eval_results(project)
+    summary = summarize_eval_results(project, identity_inspection=inspection)
 
     assert summary is not None
     assert summary.latest_run_id == "run_z"
@@ -849,7 +851,7 @@ def test_date_only_tie_uses_lexical_run_id(tmp_path: Path) -> None:
 def test_equivalent_datetime_instants_use_lexical_run_id(
     tmp_path: Path,
 ) -> None:
-    project = _project_with_run_timestamps(
+    project, inspection = _project_with_run_timestamps(
         tmp_path,
         [
             ("run_a", "2026-06-22T09:30:00-07:00"),
@@ -857,7 +859,7 @@ def test_equivalent_datetime_instants_use_lexical_run_id(
         ],
     )
 
-    summary = summarize_eval_results(project)
+    summary = summarize_eval_results(project, identity_inspection=inspection)
 
     assert summary is not None
     assert summary.latest_run_id == "run_z"
@@ -870,12 +872,12 @@ def test_latest_run_is_independent_of_row_order(tmp_path: Path) -> None:
         ("run_c", "2026-06-21"),
         ("run_b", "2026-06-22T09:00:00-07:00"),
     ]
-    project = _project_with_run_timestamps(tmp_path, values)
-    first = summarize_eval_results(project)
+    project, inspection = _project_with_run_timestamps(tmp_path, values)
+    first = summarize_eval_results(project, identity_inspection=inspection)
     headers, rows = _read_result_table(project)
     random.Random(42).shuffle(rows)
     _write_result_table(project, headers, rows)
-    second = summarize_eval_results(project)
+    second = summarize_eval_results(project, identity_inspection=inspection)
 
     assert first is not None
     assert second is not None

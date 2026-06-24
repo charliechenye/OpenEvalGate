@@ -31,7 +31,6 @@ def _project(tmp_path: Path) -> Path:
     target = tmp_path / "project"
     copytree(SOURCE, target)
     (target / "review_policy.yaml").unlink(missing_ok=True)
-    (target / "run_manifest.yaml").unlink(missing_ok=True)
     return target
 
 

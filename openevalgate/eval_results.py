@@ -176,7 +176,7 @@ def validate_eval_results(
 
     root = Path(project_dir)
     inspection = identity_inspection or inspect_run_identity(root)
-    if inspection.status == RunIdentityStatus.INVALID:
+    if inspection.status == RunIdentityStatus.INVALID or _has_unbound_results(inspection):
         issues = _provenance_issues(inspection)
         return EvalResultsValidationResult(False, issues, 0)
     results_path = _usable_results_path(inspection)
@@ -415,7 +415,7 @@ def classify_behavioral_evidence(
 
     root = Path(project_dir)
     inspection = identity_inspection or inspect_run_identity(root)
-    if inspection.status == RunIdentityStatus.INVALID:
+    if inspection.status == RunIdentityStatus.INVALID or _has_unbound_results(inspection):
         return BehavioralEvidence("invalid", None, _provenance_issues(inspection))
     path = _usable_results_path(inspection)
     if path is None or not path.is_file():
@@ -453,6 +453,8 @@ def summarize_eval_results(
 
     root = Path(project_dir)
     inspection = identity_inspection or inspect_run_identity(root)
+    if inspection.status == RunIdentityStatus.INVALID or _has_unbound_results(inspection):
+        raise ValueError("Cannot summarize invalid eval results.")
     path = _usable_results_path(inspection)
     if path is None or not path.is_file():
         return None
@@ -561,6 +563,8 @@ def summarize_selected_eval_results(
 
     root = Path(project_dir)
     inspection = identity_inspection or inspect_run_identity(root)
+    if inspection.status == RunIdentityStatus.INVALID or _has_unbound_results(inspection):
+        raise ValueError("Cannot summarize invalid eval results.")
     path = _usable_results_path(inspection)
     if path is not None and path.is_file():
         validation = validate_eval_results(root, identity_inspection=inspection)
@@ -648,9 +652,13 @@ def _parse_review_timestamp(value: str) -> _ParsedReviewTimestamp:
 
 
 def _usable_results_path(inspection: RunIdentityInspection) -> Path | None:
-    if inspection.status == RunIdentityStatus.INVALID:
+    if inspection.status != RunIdentityStatus.COMPLETE:
         return None
     return inspection.results_path
+
+
+def _has_unbound_results(inspection: RunIdentityInspection) -> bool:
+    return any(finding.id == "provenance_results_unbound" for finding in inspection.findings)
 
 
 def _output_allowed_root(root: Path, inspection: RunIdentityInspection) -> Path:

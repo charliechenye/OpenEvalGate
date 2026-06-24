@@ -388,7 +388,7 @@ def test_unsafe_action_blocker_remains_independent_of_gate_pass(
     }
 
 
-def test_missing_policy_preserves_legacy_full_file_behavioral_blocker() -> None:
+def test_missing_policy_preserves_manifest_scoped_behavioral_blocker() -> None:
     inspection = inspect_project(CUSTOMER_SUPPORT)
 
     assert "critical_escalation_regression" in {
@@ -864,7 +864,7 @@ def test_invalid_run_identity_makes_behavioral_evidence_unavailable(tmp_path: Pa
     assert "critical_escalation_regression" not in {blocker.id for blocker in inspection.hard_blockers}
 
 
-def test_present_invalid_manifest_never_becomes_legacy(tmp_path: Path) -> None:
+def test_present_invalid_manifest_never_becomes_missing(tmp_path: Path) -> None:
     project = _copy_project(tmp_path)
     (project / "eval_runs" / "run_002" / "run_manifest.yaml").write_text("schema_version: ['1'\n", encoding="utf-8")
 
@@ -874,14 +874,18 @@ def test_present_invalid_manifest_never_becomes_legacy(tmp_path: Path) -> None:
     assert inspection.run_identity_inspection.results_present is False
 
 
-def test_manifestless_identity_remains_structurally_usable(tmp_path: Path) -> None:
+def test_manifestless_results_fail_project_validation(tmp_path: Path) -> None:
     project = _copy_project(tmp_path)
     (project / "run_manifest.yaml").unlink()
 
     inspection = inspect_project(project)
 
-    assert inspection.check.valid
-    assert inspection.run_identity_inspection.status == "legacy"
+    assert not inspection.check.valid
+    assert inspection.run_identity_inspection.status == "missing"
+    assert {finding.id for finding in inspection.run_identity_inspection.findings} == {
+        "provenance_manifest_absent",
+        "provenance_results_unbound",
+    }
 
 
 def test_complete_identity_does_not_remove_existing_blockers(tmp_path: Path) -> None:
@@ -914,13 +918,13 @@ outputs:
 
 
 
-def test_manifestless_controlled_launch_is_blocked_by_unversioned_eval_run(tmp_path: Path) -> None:
+def test_manifestless_controlled_launch_is_blocked_by_missing_eval_run_provenance(tmp_path: Path) -> None:
     project = _copy_project(tmp_path)
     (project / "run_manifest.yaml").unlink()
 
     inspection = inspect_project(project)
 
-    assert "unversioned_eval_run" in {blocker.id for blocker in inspection.hard_blockers}
+    assert "missing_eval_run_provenance" in {blocker.id for blocker in inspection.hard_blockers}
 
 @pytest.mark.parametrize(
     ("root_fails", "scoped_fails", "expect_escalation_blocker",),

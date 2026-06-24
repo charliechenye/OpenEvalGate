@@ -22,7 +22,7 @@ from openevalgate.resources.schemas import (
 
 class RunIdentityStatus(str, Enum):
     COMPLETE = "complete"
-    LEGACY = "legacy"
+    MISSING = "missing"
     INVALID = "invalid"
 
 
@@ -68,7 +68,7 @@ class RunIdentityInspection:
 
     @property
     def results_present(self) -> bool:
-        """Whether a results file was present when identity was inspected."""
+        """Whether authoritative result evidence was established during inspection."""
 
         return self.results_path is not None
 
@@ -90,6 +90,7 @@ _FINDING_ORDER = {
     "provenance_lifecycle_failed": 13,
     "provenance_lifecycle_incomplete": 14,
     "provenance_manifest_absent": 15,
+    "provenance_results_unbound": 16,
 }
 
 _MANIFEST_VALIDATOR = Draft202012Validator(
@@ -137,29 +138,38 @@ def inspect_run_identity(
         authoritative = root_manifest
 
     if authoritative is None:
-        findings = ()
-        if not root_results.is_file():
-            findings = (
-                ProvenanceFinding(
-                    id="provenance_manifest_absent",
-                    path=str(root / "run_manifest.yaml"),
-                    message="No versioned run manifest was provided.",
+        expected_manifest = (
+            root / "eval_runs" / selected_run / "run_manifest.yaml"
+            if selected_run
+            else root_manifest
+        )
+        findings = [
+            ProvenanceFinding(
+                id="provenance_manifest_absent",
+                path=str(expected_manifest),
+                message=(
+                    "No authoritative run_manifest.yaml was found for the "
+                    "selected eval-run scope."
                 ),
             )
+        ]
         if root_results.is_file():
-            legacy_findings = _validate_legacy_output_identity(root, root_results)
-            return RunIdentityInspection(
-                status=RunIdentityStatus.INVALID if legacy_findings else RunIdentityStatus.LEGACY,
-                manifest_path=None,
-                identity=None,
-                findings=tuple(_sort_findings(legacy_findings)),
-                results_path=root_results,
+            findings.append(
+                ProvenanceFinding(
+                    id="provenance_results_unbound",
+                    path=str(root_results),
+                    message=(
+                        "eval_results.csv exists but is not bound to an "
+                        "authoritative run manifest. The file was excluded "
+                        "from validation, metrics, and launch decisions."
+                    ),
+                )
             )
         return RunIdentityInspection(
-            status=RunIdentityStatus.LEGACY,
+            status=RunIdentityStatus.MISSING,
             manifest_path=None,
             identity=None,
-            findings=findings,
+            findings=tuple(_sort_findings(findings)),
             results_path=None,
         )
 
@@ -586,33 +596,6 @@ def _optional_identity(value: Any) -> str | None:
         return None
     stripped = str(value).strip()
     return stripped or None
-
-
-def _validate_legacy_output_identity(project_root: Path, results_path: Path) -> list[ProvenanceFinding]:
-    try:
-        with results_path.open("r", encoding="utf-8", newline="") as handle:
-            rows = list(csv.DictReader(handle))
-    except (csv.Error, OSError, UnicodeError) as exc:
-        return [
-            ProvenanceFinding(
-                id="provenance_manifest_schema_invalid",
-                path=str(results_path),
-                message=f"Could not read legacy results CSV: {exc}",
-            )
-        ]
-    findings: list[ProvenanceFinding] = []
-    for index, row in enumerate(rows, start=2):
-        findings.extend(
-            _validate_output_identity(
-                project_root,
-                results_path,
-                project_root,
-                row,
-                f"{results_path}:row[{index}]",
-                manifest_identity=None,
-            )
-        )
-    return findings
 
 
 def _validate_output_identity(

@@ -55,6 +55,25 @@ def _controlled_launch_project(
     (project / "review_policy.yaml").write_text(
         yaml.safe_dump(policy, sort_keys=False), encoding="utf-8"
     )
+    (project / "run_manifest.yaml").write_text(
+        """
+schema_version: "1"
+run:
+  id: release-run
+  status: complete
+candidate:
+  id: candidate-v3
+  version: "1"
+evaluation:
+  kind: human
+  evaluator:
+    id: harness
+outputs:
+  results:
+    path: eval_results.csv
+""".lstrip(),
+        encoding="utf-8",
+    )
     return project, load_eval_cases(project / "eval_cases.yaml")
 
 
@@ -112,7 +131,7 @@ def test_report_identity_section_includes_manifest_backed_identity(customer_supp
     assert "- Manifest: run_manifest.yaml" in customer_support_report
     assert "- Results path: eval_results.csv" in customer_support_report
     assert "- Candidate version: customer-support-example-v1" in customer_support_report
-    assert "unversioned_eval_run" not in customer_support_report
+    assert "missing_eval_run_provenance" not in customer_support_report
 
 
 def test_report_identity_section_renders_project_relative_provenance_paths(tmp_path: Path) -> None:
@@ -755,7 +774,7 @@ def test_missing_policy_selected_scope_is_not_evaluated(tmp_path: Path) -> None:
     assert "Sufficiency for effective review mode" in report
 
 
-def test_zero_matching_selected_rows_report_real_zero_coverage(
+def test_unselected_identity_rows_are_excluded_from_report_metrics(
     tmp_path: Path,
 ) -> None:
     project, _ = _controlled_launch_project(tmp_path)
@@ -769,12 +788,9 @@ def test_zero_matching_selected_rows_report_real_zero_coverage(
 
     report = generate_report(project)
 
-    assert "- Selected result rows: 0" in report
-    assert "- Observed eval cases: 0" in report
-    assert "- Case coverage: 0%" in report
-    assert "| pass_rate | Not evaluated | >= 100% | Not evaluated |" in report
-    assert "**Final launch recommendation:** Not ready for controlled launch" in report
-
+    assert "**Behavioral evidence status:** Invalid — results could not be validated." in report
+    assert "Unavailable due to invalid behavioral evidence" in report
+    assert "- Selected result rows: 0" not in report
 
 def test_invalid_behavioral_evidence_has_distinct_selected_scope_wording(
     tmp_path: Path,
@@ -845,6 +861,25 @@ def test_shadow_report_keeps_failed_invariant_informational(
     }
     (project / "review_policy.yaml").write_text(
         yaml.safe_dump(policy, sort_keys=False),
+        encoding="utf-8",
+    )
+    (project / "run_manifest.yaml").write_text(
+        """
+schema_version: "1"
+run:
+  id: shadow-run
+  status: complete
+candidate:
+  id: shadow-candidate
+  version: "1"
+evaluation:
+  kind: human
+  evaluator:
+    id: harness
+outputs:
+  results:
+    path: eval_results.csv
+""".lstrip(),
         encoding="utf-8",
     )
     route = low_risk_case["expected_route"]

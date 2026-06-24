@@ -228,12 +228,15 @@ def _evaluate_independent_blockers(
             )
 
     if behavioral_scope is not None:
-        if run_identity_inspection.status == RunIdentityStatus.LEGACY:
+        if run_identity_inspection.status == RunIdentityStatus.MISSING:
             blockers.append(
                 HardBlocker(
-                    "unversioned_eval_run",
-                    "Controlled-launch review requires a complete versioned eval-run identity.",
-                    "run_manifest.yaml",
+                    "missing_eval_run_provenance",
+                    "Controlled-launch review requires a complete manifest-backed eval-run identity.",
+                    (
+                        f"eval_runs/{behavioral_scope.run_id}/run_manifest.yaml "
+                        "or run_manifest.yaml"
+                    ),
                 )
             )
         lifecycle_findings = {finding.id for finding in run_identity_inspection.findings}
@@ -331,15 +334,12 @@ def _critical_escalation_failures(
         and isinstance(case.get("expected_handoff"), dict)
     }
     failures: set[str] = set()
-    if run_identity_inspection is None:
-        fallback_path = root / "eval_results.csv"
-        results_path = fallback_path if fallback_path.is_file() else None
-    else:
-        results_path = (
-            None
-            if run_identity_inspection.status == RunIdentityStatus.INVALID
-            else run_identity_inspection.results_path
-        )
+    if (
+        run_identity_inspection is None
+        or run_identity_inspection.status != RunIdentityStatus.COMPLETE
+    ):
+        return []
+    results_path = run_identity_inspection.results_path
     if results_path is None or not results_path.is_file():
         return []
     for row in read_eval_results(results_path):

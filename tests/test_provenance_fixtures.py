@@ -35,7 +35,7 @@ EXPECTED_STATUS = {
     "invalid-run-identity": RunIdentityStatus.INVALID,
     "invalid-timestamp-order": RunIdentityStatus.COMPLETE,
     "invalid-unsafe-path": RunIdentityStatus.INVALID,
-    "legacy-no-manifest": RunIdentityStatus.LEGACY,
+    "legacy-no-manifest": RunIdentityStatus.MISSING,
     "minimal-declared-human": RunIdentityStatus.COMPLETE,
     "missing-local-file": RunIdentityStatus.COMPLETE,
     "missing-required-candidate-id": RunIdentityStatus.INVALID,

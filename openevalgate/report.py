@@ -249,8 +249,16 @@ def _eval_run_identity_section(inspection: RunIdentityInspection, root: Path) ->
         lines.append("- Findings: none")
     if inspection.status == RunIdentityStatus.COMPLETE:
         lines.append("- Limitation: Run and output identity checks passed. Digests and release freshness were not evaluated.")
-    elif inspection.status == RunIdentityStatus.LEGACY:
-        lines.append("- Warning: No versioned run manifest was provided. Existing CSV evidence is being handled in legacy compatibility mode.")
+    elif inspection.status == RunIdentityStatus.MISSING:
+        if any(finding.id == "provenance_results_unbound" for finding in inspection.findings):
+            lines.append(
+                "- Action required: eval_results.csv was found without an authoritative "
+                "run_manifest.yaml. The file was excluded from validation, behavioral "
+                "metrics, and launch decisions. Add a valid manifest or remove the "
+                "unbound result file."
+            )
+        else:
+            lines.append("- Note: No eval-run evidence was provided. A manifest is required when result evidence is added.")
     else:
         lines.append("- Warning: Run identity is invalid. Behavioral evidence from this run was excluded from launch evaluation.")
     return "\n".join(lines)
@@ -271,7 +279,7 @@ def _display_project_path(path: Path, root: Path) -> str:
 def _identity_status_display(status: RunIdentityStatus) -> str:
     return {
         RunIdentityStatus.COMPLETE: "Complete",
-        RunIdentityStatus.LEGACY: "Legacy",
+        RunIdentityStatus.MISSING: "Missing",
         RunIdentityStatus.INVALID: "Invalid",
     }[status]
 

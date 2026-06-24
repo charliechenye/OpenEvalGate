@@ -2,7 +2,11 @@ from pathlib import Path
 
 import yaml
 
-from openevalgate.eval_results import classify_behavioral_evidence
+from openevalgate.eval_results import (
+    classify_behavioral_evidence,
+    summarize_eval_results,
+    validate_eval_results,
+)
 from openevalgate.provenance import RunIdentityStatus, inspect_run_identity
 
 
@@ -72,24 +76,39 @@ def _finding_ids(inspection):
     return [finding.id for finding in inspection.findings]
 
 
-def test_no_manifest_with_results_is_legacy(tmp_path: Path) -> None:
+def test_no_manifest_with_results_is_missing_and_unbound(tmp_path: Path) -> None:
     _write_results(tmp_path / "eval_results.csv")
 
     inspection = inspect_run_identity(tmp_path)
 
-    assert inspection.status == RunIdentityStatus.LEGACY
-    assert inspection.results_path == tmp_path / "eval_results.csv"
-    assert inspection.results_present is True
+    assert inspection.status == RunIdentityStatus.MISSING
+    assert inspection.results_path is None
+    assert inspection.results_present is False
     assert inspection.identity is None
+    assert _finding_ids(inspection) == [
+        "provenance_manifest_absent",
+        "provenance_results_unbound",
+    ]
+    validation = validate_eval_results(tmp_path, identity_inspection=inspection)
+    evidence = classify_behavioral_evidence(tmp_path, identity_inspection=inspection)
+    assert not validation.valid
+    assert validation.row_count == 0
+    assert evidence.state == "invalid"
+    assert evidence.summary is None
 
 
-def test_no_manifest_without_results_is_legacy_not_provided(tmp_path: Path) -> None:
+def test_no_manifest_without_results_is_missing_not_provided(tmp_path: Path) -> None:
     inspection = inspect_run_identity(tmp_path)
 
-    assert inspection.status == RunIdentityStatus.LEGACY
+    assert inspection.status == RunIdentityStatus.MISSING
     assert inspection.results_path is None
     assert inspection.results_present is False
     assert _finding_ids(inspection) == ["provenance_manifest_absent"]
+    validation = validate_eval_results(tmp_path, identity_inspection=inspection)
+    evidence = classify_behavioral_evidence(tmp_path, identity_inspection=inspection)
+    assert validation.valid
+    assert validation.row_count == 0
+    assert evidence.state == "not_provided"
 
 
 def test_valid_root_manifest_is_complete(tmp_path: Path) -> None:
@@ -141,7 +160,7 @@ def test_root_manifest_fallback_must_declare_selected_run(tmp_path: Path) -> Non
 
     inspection = inspect_run_identity(tmp_path, selected_run_id="run_001")
 
-    assert inspection.status == RunIdentityStatus.LEGACY
+    assert inspection.status == RunIdentityStatus.MISSING
     assert inspection.identity is None
 
 
@@ -593,20 +612,23 @@ def test_undecodable_optional_markdown_metadata_is_unavailable(tmp_path: Path) -
     assert inspect_run_identity(tmp_path).status == RunIdentityStatus.COMPLETE
 
 
-def test_legacy_output_identity_contradiction_is_invalid(tmp_path: Path) -> None:
-    _write_output(tmp_path / "eval_runs" / "run_002" / "case_001.md")
-    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "eval_runs/run_002/case_001.md"}])
+def test_manifestless_results_are_unbound_without_output_identity_validation(tmp_path: Path) -> None:
+    output = tmp_path / "eval_runs" / "wrong_run" / "case_001.md"
+    output.parent.mkdir(parents=True)
+    output.write_text("- Run ID: wrong_run\n", encoding="utf-8")
+    _write_result_rows(
+        tmp_path / "eval_results.csv",
+        [{"observed_output_path": "eval_runs/wrong_run/case_001.md"}],
+    )
 
     inspection = inspect_run_identity(tmp_path)
 
-    assert inspection.status == RunIdentityStatus.INVALID
-    assert inspection.results_path == tmp_path / "eval_results.csv"
-    assert inspection.results_present is True
-    assert _finding_ids(inspection) == ["provenance_run_id_mismatch"]
-    evidence = classify_behavioral_evidence(tmp_path, identity_inspection=inspection)
-    assert evidence.state == "invalid"
-    assert evidence.summary is None
-
+    assert inspection.status == RunIdentityStatus.MISSING
+    assert inspection.results_path is None
+    assert _finding_ids(inspection) == [
+        "provenance_manifest_absent",
+        "provenance_results_unbound",
+    ]
 
 def test_no_artifact_index_remains_complete(tmp_path: Path) -> None:
     _write_result_rows(tmp_path / "eval_results.csv", [{"case_id": "case_001"}])
