@@ -889,3 +889,65 @@ def test_canonical_latest_run_remains_deterministic() -> None:
 
     assert summary is not None
     assert summary.latest_run_id == "run_002"
+
+
+def test_unbound_results_are_never_opened(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = _project(tmp_path)
+    manifest_path = project / "run_manifest.yaml"
+    manifest_path.unlink()
+
+    unbound_results = project / "eval_results.csv"
+    inspection = inspect_run_identity(project)
+
+    assert inspection.status.value == "missing"
+    assert any(
+        finding.id == "provenance_results_unbound"
+        for finding in inspection.findings
+    )
+
+    original_open = Path.open
+    resolved_unbound = unbound_results.resolve(strict=False)
+
+    def guarded_open(
+        self: Path,
+        *args: object,
+        **kwargs: object,
+    ):
+        if self.resolve(strict=False) == resolved_unbound:
+            raise AssertionError("Unbound results must not be opened.")
+        return original_open(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", guarded_open)
+
+    validation = validate_eval_results(
+        project,
+        identity_inspection=inspection,
+    )
+    evidence = classify_behavioral_evidence(
+        project,
+        identity_inspection=inspection,
+    )
+    check = check_project(
+        project,
+        identity_inspection=inspection,
+    )
+
+    assert not validation.valid
+    assert validation.row_count == 0
+    assert all(
+        issue.source == "provenance"
+        for issue in validation.issues
+    )
+
+    assert evidence.state == "invalid"
+    assert evidence.summary is None
+    assert not check.valid
+
+    with pytest.raises(ValueError):
+        summarize_eval_results(
+            project,
+            identity_inspection=inspection,
+        )

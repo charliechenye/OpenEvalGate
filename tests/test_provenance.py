@@ -97,6 +97,94 @@ def test_no_manifest_with_results_is_missing_and_unbound(tmp_path: Path) -> None
     assert evidence.summary is None
 
 
+def test_bound_root_results_are_not_unbound_for_different_selected_run(
+    tmp_path: Path,
+) -> None:
+    _write_results(tmp_path / "eval_results.csv")
+    _write_manifest(
+        tmp_path / "run_manifest.yaml",
+        _base_manifest(
+            run={"id": "run_a", "status": "complete"},
+        ),
+    )
+
+    inspection = inspect_run_identity(
+        tmp_path,
+        selected_run_id="run_b",
+    )
+
+    assert inspection.status == RunIdentityStatus.MISSING
+    assert inspection.results_path is None
+    assert _finding_ids(inspection) == [
+        "provenance_manifest_absent",
+    ]
+
+
+def test_scoped_results_without_manifest_are_unbound(
+    tmp_path: Path,
+) -> None:
+    run_dir = tmp_path / "eval_runs" / "run_b"
+    scoped_results = run_dir / "eval_results.csv"
+    _write_results(scoped_results)
+
+    inspection = inspect_run_identity(
+        tmp_path,
+        selected_run_id="run_b",
+    )
+
+    assert inspection.status == RunIdentityStatus.MISSING
+    assert inspection.results_path is None
+    assert _finding_ids(inspection) == [
+        "provenance_manifest_absent",
+        "provenance_results_unbound",
+    ]
+
+    unbound_findings = [
+        finding
+        for finding in inspection.findings
+        if finding.id == "provenance_results_unbound"
+    ]
+    assert [finding.path for finding in unbound_findings] == [
+        str(scoped_results)
+    ]
+
+
+def test_scoped_unbound_results_do_not_mislabel_bound_root_results(
+    tmp_path: Path,
+) -> None:
+    root_results = tmp_path / "eval_results.csv"
+    _write_results(root_results)
+    _write_manifest(
+        tmp_path / "run_manifest.yaml",
+        _base_manifest(
+            run={"id": "run_a", "status": "complete"},
+        ),
+    )
+
+    run_dir = tmp_path / "eval_runs" / "run_b"
+    scoped_results = run_dir / "eval_results.csv"
+    _write_results(scoped_results)
+
+    inspection = inspect_run_identity(
+        tmp_path,
+        selected_run_id="run_b",
+    )
+
+    assert inspection.status == RunIdentityStatus.MISSING
+    assert _finding_ids(inspection) == [
+        "provenance_manifest_absent",
+        "provenance_results_unbound",
+    ]
+
+    unbound_paths = [
+        finding.path
+        for finding in inspection.findings
+        if finding.id == "provenance_results_unbound"
+    ]
+    assert unbound_paths == [str(scoped_results)]
+    assert str(root_results) not in unbound_paths
+
+
 def test_no_manifest_without_results_is_missing_not_provided(tmp_path: Path) -> None:
     inspection = inspect_run_identity(tmp_path)
 

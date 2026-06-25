@@ -109,6 +109,30 @@ _METADATA_LABEL_PATTERN = re.compile(
 )
 
 
+def _unbound_result_paths(
+    root: Path,
+    *,
+    selected_run: str | None,
+) -> tuple[Path, ...]:
+    paths: list[Path] = []
+
+    if selected_run:
+        scoped_root = root / "eval_runs" / selected_run
+        scoped_manifest = scoped_root / "run_manifest.yaml"
+        scoped_results = scoped_root / "eval_results.csv"
+
+        if scoped_results.is_file() and not scoped_manifest.is_file():
+            paths.append(scoped_results)
+
+    root_manifest = root / "run_manifest.yaml"
+    root_results = root / "eval_results.csv"
+
+    if root_results.is_file() and not root_manifest.is_file():
+        paths.append(root_results)
+
+    return tuple(paths)
+
+
 def inspect_run_identity(
     project_dir: str | Path,
     *,
@@ -153,11 +177,14 @@ def inspect_run_identity(
                 ),
             )
         ]
-        if root_results.is_file():
+        for unbound_results_path in _unbound_result_paths(
+            root,
+            selected_run=selected_run,
+        ):
             findings.append(
                 ProvenanceFinding(
                     id="provenance_results_unbound",
-                    path=str(root_results),
+                    path=str(unbound_results_path),
                     message=(
                         "eval_results.csv exists but is not bound to an "
                         "authoritative run manifest. The file was excluded "
@@ -165,6 +192,7 @@ def inspect_run_identity(
                     ),
                 )
             )
+
         return RunIdentityInspection(
             status=RunIdentityStatus.MISSING,
             manifest_path=None,

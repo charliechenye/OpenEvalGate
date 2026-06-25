@@ -948,3 +948,43 @@ def test_scoped_manifest_results_control_escalation_blocker(
     assert ("critical_escalation_regression" in blockers) is expect_escalation_blocker
     if expect_escalation_blocker:
         assert ( blockers["critical_escalation_regression"].evidence == HIGH_RISK_HANDOFF_CASE_ID )
+
+
+def test_scoped_results_without_manifest_fail_project_validation(
+    tmp_path: Path,
+) -> None:
+    project = _copy_project(tmp_path)
+
+    root_results = project / "eval_results.csv"
+    root_manifest = project / "run_manifest.yaml"
+
+    scoped_results = (
+        project
+        / "eval_runs"
+        / SCOPED_RUN_ID
+        / "eval_results.csv"
+    )
+    scoped_results.parent.mkdir(parents=True, exist_ok=True)
+    scoped_results.write_text(
+        "this,is,intentionally,not,validated\n",
+        encoding="utf-8",
+    )
+
+    root_results.unlink()
+    root_manifest.unlink()
+
+    inspection = inspect_project(project)
+
+    assert not inspection.check.valid
+    assert inspection.run_identity_inspection.status.value == "missing"
+
+    unbound_findings = [
+        finding
+        for finding in inspection.run_identity_inspection.findings
+        if finding.id == "provenance_results_unbound"
+    ]
+    assert [finding.path for finding in unbound_findings] == [
+        str(scoped_results)
+    ]
+
+    assert main(["check", str(project)]) == 1
