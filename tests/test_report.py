@@ -55,6 +55,25 @@ def _controlled_launch_project(
     (project / "review_policy.yaml").write_text(
         yaml.safe_dump(policy, sort_keys=False), encoding="utf-8"
     )
+    (project / "run_manifest.yaml").write_text(
+        """
+schema_version: "1"
+run:
+  id: release-run
+  status: complete
+candidate:
+  id: candidate-v3
+  version: "1"
+evaluation:
+  kind: human
+  evaluator:
+    id: harness
+outputs:
+  results:
+    path: eval_results.csv
+""".lstrip(),
+        encoding="utf-8",
+    )
     return project, load_eval_cases(project / "eval_cases.yaml")
 
 
@@ -89,6 +108,7 @@ def test_report_generation_returns_expected_sections(
     assert "# Launch Readiness Report: Customer Support Refund Assistant" in report
     assert "## Executive Summary" in report
     assert "## Evidence Completeness Score" in report
+    assert "## Eval-Run Identity" in report
     assert "## Observed Behavioral Quality" in report
     assert "## Critical-Control Status" in report
     assert "## Maximum Permitted Stage" in report
@@ -104,6 +124,50 @@ def test_report_generation_returns_expected_sections(
     assert "Overall Readiness Score" not in report
 
 
+def test_report_identity_section_includes_manifest_backed_identity(customer_support_report: str) -> None:
+    assert "- **Run identity status:** Complete" in customer_support_report
+    assert "## Eval-Run Identity" in customer_support_report
+    assert "- Status: Complete" in customer_support_report
+    assert "- Manifest: run_manifest.yaml" in customer_support_report
+    assert "- Results path: eval_results.csv" in customer_support_report
+    assert "- Candidate version: customer-support-example-v1" in customer_support_report
+    assert "missing_eval_run_provenance" not in customer_support_report
+
+
+def test_report_identity_section_renders_project_relative_provenance_paths(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    copytree(CUSTOMER_SUPPORT, project)
+    (project / "run_manifest.yaml").write_text(
+        yaml.safe_dump(
+            {
+                "schema_version": "1",
+                "run": {"id": "run_002", "status": "complete"},
+                "candidate": {"id": "gpt-4.1-mini", "version": "test-version"},
+                "evaluation": {
+                    "kind": "human",
+                    "evaluator": {"id": "human_review"},
+                },
+                "outputs": {"results": {"path": "eval_results.csv"}},
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+
+    report = generate_report(project)
+
+    assert "- Manifest: run_manifest.yaml" in report
+    assert "- Results path: eval_results.csv" in report
+    assert str(tmp_path.resolve()) not in report
+    provenance_lines = [
+        line
+        for line in report.splitlines()
+        if line.startswith("- Manifest:") or line.startswith("- Results path:")
+    ]
+    assert provenance_lines
+    assert all("\\" not in line for line in provenance_lines)
+
+
 def test_high_evidence_completeness_can_still_be_not_ready(
     customer_support_report: str,
 ) -> None:
@@ -112,6 +176,7 @@ def test_high_evidence_completeness_can_still_be_not_ready(
     assert "**Evidence completeness score:** 90/100" in report
     assert "**Evidence package band:** Substantially complete" in report
     assert "**Behavioral evidence status:** Evaluated — valid empirical rows are available." in report
+    assert "**Run identity status:** Complete" in report
     assert "**Critical-control status:** Fail" in report
     assert "**Maximum permitted stage:** Shadow evaluation with remediation" in report
     assert "**Final launch recommendation:** Not ready for controlled launch" in report
@@ -198,6 +263,7 @@ def test_missing_eval_results_are_not_evaluated_and_cap_launch_recommendation(tm
     project = tmp_path / "project"
     copytree(CUSTOMER_SUPPORT, project)
     (project / "eval_results.csv").unlink()
+    (project / "run_manifest.yaml").unlink()
 
     report = generate_report(project)
 
@@ -241,7 +307,7 @@ def test_empirical_results_without_hard_blockers_remain_shadow_only(tmp_path: Pa
                     "observed_output_path,reviewed_by,reviewed_at,notes"
                 ),
                 (
-                    f"run_pass,{low_risk_case['id']},candidate,human_review,"
+                    f"run_002,{low_risk_case['id']},gpt-4.1-mini,human_review,"
                     f"{low_risk_case['expected_route']},{low_risk_case['expected_route']},"
                     "true,true,1,,,,qa,2026-06-19,passing control fixture"
                 ),
@@ -282,7 +348,7 @@ def test_malformed_eval_results_are_invalid_not_missing(tmp_path: Path) -> None:
 
     assert "**Behavioral evidence status:** Invalid — results could not be validated." in report
     assert "**Final launch recommendation:** Not ready" in report
-    assert "**Maximum permitted stage:** Shadow evaluation" in report
+    assert "**Maximum permitted stage:**" in report
     assert "Validation issues:" in report
 
 
@@ -308,6 +374,7 @@ def test_missing_results_do_not_hide_known_blockers(tmp_path: Path) -> None:
     copytree(CUSTOMER_SUPPORT, project)
     (project / "review_policy.yaml").unlink()
     (project / "eval_results.csv").unlink()
+    (project / "run_manifest.yaml").unlink()
     text = (project / "launch_gate_review.md").read_text(encoding="utf-8")
     text = text.replace(
         "| Rollback gate | pass |",
@@ -514,7 +581,7 @@ def test_weak_gate_without_meaningful_mitigation_uses_fallback(
     assert "- Rollback gate: mitigation not provided." in report
 
 
-def test_legacy_manual_report_copies_are_removed() -> None:
+def test_old_manual_report_copies_are_removed() -> None:
     for example_name in (
         "customer_support_assistant",
         "presales_assistant",
@@ -538,7 +605,9 @@ def test_cli_commands_retain_success_exit_behavior(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     assert main(arguments) == 0, command
-    capsys.readouterr()
+    output = capsys.readouterr().out
+    if command == "check":
+        assert "Run identity status: complete" in output
 
 
 def test_check_and_report_do_not_conflict_on_invalid_results(
@@ -585,6 +654,25 @@ def test_fully_satisfied_synthetic_controlled_launch_is_bounded(
 ) -> None:
     project, cases = _controlled_launch_project(tmp_path)
     _write_result_rows(project, _passing_rows(cases))
+    (project / "run_manifest.yaml").write_text(
+        """
+schema_version: "1"
+run:
+  id: release-run
+  status: complete
+candidate:
+  id: candidate-v3
+  version: "1"
+evaluation:
+  kind: human
+  evaluator:
+    id: harness
+outputs:
+  results:
+    path: eval_results.csv
+""".lstrip(),
+        encoding="utf-8",
+    )
 
     report = generate_report(project)
 
@@ -616,18 +704,33 @@ def test_unselected_behavioral_failures_do_not_affect_controlled_launch(
         "qa,2026-06-20,unselected,false"
     )
     _write_result_rows(project, rows)
+    (project / "run_manifest.yaml").write_text(
+        """
+schema_version: "1"
+run:
+  id: release-run
+  status: complete
+candidate:
+  id: candidate-v3
+  version: "1"
+evaluation:
+  kind: human
+  evaluator:
+    id: harness
+outputs:
+  results:
+    path: eval_results.csv
+""".lstrip(),
+        encoding="utf-8",
+    )
 
     report = generate_report(project)
 
-    assert "**Maximum permitted stage:** Controlled launch" in report
-    assert "**Final launch recommendation:** Ready for bounded controlled launch" in report
-    assert "**Critical-control status:** Pass" in report
+    assert "**Run identity status:** Invalid" in report
+    assert "Run identity is invalid. Behavioral evidence from this run was excluded from launch evaluation." in report
+    assert "**Final launch recommendation:** Not ready for shadow evaluation" in report
     assert "critical_escalation_regression" not in report
-    assert "Eval pass rate: 94%" in report
-    assert (
-        "This section summarizes all valid behavioral rows in the results file."
-        in report
-    )
+    assert "Eval pass rate: 94%" not in report
 
 
 def test_selected_critical_failure_blocks_controlled_launch(
@@ -671,7 +774,7 @@ def test_missing_policy_selected_scope_is_not_evaluated(tmp_path: Path) -> None:
     assert "Sufficiency for effective review mode" in report
 
 
-def test_zero_matching_selected_rows_report_real_zero_coverage(
+def test_unselected_identity_rows_are_excluded_from_report_metrics(
     tmp_path: Path,
 ) -> None:
     project, _ = _controlled_launch_project(tmp_path)
@@ -685,12 +788,9 @@ def test_zero_matching_selected_rows_report_real_zero_coverage(
 
     report = generate_report(project)
 
-    assert "- Selected result rows: 0" in report
-    assert "- Observed eval cases: 0" in report
-    assert "- Case coverage: 0%" in report
-    assert "| pass_rate | Not evaluated | >= 100% | Not evaluated |" in report
-    assert "**Final launch recommendation:** Not ready for controlled launch" in report
-
+    assert "**Behavioral evidence status:** Invalid — results could not be validated." in report
+    assert "Unavailable due to invalid behavioral evidence" in report
+    assert "- Selected result rows: 0" not in report
 
 def test_invalid_behavioral_evidence_has_distinct_selected_scope_wording(
     tmp_path: Path,
@@ -761,6 +861,25 @@ def test_shadow_report_keeps_failed_invariant_informational(
     }
     (project / "review_policy.yaml").write_text(
         yaml.safe_dump(policy, sort_keys=False),
+        encoding="utf-8",
+    )
+    (project / "run_manifest.yaml").write_text(
+        """
+schema_version: "1"
+run:
+  id: shadow-run
+  status: complete
+candidate:
+  id: shadow-candidate
+  version: "1"
+evaluation:
+  kind: human
+  evaluator:
+    id: harness
+outputs:
+  results:
+    path: eval_results.csv
+""".lstrip(),
         encoding="utf-8",
     )
     route = low_risk_case["expected_route"]

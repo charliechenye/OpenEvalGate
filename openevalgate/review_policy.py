@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Any
+from typing import Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from openevalgate.provenance import RunIdentityInspection
 
 import yaml
 
@@ -12,6 +15,7 @@ from openevalgate.eval_results import (
     classify_behavioral_evidence,
     summarize_selected_eval_results,
 )
+from openevalgate.provenance import inspect_run_identity
 from openevalgate.schema import (
     ReviewMode,
     ValidationIssue,
@@ -171,10 +175,27 @@ def validate_review_policy(project_dir: str | Path) -> ReviewPolicyResult:
     return ReviewPolicyResult(True, True, mode, mode, "review_policy", policy, ())
 
 
-def evaluate_behavioral_sufficiency(project_dir: str | Path) -> BehavioralSufficiency:
+def evaluate_behavioral_sufficiency(
+    project_dir: str | Path,
+    *,
+    identity_inspection: RunIdentityInspection | None = None,
+) -> BehavioralSufficiency:
     root = Path(project_dir)
     policy_result = validate_review_policy(root)
-    evidence = classify_behavioral_evidence(root)
+    scope = policy_result.policy.evaluation_scope if policy_result.policy else None
+    inspection = identity_inspection
+    if inspection is None:
+        inspection = inspect_run_identity(
+            root,
+            selected_run_id=scope.run_id if scope else None,
+            selected_candidate=scope.candidate if scope else None,
+        )
+    evidence = classify_behavioral_evidence(root, identity_inspection=inspection)
+    selected_results_path = (
+        inspection.results_path
+        if evidence.state == "available"
+        else None
+    )
     cases: list[dict[str, Any]] = []
     eval_path = root / "eval_cases.yaml"
     if eval_path.is_file() and validate_eval_cases(eval_path).valid:
@@ -183,11 +204,13 @@ def evaluate_behavioral_sufficiency(project_dir: str | Path) -> BehavioralSuffic
     critical_ids = tuple(sorted(
         str(case["id"]).strip() for case in cases if is_critical_eval_case(case)
     ))
-    scope = policy_result.policy.evaluation_scope if policy_result.policy else None
     coverage_policy = policy_result.policy.coverage if policy_result.policy else None
     selected = (
         summarize_selected_eval_results(
-            root, run_id=scope.run_id, candidate=scope.candidate
+            root,
+            run_id=scope.run_id,
+            candidate=scope.candidate,
+            identity_inspection=inspection,
         )
         if scope and evidence.state == "available"
         else None
@@ -205,7 +228,12 @@ def evaluate_behavioral_sufficiency(project_dir: str | Path) -> BehavioralSuffic
     critical_below = tuple(sorted(
         case_id for case_id in observed_critical if counts.get(case_id, 0) < minimum_trials
     ))
-    failed_critical = _failed_critical_ids(root, scope, critical_ids, evidence.state)
+    failed_critical = _failed_critical_ids(
+        scope,
+        critical_ids,
+        evidence.state,
+        results_path=selected_results_path,
+    )
     case_coverage = len(observed) / len(expected_ids) if expected_ids else None
     critical_coverage = (
         len(observed_critical) / len(critical_ids) if critical_ids else None
@@ -405,17 +433,18 @@ def _invariant_outcomes(
 
 
 def _failed_critical_ids(
-    root: Path,
     scope: EvaluationScope | None,
     critical_ids: tuple[str, ...],
     evidence_state: str,
+    *,
+    results_path: Path | None,
 ) -> tuple[str, ...]:
-    if not scope or evidence_state != "available":
+    if not scope or evidence_state != "available" or results_path is None:
         return ()
     from openevalgate.eval_results import _cell, read_eval_results
     return tuple(sorted({
         _cell(row, "case_id")
-        for row in read_eval_results(root / "eval_results.csv")
+        for row in read_eval_results(results_path)
         if _cell(row, "run_id") == scope.run_id.strip()
         and _cell(row, "candidate") == scope.candidate.strip()
         and _cell(row, "case_id") in critical_ids

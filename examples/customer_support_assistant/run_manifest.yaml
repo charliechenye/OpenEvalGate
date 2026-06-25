@@ -1,0 +1,19 @@
+schema_version: "1"
+
+run:
+  id: run_002
+  status: complete
+
+candidate:
+  id: gpt-4.1-mini
+  version: customer-support-example-v1
+
+evaluation:
+  kind: human
+  evaluator:
+    id: human_review
+    role: canonical_example_review
+
+outputs:
+  results:
+    path: eval_results.csv

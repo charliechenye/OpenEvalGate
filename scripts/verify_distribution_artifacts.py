@@ -267,6 +267,10 @@ def verify_wheel(
                 path.relative_to(project_root).as_posix()
                 for path in (project_root / "openevalgate").rglob("*.py")
             }
+            expected_package_data = {
+                path.relative_to(project_root).as_posix()
+                for path in (project_root / "openevalgate" / "resources").rglob("*.json")
+            }
             wheel_python = {
                 path
                 for path in normalized
@@ -276,6 +280,8 @@ def verify_wheel(
                 _fail(artifact, missing, "expected runtime Python file is missing")
             for unexpected in sorted(wheel_python - expected_python):
                 _fail(artifact, unexpected, "unexpected runtime Python module")
+            for missing in sorted(expected_package_data - normalized_set):
+                _fail(artifact, missing, "expected runtime package data file is missing")
 
             required_metadata = {"METADATA", "WHEEL", "RECORD", "entry_points.txt"}
             for filename in sorted(required_metadata):
@@ -399,6 +405,10 @@ def verify_sdist(
             required.update(
                 path.relative_to(project_root).as_posix()
                 for path in (project_root / "openevalgate").rglob("*.py")
+            )
+            required.update(
+                path.relative_to(project_root).as_posix()
+                for path in (project_root / "openevalgate" / "resources").rglob("*.json")
             )
             for relative_path in sorted(required):
                 archive_path = f"{root}/{relative_path}"

@@ -11,3 +11,5 @@ Their data, metrics, model outputs, policies, and generated reports are illustra
 - [Education Assistant](education_assistant/README.md) demonstrates academic-integrity boundaries, learner-safety escalation, accessibility review, context transfer, and durable resume behavior.
 
 Each scenario README links its principal inputs and canonical generated report and provides commands that run from the repository root.
+
+Each result-bearing scenario includes a `run_manifest.yaml` that binds the illustrative `eval_results.csv` to a declared run, candidate, and evaluator identity.

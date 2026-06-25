@@ -8,8 +8,9 @@ The project follows semantic versioning while it remains in alpha. Until a stabl
 
 ### Added
 
-- Proposed eval-run provenance contract, schemas, expected-classification schema, normative fixtures, and contract-development checks for fixture integrity and selected invariants; runtime parsing, complete classification, reporting, and enforcement are not implemented yet.
-- Expanded provenance contract fixture coverage for unsafe single-dot path segments and optional artifact identity fields, including positive omitted-identity mapping and negative wrong-trial mapping; runtime provenance execution remains pending.
+- Runtime eval-run identity inspection for `run_manifest.yaml`, selected review-policy scope, manifest-backed result CSV identity, conventional output-directory identity, recognized Markdown output metadata, optional artifact-index identity, lifecycle findings, and missing/no-results classification, and unbound-result exclusion.
+- Explicit packaged runtime provenance schemas, with wheel and source-distribution checks that compare packaged resources byte-for-byte against the normative top-level schemas.
+- Expanded provenance contract fixture coverage for unsafe single-dot path segments and optional artifact identity fields, including positive omitted-identity mapping, negative wrong-trial mapping, and runtime fixture projection coverage.
 - Non-empty core eval-result validation, duplicate identity rejection, strict
   ISO review-timestamp validation, and safe project-relative output references.
 - Eval-case authority for expected routes and consistency validation for
@@ -38,9 +39,13 @@ The project follows semantic versioning while it remains in alpha. Until a stabl
 
 ### Changed
 
+- Result-bearing projects now require manifest-backed eval-run identity.
+- Manifestless result files now fail provenance validation, while their rows are excluded from row validation, summaries, metrics, coverage, behavioral invariants, behavior-derived blockers, and launch decisions.
+- Canonical examples now include complete versioned run manifests.
+- Runtime identity states are now complete, missing, or invalid.
 - Route-match metrics are derived from actual routes and authoritative eval
   cases instead of trusting the declared CSV boolean.
-- Invalid result evidence is rejected by whole-file and selected-scope
+- Invalid result or eval-run identity evidence is rejected by whole-file and selected-scope
   summaries before it can influence behavioral or controlled-launch metrics.
 - Informational latest-run selection now uses recorded review dates and
   offset-aware timestamps with a deterministic lexical run-ID tie-break.
@@ -56,7 +61,8 @@ The project follows semantic versioning while it remains in alpha. Until a stabl
   or shadow review critical-control status to `Fail`.
 - Controlled-launch behavioral blockers and authorization now use only the
   selected run and candidate; reports distinguish unevaluated selection,
-  invalid policy, invalid results, and informational full-file metrics.
+  invalid policy, invalid results, identity status, lifecycle status, missing provenance,
+  unbound-result exclusion, and informational full-file metrics.
 - Canonical report reproduction is revalidated byte-for-byte through the installed wheel.
 - Generated Markdown reports now use canonical LF line endings across platforms to preserve byte-for-byte reproducibility.
 - Public package metadata now identifies the maintainer and project URLs.

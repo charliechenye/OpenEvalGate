@@ -9,7 +9,7 @@ This roadmap separates four distinct milestones that should not be treated as on
 
 OpenEvalGate should be positioned as an **evidence-backed release-assurance framework for production AI assistants and agents**. It is not a complete AI governance platform, eval runner, observability system, runtime guardrail, compliance certification product, or guarantee of safe deployment.
 
-> **Current state:** Public positioning and limitations, deterministic review modes, behavioral sufficiency, centralized hard-gate policy, package builds, clean-wheel installation, installed CLI execution, and canonical-report reproduction are implemented. Governance, repository protection, disclosure review, and exact-commit verification remain before public visibility. The first public `0.2.0` release follows after evidence-integrity and onboarding work.
+> **Current state:** Public positioning and limitations, deterministic review modes, behavioral sufficiency, centralized hard-gate policy, runtime eval-run identity enforcement, package builds, clean-wheel installation, installed CLI execution, and canonical-report reproduction are implemented. Governance, repository protection, disclosure review, and exact-commit verification remain before public visibility. The first public `0.2.0` release follows after remaining evidence-integrity and onboarding work.
 
 See [Release Milestones](docs/roadmap/release-milestones.md) for the milestone definitions and dependency order.
 
@@ -115,22 +115,23 @@ The following are not required merely to make the repository public:
 - [x] Validate result timestamps and remove CSV row order from informational run chronology.
 - [x] Validate supplied output references as safe, contained, existing regular files.
 - [ ] Validate candidate registries and pin case, workflow, model, and artifact versions.
-- [ ] Validate output digests and referenced artifact provenance.
+- [~] Validate referenced output artifact identity; digest verification remains deferred.
 - [x] Prevent invalid core result evidence from influencing summaries or launch decisions.
 
 ### B2. Add run provenance and freshness
 
-- [~] Define evaluator kinds and minimum evidence. Contract proposed; runtime validation pending.
-- [~] Define candidate identity, run lifecycle, timestamps, and resource descriptors. Contract proposed; runtime validation pending.
-- [~] Define provenance presence, validity, freshness, recency, assurance, lifecycle, and authorization classifications. Contract proposed with normative fixture expectations and fixture-integrity checks, including unsafe path and optional artifact-identity branches; runtime classification and reporting pending.
-- [~] Define stale-evidence behavior when current candidate or policy state differs from valid historical evidence. Contract proposed with selected invariant fixtures; runtime freshness comparison pending.
-- [ ] Parse and verify run provenance.
-- [ ] Validate at runtime that referenced output-artifact metadata and directory identity agree with result rows when optional artifact identity fields are supplied.
-- [ ] Display provenance classifications in reports.
-- [ ] Enforce controlled-launch provenance requirements.
+- [x] Define evaluator kinds and minimum evidence in the v1 contract and enforce evaluator identity at runtime.
+- [~] Define candidate identity, run lifecycle, timestamps, and resource descriptors. Runtime identity and lifecycle classification are implemented; digest verification and freshness resource comparison remain deferred.
+- [~] Define provenance presence, validity, freshness, recency, assurance, lifecycle, and authorization classifications. Runtime identity status, lifecycle status, missing-manifest detection, unbound-result exclusion, and controlled-launch identity blocking are implemented; freshness, recency, verified assurance, and `review_context.yaml` remain deferred.
+- [~] Define stale-evidence behavior when current candidate or policy state differs from valid historical evidence. Contract proposed with selected invariant fixtures; runtime freshness comparison remains deferred.
+- [x] Parse and enforce selected run identity against manifests and compatible result CSVs.
+- [x] Validate at runtime that referenced output-artifact metadata and directory identity agree with result rows when optional artifact identity fields are supplied.
+- [x] Display runtime identity and lifecycle status in reports.
+- [~] Enforce controlled-launch provenance requirements for complete versioned identity and lifecycle; digest verification, freshness, recency, and verified assurance remain deferred.
 
 ### B3. Provide a minimal adoption path
 
+- [ ] Add a provenance initialization command that generates a minimal run manifest and an optional artifact index from existing result evidence.
 - [ ] Add `openevalgate init <project> --profile minimal`, or package an equivalently deterministic minimal scaffold.
 - [ ] Keep the initial profile set small; defer speculative profile breadth until user demand is demonstrated.
 - [ ] Add a five-minute installed-wheel quickstart for Linux/macOS and Windows PowerShell.
@@ -183,7 +184,7 @@ The following are not required merely to make the repository public:
 ### Methodology and adoption evidence
 
 - [ ] A versioned specification defines the normative primitives and failure behavior.
-- [ ] Evidence provenance and freshness rules are operational.
+- [~] Runtime eval-run identity rules are operational; digest verification, freshness, recency, and verified assurance remain deferred.
 - [ ] Multiple independent users have completed end-to-end reviews.
 - [ ] At least one external contribution and one real integration exist.
 - [ ] At least one sanitized case study is published with explicit limitations.

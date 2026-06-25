@@ -38,6 +38,7 @@ def test_optional_files_do_not_fail_project_check(tmp_path: Path) -> None:
     copytree(CUSTOMER_SUPPORT, project)
     (project / "model_arena_scorecard.csv").unlink()
     (project / "eval_results.csv").unlink()
+    (project / "run_manifest.yaml").unlink()
     (project / "domain_owner_feedback_loop.md").unlink()
     (project / "agent_behavior_change_request.md").unlink()
     (project / "p0_failure_mode_checklist.md").unlink()

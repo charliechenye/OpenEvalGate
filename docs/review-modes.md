@@ -4,10 +4,10 @@ OpenEvalGate supports three explicit review modes through an optional
 `review_policy.yaml` file.
 
 The three canonical projects under `examples/` include editable policies that
-demonstrate different review modes::
+demonstrate different review modes:
 
 - customer support requests controlled launch but remains blocked;
-- education requests shadow launch review but remains blocked from shadow evaluation;;
+- education requests shadow launch review but remains blocked from shadow evaluation;
 - presales requests documentation review.
 
 These examples teach review-mode semantics without manufacturing a passing
@@ -19,9 +19,12 @@ controlled-launch project.
   documentation review, even when behavioral results exist.
 - `shadow_launch` may authorize bounded shadow evaluation when control
   evidence is sufficient and no hard blockers exist. Missing or empty results
-  are allowed; present but invalid results block advancement.
+  are allowed; present but invalid results block advancement. A conventional
+  `eval_results.csv` without an authoritative `run_manifest.yaml` is unbound
+  provenance evidence and fails validation before its rows can be used.
 - `controlled_launch` is an explicit opt-in that requires a selected run and
-  candidate plus sufficient behavioral evidence.
+  candidate, complete manifest-backed eval-run identity, non-failed lifecycle,
+  and sufficient behavioral evidence.
 
 When the policy file is absent, the declared mode is unavailable and the
 effective mode is `shadow_launch` for backward compatibility. A present but
@@ -56,6 +59,11 @@ not influence controlled-launch coverage, trial depth, thresholds, invariants,
 behavioral blockers, or authorization. Selected-scope coverage is evaluated
 only when a valid policy selects both a run and a candidate. Without that
 selection, selected-scope coverage is reported as `Not evaluated`, not zero.
+
+When a review policy selects a run, OpenEvalGate uses the matching run-scoped
+manifest when present, or a root manifest only when it declares the selected
+run. A root result file bound to another run's valid root manifest is not
+treated as unbound merely because a different run is selected.
 
 The `Observed Behavioral Quality` report section may still summarize every
 valid row in the results file as broader informational evidence. Those
@@ -138,6 +146,10 @@ A controlled-launch recommendation is bounded to the selected candidate, run, ev
 
 The recommendation is not a universal safety claim, compliance certification,
 unrestricted production approval, or substitute for runtime monitoring and
-organizational authorization. This iteration does not validate provenance,
-freshness, artifact-version pinning, referenced artifact metadata, enriched
-workflow-route or handoff claims, or every routing and model-policy field.
+organizational authorization.
+
+This iteration validates runtime eval-run identity, selected-scope result
+identity, supplied output references, recognized output metadata, and optional
+artifact-index identity. It does not yet verify provenance digests, freshness,
+recency, `review_context.yaml`, enriched workflow-route or handoff claims, or
+every routing and model-policy field.

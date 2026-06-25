@@ -1,1 +1,2 @@
 include CHANGELOG.md
+recursive-include openevalgate/resources/schemas *.json

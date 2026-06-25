@@ -15,6 +15,7 @@ from openevalgate.eval_results import BehavioralEvidence, classify_behavioral_ev
 from openevalgate.hard_gate_policy import HardGateEvaluation
 from openevalgate.launch_gate_review import GateRow, is_meaningful_mitigation
 from openevalgate.project_inspection import inspect_project
+from openevalgate.provenance import RunIdentityInspection, RunIdentityStatus
 from openevalgate.routing import summarize_routing_policy
 from openevalgate.review_policy import evaluate_behavioral_sufficiency
 from openevalgate.schema import (
@@ -35,8 +36,14 @@ def generate_report(project_dir: str | Path) -> str:
     check = inspection.check
     cases = _safe_load_cases(root / "eval_cases.yaml")
     gates = inspection.launch_gate_review.valid_rows
-    behavioral_evidence = classify_behavioral_evidence(root)
-    behavioral_sufficiency = evaluate_behavioral_sufficiency(root)
+    behavioral_evidence = classify_behavioral_evidence(
+        root,
+        identity_inspection=inspection.run_identity_inspection,
+    )
+    behavioral_sufficiency = evaluate_behavioral_sufficiency(
+        root,
+        identity_inspection=inspection.run_identity_inspection,
+    )
     blockers = inspection.hard_blockers
     score = score_gates(inspection.launch_gate_review)
     project_evidence_valid = (
@@ -56,7 +63,15 @@ def generate_report(project_dir: str | Path) -> str:
         f"# Launch Readiness Report: {system_name}",
         "",
         "## Executive Summary",
-        _executive_summary(system_name, assistant_type, assessment),
+        _executive_summary(
+            system_name,
+            assistant_type,
+            assessment,
+            inspection.run_identity_inspection,
+        ),
+        "",
+        "## Eval-Run Identity",
+        _eval_run_identity_section(inspection.run_identity_inspection, root),
         "",
         "## Evidence Completeness Score",
         f"{assessment.evidence_completeness_score}/100",
@@ -175,6 +190,7 @@ def _executive_summary(
     system_name: str,
     assistant_type: str,
     assessment: LaunchAssessment,
+    run_identity: RunIdentityInspection,
 ) -> str:
     return "\n".join(
         [
@@ -183,6 +199,7 @@ def _executive_summary(
             f"- **Evidence completeness score:** {assessment.evidence_completeness_score}/100",
             f"- **Evidence package band:** {assessment.evidence_band}",
             f"- **Behavioral evidence status:** {behavioral_evidence_display(assessment.behavioral_evidence_state)}",
+            f"- **Run identity status:** {_identity_status_display(run_identity.status)}",
             f"- **Declared review mode:** {_mode_display(assessment.declared_review_mode)}",
             f"- **Effective review mode:** {_mode_display(assessment.effective_review_mode)}",
             (
@@ -200,6 +217,77 @@ def _executive_summary(
             f"- **Hard blockers:** {len(assessment.hard_blockers)}",
         ]
     )
+
+
+def _eval_run_identity_section(inspection: RunIdentityInspection, root: Path) -> str:
+    lines = [f"- Status: {_identity_status_display(inspection.status)}"]
+    if inspection.manifest_path is not None:
+        lines.append(f"- Manifest: {_display_project_path(inspection.manifest_path, root)}")
+    if inspection.identity is not None:
+        identity = inspection.identity
+        lines.extend(
+            [
+                f"- Run ID: {identity.run_id}",
+                f"- Lifecycle: {_lifecycle_display(identity.run_status)}",
+                f"- Candidate: {identity.candidate_id}",
+                f"- Candidate version: {identity.candidate_version}",
+                f"- Evaluator kind: {identity.evaluator.kind}",
+                f"- Evaluator ID: {identity.evaluator.evaluator_id}",
+                f"- Results path: {_display_project_path(identity.results_path, root)}",
+            ]
+        )
+        if identity.evaluator.evaluator_version is not None:
+            lines.append(f"- Evaluator version: {identity.evaluator.evaluator_version}")
+        if identity.framework_id is not None:
+            framework = identity.framework_id
+            if identity.framework_version is not None:
+                framework += f" {identity.framework_version}"
+            lines.append(f"- Framework: {framework}")
+    if inspection.findings:
+        lines.append("- Findings: " + "; ".join(f"{finding.id}: {finding.message}" for finding in inspection.findings))
+    else:
+        lines.append("- Findings: none")
+    if inspection.status == RunIdentityStatus.COMPLETE:
+        lines.append("- Limitation: Run and output identity checks passed. Digests and release freshness were not evaluated.")
+    elif inspection.status == RunIdentityStatus.MISSING:
+        if any(finding.id == "provenance_results_unbound" for finding in inspection.findings):
+            lines.append(
+                "- Action required: eval_results.csv was found without an authoritative "
+                "run_manifest.yaml. The file failed provenance validation. Its rows were " \
+                "excluded from row validation, behavioral metrics, and launch decisions. " \
+                "Add a valid manifest or remove the unbound result file."
+            )
+        else:
+            lines.append("- Note: No eval-run evidence was provided. A manifest is required when result evidence is added.")
+    else:
+        lines.append("- Warning: Run identity is invalid. Behavioral evidence from this run was excluded from launch evaluation.")
+    return "\n".join(lines)
+
+
+def _display_project_path(path: Path, root: Path) -> str:
+    resolved_root = root.resolve(strict=False)
+    resolved_path = path.resolve(strict=False)
+
+    try:
+        return resolved_path.relative_to(resolved_root).as_posix()
+    except ValueError:
+        if not path.is_absolute():
+            return path.as_posix()
+        return "<outside-project>"
+
+
+def _identity_status_display(status: RunIdentityStatus) -> str:
+    return {
+        RunIdentityStatus.COMPLETE: "Complete",
+        RunIdentityStatus.MISSING: "Missing",
+        RunIdentityStatus.INVALID: "Invalid",
+    }[status]
+
+
+def _lifecycle_display(status: str) -> str:
+    if status == "aborted":
+        return "incomplete"
+    return status
 
 
 def _hard_blocker_summary(blockers: list[HardBlocker]) -> str:

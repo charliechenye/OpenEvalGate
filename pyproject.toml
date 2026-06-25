@@ -49,6 +49,7 @@ classifiers = [
   "Topic :: Software Development :: Quality Assurance",
 ]
 dependencies = [
+  "jsonschema[format-nongpl]>=4.23",
   "PyYAML>=6.0.0",
 ]
 
@@ -57,7 +58,6 @@ dev = [
   "build>=1.2.2",
   "pytest>=8.0.0",
   "pytest-xdist>=3.6.1",
-  "jsonschema[format-nongpl]>=4.23",
 ]
 
 [project.urls]
@@ -72,6 +72,9 @@ openevalgate = "openevalgate.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["openevalgate*"]
+
+[tool.setuptools.package-data]
+"openevalgate.resources.schemas" = ["*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

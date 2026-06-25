@@ -6,6 +6,7 @@
 - **Evidence completeness score:** 34/100
 - **Evidence package band:** Incomplete
 - **Behavioral evidence status:** Evaluated — valid empirical rows are available.
+- **Run identity status:** Complete
 - **Declared review mode:** shadow_launch
 - **Effective review mode:** shadow_launch
 - **Sufficiency for effective review mode:** Sufficient
@@ -14,6 +15,19 @@
 - **Final launch recommendation:** Not ready for shadow evaluation
 - **Recommended next actions:** Complete missing or invalid control-evidence requirements; Remediate known hard blockers.
 - **Hard blockers:** 6
+
+## Eval-Run Identity
+- Status: Complete
+- Manifest: run_manifest.yaml
+- Run ID: run_001
+- Lifecycle: complete
+- Candidate: education_candidate
+- Candidate version: education-example-v1
+- Evaluator kind: human
+- Evaluator ID: human_review
+- Results path: eval_results.csv
+- Findings: none
+- Limitation: Run and output identity checks passed. Digests and release freshness were not evaluated.
 
 ## Evidence Completeness Score
 34/100

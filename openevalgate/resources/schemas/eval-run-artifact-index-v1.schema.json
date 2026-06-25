@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/charliechenye/OpenEvalGate/schemas/eval-run-artifact-index-v1.schema.json",
+  "title": "OpenEvalGate Eval-Run Artifact Index v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "artifacts"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1"
+    },
+    "run_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/artifact"
+      }
+    },
+    "extensions": {
+      "type": "object"
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^\\S(?:[^\\r\\n]*\\S)?$"
+    },
+    "alias": {
+      "type": "string",
+      "pattern": "^\\S(?:[^\\r\\n]*\\S)?$"
+    },
+    "aliases": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/alias"
+      },
+      "uniqueItems": true
+    },
+    "mediaType": {
+      "type": "string",
+      "pattern": "^[^\\r\\n]+$"
+    },
+    "relativePath": {
+      "type": "string",
+      "pattern": "^(?!/)(?!.*//)(?!.*(?:^|/)\\.(?:/|$))(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\)(?![A-Za-z]:)\\S(?:[^\\r\\n]*[^\\s/])?$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "digest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sha256"
+      ],
+      "properties": {
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_id",
+        "artifact_type",
+        "path"
+      ],
+      "properties": {
+        "artifact_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "artifact_type": {
+          "$ref": "#/$defs/identifier"
+        },
+        "case_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "trial_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "evaluator_ref": {
+          "$ref": "#/$defs/identifier"
+        },
+        "path": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "media_type": {
+          "$ref": "#/$defs/mediaType"
+        },
+        "digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "annotations": {
+          "type": "object"
+        },
+        "extensions": {
+          "type": "object"
+        }
+      },
+      "dependentRequired": {
+        "trial_id": [
+          "case_id"
+        ]
+      }
+    }
+  }
+}

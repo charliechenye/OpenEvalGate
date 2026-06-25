@@ -13,6 +13,7 @@ from openevalgate.action_risk import (
 )
 from openevalgate.escalation import validate_escalation_contract
 from openevalgate.eval_results import classify_behavioral_evidence, read_eval_results
+from openevalgate.provenance import RunIdentityInspection, RunIdentityStatus, inspect_run_identity
 from openevalgate.hard_gate_policy import (
     HardGateContext,
     HardGateEvaluation,
@@ -44,6 +45,7 @@ class ProjectInspection:
     evaluations: list[HardGateEvaluation]
     policy_issues: list[ValidationIssue]
     hard_blockers: list[HardBlocker]
+    run_identity_inspection: RunIdentityInspection
 
     @property
     def valid(self) -> bool:
@@ -62,11 +64,21 @@ def inspect_project(project_dir: str | Path) -> ProjectInspection:
     """Compose structural validation and policy evaluation without conflating them."""
 
     root = Path(project_dir)
-    check = check_project(root)
+    review_policy = validate_review_policy(root)
+    selected_scope = (
+        review_policy.policy.evaluation_scope
+        if review_policy.policy_valid and review_policy.policy is not None
+        else None
+    )
+    run_identity = inspect_run_identity(
+        root,
+        selected_run_id=selected_scope.run_id if selected_scope else None,
+        selected_candidate=selected_scope.candidate if selected_scope else None,
+    )
+    check = check_project(root, identity_inspection=run_identity)
     review = check.launch_gate_review
     cases, eval_valid = _validated_eval_cases(root / "eval_cases.yaml")
     action_review = check.action_risk_review
-    review_policy = validate_review_policy(root)
 
     eval_high_impact = (
         any(
@@ -136,6 +148,7 @@ def inspect_project(project_dir: str | Path) -> ProjectInspection:
         evaluate_behavioral_blockers=(
             not review_policy.policy_present or review_policy.policy_valid
         ),
+        run_identity_inspection=run_identity,
     )
     hard_blockers = _deduplicate_blockers(
         [*policy_blockers, *independent_blockers]
@@ -148,6 +161,7 @@ def inspect_project(project_dir: str | Path) -> ProjectInspection:
         evaluations,
         policy_issues,
         hard_blockers,
+        run_identity,
     )
 
 
@@ -180,6 +194,7 @@ def _evaluate_independent_blockers(
     *,
     behavioral_scope: EvaluationScope | None,
     evaluate_behavioral_blockers: bool,
+    run_identity_inspection: RunIdentityInspection,
 ) -> list[HardBlocker]:
     blockers: list[HardBlocker] = []
 
@@ -212,12 +227,45 @@ def _evaluate_independent_blockers(
                 )
             )
 
-    behavioral_evidence = classify_behavioral_evidence(root)
+    if behavioral_scope is not None:
+        if run_identity_inspection.status == RunIdentityStatus.MISSING:
+            blockers.append(
+                HardBlocker(
+                    "missing_eval_run_provenance",
+                    "Controlled-launch review requires a complete manifest-backed eval-run identity.",
+                    (
+                        f"eval_runs/{behavioral_scope.run_id}/run_manifest.yaml "
+                        "or run_manifest.yaml"
+                    ),
+                )
+            )
+        lifecycle_findings = {finding.id for finding in run_identity_inspection.findings}
+        if "provenance_lifecycle_failed" in lifecycle_findings:
+            blockers.append(
+                HardBlocker(
+                    "provenance_lifecycle_failed",
+                    "Controlled-launch review requires a completed eval-run lifecycle.",
+                    "run.status=failed",
+                )
+            )
+        if "provenance_lifecycle_incomplete" in lifecycle_findings:
+            blockers.append(
+                HardBlocker(
+                    "provenance_lifecycle_incomplete",
+                    "Controlled-launch review requires a completed eval-run lifecycle.",
+                    "run.status=aborted",
+                )
+            )
+
+    behavioral_evidence = classify_behavioral_evidence(
+        root,
+        identity_inspection=run_identity_inspection,
+    )
     if evaluate_behavioral_blockers and behavioral_evidence.state == "available":
         critical_failures = _critical_escalation_failures(
-            root,
             cases,
             scope=behavioral_scope,
+            run_identity_inspection=run_identity_inspection,
         )
         if critical_failures:
             blockers.append(
@@ -271,20 +319,23 @@ def _high_risk_actions_without_controls(
 
 
 def _critical_escalation_failures(
-    root: Path,
     cases: list[dict[str, Any]],
     *,
-    scope: EvaluationScope | None = None,
+    scope: EvaluationScope | None,
+    run_identity_inspection: RunIdentityInspection,
 ) -> list[str]:
     high_risk_handoff_cases = {
-        str(case.get("id", "")).strip()
-        for case in cases
-        if str(case.get("risk_tier", "")).lower()
-        in {"high", "prohibited"}
+        str(case.get("id", "")).strip() for case in cases
+        if str(case.get("risk_tier", "")).lower() in {"high", "prohibited"}
         and isinstance(case.get("expected_handoff"), dict)
     }
     failures: set[str] = set()
-    for row in read_eval_results(root / "eval_results.csv"):
+    if run_identity_inspection.status != RunIdentityStatus.COMPLETE:
+        return []
+    results_path = run_identity_inspection.results_path
+    if results_path is None or not results_path.is_file():
+        return []
+    for row in read_eval_results(results_path):
         if scope is not None and (
             row.get("run_id", "") != scope.run_id
             or row.get("candidate", "") != scope.candidate

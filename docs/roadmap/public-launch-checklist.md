@@ -16,7 +16,7 @@ Public visibility is not the same as publishing OpenEvalGate `0.2.0`, releasing 
 - [x] Unknown conditional applicability is fail-closed.
 - [x] Invalid action-risk evidence cannot satisfy policy.
 - [x] Core eval-result identity, expected-route, duplicate, timestamp, and supplied-output-reference errors cannot silently influence a controlled-launch decision.
-- [~] Provenance and freshness contract is proposed with fixture-integrity checks for selected branches, including unsafe paths and optional artifact identity; enriched workflow, handoff, runtime provenance validation, freshness enforcement, and artifact-version checks remain pending for controlled launch.
+- [~] Provenance and freshness contract is proposed with fixture-integrity checks for selected branches. Runtime eval-run identity validation, unbound-result exclusion, lifecycle reporting, and controlled-launch identity blocking are implemented; freshness enforcement, digest verification, enriched workflow/handoff validation, and broader artifact-version checks remain pending.
 
 ## 2. Public Positioning and Non-Claims
 
@@ -151,7 +151,7 @@ These items do not block public repository visibility:
 - [ ] PyPI publication.
 - [ ] A tagged `0.2.0` release.
 - [ ] Published external case studies.
-- [ ] Runtime eval-run provenance parsing, freshness comparison, report display, and controlled-launch enforcement.
+- [ ] Runtime digest verification, freshness comparison, recency enforcement, and complete contract authorization output.
 
 They remain tracked in [TODO.md](../../TODO.md), [Release Milestones](release-milestones.md), and [Iteration 3](iteration-03-adoption-and-external-validation.md).
 

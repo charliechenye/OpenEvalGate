@@ -61,7 +61,7 @@
         "manifest_presence": {
           "enum": [
             "present",
-            "legacy_absent"
+            "absent"
           ]
         },
         "validity": {
@@ -141,6 +141,7 @@
       "items": {
         "enum": [
           "provenance_manifest_absent",
+          "provenance_results_unbound",
           "provenance_manifest_schema_invalid",
           "provenance_unsupported_schema_version",
           "provenance_results_path_required",

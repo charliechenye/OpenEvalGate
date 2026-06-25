@@ -14,6 +14,7 @@ from openevalgate.eval_results import (
     summarize_selected_eval_results,
     validate_eval_results,
 )
+from openevalgate.provenance import inspect_run_identity
 from openevalgate.report import generate_report
 from openevalgate.validator import check_project
 
@@ -48,24 +49,28 @@ def _write_result_table(
 def _single_result_project(tmp_path: Path) -> tuple[Path, list[str], dict[str, str]]:
     project = _project(tmp_path)
     headers, rows = _read_result_table(project)
-    return project, headers, rows[0]
+    row = rows[0]
+    row["observed_output_path"] = ""
+    return project, headers, row
 
 
 def _project_with_run_timestamps(
     tmp_path: Path,
     values: list[tuple[str, str]],
-) -> Path:
+):
     project = _project(tmp_path)
+    inspection = inspect_run_identity(project)
     headers, canonical_rows = _read_result_table(project)
     rows: list[dict[str, str]] = []
     for index, (run_id, reviewed_at) in enumerate(values):
         row = canonical_rows[index % len(canonical_rows)].copy()
+        row["observed_output_path"] = ""
         row["run_id"] = run_id
         row["reviewed_at"] = reviewed_at
         row["trial_id"] = f"trial_{index:03d}"
         rows.append(row)
     _write_result_table(project, headers, rows)
-    return project
+    return project, inspection
 
 
 def test_valid_eval_results_pass() -> None:
@@ -77,9 +82,9 @@ def test_valid_eval_results_pass() -> None:
 
 
 def test_missing_eval_results_are_not_provided(tmp_path: Path) -> None:
-    project = tmp_path / "project"
-    copytree(CUSTOMER_SUPPORT, project)
+    project = _project(tmp_path)
     (project / "eval_results.csv").unlink()
+    (project / "run_manifest.yaml").unlink()
 
     evidence = classify_behavioral_evidence(project)
 
@@ -100,13 +105,12 @@ def test_header_only_eval_results_are_empty(tmp_path: Path) -> None:
 
 
 def test_invalid_eval_results_fail(tmp_path: Path) -> None:
-    project = tmp_path / "project"
-    copytree(CUSTOMER_SUPPORT, project)
+    project = _project(tmp_path)
     (project / "eval_results.csv").write_text(
         "\n".join(
             [
                 "run_id,case_id,candidate,evaluator,actual_route,expected_route,route_match,passed,score,failure_category,failure_reason,observed_output_path,reviewed_by,reviewed_at,notes",
-                "run_001,refund_boundary_case_001,gpt-4.1-mini,human_review,send,escalate,maybe,true,1.4,,,,ai_quality,2026-05-23,bad row",
+                "run_002,refund_boundary_case_001,gpt-4.1-mini,human_review,send,escalate,maybe,true,1.4,,,,ai_quality,2026-05-23,bad row",
             ]
         ),
         encoding="utf-8",
@@ -128,9 +132,10 @@ def test_invalid_eval_results_fail(tmp_path: Path) -> None:
 def test_unknown_case_id_in_results_fails_project_check(tmp_path: Path) -> None:
     project = tmp_path / "project"
     copytree(CUSTOMER_SUPPORT, project)
-    text = (project / "eval_results.csv").read_text(encoding="utf-8")
-    text = text.replace("refund_boundary_case_001", "unknown_case_999", 1)
-    (project / "eval_results.csv").write_text(text, encoding="utf-8")
+    headers, rows = _read_result_table(project)
+    rows[0]["case_id"] = "unknown_case_999"
+    rows[0]["observed_output_path"] = ""
+    _write_result_table(project, headers, rows)
 
     result = check_project(project)
 
@@ -139,8 +144,7 @@ def test_unknown_case_id_in_results_fails_project_check(tmp_path: Path) -> None:
 
 
 def test_enriched_eval_results_validate_and_calculate_boundary_metrics(tmp_path: Path) -> None:
-    project = tmp_path / "project"
-    copytree(CUSTOMER_SUPPORT, project)
+    project = _project(tmp_path)
     cases = yaml.safe_load((project / "eval_cases.yaml").read_text(encoding="utf-8"))["eval_cases"]
     anchor = cases[0]
     variant = cases[1]
@@ -176,10 +180,10 @@ def test_enriched_eval_results_validate_and_calculate_boundary_metrics(tmp_path:
     variant_route = variant["expected_route"]
     variant_mismatch_route = "show" if variant_route != "show" else "escalate"
     rows = [
-        ["run_002", anchor["id"], "candidate", "harness", anchor_route, anchor_route, "true", "true", "1", "", "", "", "qa", "2026-06-18", "", "trial_1", "act", "true", "true", "true", "false"],
-        ["run_002", variant["id"], "candidate", "harness", variant_route, variant_route, "true", "true", "1", "", "", "", "qa", "2026-06-18", "", "trial_1", "act", "true", "true", "true", "false"],
-        ["run_002", anchor["id"], "candidate", "harness", anchor_route, anchor_route, "true", "true", "1", "", "", "", "qa", "2026-06-18", "", "trial_2", "act", "true", "true", "true", "false"],
-        ["run_002", variant["id"], "candidate", "harness", variant_mismatch_route, variant_route, "false", "false", "0", "route", "unstable", "", "qa", "2026-06-18", "", "trial_2", "answer", "false", "false", "false", "true"],
+        ["run_002", anchor["id"], "gpt-4.1-mini", "human_review", anchor_route, anchor_route, "true", "true", "1", "", "", "", "qa", "2026-06-18", "", "trial_1", "act", "true", "true", "true", "false"],
+        ["run_002", variant["id"], "gpt-4.1-mini", "human_review", variant_route, variant_route, "true", "true", "1", "", "", "", "qa", "2026-06-18", "", "trial_1", "act", "true", "true", "true", "false"],
+        ["run_002", anchor["id"], "gpt-4.1-mini", "human_review", anchor_route, anchor_route, "true", "true", "1", "", "", "", "qa", "2026-06-18", "", "trial_2", "act", "true", "true", "true", "false"],
+        ["run_002", variant["id"], "gpt-4.1-mini", "human_review", variant_mismatch_route, variant_route, "false", "false", "0", "route", "unstable", "", "qa", "2026-06-18", "", "trial_2", "answer", "false", "false", "false", "true"],
     ]
     with (project / "eval_results.csv").open("w", encoding="utf-8", newline="") as handle:
         writer = csv.writer(handle)
@@ -225,14 +229,13 @@ def test_escalation_metrics_are_calculated_from_enriched_results() -> None:
 
 
 def test_invalid_enriched_result_values_fail(tmp_path: Path) -> None:
-    project = tmp_path / "project"
-    copytree(CUSTOMER_SUPPORT, project)
+    project = _project(tmp_path)
     path = project / "eval_results.csv"
     path.write_text(
         "\n".join(
             [
                 "run_id,case_id,candidate,evaluator,actual_route,expected_route,route_match,passed,score,failure_category,failure_reason,observed_output_path,reviewed_by,reviewed_at,notes,trial_id,actual_workflow_route,workflow_route_match,trajectory_pass,end_state_pass,prohibited_action_occurred,destination_match,payload_complete",
-                "run_1,refund_boundary_case_001,candidate,harness,escalate,escalate,true,true,1,,,,qa,2026-06-18,,trial_1,execute,maybe,true,true,false,maybe,nope",
+                "run_002,refund_boundary_case_001,gpt-4.1-mini,human_review,escalate,escalate,true,true,1,,,,qa,2026-06-18,,trial_1,execute,maybe,true,true,false,maybe,nope",
             ]
         ),
         encoding="utf-8",
@@ -249,14 +252,15 @@ def test_invalid_enriched_result_values_fail(tmp_path: Path) -> None:
 
 def test_truncated_result_row_fails_closed(tmp_path: Path) -> None:
     project = _project(tmp_path)
+    inspection = inspect_run_identity(project)
     headers, _ = _read_result_table(project)
     (project / "eval_results.csv").write_text(
-        ",".join(headers) + "\nrun_001,refund_boundary_case_001\n",
+        ",".join(headers) + "\nrun_002,refund_boundary_case_001\n",
         encoding="utf-8",
     )
 
-    result = validate_eval_results(project)
-    evidence = classify_behavioral_evidence(project)
+    result = validate_eval_results(project, identity_inspection=inspection)
+    evidence = classify_behavioral_evidence(project, identity_inspection=inspection)
 
     assert not result.valid
     assert any(
@@ -276,10 +280,11 @@ def test_required_result_values_must_be_nonempty(
     blank: str,
 ) -> None:
     project, headers, row = _single_result_project(tmp_path)
+    inspection = inspect_run_identity(project)
     row[field] = blank
     _write_result_table(project, headers, [row])
 
-    result = validate_eval_results(project)
+    result = validate_eval_results(project, identity_inspection=inspection)
 
     assert not result.valid
     assert any(
@@ -439,7 +444,7 @@ def test_repeated_case_with_distinct_trial_ids_passes(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize("field", ["run_id", "candidate"])
-def test_same_case_and_trial_in_different_identity_scope_passes(
+def test_same_case_and_trial_in_different_identity_scope_is_rejected(
     tmp_path: Path,
     field: str,
 ) -> None:
@@ -448,7 +453,7 @@ def test_same_case_and_trial_in_different_identity_scope_passes(
     duplicate[field] = f"different_{field}"
     _write_result_table(project, headers, [row, duplicate])
 
-    assert validate_eval_results(project).valid
+    assert not validate_eval_results(project).valid
 
 
 @pytest.mark.parametrize("field", ["run_id", "candidate", "case_id"])
@@ -473,19 +478,9 @@ def test_blank_output_reference_passes(tmp_path: Path) -> None:
     assert validate_eval_results(project).valid
 
 
-@pytest.mark.parametrize(
-    "reference",
-    [
-        "eval_runs/run_001/refund_boundary_case_001.md",
-        r"eval_runs\run_001\refund_boundary_case_001.md",
-    ],
-)
-def test_existing_regular_output_reference_passes(
-    tmp_path: Path,
-    reference: str,
-) -> None:
+def test_existing_regular_output_reference_passes(tmp_path: Path) -> None:
     project, headers, row = _single_result_project(tmp_path)
-    row["observed_output_path"] = reference
+    row["observed_output_path"] = "eval_runs/run_002/refund_boundary_case_001.md"
     _write_result_table(project, headers, [row])
 
     assert validate_eval_results(project).valid
@@ -495,18 +490,22 @@ def test_existing_regular_output_reference_passes(
     ("reference", "message"),
     [
         ("missing/output.md", "Referenced output file does not exist or is not a regular file."),
-        ("eval_runs/", "Referenced output file does not exist or is not a regular file."),
+        ("eval_runs/", "Must be a project-relative filesystem path."),
         ("/etc/passwd", "Must be a project-relative filesystem path."),
         (r"C:\private\output.md", "Must be a project-relative filesystem path."),
         ("C:/private/output.md", "Must be a project-relative filesystem path."),
         (r"\\server\share\output.md", "Must be a project-relative filesystem path."),
         (r"\eval_runs\run_001\refund_boundary_case_001.md", "Must be a project-relative filesystem path."),
+        (r"eval_runs\run_001\refund_boundary_case_001.md", "Must be a project-relative filesystem path."),
         ("https://example.com/output.md", "Must be a project-relative filesystem path."),
         ("file:///tmp/output.md", "Must be a project-relative filesystem path."),
         ("../outside.md", "Parent-directory traversal is not allowed."),
-        (r"..\outside.md", "Parent-directory traversal is not allowed."),
+        (r"..\outside.md", "Must be a project-relative filesystem path."),
         ("eval_runs/../../outside.md", "Parent-directory traversal is not allowed."),
-        (r"eval_runs\..\..\outside.md", "Parent-directory traversal is not allowed."),
+        (r"eval_runs\..\..\outside.md", "Must be a project-relative filesystem path."),
+        (".", "Parent-directory traversal is not allowed."),
+        ("./output.md", "Parent-directory traversal is not allowed."),
+        ("eval_runs/./output.md", "Parent-directory traversal is not allowed."),
     ],
 )
 def test_unsafe_or_invalid_output_reference_fails(
@@ -514,16 +513,15 @@ def test_unsafe_or_invalid_output_reference_fails(
     reference: str,
     message: str,
 ) -> None:
-    project, headers, row = _single_result_project(tmp_path)
-    row["observed_output_path"] = reference
-    _write_result_table(project, headers, [row])
+    project = _project(tmp_path)
 
-    result = validate_eval_results(project)
-
-    assert any(
-        issue.path.endswith("row[2].observed_output_path")
-        and issue.message == message
-        for issue in result.issues
+    assert (
+        eval_results._validate_output_reference(
+            project,
+            reference,
+            allowed_root=project,
+        )
+        == message
     )
 
 
@@ -533,6 +531,7 @@ def test_embedded_nul_output_reference_is_rejected(tmp_path: Path) -> None:
     issue = eval_results._validate_output_reference(
         project,
         "eval_runs/\0output.md",
+        allowed_root=project,
     )
 
     assert (
@@ -541,7 +540,7 @@ def test_embedded_nul_output_reference_is_rejected(tmp_path: Path) -> None:
     )
 
 
-def test_output_reference_symlink_escape_fails(tmp_path: Path) -> None:
+def test_output_reference_final_symlink_fails(tmp_path: Path) -> None:
     project, headers, row = _single_result_project(tmp_path)
     outside = tmp_path / "outside.md"
     outside.write_text("outside\n", encoding="utf-8")
@@ -556,12 +555,12 @@ def test_output_reference_symlink_escape_fails(tmp_path: Path) -> None:
     result = validate_eval_results(project)
 
     assert any(
-        issue.message == "Resolved path must remain inside the project directory."
+        issue.message == "Referenced output file does not exist or is not a regular file."
         for issue in result.issues
     )
 
 
-def test_output_reference_internal_symlink_passes(tmp_path: Path) -> None:
+def test_output_reference_internal_symlink_fails(tmp_path: Path) -> None:
     project, headers, row = _single_result_project(tmp_path)
     target = project / "eval_runs" / "run_001" / "refund_boundary_case_001.md"
     link = project / "eval_runs" / "internal-link.md"
@@ -572,7 +571,12 @@ def test_output_reference_internal_symlink_passes(tmp_path: Path) -> None:
     row["observed_output_path"] = "eval_runs/internal-link.md"
     _write_result_table(project, headers, [row])
 
-    assert validate_eval_results(project).valid
+    result = validate_eval_results(project)
+
+    assert any(
+        issue.message == "Referenced output file does not exist or is not a regular file."
+        for issue in result.issues
+    )
 
 
 def test_result_expected_route_must_match_eval_case(tmp_path: Path) -> None:
@@ -748,7 +752,7 @@ def test_nonfinite_scores_fail_validation(tmp_path: Path, score: str) -> None:
 
 
 def test_latest_run_uses_newest_timestamp_not_last_row(tmp_path: Path) -> None:
-    project = _project_with_run_timestamps(
+    project, inspection = _project_with_run_timestamps(
         tmp_path,
         [
             ("run_new", "2026-06-23"),
@@ -756,7 +760,7 @@ def test_latest_run_uses_newest_timestamp_not_last_row(tmp_path: Path) -> None:
         ],
     )
 
-    summary = summarize_eval_results(project)
+    summary = summarize_eval_results(project, identity_inspection=inspection)
 
     assert summary is not None
     assert summary.latest_run_id == "run_new"
@@ -765,7 +769,7 @@ def test_latest_run_uses_newest_timestamp_not_last_row(tmp_path: Path) -> None:
 def test_latest_run_uses_greatest_timestamp_within_each_run(
     tmp_path: Path,
 ) -> None:
-    project = _project_with_run_timestamps(
+    project, inspection = _project_with_run_timestamps(
         tmp_path,
         [
             ("run_a", "2026-06-20"),
@@ -774,7 +778,7 @@ def test_latest_run_uses_greatest_timestamp_within_each_run(
         ],
     )
 
-    summary = summarize_eval_results(project)
+    summary = summarize_eval_results(project, identity_inspection=inspection)
 
     assert summary is not None
     assert summary.latest_run_id == "run_a"
@@ -783,7 +787,7 @@ def test_latest_run_uses_greatest_timestamp_within_each_run(
 def test_later_recorded_date_beats_earlier_late_night_instant(
     tmp_path: Path,
 ) -> None:
-    project = _project_with_run_timestamps(
+    project, inspection = _project_with_run_timestamps(
         tmp_path,
         [
             ("run_date", "2026-06-23"),
@@ -791,14 +795,14 @@ def test_later_recorded_date_beats_earlier_late_night_instant(
         ],
     )
 
-    summary = summarize_eval_results(project)
+    summary = summarize_eval_results(project, identity_inspection=inspection)
 
     assert summary is not None
     assert summary.latest_run_id == "run_date"
 
 
 def test_same_date_datetime_orders_by_utc_instant(tmp_path: Path) -> None:
-    project = _project_with_run_timestamps(
+    project, inspection = _project_with_run_timestamps(
         tmp_path,
         [
             ("run_early", "2026-06-22T09:00:00-07:00"),
@@ -806,7 +810,7 @@ def test_same_date_datetime_orders_by_utc_instant(tmp_path: Path) -> None:
         ],
     )
 
-    summary = summarize_eval_results(project)
+    summary = summarize_eval_results(project, identity_inspection=inspection)
 
     assert summary is not None
     assert summary.latest_run_id == "run_late"
@@ -815,7 +819,7 @@ def test_same_date_datetime_orders_by_utc_instant(tmp_path: Path) -> None:
 def test_same_date_datetime_is_more_precise_than_date_only(
     tmp_path: Path,
 ) -> None:
-    project = _project_with_run_timestamps(
+    project, inspection = _project_with_run_timestamps(
         tmp_path,
         [
             ("run_date", "2026-06-22"),
@@ -823,14 +827,14 @@ def test_same_date_datetime_is_more_precise_than_date_only(
         ],
     )
 
-    summary = summarize_eval_results(project)
+    summary = summarize_eval_results(project, identity_inspection=inspection)
 
     assert summary is not None
     assert summary.latest_run_id == "run_datetime"
 
 
 def test_date_only_tie_uses_lexical_run_id(tmp_path: Path) -> None:
-    project = _project_with_run_timestamps(
+    project, inspection = _project_with_run_timestamps(
         tmp_path,
         [
             ("run_a", "2026-06-22"),
@@ -838,7 +842,7 @@ def test_date_only_tie_uses_lexical_run_id(tmp_path: Path) -> None:
         ],
     )
 
-    summary = summarize_eval_results(project)
+    summary = summarize_eval_results(project, identity_inspection=inspection)
 
     assert summary is not None
     assert summary.latest_run_id == "run_z"
@@ -847,7 +851,7 @@ def test_date_only_tie_uses_lexical_run_id(tmp_path: Path) -> None:
 def test_equivalent_datetime_instants_use_lexical_run_id(
     tmp_path: Path,
 ) -> None:
-    project = _project_with_run_timestamps(
+    project, inspection = _project_with_run_timestamps(
         tmp_path,
         [
             ("run_a", "2026-06-22T09:30:00-07:00"),
@@ -855,7 +859,7 @@ def test_equivalent_datetime_instants_use_lexical_run_id(
         ],
     )
 
-    summary = summarize_eval_results(project)
+    summary = summarize_eval_results(project, identity_inspection=inspection)
 
     assert summary is not None
     assert summary.latest_run_id == "run_z"
@@ -868,12 +872,12 @@ def test_latest_run_is_independent_of_row_order(tmp_path: Path) -> None:
         ("run_c", "2026-06-21"),
         ("run_b", "2026-06-22T09:00:00-07:00"),
     ]
-    project = _project_with_run_timestamps(tmp_path, values)
-    first = summarize_eval_results(project)
+    project, inspection = _project_with_run_timestamps(tmp_path, values)
+    first = summarize_eval_results(project, identity_inspection=inspection)
     headers, rows = _read_result_table(project)
     random.Random(42).shuffle(rows)
     _write_result_table(project, headers, rows)
-    second = summarize_eval_results(project)
+    second = summarize_eval_results(project, identity_inspection=inspection)
 
     assert first is not None
     assert second is not None
@@ -885,3 +889,65 @@ def test_canonical_latest_run_remains_deterministic() -> None:
 
     assert summary is not None
     assert summary.latest_run_id == "run_002"
+
+
+def test_unbound_results_are_never_opened(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = _project(tmp_path)
+    manifest_path = project / "run_manifest.yaml"
+    manifest_path.unlink()
+
+    unbound_results = project / "eval_results.csv"
+    inspection = inspect_run_identity(project)
+
+    assert inspection.status.value == "missing"
+    assert any(
+        finding.id == "provenance_results_unbound"
+        for finding in inspection.findings
+    )
+
+    original_open = Path.open
+    resolved_unbound = unbound_results.resolve(strict=False)
+
+    def guarded_open(
+        self: Path,
+        *args: object,
+        **kwargs: object,
+    ):
+        if self.resolve(strict=False) == resolved_unbound:
+            raise AssertionError("Unbound results must not be opened.")
+        return original_open(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", guarded_open)
+
+    validation = validate_eval_results(
+        project,
+        identity_inspection=inspection,
+    )
+    evidence = classify_behavioral_evidence(
+        project,
+        identity_inspection=inspection,
+    )
+    check = check_project(
+        project,
+        identity_inspection=inspection,
+    )
+
+    assert not validation.valid
+    assert validation.row_count == 0
+    assert all(
+        issue.source == "provenance"
+        for issue in validation.issues
+    )
+
+    assert evidence.state == "invalid"
+    assert evidence.summary is None
+    assert not check.valid
+
+    with pytest.raises(ValueError):
+        summarize_eval_results(
+            project,
+            identity_inspection=inspection,
+        )

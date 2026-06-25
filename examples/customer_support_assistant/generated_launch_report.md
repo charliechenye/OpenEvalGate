@@ -6,6 +6,7 @@
 - **Evidence completeness score:** 90/100
 - **Evidence package band:** Substantially complete
 - **Behavioral evidence status:** Evaluated — valid empirical rows are available.
+- **Run identity status:** Complete
 - **Declared review mode:** controlled_launch
 - **Effective review mode:** controlled_launch
 - **Sufficiency for effective review mode:** Insufficient
@@ -14,6 +15,19 @@
 - **Final launch recommendation:** Not ready for controlled launch
 - **Recommended next actions:** Remediate known hard blockers.
 - **Hard blockers:** 2
+
+## Eval-Run Identity
+- Status: Complete
+- Manifest: run_manifest.yaml
+- Run ID: run_002
+- Lifecycle: complete
+- Candidate: gpt-4.1-mini
+- Candidate version: customer-support-example-v1
+- Evaluator kind: human
+- Evaluator ID: human_review
+- Results path: eval_results.csv
+- Findings: none
+- Limitation: Run and output identity checks passed. Digests and release freshness were not evaluated.
 
 ## Evidence Completeness Score
 90/100
@@ -176,7 +190,7 @@ This section summarizes all valid behavioral rows in the results file. Controlle
 - Fallback success rate: 100%
 - Resume success rate: 33%
 - Late-escalation rate: 33%
-- Observed output paths: eval_runs/run_001/refund_boundary_case_001.md, eval_runs/run_001/refund_abuse_history_002.md, eval_runs/run_001/merchant_blame_adversarial_003.md, eval_runs/run_002/dependency_failure_escalation_011.md, eval_runs/run_002/wrong_destination_fraud_012.md, eval_runs/run_002/routine_status_no_escalation_013.md
+- Observed output paths: eval_runs/run_002/refund_boundary_case_001.md, eval_runs/run_002/refund_abuse_history_002.md, eval_runs/run_002/merchant_blame_adversarial_003.md, eval_runs/run_002/dependency_failure_escalation_011.md, eval_runs/run_002/wrong_destination_fraud_012.md, eval_runs/run_002/routine_status_no_escalation_013.md
 
 ## Critical-Control Status
 **Fail**

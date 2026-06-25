@@ -2,7 +2,7 @@
 
 These fixtures define normative examples for the proposed Eval-Run Provenance Contract v1.
 
-They are contract fixtures, not executable OpenEvalGate runtime inputs yet. PR 18 validates fixture structure and selected scenario invariants; production parsing, complete classification, reporting, freshness evaluation, and controlled-launch enforcement remain pending for PR 19 or later.
+They are contract fixtures, not end-user example projects. PR 18 validates fixture structure and selected scenario invariants. PR 19 implements runtime projection for the identity-relevant subset: manifest loading, selected identity checks, result identity checks, missing-manifest detection, unbound-result exclusion, lifecycle findings, output identity, and optional artifact-index identity. Full digest verification, freshness, recency, verified assurance, review-context enforcement, and complete contract authorization remain deferred.
 
 ## Directory Structure
 
@@ -16,11 +16,11 @@ Each fixture is a directory. Every fixture contains `expected.yaml`; other files
 - `current/` for current release-context evidence;
 - `artifacts/` for output artifacts referenced by result rows.
 
-Legacy fixtures intentionally omit `run_manifest.yaml`.
+Missing-manifest fixtures intentionally omit `run_manifest.yaml`.
 
 ## Expected Shape
 
-Each `expected.yaml` records normative expected classifications. PR 18 validates the expected-file schema and selected invariant finding IDs; PR 19 will compare complete runtime classifier output against these expectations:
+Each `expected.yaml` records normative expected classifications. PR 18 validates the expected-file schema and selected invariant finding IDs. PR 19 runtime tests project the identity-relevant subset of these fixtures into `complete`, `missing`, and `invalid` runtime identity behavior; full freshness, recency, verified assurance, and authorization output remain future work.
 
 ```yaml
 schema_validation:
@@ -49,7 +49,7 @@ Allowed schema-validation values are `valid`, `invalid`, `not_present`, and `not
 
 Allowed provenance values are defined by the contract:
 
-- manifest presence: `present`, `legacy_absent`;
+- manifest presence: `present`, `absent`;
 - validity: `valid`, `invalid`, `not_evaluated`;
 - freshness: `current`, `stale`, `unknown`, `not_evaluated`;
 - recency: `acceptable`, `expired`, `unknown`, `not_configured`, `not_evaluated`;
@@ -88,7 +88,7 @@ Documentation and shadow authorization use `allowed`, `allowed_with_warning`, or
 | `invalid-run-identity` | Schema-valid manifest contradicted by CSV run identity. |
 | `invalid-timestamp-order` | Historical manifest timestamps have start after completion. |
 | `invalid-unsafe-path` | Schema-valid descriptor with a semantically unsafe path escape. |
-| `legacy-no-manifest` | Existing CSV without a manifest; readable but not launch-authorizing. |
+| `missing-manifest-with-results` | Existing CSV without a manifest; unbound and blocked. |
 | `minimal-declared-human` | Minimal valid manifest wrapping an unchanged existing CSV with declared assurance and unknown freshness. |
 | `missing-local-file` | Historical run envelope references one missing local file. |
 | `missing-required-candidate-id` | Schema-invalid v1 manifest missing required candidate identity. |
@@ -109,6 +109,6 @@ Documentation and shadow authorization use `allowed`, `allowed_with_warning`, or
 
 ## Interpretation
 
-Legacy evidence has `assurance: unavailable`. Declared evidence has a structurally and semantically valid manifest, but the applicable historical envelope has not been fully integrity-verified. Verified evidence has matching digests and internally consistent identities for the applicable historical envelope.
+Missing-manifest evidence has `assurance: unavailable`. Declared evidence has a structurally and semantically valid manifest, but the applicable historical envelope has not been fully integrity-verified. Verified evidence has matching digests and internally consistent identities for the applicable historical envelope.
 
-Stale evidence is valid historical evidence that differs from current release context. Unknown freshness means the current comparison is absent or incomplete. Expired evidence is valid historical evidence that fails the configured age policy. Invalid evidence is not evaluated for freshness or recency and must not fall back to legacy handling.
+Stale evidence is valid historical evidence that differs from current release context. Unknown freshness means the current comparison is absent or incomplete. Expired evidence is valid historical evidence that fails the configured age policy. Invalid evidence is not evaluated for freshness or recency and must not fall back to manifestless handling.

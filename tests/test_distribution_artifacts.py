@@ -25,10 +25,17 @@ SDIST_ROOT = f"openevalgate-{VERSION}"
 
 
 def _source_files() -> dict[str, bytes]:
-    return {
+    files = {
         path.relative_to(ROOT).as_posix(): b"# fixture\n"
         for path in (ROOT / "openevalgate").rglob("*.py")
     }
+    files.update(
+        {
+            path.relative_to(ROOT).as_posix(): b"{}\n"
+            for path in (ROOT / "openevalgate" / "resources").rglob("*.json")
+        }
+    )
+    return files
 
 
 def _wheel_files(
@@ -187,6 +194,21 @@ def test_wheel_rejects_missing_expected_package_file(tmp_path: Path) -> None:
 
     _assert_error(
         "openevalgate/cli.py.*expected runtime Python file is missing",
+        verify_wheel,
+        wheel,
+        project_root=ROOT,
+        expected_version=VERSION,
+    )
+
+
+def test_wheel_rejects_missing_expected_schema_resource(tmp_path: Path) -> None:
+    files = _wheel_files()
+    del files["openevalgate/resources/schemas/eval-run-manifest-v1.schema.json"]
+    wheel = tmp_path / "missing-schema.whl"
+    _write_wheel(wheel, files)
+
+    _assert_error(
+        "eval-run-manifest-v1.schema.json.*expected runtime package data file is missing",
         verify_wheel,
         wheel,
         project_root=ROOT,
