@@ -332,19 +332,46 @@ Only `complete` lifecycle may support controlled launch, and only when all other
 The authorization rules are ordered. Earlier rules take precedence over later rules.
 
 1. Invalid provenance: documentation `allowed_with_warning`, shadow `blocked`, controlled launch `blocked`.
-2. Failed or incomplete lifecycle: documentation `allowed_with_warning`, shadow `blocked`, controlled launch `blocked`.
-3. Stale evidence: documentation `allowed_with_warning`, shadow `allowed_with_warning`, controlled launch `blocked`.
-4. Expired evidence: documentation `allowed_with_warning`, shadow `allowed_with_warning`, controlled launch `blocked`.
-5. Recency unknown under a configured recency policy: documentation `allowed`, shadow `allowed_with_warning`, controlled launch `blocked`.
-6. Missing manifest without result evidence: documentation `allowed`, shadow `allowed_with_warning`, controlled launch `blocked`.
-7. Valid manifested evidence with unknown freshness, whether historically declared or verified: documentation `allowed`, shadow `allowed_with_warning`, controlled launch `blocked`.
-8. Valid, declared, current, complete evidence: documentation `allowed`, shadow `allowed`, controlled launch `blocked`.
-9. Valid, verified, current, complete evidence with acceptable recency: documentation `allowed`, shadow `allowed`, controlled launch `eligible`.
-10. Valid, verified, current, complete evidence with recency not configured: controlled launch is eligible only when the governing OpenEvalGate review or authorization policy explicitly permits proceeding without a configured evidence-age limit. Otherwise documentation is `allowed`, shadow is `allowed`, and controlled launch is `blocked`.
+2. Missing manifest with unbound result evidence: documentation `blocked`, shadow `blocked`, controlled launch `blocked`.
+3. Failed or incomplete lifecycle: documentation `allowed_with_warning`, shadow `blocked`, controlled launch `blocked`.
+4. Stale evidence: documentation `allowed_with_warning`, shadow `allowed_with_warning`, controlled launch `blocked`.
+5. Expired evidence: documentation `allowed_with_warning`, shadow `allowed_with_warning`, controlled launch `blocked`.
+6. Recency unknown under a configured recency policy: documentation `allowed`, shadow `allowed_with_warning`, controlled launch `blocked`.
+7. Missing manifest without result evidence: documentation `allowed`, shadow `allowed_with_warning`, controlled launch `blocked`.
+8. Valid manifested evidence with unknown freshness, whether historically declared or verified: documentation `allowed`, shadow `allowed_with_warning`, controlled launch `blocked`.
+9. Valid, declared, current, complete evidence: documentation `allowed`, shadow `allowed`, controlled launch `blocked`.
+10. Valid, verified, current, complete evidence with acceptable recency: documentation `allowed`, shadow `allowed`, controlled launch `eligible`.
+11. Valid, verified, current, complete evidence with recency not configured: controlled launch is eligible only when the governing OpenEvalGate review or authorization policy explicitly permits proceeding without a configured evidence-age limit. Otherwise documentation is `allowed`, shadow is `allowed`, and controlled launch is `blocked`.
 
 Documentation access means evidence may be inspected, not trusted. `allowed_with_warning` must not imply invalid evidence is trustworthy. A present-but-invalid manifest never falls back to manifestless handling. A high evaluation score, documentation score, or pass rate cannot override provenance authorization limits.
 
-## Missing Manifest
+## Missing Manifest Without Result Evidence
+
+```yaml
+provenance:
+  manifest_presence: absent
+  validity: not_evaluated
+  freshness: not_evaluated
+  recency: not_evaluated
+  assurance: unavailable
+  lifecycle: unknown
+
+authorization:
+  documentation: allowed
+  shadow: allowed_with_warning
+  controlled_launch: blocked
+
+findings:
+  - provenance_manifest_absent
+```
+
+A project may omit empirical results while it is still documenting controls. The absence of both a manifest and conventional result evidence does not make the control package structurally invalid.
+
+Behavioral evidence is `not_provided`. No result rows, summaries, metrics, coverage, or behavioral invariants are produced.
+
+Controlled launch still requires complete, manifest-backed selected-run identity.
+
+## Missing Manifest With Unbound Result Evidence
 
 ```yaml
 provenance:
@@ -359,11 +386,25 @@ authorization:
   documentation: blocked
   shadow: blocked
   controlled_launch: blocked
+
+findings:
+  - provenance_manifest_absent
+  - provenance_results_unbound
 ```
 
-Projects without result evidence may remain in a missing, not-evaluated state. Projects with result evidence but no authoritative manifest are unbound and blocked.
+A conventional result CSV without an authoritative manifest is unbound evidence.
 
-This missing-manifest classification does not apply to malformed, schema-invalid, or contradictory manifests.
+The file's existence is surfaced as a provenance validation failure. Its rows are not parsed or used for row validation, summaries, metrics, coverage, behavioral invariants, behavior-derived blockers, or authorization.
+
+The project must either add a valid manifest that binds the result evidence or remove the unbound result file.
+
+For an unscoped project, the conventional result location is `<project>/eval_results.csv`.
+
+For a review-policy-selected run, the conventional scoped result location is `<project>/eval_runs/<run_id>/eval_results.csv`.
+
+A root result file that is bound to its own valid root manifest is not unbound merely because a different run is selected.
+
+A present but malformed, schema-invalid, unsafe, or contradictory manifest is `invalid`, not `missing`. It never falls back to missing-manifest handling.
 
 ## JSON Schema Validation Profile
 
@@ -378,6 +419,7 @@ Finding identifiers are stable within contract major version 1. Future runtime o
 | Finding ID | Exact trigger |
 | --- | --- |
 | `provenance_manifest_absent` | No authoritative `run_manifest.yaml` exists for the selected scope; associated with missing manifest presence, not manifest invalidity. |
+| `provenance_results_unbound` | A conventional `eval_results.csv` exists for the selected evidence scope, but no authoritative `run_manifest.yaml` binds it. The file is surfaced as a provenance validation failure, while its rows are excluded from row validation, summaries, metrics, coverage, behavioral invariants, behavior-derived blockers, and authorization. |
 | `provenance_manifest_schema_invalid` | `run_manifest.yaml` declares v1 but fails the manifest schema for reasons other than URI-only results; historical-envelope invalidity. |
 | `provenance_unsupported_schema_version` | `run_manifest.yaml` declares an unsupported major schema version; historical-envelope invalidity with lifecycle `unknown`. |
 | `provenance_results_path_required` | `outputs.results` omits local `path` or is URI-only in v1; historical-envelope schema invalidity. |

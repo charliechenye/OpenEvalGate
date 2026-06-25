@@ -39,7 +39,8 @@ The project follows semantic versioning while it remains in alpha. Until a stabl
 
 ### Changed
 
-- Result-bearing projects now require manifest-backed eval-run identity; manifestless CSV evidence is excluded from validation, metrics, and launch decisions.
+- Result-bearing projects now require manifest-backed eval-run identity.
+- Manifestless result files now fail provenance validation, while their rows are excluded from row validation, summaries, metrics, coverage, behavioral invariants, behavior-derived blockers, and launch decisions.
 - Canonical examples now include complete versioned run manifests.
 - Runtime identity states are now complete, missing, or invalid.
 - Route-match metrics are derived from actual routes and authoritative eval

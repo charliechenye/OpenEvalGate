@@ -102,7 +102,11 @@ The [Eval-Run Provenance Contract v1](docs/contracts/eval-run-provenance-v1.md) 
 
 OpenEvalGate classifies selected eval-run identity as `complete`, `missing`, or `invalid`. `complete` means the run, candidate, evaluator, result CSV, output paths, recognized output metadata, and declared artifact-index identities are coherent. It does not mean the run lifecycle is complete, rows exist, the run passed, digests were verified, evidence is fresh or recent, behavioral evidence is sufficient, or controlled launch is authorized.
 
-Projects may omit empirical results while documenting controls. Once `eval_results.csv` is present, an authoritative `run_manifest.yaml` is required; manifestless CSV evidence is excluded from validation, metrics, coverage, invariants, blockers, and launch decisions. No new CSV columns are required. Artifact indexes remain optional. Digest verification, verified assurance, freshness and recency comparison, automatic provenance initialization, and `review_context.yaml` enforcement remain deferred.
+Projects may omit empirical results while documenting controls. Once a conventional `eval_results.csv` is present, an authoritative `run_manifest.yaml` is required.
+
+A manifestless result file is surfaced as a provenance validation failure, while its rows are excluded from row validation, summaries, metrics, coverage, behavioral invariants, behavior-derived blockers, and launch authorization. No new CSV columns are required.
+
+Artifact indexes remain optional. Digest verification, verified assurance, freshness and recency comparison, automatic provenance initialization, and `review_context.yaml` enforcement remain deferred.
 
 Minimal manifest:
 
