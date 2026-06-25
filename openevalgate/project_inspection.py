@@ -263,7 +263,6 @@ def _evaluate_independent_blockers(
     )
     if evaluate_behavioral_blockers and behavioral_evidence.state == "available":
         critical_failures = _critical_escalation_failures(
-            root,
             cases,
             scope=behavioral_scope,
             run_identity_inspection=run_identity_inspection,
@@ -320,24 +319,18 @@ def _high_risk_actions_without_controls(
 
 
 def _critical_escalation_failures(
-    root: Path,
     cases: list[dict[str, Any]],
     *,
-    scope: EvaluationScope | None = None,
-    run_identity_inspection: RunIdentityInspection | None = None,
+    scope: EvaluationScope | None,
+    run_identity_inspection: RunIdentityInspection,
 ) -> list[str]:
     high_risk_handoff_cases = {
-        str(case.get("id", "")).strip()
-        for case in cases
-        if str(case.get("risk_tier", "")).lower()
-        in {"high", "prohibited"}
+        str(case.get("id", "")).strip() for case in cases
+        if str(case.get("risk_tier", "")).lower() in {"high", "prohibited"}
         and isinstance(case.get("expected_handoff"), dict)
     }
     failures: set[str] = set()
-    if (
-        run_identity_inspection is None
-        or run_identity_inspection.status != RunIdentityStatus.COMPLETE
-    ):
+    if run_identity_inspection.status != RunIdentityStatus.COMPLETE:
         return []
     results_path = run_identity_inspection.results_path
     if results_path is None or not results_path.is_file():
