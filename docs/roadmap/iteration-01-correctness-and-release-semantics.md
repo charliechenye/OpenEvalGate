@@ -108,7 +108,7 @@ Required concepts:
 - [x] Parse and enforce selected run evidence against current project result rows, output identity, and declared artifact index identity.
 - [ ] Surface stale evidence in reports after freshness comparison is implemented.
 - [~] Require versioned evidence for controlled-launch authorization. Complete runtime identity and non-failed lifecycle are required; non-stale evidence waits on freshness and recency implementation.
-- [x] Require manifest-backed result evidence and block unbound CSV evidence from validation, metrics, and launch decisions.
+- [x] Require manifest-backed result evidence; manifestless conventional result files fail provenance validation while their rows are excluded from behavioral processing and launch decisions.
 
 ### Distinguish evidence provenance
 

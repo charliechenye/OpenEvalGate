@@ -8,6 +8,7 @@ This scenario demonstrates boundaries for discounts, roadmap statements, and leg
 
 - [Evaluation cases](eval_cases.yaml)
 - [Evaluation results](eval_results.csv)
+- [Run manifest](run_manifest.yaml)
 - [Review policy](review_policy.yaml)
 - [Generated launch report](generated_launch_report.md)
 

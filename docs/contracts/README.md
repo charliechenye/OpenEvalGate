@@ -8,14 +8,16 @@ This directory contains versioned, implementation-facing contracts for evidence 
 
 ## Provenance Schemas
 
-The proposed eval-run provenance contract is paired with four Draft 2020-12 schemas:
+The eval-run provenance contract is paired with four Draft 2020-12 schemas:
 
 - `schemas/eval-run-manifest-v1.schema.json` for `run_manifest.yaml`.
 - `schemas/eval-run-artifact-index-v1.schema.json` for `artifact_index.yaml`.
 - `schemas/eval-run-review-context-v1.schema.json` for `review_context.yaml`.
 - `schemas/eval-run-provenance-expected-v1.schema.json` for fixture `expected.yaml` classifications and registered finding IDs.
 
-Fixture expectations under `spec/fixtures/provenance/v1/` are schema-validated and fixture-integrity checked by `tests/test_provenance_contract_fixtures.py`. PR 18 validation covers schemas, inventory, referenced files, recorded digests, orphan-file hygiene, and selected scenario invariants. Complete provenance classification, authorization evaluation, runtime freshness behavior, reporting, and CLI output remain PR 19 or later work.
+Fixture expectations under `spec/fixtures/provenance/v1/` are schema-validated and fixture-integrity checked by `tests/test_provenance_contract_fixtures.py`. PR 18 established the contract, schemas, fixture inventory, referenced-file checks, recorded-digest checks, orphan-file hygiene, and selected scenario invariants.
+
+PR 19 implements the runtime identity subset: manifest loading, selected run and candidate checks, evaluator identity checks, manifest-backed result selection, missing-manifest detection, unbound-result exclusion, report visibility, and controlled-launch blocking for missing, invalid, failed, or incomplete identity evidence. Digest verification, verified assurance, freshness, recency, `review_context.yaml`, and complete contract authorization remain deferred.
 
 ## Contract principles
 
@@ -30,4 +32,4 @@ Contracts in this directory are:
 
 A contract may be published before the CLI enforces it. The document, schemas, and fixtures establish intended semantics; implementation status remains documented separately in the roadmap and release notes.
 
-The eval-run provenance contract is proposed. It does not change the current CSV parser or require new provenance columns in `eval_results.csv`.
+The eval-run provenance contract is proposed as a broader v1 contract. The current runtime implements its identity-enforcement subset and does not require new provenance columns in `eval_results.csv`.

@@ -2,7 +2,7 @@
 
 These fixtures define normative examples for the proposed Eval-Run Provenance Contract v1.
 
-They are contract fixtures, not executable OpenEvalGate runtime inputs yet. PR 18 validates fixture structure and selected scenario invariants; production parsing, complete classification, reporting, freshness evaluation, and controlled-launch enforcement remain pending for PR 19 or later.
+They are contract fixtures, not end-user example projects. PR 18 validates fixture structure and selected scenario invariants. PR 19 implements runtime projection for the identity-relevant subset: manifest loading, selected identity checks, result identity checks, missing-manifest detection, unbound-result exclusion, lifecycle findings, output identity, and optional artifact-index identity. Full digest verification, freshness, recency, verified assurance, review-context enforcement, and complete contract authorization remain deferred.
 
 ## Directory Structure
 
@@ -20,7 +20,7 @@ Missing-manifest fixtures intentionally omit `run_manifest.yaml`.
 
 ## Expected Shape
 
-Each `expected.yaml` records normative expected classifications. PR 18 validates the expected-file schema and selected invariant finding IDs; PR 19 will compare complete runtime classifier output against these expectations:
+Each `expected.yaml` records normative expected classifications. PR 18 validates the expected-file schema and selected invariant finding IDs. PR 19 runtime tests project the identity-relevant subset of these fixtures into `complete`, `missing`, and `invalid` runtime identity behavior; full freshness, recency, verified assurance, and authorization output remain future work.
 
 ```yaml
 schema_validation:

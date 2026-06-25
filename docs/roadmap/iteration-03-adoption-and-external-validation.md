@@ -16,14 +16,15 @@ The `0.2.0` theme is **evidence integrity and minimal adoption**.
 
 ### Evidence integrity
 
-- [ ] Require non-empty mandatory eval-result fields.
-- [ ] Recompute or consistency-check derived route, workflow, destination, and policy fields.
-- [ ] Reject duplicate result records.
-- [ ] Validate timestamps, selected scope, candidate references, and observed-output references.
-- [~] Add explicit run provenance and evaluator type. Contract proposed with fixture-integrity checks; runtime parsing pending.
-- [~] Define framework, input, result, and artifact descriptor rules. Contract proposed; digest verification pending.
-- [~] Define stale-evidence and recency behavior. Contract proposed; runtime freshness comparison pending.
-- [ ] Require versioned, non-stale selected evidence for controlled-launch authorization.
+- [x] Require non-empty mandatory eval-result fields.
+- [x] Recompute and consistency-check core route-match evidence against authoritative eval-case routes.
+- [ ] Derive or independently consistency-check workflow-route, destination, handoff, and model-policy claims where source evidence exists.
+- [x] Reject duplicate result records.
+- [x] Validate timestamps, selected scope, candidate references, and observed-output references.
+- [~] Add explicit run provenance and evaluator type. Runtime identity enforcement is implemented; digest verification, freshness, recency, and verified assurance remain deferred.
+- [~] Define framework, input, result, and artifact descriptor rules. Runtime identity and optional artifact-index identity are implemented; digest verification remains deferred.
+- [~] Define stale-evidence and recency behavior. Contract proposed; runtime freshness and recency comparison remain pending.
+- [~] Require versioned, non-stale selected evidence for controlled-launch authorization. Complete manifest-backed identity and non-failed lifecycle are enforced; non-stale evidence awaits freshness and recency implementation.
 
 ### Minimal onboarding
 
