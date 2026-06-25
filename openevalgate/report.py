@@ -253,9 +253,9 @@ def _eval_run_identity_section(inspection: RunIdentityInspection, root: Path) ->
         if any(finding.id == "provenance_results_unbound" for finding in inspection.findings):
             lines.append(
                 "- Action required: eval_results.csv was found without an authoritative "
-                "run_manifest.yaml. The file was excluded from validation, behavioral "
-                "metrics, and launch decisions. Add a valid manifest or remove the "
-                "unbound result file."
+                "run_manifest.yaml. The file failed provenance validation. Its rows were " \
+                "excluded from row validation, behavioral metrics, and launch decisions. " \
+                "Add a valid manifest or remove the unbound result file."
             )
         else:
             lines.append("- Note: No eval-run evidence was provided. A manifest is required when result evidence is added.")

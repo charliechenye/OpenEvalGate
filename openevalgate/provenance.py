@@ -187,8 +187,9 @@ def inspect_run_identity(
                     path=str(unbound_results_path),
                     message=(
                         "eval_results.csv exists but is not bound to an "
-                        "authoritative run manifest. The file was excluded "
-                        "from validation, metrics, and launch decisions."
+                        "authoritative run manifest. The file failed provenance "
+                        "validation. Its rows were excluded from row validation, "
+                        "behavioral metrics, and launch decisions."
                     ),
                 )
             )
