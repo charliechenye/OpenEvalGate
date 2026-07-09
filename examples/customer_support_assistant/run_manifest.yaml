@@ -3,6 +3,8 @@ schema_version: "1"
 run:
   id: run_002
   status: complete
+  started_at: "2026-06-18T17:00:00Z"
+  completed_at: "2026-06-18T17:14:22Z"
 
 candidate:
   id: gpt-4.1-mini
@@ -14,6 +16,14 @@ evaluation:
     id: human_review
     role: canonical_example_review
 
+inputs:
+  - role: eval_cases
+    path: inputs/eval_cases.yaml
+    digest:
+      sha256: "b619ed931f9bdb0133441f20b749c182e54032a5770dd29f9abef7b11a11c4ca"
+
 outputs:
   results:
     path: eval_results.csv
+    digest:
+      sha256: "c77996d93b0fe4ff02d90b961dc51c56a286f0aa93eca7691b2ebfc4be98bfba"

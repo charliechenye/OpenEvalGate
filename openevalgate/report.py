@@ -210,10 +210,14 @@ def _executive_summary(
             f"- **Maximum permitted stage:** {assessment.maximum_permitted_stage}",
             f"- **Final launch recommendation:** {assessment.recommendation}",
             "- **Recommended next actions:** "
-            + "; ".join(
-                action.rstrip(".") for action in assessment.recommended_next_actions
-            )
-            + ".",
+            + (
+                "; ".join(
+                    action.rstrip(".") for action in assessment.recommended_next_actions
+                )
+                + "."
+                if assessment.recommended_next_actions
+                else "No additional actions recorded."
+            ),
             f"- **Hard blockers:** {len(assessment.hard_blockers)}",
         ]
     )

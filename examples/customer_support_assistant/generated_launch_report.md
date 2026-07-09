@@ -20,10 +20,10 @@
 - Status: Complete
 - Manifest: run_manifest.yaml
 - Provenance validity: Valid
-- Freshness: Unknown
-- Recency: Not configured
-- Assurance: Declared
-- Review context: not provided
+- Freshness: Current
+- Recency: Acceptable
+- Assurance: Verified
+- Review context: review_context.yaml
 - Run ID: run_002
 - Lifecycle: complete
 - Candidate: gpt-4.1-mini
@@ -31,7 +31,7 @@
 - Evaluator kind: human
 - Evaluator ID: human_review
 - Results path: eval_results.csv
-- Findings: provenance_freshness_unknown: No review context was provided for current-release comparison.
+- Findings: none
 - Note: Historical identity, assurance, freshness, and recency classifications were evaluated where evidence was available.
 
 ## Evidence Completeness Score

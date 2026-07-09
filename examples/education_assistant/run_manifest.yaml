@@ -3,6 +3,8 @@ schema_version: "1"
 run:
   id: run_001
   status: complete
+  started_at: "2026-06-18T17:00:00Z"
+  completed_at: "2026-06-18T17:14:22Z"
 
 candidate:
   id: education_candidate
@@ -14,6 +16,14 @@ evaluation:
     id: human_review
     role: canonical_example_review
 
+inputs:
+  - role: eval_cases
+    path: inputs/eval_cases.yaml
+    digest:
+      sha256: "17335c34751bfc35ed3c30dadc2ec305f9ae72f85bb1b81a56c228c0fb5f1bd2"
+
 outputs:
   results:
     path: eval_results.csv
+    digest:
+      sha256: "98f9fafbbc7aad64a453837f294251e937642ed45090495bf455cc0ebc4f629f"

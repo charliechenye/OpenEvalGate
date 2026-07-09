@@ -1,0 +1,105 @@
+routing_policy:
+  metadata:
+    id: subscription_support_routing
+    version: "1.0.0"
+    owner: account_platform
+    last_reviewed: "2026-06-18"
+  models:
+    - id: subscription-small
+      provider: synthetic_provider
+      model_version: subscription-small-v1
+      capability_tier: balanced
+  workflows:
+    - id: billing_lookup
+      name: Verified billing lookup
+      kind: subagent
+      owner: account_platform
+      risk_tier: low
+      scenarios: [billing_explanation]
+      mandatory_controls: [account_access_check, invoice_grounding]
+      fallback_workflow_id: account_security_review
+      eval_cases: [invoice_explanation_001]
+      model_assignment:
+        mode: fixed
+        approved_models: [subscription-small]
+        default_model: subscription-small
+        reasoning_level: low
+    - id: account_clarification
+      name: Account context clarification
+      kind: deterministic
+      owner: account_platform
+      risk_tier: medium
+      scenarios: [billing_clarification]
+      mandatory_controls: [verification_workflow]
+      fallback_workflow_id: account_security_review
+      eval_cases: [missing_account_context_002]
+      model_assignment:
+        mode: none
+        approved_models: []
+        default_model: ""
+        reasoning_level: none
+    - id: billing_approval
+      name: Billing approval queue
+      kind: human
+      owner: billing_policy
+      risk_tier: high
+      scenarios: [cancellation_refund]
+      mandatory_controls: [approval_checkpoint, idempotency]
+      fallback_workflow_id: billing_case_queue
+      eval_cases: [cancellation_exception_003]
+      model_assignment:
+        mode: none
+        approved_models: []
+        default_model: ""
+        reasoning_level: none
+    - id: account_security_review
+      name: Account security review
+      kind: human
+      owner: trust_safety
+      risk_tier: high
+      scenarios: [account_security, security_refusal]
+      mandatory_controls: [sensitive_action_pause, fresh_verification]
+      fallback_workflow_id: lock_sensitive_actions
+      eval_cases: [account_takeover_004, authentication_bypass_005]
+      model_assignment:
+        mode: none
+        approved_models: []
+        default_model: ""
+        reasoning_level: none
+    - id: billing_case_queue
+      name: Billing case fallback queue
+      kind: human
+      owner: billing_policy
+      risk_tier: medium
+      scenarios: [billing_fallback]
+      mandatory_controls: [case_checkpoint]
+      fallback_workflow_id: account_security_review
+      eval_cases: []
+      model_assignment:
+        mode: none
+        approved_models: []
+        default_model: ""
+        reasoning_level: none
+    - id: lock_sensitive_actions
+      name: Sensitive action lock
+      kind: deterministic
+      owner: account_platform
+      risk_tier: prohibited
+      scenarios: [security_fallback]
+      mandatory_controls: [action_lock]
+      fallback_workflow_id: account_security_review
+      eval_cases: []
+      model_assignment:
+        mode: none
+        approved_models: []
+        default_model: ""
+        reasoning_level: none
+  observability:
+    required_fields: [workflow_id, model_id, routing_policy_version, routing_reason]
+  rollback:
+    owner: account_platform
+    fallback_workflow_id: lock_sensitive_actions
+    triggers: [unauthorized_action, security_incident, billing_regression]
+  recertification:
+    cadence_days: 30
+    required_reviewers: [subscription_operations, billing_policy, trust_safety]
