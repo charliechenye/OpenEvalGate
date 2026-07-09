@@ -2,7 +2,7 @@
 
 These fixtures define normative examples for the proposed Eval-Run Provenance Contract v1.
 
-They are contract fixtures, not end-user example projects. PR 18 validates fixture structure and selected scenario invariants. PR 19 implements runtime projection for the identity-relevant subset: manifest loading, selected identity checks, result identity checks, missing-manifest detection, unbound-result exclusion, lifecycle findings, output identity, and optional artifact-index identity. Full digest verification, freshness, recency, verified assurance, review-context enforcement, and complete contract authorization remain deferred.
+They are contract fixtures, not end-user example projects. PR 18 validates fixture structure and selected scenario invariants. Runtime projection covers the historical envelope subset: manifest loading, selected identity checks, result identity checks, missing-manifest detection, unbound-result exclusion, lifecycle findings, output identity, optional artifact-index identity, local digest verification, historical input uniqueness, canonical mirror consistency, and run timestamp order. Freshness, recency, verified assurance, review-context enforcement, and complete contract authorization remain deferred.
 
 ## Directory Structure
 
@@ -20,7 +20,7 @@ Missing-manifest fixtures intentionally omit `run_manifest.yaml`.
 
 ## Expected Shape
 
-Each `expected.yaml` records normative expected classifications. PR 18 validates the expected-file schema and selected invariant finding IDs. PR 19 runtime tests project the identity-relevant subset of these fixtures into `complete`, `missing`, and `invalid` runtime identity behavior; full freshness, recency, verified assurance, and authorization output remain future work.
+Each `expected.yaml` records normative expected classifications. PR 18 validates the expected-file schema and selected invariant finding IDs. Runtime tests project the historical envelope subset of these fixtures into `complete`, `missing`, and `invalid` runtime identity behavior; full freshness, recency, verified assurance, and authorization output remain future work.
 
 ```yaml
 schema_validation:

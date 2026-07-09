@@ -851,6 +851,108 @@ def test_evaluation_policy_digest_mismatch_is_invalid(tmp_path: Path) -> None:
     assert _finding_ids(inspection) == ["provenance_input_digest_mismatch"]
 
 
+def test_missing_manifest_descriptor_path_is_invalid(tmp_path: Path) -> None:
+    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": ""}])
+    manifest = _base_manifest()
+    manifest["candidate"]["artifact"] = {"path": "missing-candidate.yaml"}
+    _write_manifest(tmp_path / "run_manifest.yaml", manifest)
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.status == RunIdentityStatus.INVALID
+    assert _finding_ids(inspection) == ["provenance_local_file_missing"]
+
+
+def test_duplicate_singleton_input_role_is_invalid(tmp_path: Path) -> None:
+    _write_output(tmp_path / "inputs" / "eval_cases.yaml")
+    _write_output(tmp_path / "inputs" / "eval_cases_copy.yaml")
+    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": ""}])
+    manifest = _base_manifest(
+        inputs=[
+            {"role": "eval_cases", "path": "inputs/eval_cases.yaml"},
+            {"role": "eval_cases", "path": "inputs/eval_cases_copy.yaml"},
+        ]
+    )
+    _write_manifest(tmp_path / "run_manifest.yaml", manifest)
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.status == RunIdentityStatus.INVALID
+    assert _finding_ids(inspection) == ["provenance_duplicate_singleton_role"]
+
+
+def test_duplicate_custom_input_key_is_invalid(tmp_path: Path) -> None:
+    _write_output(tmp_path / "inputs" / "policy_a.yaml")
+    _write_output(tmp_path / "inputs" / "policy_b.yaml")
+    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": ""}])
+    manifest = _base_manifest(
+        inputs=[
+            {"role": "custom_policy", "name": "policy", "path": "inputs/policy_a.yaml"},
+            {"role": "custom_policy", "name": "policy", "path": "inputs/policy_b.yaml"},
+        ]
+    )
+    _write_manifest(tmp_path / "run_manifest.yaml", manifest)
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.status == RunIdentityStatus.INVALID
+    assert _finding_ids(inspection) == ["provenance_duplicate_historical_resource"]
+
+
+def test_fixed_purpose_input_mirror_mismatch_is_invalid(tmp_path: Path) -> None:
+    _write_output(tmp_path / "policy.yaml")
+    _write_output(tmp_path / "inputs" / "other_policy.yaml")
+    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": ""}])
+    manifest = _base_manifest(
+        inputs=[
+            {"role": "evaluation_policy", "path": "inputs/other_policy.yaml"},
+        ]
+    )
+    manifest["evaluation"]["policy"] = {"path": "policy.yaml"}
+    _write_manifest(tmp_path / "run_manifest.yaml", manifest)
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.status == RunIdentityStatus.INVALID
+    assert _finding_ids(inspection) == ["provenance_duplicate_resource_mismatch"]
+
+
+def test_matching_fixed_purpose_input_mirror_is_complete(tmp_path: Path) -> None:
+    policy = tmp_path / "policy.yaml"
+    _write_output(policy)
+    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": ""}])
+    digest = {"sha256": _sha256(policy)}
+    manifest = _base_manifest(
+        inputs=[
+            {"role": "evaluation_policy", "path": "policy.yaml", "digest": digest},
+        ]
+    )
+    manifest["evaluation"]["policy"] = {"path": "policy.yaml", "digest": digest}
+    _write_manifest(tmp_path / "run_manifest.yaml", manifest)
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.status == RunIdentityStatus.COMPLETE
+
+
+def test_invalid_run_timestamp_order_is_invalid(tmp_path: Path) -> None:
+    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": ""}])
+    manifest = _base_manifest(
+        run={
+            "id": "run_001",
+            "status": "complete",
+            "started_at": "2026-06-18T10:00:00Z",
+            "completed_at": "2026-06-18T09:59:59Z",
+        }
+    )
+    _write_manifest(tmp_path / "run_manifest.yaml", manifest)
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.status == RunIdentityStatus.INVALID
+    assert _finding_ids(inspection) == ["provenance_timestamp_order_invalid"]
+
+
 def test_schema_invalid_artifact_index_is_invalid(tmp_path: Path) -> None:
     _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": ""}])
     (tmp_path / "artifact_index.yaml").write_text(
