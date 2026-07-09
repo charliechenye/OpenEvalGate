@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import re
 from dataclasses import dataclass
 from enum import Enum
@@ -83,14 +84,16 @@ _FINDING_ORDER = {
     "provenance_run_id_mismatch": 6,
     "provenance_candidate_alias_mismatch": 7,
     "provenance_evaluator_alias_mismatch": 8,
-    "provenance_artifact_identity_mismatch": 9,
-    "provenance_duplicate_artifact_id": 10,
-    "provenance_duplicate_artifact_path": 11,
-    "provenance_duplicate_hybrid_component_id": 12,
-    "provenance_lifecycle_failed": 13,
-    "provenance_lifecycle_incomplete": 14,
-    "provenance_manifest_absent": 15,
-    "provenance_results_unbound": 16,
+    "provenance_input_digest_mismatch": 9,
+    "provenance_output_digest_mismatch": 10,
+    "provenance_artifact_identity_mismatch": 11,
+    "provenance_duplicate_artifact_id": 12,
+    "provenance_duplicate_artifact_path": 13,
+    "provenance_duplicate_hybrid_component_id": 14,
+    "provenance_lifecycle_failed": 15,
+    "provenance_lifecycle_incomplete": 16,
+    "provenance_manifest_absent": 17,
+    "provenance_results_unbound": 18,
 }
 
 _MANIFEST_VALIDATOR = Draft202012Validator(
@@ -398,6 +401,8 @@ def _identity_from_manifest(
             )
         )
 
+    findings.extend(_validate_manifest_descriptor_digests(path, manifest))
+
     framework = evaluation.get("framework") or {}
     identity = RunIdentity(
         run_id=str(run["id"]),
@@ -533,7 +538,7 @@ def _validate_artifact_index_identity(identity: RunIdentity) -> list[ProvenanceF
     }
     entries_by_path: dict[str, list[dict[str, Any]]] = {}
     normalized_paths: list[str] = []
-    for artifact in artifacts:
+    for index, artifact in enumerate(artifacts):
         artifact_path = str(artifact["path"])
         resolution = resolve_local_evidence_path(
             identity.artifact_index_path.parent,
@@ -544,6 +549,14 @@ def _validate_artifact_index_identity(identity: RunIdentity) -> list[ProvenanceF
         if resolution.error is not None or resolution.path is None:
             findings.append(_path_finding(resolution.error or "unsafe", f"{identity.artifact_index_path}:artifacts.path"))
             continue
+        findings.extend(
+            _validate_resolved_descriptor_digest(
+                resolution.path,
+                f"{identity.artifact_index_path}:artifacts[{index}].digest.sha256",
+                artifact,
+                finding_id="provenance_output_digest_mismatch",
+            )
+        )
         normalized = _relative_to_root(resolution.path, identity.evidence_root)
         normalized_paths.append(normalized)
         entries_by_path.setdefault(normalized, []).append(artifact)
@@ -609,6 +622,171 @@ def _validate_artifact_index_identity(identity: RunIdentity) -> list[ProvenanceF
                 )
             )
     return findings
+
+
+def _validate_manifest_descriptor_digests(
+    manifest_path: Path,
+    manifest: dict[str, Any],
+) -> list[ProvenanceFinding]:
+    findings: list[ProvenanceFinding] = []
+    for path_label, descriptor, finding_id in _manifest_digest_descriptors(manifest_path, manifest):
+        findings.extend(
+            _validate_descriptor_digest(
+                manifest_path.parent,
+                path_label,
+                descriptor,
+                finding_id=finding_id,
+            )
+        )
+    return findings
+
+
+def _manifest_digest_descriptors(
+    manifest_path: Path,
+    manifest: dict[str, Any],
+) -> list[tuple[str, dict[str, Any], str]]:
+    descriptors: list[tuple[str, dict[str, Any], str]] = []
+    candidate = manifest["candidate"]
+    if isinstance(candidate.get("artifact"), dict):
+        descriptors.append(
+            (
+                f"{manifest_path}:candidate.artifact",
+                candidate["artifact"],
+                "provenance_input_digest_mismatch",
+            )
+        )
+
+    evaluation = manifest["evaluation"]
+    if isinstance(evaluation.get("policy"), dict):
+        descriptors.append(
+            (
+                f"{manifest_path}:evaluation.policy",
+                evaluation["policy"],
+                "provenance_input_digest_mismatch",
+            )
+        )
+    evaluator = evaluation["evaluator"]
+    if isinstance(evaluator.get("configuration"), dict):
+        descriptors.append(
+            (
+                f"{manifest_path}:evaluation.evaluator.configuration",
+                evaluator["configuration"],
+                "provenance_input_digest_mismatch",
+            )
+        )
+    if isinstance(evaluator.get("decision_policy"), dict):
+        descriptors.append(
+            (
+                f"{manifest_path}:evaluation.evaluator.decision_policy",
+                evaluator["decision_policy"],
+                "provenance_input_digest_mismatch",
+            )
+        )
+    for index, component in enumerate(evaluator.get("components", []) or []):
+        if isinstance(component.get("configuration"), dict):
+            descriptors.append(
+                (
+                    f"{manifest_path}:evaluation.evaluator.components[{index}].configuration",
+                    component["configuration"],
+                    "provenance_input_digest_mismatch",
+                )
+            )
+
+    for index, descriptor in enumerate(manifest.get("inputs", []) or []):
+        if isinstance(descriptor, dict):
+            descriptors.append(
+                (
+                    f"{manifest_path}:inputs[{index}]",
+                    descriptor,
+                    "provenance_input_digest_mismatch",
+                )
+            )
+
+    outputs = manifest["outputs"]
+    descriptors.append(
+        (
+            f"{manifest_path}:outputs.results",
+            outputs["results"],
+            "provenance_output_digest_mismatch",
+        )
+    )
+    if isinstance(outputs.get("artifact_index"), dict):
+        descriptors.append(
+            (
+                f"{manifest_path}:outputs.artifact_index",
+                outputs["artifact_index"],
+                "provenance_output_digest_mismatch",
+            )
+        )
+    for index, descriptor in enumerate(outputs.get("additional", []) or []):
+        if isinstance(descriptor, dict):
+            descriptors.append(
+                (
+                    f"{manifest_path}:outputs.additional[{index}]",
+                    descriptor,
+                    "provenance_output_digest_mismatch",
+                )
+            )
+
+    return descriptors
+
+
+def _validate_descriptor_digest(
+    descriptor_root: Path,
+    path_label: str,
+    descriptor: dict[str, Any],
+    *,
+    finding_id: str,
+) -> list[ProvenanceFinding]:
+    if "path" not in descriptor or "digest" not in descriptor:
+        return []
+    resolution = resolve_local_evidence_path(
+        descriptor_root,
+        descriptor["path"],
+        allowed_root=descriptor_root,
+        require_file=True,
+    )
+    if resolution.error is not None or resolution.path is None:
+        return [_path_finding(resolution.error or "unsafe", f"{path_label}.path")]
+    return _validate_resolved_descriptor_digest(
+        resolution.path,
+        f"{path_label}.digest.sha256",
+        descriptor,
+        finding_id=finding_id,
+    )
+
+
+def _validate_resolved_descriptor_digest(
+    resolved_path: Path,
+    path_label: str,
+    descriptor: dict[str, Any],
+    *,
+    finding_id: str,
+) -> list[ProvenanceFinding]:
+    expected = descriptor.get("digest", {}).get("sha256")
+    if not isinstance(expected, str):
+        return []
+    try:
+        actual = _sha256(resolved_path)
+    except OSError:
+        return [_path_finding("missing", path_label)]
+    if actual == expected:
+        return []
+    return [
+        ProvenanceFinding(
+            id=finding_id,
+            path=path_label,
+            message="Declared SHA-256 digest does not match local evidence bytes.",
+        )
+    ]
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def _read_csv_rows(path: Path) -> list[dict[str, str]]:

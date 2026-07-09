@@ -29,15 +29,15 @@ EXPECTED_STATUS = {
     "invalid-artifact-identity": RunIdentityStatus.INVALID,
     "invalid-artifact-trial-identity": RunIdentityStatus.INVALID,
     "invalid-dot-segment-path": RunIdentityStatus.INVALID,
-    "invalid-input-digest": RunIdentityStatus.COMPLETE,
-    "invalid-output-digest": RunIdentityStatus.COMPLETE,
+    "invalid-input-digest": RunIdentityStatus.INVALID,
+    "invalid-output-digest": RunIdentityStatus.INVALID,
     "invalid-review-context-schema": RunIdentityStatus.COMPLETE,
     "invalid-run-identity": RunIdentityStatus.INVALID,
     "invalid-timestamp-order": RunIdentityStatus.COMPLETE,
     "invalid-unsafe-path": RunIdentityStatus.INVALID,
     "missing-manifest-with-results": RunIdentityStatus.MISSING,
     "minimal-declared-human": RunIdentityStatus.COMPLETE,
-    "missing-local-file": RunIdentityStatus.COMPLETE,
+    "missing-local-file": RunIdentityStatus.INVALID,
     "missing-required-candidate-id": RunIdentityStatus.INVALID,
     "recency-unknown-missing-completed-at": RunIdentityStatus.COMPLETE,
     "review-context-invalid-current-digest": RunIdentityStatus.COMPLETE,
@@ -56,7 +56,6 @@ EXPECTED_STATUS = {
 }
 
 DEFERRED_FINDING_FRAGMENTS = (
-    "digest",
     "stale",
     "freshness",
     "recency",
