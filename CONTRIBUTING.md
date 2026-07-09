@@ -78,6 +78,8 @@ Tests should cover malformed and boundary inputs, not only successful examples. 
 3. verify byte-for-byte reproducibility;
 4. keep manually maintained copies out of the repository.
 
+When editing any evidence file covered by a SHA-256 digest, including removing trailing whitespace, recompute the file digest and update every dependent artifact index or manifest digest before running validation. Treat whitespace cleanup as a byte change, not a prose-only change.
+
 ## Evidence hygiene
 
 Use synthetic or fully redacted examples. Do not commit:

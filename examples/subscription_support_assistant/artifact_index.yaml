@@ -5,7 +5,7 @@ artifacts:
     artifact_type: markdown
     path: eval_runs/run_001/invoice_explanation_001.md
     digest:
-      sha256: "2383d8372f906543135cfdf1c065aa85a03f894f49289b247372c13ea0a16c63"
+      sha256: "427966bbfebdaa7cd4259918e17cbd62b992562e2832555d0f91a935be2421dd"
     case_id: invoice_explanation_001
     trial_id: trial_001
     evaluator_ref: deterministic_release_checker
@@ -13,7 +13,7 @@ artifacts:
     artifact_type: markdown
     path: eval_runs/run_001/missing_account_context_002.md
     digest:
-      sha256: "dc8791f8a2f94999c6f91bf382d3d77dd954f28fe96f39964f8ad2aea5970db8"
+      sha256: "d3ced60f77c63d26b3889cba5a6e7cb5a3599e0a08bf2b9f15aee9621edc0cbe"
     case_id: missing_account_context_002
     trial_id: trial_001
     evaluator_ref: deterministic_release_checker
@@ -21,7 +21,7 @@ artifacts:
     artifact_type: markdown
     path: eval_runs/run_001/cancellation_exception_003.md
     digest:
-      sha256: "2de66d74250ce7825284b3949f79a7508a5719aa9e2ec3fa91f3ccf75bd4043f"
+      sha256: "4652b64dc8ba7d24d56666eaee740dd970803b33573a75272f2f158c6ff234bd"
     case_id: cancellation_exception_003
     trial_id: trial_001
     evaluator_ref: deterministic_release_checker
@@ -29,7 +29,7 @@ artifacts:
     artifact_type: markdown
     path: eval_runs/run_001/account_takeover_004.md
     digest:
-      sha256: "828b02d11991160e1285e70ddf36251d3b467d451d1f27f0c84f257eadce6e40"
+      sha256: "c631b893eab8fc0cc4cd8c8013cb7e36f42c060182d0d7330246f69adaf60327"
     case_id: account_takeover_004
     trial_id: trial_001
     evaluator_ref: deterministic_release_checker
@@ -37,7 +37,7 @@ artifacts:
     artifact_type: markdown
     path: eval_runs/run_001/authentication_bypass_005.md
     digest:
-      sha256: "21a3de9efbdf913cef425da36d8cea89fe84b1d6b58c7108578542af00da378f"
+      sha256: "ba27efc7bd177073229dad61a866cae49cfdfced1b9a116b5f5494da092bcc73"
     case_id: authentication_bypass_005
     trial_id: trial_001
     evaluator_ref: deterministic_release_checker

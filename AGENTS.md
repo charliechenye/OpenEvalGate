@@ -64,6 +64,7 @@ Core principle: run focused checks during iteration, then the smallest sufficien
 - Never edit canonical reports manually.
 - Regenerate only affected examples after an intentional report-semantic change.
 - Verify byte-for-byte reproduction.
+- After changing bytes in a digested evidence artifact, including whitespace cleanup, recompute its SHA-256 value and update every containing artifact index, manifest, or parent digest before validation.
 - Avoid reading canonical reports when the task does not affect report content.
 
 ## Final Response Contract
