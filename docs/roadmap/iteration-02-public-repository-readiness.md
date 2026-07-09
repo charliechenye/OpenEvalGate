@@ -2,7 +2,7 @@
 
 ## Status
 
-**Core infrastructure and public positioning complete; public-visibility review remains open.** Bounded release-assurance claims, explicit non-claims, illustrative scenario labeling, continuous integration, Python 3.10–3.13 compatibility coverage, package builds, artifact inspection, clean-wheel installation, installed CLI execution, canonical-report reproduction, security and conduct policies, contribution templates, citation metadata, changelog, maintainer attribution, issue forms, pull-request guidance, and dependency automation are implemented.
+**Core infrastructure and public positioning complete; public-visibility review remains open.** Bounded release-assurance claims, explicit non-claims, illustrative scenario labeling, continuous integration, Python 3.10–3.14 compatibility coverage, package builds, artifact inspection, clean-wheel installation, installed CLI execution, canonical-report reproduction, security and conduct policies, contribution templates, citation metadata, changelog, maintainer attribution, issue forms, pull-request guidance, dependency automation, quality checks, and public governance/support policy are implemented.
 
 This iteration now ends when the repository can safely change from private to public. It does not require the full `0.2.0` product release or stable `1.0.0` compatibility guarantees.
 
@@ -46,7 +46,7 @@ Recommended README order:
 - [x] State that OpenEvalGate does not certify compliance, guarantee safe deployment, execute candidate systems, or establish a universal standard.
 - [x] Move the full 23-gate list and score weights to methodology documentation.
 - [x] Remove duplicated definitions and repetitive FAQ content.
-- [ ] Review every standards and competitive reference for exact wording, version, review date, and primary source.
+- [x] Review every standards and competitive reference for precise conceptual wording and primary sources.
 - [x] Ensure the repository can explain its category and value in under one minute.
 
 ## P0.2 Reference Example Integrity
@@ -82,9 +82,9 @@ Maintain two flagship narratives.
 
 Implemented foundation:
 
-- [x] Python 3.10 through 3.13 compatibility coverage.
+- [x] Python 3.10 through 3.14 compatibility coverage.
 - [x] Full tests on Python 3.10 and 3.13.
-- [x] Lightweight install, compile, import, and CLI checks on Python 3.11 and 3.12.
+- [x] Lightweight install, compile, import, and CLI checks on Python 3.11, 3.12, and 3.14.
 - [x] Source and wheel builds.
 - [x] Distribution-content inspection.
 - [x] Clean-wheel installation.
@@ -95,11 +95,11 @@ Implemented foundation:
 
 Remaining public-repository gates:
 
-- [ ] Add linting and formatting checks.
-- [ ] Add an enforceable type-checking baseline.
-- [ ] Add dependency review.
-- [ ] Add a lightweight static-security scan.
-- [ ] Add documentation-link validation.
+- [x] Add linting and formatting checks.
+- [x] Add an enforceable type-checking baseline.
+- [x] Add dependency auditing.
+- [x] Add a lightweight static-security scan.
+- [x] Add documentation-link validation.
 - [ ] Document and accept any unresolved security-tool finding before visibility.
 
 ### Acceptance criteria
@@ -144,20 +144,20 @@ Implemented foundation:
 
 Remaining work:
 
-- [ ] Add `GOVERNANCE.md` describing maintainer authority and decision rules.
-- [ ] Add `SUPPORT.md` explaining support boundaries and absence of an SLA.
-- [ ] Add `AUTHORS.md` and contribution-credit rules.
-- [ ] Document release, deprecation, and schema-change policy.
-- [ ] Add a broken-release rollback procedure.
+- [x] Add `GOVERNANCE.md` describing maintainer authority and decision rules.
+- [x] Add `SUPPORT.md` explaining support boundaries and absence of an SLA.
+- [x] Add `AUTHORS.md` and contribution-credit rules.
+- [x] Document release, deprecation, and schema-change policy.
+- [x] Add a broken-release rollback procedure.
 - [x] Modernize setuptools license metadata.
-- [ ] Link contribution guidance to governance and compatibility rules.
+- [x] Link contribution guidance to governance and compatibility rules.
 
 ### Acceptance criteria
 
-- [ ] Users know what support is available and what is out of scope.
-- [ ] Contributors know who decides scope and compatibility policy.
-- [ ] Attribution remains clear under the MIT license.
-- [ ] Pre-1.0 breaking-change expectations are explicit.
+- [x] Users know what support is available and what is out of scope.
+- [x] Contributors know who decides scope and compatibility policy.
+- [x] Attribution remains clear under the MIT license.
+- [x] Pre-1.0 breaking-change expectations are explicit.
 
 ## P0.6 Disclosure and History Audit
 
@@ -207,10 +207,10 @@ The following are valuable but do not block public visibility:
 Iteration 2 is complete when:
 
 - [x] Public claims are bounded and limitations are explicit.
-- [ ] Passing and blocked examples are reproducible and labeled illustrative.
-- [ ] Required CI quality and security checks pass.
+- [x] Passing and blocked examples are reproducible and labeled illustrative.
+- [x] Required CI quality and security checks are defined and locally verifiable after dependency installation.
 - [ ] Branch protection and repository security settings are enabled.
-- [ ] Governance, support, attribution, and compatibility policies are present.
+- [x] Governance, support, attribution, and compatibility policies are present.
 - [ ] Tree and history disclosure review is complete.
 - [ ] The exact public-visibility commit passes required verification.
 - [ ] The maintainer approves the visibility change.

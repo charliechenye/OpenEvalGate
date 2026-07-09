@@ -10,7 +10,6 @@ from dataclasses import dataclass
 from typing import Literal
 
 from openevalgate.launch_gate_review import (
-    GateRow,
     LaunchGateReview,
     is_meaningful_evidence,
 )

@@ -12,7 +12,7 @@ import zipfile
 from email.parser import Parser
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path, PurePosixPath
-from typing import Iterable
+from typing import Iterable, NoReturn
 
 
 DISTRIBUTION_NAME = "openevalgate"
@@ -43,7 +43,7 @@ class VerificationError(Exception):
     """Raised when a distribution artifact violates its contract."""
 
 
-def _fail(artifact: str, path: str | Path, reason: str) -> None:
+def _fail(artifact: str, path: str | Path, reason: str) -> NoReturn:
     raise VerificationError(f"{artifact}: {str(path)!r}: {reason}")
 
 

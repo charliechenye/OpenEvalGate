@@ -8,7 +8,7 @@ from pathlib import Path
 from openevalgate.action_risk import ActionRiskReview, inspect_action_risk_matrix
 from openevalgate.escalation import validate_escalation_contract
 from openevalgate.eval_results import validate_eval_results
-from openevalgate.provenance import RunIdentityInspection, RunIdentityStatus, inspect_run_identity
+from openevalgate.provenance import RunIdentityInspection, inspect_run_identity
 from openevalgate.launch_gate_review import (
     LaunchGateReview,
     parse_launch_gate_review,

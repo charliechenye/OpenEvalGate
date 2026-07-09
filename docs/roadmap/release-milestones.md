@@ -34,7 +34,7 @@ Make the current project safe and credible for public inspection without implyin
 
 1. Reposition OpenEvalGate for public alpha and document limitations.
 2. Validate and recompute behavioral evaluation evidence.
-3. Define the eval-run provenance contract for controlled-launch evidence, then implement runtime verification in a follow-up.
+3. Define and implement the local eval-run provenance contract subset for controlled-launch evidence.
 4. Add passing and blocked public reference scenarios.
 5. Define public governance, support, and compatibility policies.
 6. Add public-repository quality and security gates.
@@ -72,7 +72,7 @@ Ship the first substantive public-alpha release around **evidence integrity and 
 
 - internally consistent eval-result validation;
 - duplicate, timestamp, reference, and output-path validation;
-- proposed run provenance contract and fixture-integrity checks for selected path, artifact-identity, digest, lifecycle, freshness, and recency branches, with runtime identity enforcement implemented and digest verification, freshness, recency, and verified assurance still required before stable provenance claims;
+- proposed run provenance contract and fixture-integrity checks for selected path, artifact-identity, digest, lifecycle, freshness, and recency branches, with the local runtime identity, digest, lifecycle, assurance, freshness, and recency subset implemented;
 - controlled-launch evidence pinned to an explicit run;
 - a minimal installed-wheel onboarding path;
 - versioned JSON output and documented exit behavior;

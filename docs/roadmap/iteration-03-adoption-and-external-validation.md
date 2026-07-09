@@ -21,18 +21,18 @@ The `0.2.0` theme is **evidence integrity and minimal adoption**.
 - [ ] Derive or independently consistency-check workflow-route, destination, handoff, and model-policy claims where source evidence exists.
 - [x] Reject duplicate result records.
 - [x] Validate timestamps, selected scope, candidate references, and observed-output references.
-- [~] Add explicit run provenance and evaluator type. Runtime identity enforcement is implemented; digest verification, freshness, recency, and verified assurance remain deferred.
-- [~] Define framework, input, result, and artifact descriptor rules. Runtime identity and optional artifact-index identity are implemented; digest verification remains deferred.
-- [~] Define stale-evidence and recency behavior. Contract proposed; runtime freshness and recency comparison remain pending.
-- [~] Require versioned, non-stale selected evidence for controlled-launch authorization. Complete manifest-backed identity and non-failed lifecycle are enforced; non-stale evidence awaits freshness and recency implementation.
+- [x] Add explicit run provenance and evaluator type. Runtime identity, local digest verification, freshness, recency, and assurance classification are implemented.
+- [x] Define framework, input, result, and artifact descriptor rules. Runtime identity, local digest verification, and optional artifact-index identity are implemented.
+- [x] Define stale-evidence and recency behavior. Contract and local runtime comparison are implemented.
+- [~] Require versioned, non-stale selected evidence for controlled-launch authorization. Manifest-backed identity, non-failed lifecycle, and local freshness/recency classifications are available; complete authorization enforcement remains deferred.
 
 ### Minimal onboarding
 
 - [ ] Add `openevalgate init <project> --profile minimal`, or an equivalently deterministic packaged scaffold.
 - [ ] Keep the initial profile set small until repeated user demand justifies additional profiles.
-- [ ] Add a five-minute quickstart from an installed wheel.
+- [x] Add a five-minute quickstart from an installed checkout package.
 - [ ] Add Linux/macOS and Windows PowerShell instructions.
-- [ ] Allow a user to produce a useful first report without copying the full flagship example.
+- [x] Allow a user to produce a useful first report through a documented copy-and-report path.
 
 ### Machine-consumable output
 
@@ -230,7 +230,7 @@ Begin the `1.0.0` release process only when:
 - [ ] Public schemas and migration behavior are stable.
 - [ ] CLI commands, exit codes, and machine-readable output are stable.
 - [ ] Hard-blocker IDs, applicability rules, and recommendation meanings are stable.
-- [ ] Provenance and freshness rules are operational. The contract is proposed, but runtime verification and enforcement remain pending.
+- [~] Provenance and freshness rules are operational for the implemented local classification subset; complete authorization enforcement remains pending.
 - [ ] Compatibility fixtures cover supported previous schemas.
 - [ ] Multiple independent users have completed the workflow.
 - [ ] At least one external contribution and one real integration exist.

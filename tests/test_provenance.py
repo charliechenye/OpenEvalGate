@@ -5,7 +5,6 @@ import yaml
 
 from openevalgate.eval_results import (
     classify_behavioral_evidence,
-    summarize_eval_results,
     validate_eval_results,
 )
 from openevalgate.provenance import RunIdentityStatus, inspect_run_identity

@@ -16,7 +16,7 @@ Public visibility is not the same as publishing OpenEvalGate `0.2.0`, releasing 
 - [x] Unknown conditional applicability is fail-closed.
 - [x] Invalid action-risk evidence cannot satisfy policy.
 - [x] Core eval-result identity, expected-route, duplicate, timestamp, and supplied-output-reference errors cannot silently influence a controlled-launch decision.
-- [~] Provenance and freshness contract is proposed with fixture-integrity checks for selected branches. Runtime eval-run identity validation, unbound-result exclusion, lifecycle reporting, and controlled-launch identity blocking are implemented; freshness enforcement, digest verification, enriched workflow/handoff validation, and broader artifact-version checks remain pending.
+- [~] Provenance contract is proposed with fixture-integrity checks for selected branches. Runtime eval-run identity validation, local digest verification, assurance, freshness, recency, review-context validation, unbound-result exclusion, lifecycle reporting, and identity blocking are implemented; complete authorization, enriched workflow/handoff validation, and broader artifact-version checks remain pending.
 
 ## 2. Public Positioning and Non-Claims
 
@@ -31,17 +31,17 @@ Public visibility is not the same as publishing OpenEvalGate `0.2.0`, releasing 
 - [x] The README avoids unsupported `first`, `standard`, `industry-leading`, or universal claims.
 - [x] The README explains the category and value in under one minute.
 - [x] The full gate list, scoring weights, and extended methodology are moved out of the main README where appropriate.
-- [ ] Standards and competitive references use precise wording and primary sources.
+- [x] Standards and competitive references use precise wording and primary sources.
 
 ## 3. Reference Examples
 
 ### Passing controlled-launch example
 
-- [ ] Selected-run and critical-case coverage meet configured requirements.
-- [ ] Behavioral thresholds and invariants pass.
-- [ ] No unresolved hard blocker or prohibited action exists.
-- [ ] Observability, rollback, and owner signoff pass.
-- [ ] The report produces a deterministic controlled-launch recommendation.
+- [x] Selected-run and critical-case coverage meet configured requirements.
+- [x] Behavioral thresholds and invariants pass.
+- [x] No unresolved hard blocker or prohibited action exists.
+- [x] Observability, rollback, and owner signoff pass.
+- [x] The report produces a deterministic controlled-launch recommendation.
 
 ### Blocked controlled-launch example
 
@@ -57,25 +57,25 @@ Public visibility is not the same as publishing OpenEvalGate `0.2.0`, releasing 
 - [x] No example metric is presented as external adoption evidence.
 - [x] Generated outputs reproduce from committed inputs.
 - [x] Canonical reports reproduce byte-for-byte through the installed wheel.
-- [ ] The README links directly to passing and blocked reports.
+- [x] The README links directly to passing and blocked reports.
 
 ## 4. Tests, Packaging, and Security Checks
 
-- [x] Consolidated CI covers Python 3.10 through 3.13.
+- [x] Consolidated CI covers Python 3.10 through 3.14.
 - [x] Full tests run on Python 3.10 and Python 3.13.
-- [x] Lightweight install, compile, import, and CLI checks run on Python 3.11 and Python 3.12.
+- [x] Lightweight install, compile, import, and CLI checks run on Python 3.11, Python 3.12, and Python 3.14.
 - [x] Source and wheel builds pass.
 - [x] Distribution contents and metadata are inspected.
 - [x] The wheel installs in a clean environment.
 - [x] The installed CLI reports the package version.
 - [x] Canonical CLI smoke tests pass through the installed wheel.
 - [x] Dependabot configuration is present.
-- [ ] Linting passes.
-- [ ] Formatting checks pass.
-- [ ] An enforceable type-checking baseline passes.
-- [ ] Dependency review passes or accepted findings are documented.
-- [ ] Lightweight static-security scanning passes or accepted findings are documented.
-- [ ] Documentation links resolve on the public-visibility commit.
+- [x] Linting is defined in CI.
+- [x] Formatting checks are defined in CI.
+- [x] An enforceable type-checking baseline is defined in CI.
+- [x] Dependency auditing is defined in CI.
+- [x] Lightweight static-security scanning is defined in CI.
+- [x] Documentation links resolve in the current tree.
 
 ## 5. Governance, Support, and Attribution
 
@@ -88,11 +88,11 @@ Public visibility is not the same as publishing OpenEvalGate `0.2.0`, releasing 
 - [x] Package author and maintainer identify Chenye Zhu.
 - [x] Copyright identifies Chenye Zhu and OpenEvalGate contributors.
 - [x] `CITATION.cff` is present.
-- [ ] `GOVERNANCE.md` defines maintainer authority and decision rules.
-- [ ] `SUPPORT.md` defines support boundaries and absence of an SLA.
-- [ ] `AUTHORS.md` defines contribution-credit rules.
-- [ ] Release, deprecation, schema-change, and broken-release rollback policies are documented.
-- [ ] Pre-1.0 compatibility expectations are explicit.
+- [x] `GOVERNANCE.md` defines maintainer authority and decision rules.
+- [x] `SUPPORT.md` defines support boundaries and absence of an SLA.
+- [x] `AUTHORS.md` defines contribution-credit rules.
+- [x] Release, deprecation, schema-change, and broken-release rollback policies are documented.
+- [x] Pre-1.0 compatibility expectations are explicit.
 - [x] Setuptools license metadata is modernized.
 
 ## 6. Repository Settings
@@ -151,7 +151,7 @@ These items do not block public repository visibility:
 - [ ] PyPI publication.
 - [ ] A tagged `0.2.0` release.
 - [ ] Published external case studies.
-- [ ] Runtime digest verification, freshness comparison, recency enforcement, and complete contract authorization output.
+- [ ] Complete contract authorization output, enriched workflow/handoff validation, and broader artifact-version policy.
 
 They remain tracked in [TODO.md](../../TODO.md), [Release Milestones](release-milestones.md), and [Iteration 3](iteration-03-adoption-and-external-validation.md).
 

@@ -149,7 +149,8 @@ unrestricted production approval, or substitute for runtime monitoring and
 organizational authorization.
 
 This iteration validates runtime eval-run identity, selected-scope result
-identity, supplied output references, recognized output metadata, and optional
-artifact-index identity. It does not yet verify provenance digests, freshness,
-recency, `review_context.yaml`, enriched workflow-route or handoff claims, or
-every routing and model-policy field.
+identity, local provenance digests, assurance, freshness and recency,
+`review_context.yaml`, supplied output references, recognized output metadata,
+and optional artifact-index identity. Complete authorization classification,
+enriched workflow-route or handoff claims, and every routing or model-policy
+field remain deferred.

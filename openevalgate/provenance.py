@@ -216,7 +216,6 @@ def inspect_run_identity(
     """Inspect the authoritative eval-run identity for a project."""
 
     root = Path(project_dir)
-    root_results = root / "eval_results.csv"
     root_manifest = root / "run_manifest.yaml"
     selected_run = selected_run_id.strip() if selected_run_id else None
     selected_candidate_value = selected_candidate.strip() if selected_candidate else None
