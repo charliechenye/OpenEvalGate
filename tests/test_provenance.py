@@ -1,3 +1,4 @@
+import hashlib
 from pathlib import Path
 
 import yaml
@@ -562,6 +563,10 @@ def _write_output(path: Path, text: str = "output\n") -> None:
     path.write_text(text, encoding="utf-8")
 
 
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
 def _manifest_with_artifact_index() -> dict:
     return _base_manifest(
         outputs={
@@ -751,6 +756,101 @@ def test_valid_artifact_index_is_complete(tmp_path: Path) -> None:
     assert inspection.status == RunIdentityStatus.COMPLETE
 
 
+def test_matching_artifact_digest_is_complete(tmp_path: Path) -> None:
+    artifact = tmp_path / "artifacts" / "case_001.md"
+    _write_output(artifact)
+    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "artifacts/case_001.md"}])
+    _write_artifact_index(
+        tmp_path / "artifact_index.yaml",
+        [
+            {
+                "artifact_id": "artifact-001",
+                "artifact_type": "markdown",
+                "path": "artifacts/case_001.md",
+                "digest": {"sha256": _sha256(artifact)},
+            }
+        ],
+    )
+    _write_manifest(tmp_path / "run_manifest.yaml", _manifest_with_artifact_index())
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.status == RunIdentityStatus.COMPLETE
+
+
+def test_results_digest_mismatch_is_invalid(tmp_path: Path) -> None:
+    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": ""}])
+    manifest = _base_manifest(outputs={"results": {"path": "eval_results.csv", "digest": {"sha256": "0" * 64}}})
+    _write_manifest(tmp_path / "run_manifest.yaml", manifest)
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.status == RunIdentityStatus.INVALID
+    assert _finding_ids(inspection) == ["provenance_output_digest_mismatch"]
+
+
+def test_manifest_input_digest_mismatch_is_invalid(tmp_path: Path) -> None:
+    _write_output(tmp_path / "inputs" / "eval_cases.yaml")
+    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": ""}])
+    manifest = _base_manifest(
+        inputs=[
+            {
+                "role": "eval_cases",
+                "path": "inputs/eval_cases.yaml",
+                "digest": {"sha256": "0" * 64},
+            }
+        ]
+    )
+    _write_manifest(tmp_path / "run_manifest.yaml", manifest)
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.status == RunIdentityStatus.INVALID
+    assert _finding_ids(inspection) == ["provenance_input_digest_mismatch"]
+
+
+def test_candidate_artifact_digest_mismatch_is_invalid(tmp_path: Path) -> None:
+    _write_output(tmp_path / "candidate.yaml")
+    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": ""}])
+    manifest = _base_manifest()
+    manifest["candidate"]["artifact"] = {"path": "candidate.yaml", "digest": {"sha256": "0" * 64}}
+    _write_manifest(tmp_path / "run_manifest.yaml", manifest)
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.status == RunIdentityStatus.INVALID
+    assert _finding_ids(inspection) == ["provenance_input_digest_mismatch"]
+
+
+def test_evaluator_configuration_digest_mismatch_is_invalid(tmp_path: Path) -> None:
+    _write_output(tmp_path / "evaluator.yaml")
+    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": ""}])
+    manifest = _base_manifest()
+    manifest["evaluation"]["evaluator"]["configuration"] = {
+        "path": "evaluator.yaml",
+        "digest": {"sha256": "0" * 64},
+    }
+    _write_manifest(tmp_path / "run_manifest.yaml", manifest)
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.status == RunIdentityStatus.INVALID
+    assert _finding_ids(inspection) == ["provenance_input_digest_mismatch"]
+
+
+def test_evaluation_policy_digest_mismatch_is_invalid(tmp_path: Path) -> None:
+    _write_output(tmp_path / "policy.yaml")
+    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": ""}])
+    manifest = _base_manifest()
+    manifest["evaluation"]["policy"] = {"path": "policy.yaml", "digest": {"sha256": "0" * 64}}
+    _write_manifest(tmp_path / "run_manifest.yaml", manifest)
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.status == RunIdentityStatus.INVALID
+    assert _finding_ids(inspection) == ["provenance_input_digest_mismatch"]
+
+
 def test_schema_invalid_artifact_index_is_invalid(tmp_path: Path) -> None:
     _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": ""}])
     (tmp_path / "artifact_index.yaml").write_text(
@@ -926,7 +1026,7 @@ def test_missing_artifact_file_is_invalid(tmp_path: Path) -> None:
     assert "provenance_local_file_missing" in _finding_ids(inspect_run_identity(tmp_path))
 
 
-def test_digest_mismatch_is_deferred_for_identity(tmp_path: Path) -> None:
+def test_artifact_digest_mismatch_is_invalid(tmp_path: Path) -> None:
     _write_output(tmp_path / "artifacts" / "case_001.md")
     _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "artifacts/case_001.md"}])
     _write_artifact_index(
@@ -944,5 +1044,5 @@ def test_digest_mismatch_is_deferred_for_identity(tmp_path: Path) -> None:
 
     inspection = inspect_run_identity(tmp_path)
 
-    assert inspection.status == RunIdentityStatus.COMPLETE
-    assert not any("digest" in finding.id for finding in inspection.findings)
+    assert inspection.status == RunIdentityStatus.INVALID
+    assert _finding_ids(inspection) == ["provenance_output_digest_mismatch"]
