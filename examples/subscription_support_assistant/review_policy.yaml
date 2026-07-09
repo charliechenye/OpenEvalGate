@@ -1,0 +1,14 @@
+schema_version: "1"
+requested_mode: controlled_launch
+evaluation_scope:
+  run_id: run_001
+  candidate: subscription-support
+coverage:
+  minimum_case_coverage: 1.0
+  minimum_critical_case_coverage: 1.0
+  minimum_trials_per_case: 1
+thresholds:
+  pass_rate:
+    minimum: 1.0
+  route_match_rate:
+    minimum: 1.0

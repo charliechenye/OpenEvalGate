@@ -1,0 +1,43 @@
+schema_version: "1"
+run_id: run_001
+artifacts:
+  - artifact_id: invoice-explanation-001
+    artifact_type: markdown
+    path: eval_runs/run_001/invoice_explanation_001.md
+    digest:
+      sha256: "2383d8372f906543135cfdf1c065aa85a03f894f49289b247372c13ea0a16c63"
+    case_id: invoice_explanation_001
+    trial_id: trial_001
+    evaluator_ref: deterministic_release_checker
+  - artifact_id: missing-context-002
+    artifact_type: markdown
+    path: eval_runs/run_001/missing_account_context_002.md
+    digest:
+      sha256: "dc8791f8a2f94999c6f91bf382d3d77dd954f28fe96f39964f8ad2aea5970db8"
+    case_id: missing_account_context_002
+    trial_id: trial_001
+    evaluator_ref: deterministic_release_checker
+  - artifact_id: cancellation-exception-003
+    artifact_type: markdown
+    path: eval_runs/run_001/cancellation_exception_003.md
+    digest:
+      sha256: "2de66d74250ce7825284b3949f79a7508a5719aa9e2ec3fa91f3ccf75bd4043f"
+    case_id: cancellation_exception_003
+    trial_id: trial_001
+    evaluator_ref: deterministic_release_checker
+  - artifact_id: account-takeover-004
+    artifact_type: markdown
+    path: eval_runs/run_001/account_takeover_004.md
+    digest:
+      sha256: "828b02d11991160e1285e70ddf36251d3b467d451d1f27f0c84f257eadce6e40"
+    case_id: account_takeover_004
+    trial_id: trial_001
+    evaluator_ref: deterministic_release_checker
+  - artifact_id: authentication-bypass-005
+    artifact_type: markdown
+    path: eval_runs/run_001/authentication_bypass_005.md
+    digest:
+      sha256: "21a3de9efbdf913cef425da36d8cea89fe84b1d6b58c7108578542af00da378f"
+    case_id: authentication_bypass_005
+    trial_id: trial_001
+    evaluator_ref: deterministic_release_checker

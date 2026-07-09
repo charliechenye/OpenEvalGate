@@ -79,3 +79,8 @@ def presales_report() -> str:
 @pytest.fixture(scope="session")
 def education_report() -> str:
     return _read_canonical_report("education_assistant")
+
+
+@pytest.fixture(scope="session")
+def subscription_support_report() -> str:
+    return _read_canonical_report("subscription_support_assistant")

@@ -23,10 +23,18 @@ ROOT = Path(__file__).resolve().parents[1]
 CUSTOMER_SUPPORT = ROOT / "examples" / "customer_support_assistant"
 
 
+def _copy_mutable_project(source: Path, target: Path) -> Path:
+    copytree(source, target)
+    manifest_path = target / "run_manifest.yaml"
+    manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+    manifest["outputs"]["results"].pop("digest", None)
+    manifest_path.write_text(yaml.safe_dump(manifest, sort_keys=False), encoding="utf-8")
+    return target
+
+
 def _project(tmp_path: Path) -> Path:
     project = tmp_path / "project"
-    copytree(CUSTOMER_SUPPORT, project)
-    return project
+    return _copy_mutable_project(CUSTOMER_SUPPORT, project)
 
 
 def _read_result_table(project: Path) -> tuple[list[str], list[dict[str, str]]]:
@@ -94,7 +102,7 @@ def test_missing_eval_results_are_not_provided(tmp_path: Path) -> None:
 
 def test_header_only_eval_results_are_empty(tmp_path: Path) -> None:
     project = tmp_path / "project"
-    copytree(CUSTOMER_SUPPORT, project)
+    _copy_mutable_project(CUSTOMER_SUPPORT, project)
     header = (project / "eval_results.csv").read_text(encoding="utf-8").splitlines()[0]
     (project / "eval_results.csv").write_text(header + "\n", encoding="utf-8")
 
@@ -131,7 +139,7 @@ def test_invalid_eval_results_fail(tmp_path: Path) -> None:
 
 def test_unknown_case_id_in_results_fails_project_check(tmp_path: Path) -> None:
     project = tmp_path / "project"
-    copytree(CUSTOMER_SUPPORT, project)
+    _copy_mutable_project(CUSTOMER_SUPPORT, project)
     headers, rows = _read_result_table(project)
     rows[0]["case_id"] = "unknown_case_999"
     rows[0]["observed_output_path"] = ""

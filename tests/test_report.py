@@ -132,11 +132,25 @@ def test_report_identity_section_includes_manifest_backed_identity(customer_supp
     assert "- Results path: eval_results.csv" in customer_support_report
     assert "- Candidate version: customer-support-example-v1" in customer_support_report
     assert "- Provenance validity: Valid" in customer_support_report
-    assert "- Freshness: Unknown" in customer_support_report
-    assert "- Recency: Not configured" in customer_support_report
-    assert "- Assurance: Declared" in customer_support_report
-    assert "- Review context: not provided" in customer_support_report
+    assert "- Freshness: Current" in customer_support_report
+    assert "- Recency: Acceptable" in customer_support_report
+    assert "- Assurance: Verified" in customer_support_report
+    assert "- Review context: review_context.yaml" in customer_support_report
     assert "missing_eval_run_provenance" not in customer_support_report
+
+
+def test_subscription_support_reference_is_ready_for_bounded_controlled_launch(
+    subscription_support_report: str,
+) -> None:
+    assert "# Launch Readiness Report: Subscription Support Assistant" in subscription_support_report
+    assert "**Evidence completeness score:** 100/100" in subscription_support_report
+    assert "Freshness: Current" in subscription_support_report
+    assert "Recency: Acceptable" in subscription_support_report
+    assert "Assurance: Verified" in subscription_support_report
+    assert "**Final launch recommendation:** Ready for bounded controlled launch" in subscription_support_report
+    assert "**Hard blockers:** 0" in subscription_support_report
+    assert "Missing eval cases: none" in subscription_support_report
+    assert "Missing critical cases: none" in subscription_support_report
 
 
 def test_report_identity_section_renders_project_relative_provenance_paths(tmp_path: Path) -> None:
@@ -285,6 +299,11 @@ def test_empty_eval_results_are_distinguished_from_missing_results(tmp_path: Pat
     copytree(CUSTOMER_SUPPORT, project)
     header = (project / "eval_results.csv").read_text(encoding="utf-8").splitlines()[0]
     (project / "eval_results.csv").write_text(header + "\n", encoding="utf-8")
+    manifest = yaml.safe_load((project / "run_manifest.yaml").read_text(encoding="utf-8"))
+    manifest["outputs"]["results"].pop("digest", None)
+    (project / "run_manifest.yaml").write_text(
+        yaml.safe_dump(manifest, sort_keys=False), encoding="utf-8"
+    )
 
     report = generate_report(project)
 
@@ -320,6 +339,11 @@ def test_empirical_results_without_hard_blockers_remain_shadow_only(tmp_path: Pa
         )
         + "\n",
         encoding="utf-8",
+    )
+    manifest = yaml.safe_load((project / "run_manifest.yaml").read_text(encoding="utf-8"))
+    manifest["outputs"]["results"].pop("digest", None)
+    (project / "run_manifest.yaml").write_text(
+        yaml.safe_dump(manifest, sort_keys=False), encoding="utf-8"
     )
     gate_review = project / "launch_gate_review.md"
     gate_review.write_text(

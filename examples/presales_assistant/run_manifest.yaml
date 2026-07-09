@@ -3,6 +3,8 @@ schema_version: "1"
 run:
   id: run_001
   status: complete
+  started_at: "2026-06-18T17:00:00Z"
+  completed_at: "2026-06-18T17:14:22Z"
 
 candidate:
   id: presales_candidate
@@ -14,6 +16,14 @@ evaluation:
     id: human_review
     role: canonical_example_review
 
+inputs:
+  - role: eval_cases
+    path: inputs/eval_cases.yaml
+    digest:
+      sha256: "d18bead9969c1d4f20fc3e1d8ed7a8d8753c80721de0203ed166365f3bec1277"
+
 outputs:
   results:
     path: eval_results.csv
+    digest:
+      sha256: "a284630551828c9eb17c577695f6dcee0c676ddd962ec248d2c1fbc44f529fcb"

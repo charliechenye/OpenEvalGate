@@ -1,0 +1,4 @@
+model,quality_score,safety_score,latency_ms,cost_per_1k_requests,eval_pass_rate,notes,recommendation
+subscription-small,4.8,4.9,420,0.24,1.00,Best bounded-route performance in the synthetic release set,preferred
+subscription-fast,4.9,4.2,220,0.12,0.80,Fast but weaker security-boundary behavior,not_selected
+subscription-frontier,4.7,4.9,780,0.68,1.00,Strong but unnecessary for the bounded workflow,conditional
