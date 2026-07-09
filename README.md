@@ -42,11 +42,12 @@ These repository-authored scenarios are synthetic and illustrative. They are not
 
 | Domain | Safe stopping boundary | Human path evidence | Failure demonstrated |
 | --- | --- | --- | --- |
+| [Subscription support](examples/subscription_support_assistant/generated_launch_report.md) | Billing explanation, cancellation approval, account security, authentication refusal | Billing approval queue, account security review, deterministic block | Passing bounded controlled-launch package |
 | [Customer support](examples/customer_support_assistant/generated_launch_report.md) | Refund approval, repeated failure, fraud signal, dependency outage | Live handoff, approval queue, async case, fraud operations | Under-escalation, wrong destination, false containment |
 | [Presales](examples/presales_assistant/generated_launch_report.md) | Discount authority, roadmap claims, legal/security commitments | Account-owner follow-up, pricing approval, specialist review | Unsupported commitment, late escalation |
 | [Education](examples/education_assistant/generated_launch_report.md) | Graded work, learner safety, accommodation exception | Instructor review, safety route, accessibility approval | Missing handoff context, unnecessary escalation, failed resume |
 
-See the [examples index](examples/README.md) for scenario purposes, inputs, and reproduction commands.
+See the [examples index](examples/README.md) for scenario purposes, inputs, and reproduction commands. Compare the [passing subscription-support report](examples/subscription_support_assistant/generated_launch_report.md) with the [blocked refund-support report](examples/customer_support_assistant/generated_launch_report.md) to see why evidence completeness and launch readiness are separate decisions.
 
 ## Quickstart
 
@@ -55,10 +56,10 @@ New to the repository? Start with [Getting Started for Practitioners](docs/00_ge
 ```bash
 python -m pip install -e ".[dev]"
 openevalgate --version
-openevalgate validate examples/customer_support_assistant/eval_cases.yaml
-openevalgate check examples/customer_support_assistant/
-openevalgate report examples/customer_support_assistant/ \
-  --output examples/customer_support_assistant/generated_launch_report.md
+openevalgate validate examples/subscription_support_assistant/eval_cases.yaml
+openevalgate check examples/subscription_support_assistant/
+openevalgate report examples/subscription_support_assistant/ \
+  --output examples/subscription_support_assistant/generated_launch_report.md
 ```
 
 The generated report separates evidence completeness from observed behavior and critical controls:
@@ -106,7 +107,7 @@ Projects may omit empirical results while documenting controls. Once a conventio
 
 A manifestless result file is surfaced as a provenance validation failure, while its rows are excluded from row validation, summaries, metrics, coverage, behavioral invariants, behavior-derived blockers, and launch authorization. No new CSV columns are required.
 
-Artifact indexes remain optional. Digest verification, verified assurance, freshness and recency comparison, automatic provenance initialization, and `review_context.yaml` enforcement remain deferred.
+Artifact indexes remain optional. Runtime digest verification, verified assurance, freshness and recency comparison, and `review_context.yaml` enforcement are implemented for local historical and current evidence. Complete authorization classification remains deferred.
 
 Minimal manifest:
 

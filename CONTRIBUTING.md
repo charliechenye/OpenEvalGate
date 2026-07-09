@@ -43,6 +43,8 @@ python -m build
 git diff --check
 ```
 
+Run `git diff --check` before every commit or pull request. Fix all reported trailing whitespace and other whitespace errors before handoff; GitHub's whitespace validation should be a final confirmation, not the first detection.
+
 Try the canonical workflow:
 
 ```bash
@@ -75,6 +77,8 @@ Tests should cover malformed and boundary inputs, not only successful examples. 
 2. regenerate every affected canonical report;
 3. verify byte-for-byte reproducibility;
 4. keep manually maintained copies out of the repository.
+
+When editing any evidence file covered by a SHA-256 digest, including removing trailing whitespace, recompute the file digest and update every dependent artifact index or manifest digest before running validation. Treat whitespace cleanup as a byte change, not a prose-only change.
 
 ## Evidence hygiene
 

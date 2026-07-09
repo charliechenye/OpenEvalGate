@@ -1,0 +1,28 @@
+schema_version: "1"
+run:
+  id: run_001
+  status: complete
+  started_at: "2026-06-18T17:00:00Z"
+  completed_at: "2026-06-18T17:14:22Z"
+candidate:
+  id: subscription-support
+  version: "2026.06.18-rc1"
+evaluation:
+  kind: deterministic
+  evaluator:
+    id: deterministic_release_checker
+    version: "1.0.0"
+inputs:
+  - role: eval_cases
+    path: inputs/eval_cases.yaml
+    digest:
+      sha256: "a493c370b1edadd2dae1f16ee83d44381539118e6d119356073b8d4db6125f20"
+outputs:
+  results:
+    path: eval_results.csv
+    digest:
+      sha256: "d192ecfb2bacf878f4e9b6d2eec226ded7b28a0eb0addf82f16b1d31c4b439e7"
+  artifact_index:
+    path: artifact_index.yaml
+    digest:
+      sha256: "6aab47a65331515ee0bd181418289acd30e298b1dae77f307bf9c5f1925869cc"

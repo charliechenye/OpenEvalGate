@@ -210,10 +210,14 @@ def _executive_summary(
             f"- **Maximum permitted stage:** {assessment.maximum_permitted_stage}",
             f"- **Final launch recommendation:** {assessment.recommendation}",
             "- **Recommended next actions:** "
-            + "; ".join(
-                action.rstrip(".") for action in assessment.recommended_next_actions
-            )
-            + ".",
+            + (
+                "; ".join(
+                    action.rstrip(".") for action in assessment.recommended_next_actions
+                )
+                + "."
+                if assessment.recommended_next_actions
+                else "No additional actions recorded."
+            ),
             f"- **Hard blockers:** {len(assessment.hard_blockers)}",
         ]
     )
@@ -223,6 +227,19 @@ def _eval_run_identity_section(inspection: RunIdentityInspection, root: Path) ->
     lines = [f"- Status: {_identity_status_display(inspection.status)}"]
     if inspection.manifest_path is not None:
         lines.append(f"- Manifest: {_display_project_path(inspection.manifest_path, root)}")
+    classification = inspection.classification
+    lines.extend(
+        [
+            f"- Provenance validity: {_provenance_display(classification.validity.value)}",
+            f"- Freshness: {_provenance_display(classification.freshness.value)}",
+            f"- Recency: {_provenance_display(classification.recency.value)}",
+            f"- Assurance: {_provenance_display(classification.assurance.value)}",
+        ]
+    )
+    if inspection.review_context_path is not None:
+        lines.append(f"- Review context: {_display_project_path(inspection.review_context_path, root)}")
+    else:
+        lines.append("- Review context: not provided")
     if inspection.identity is not None:
         identity = inspection.identity
         lines.extend(
@@ -248,7 +265,16 @@ def _eval_run_identity_section(inspection: RunIdentityInspection, root: Path) ->
     else:
         lines.append("- Findings: none")
     if inspection.status == RunIdentityStatus.COMPLETE:
-        lines.append("- Limitation: Run and output identity checks passed. Digests and release freshness were not evaluated.")
+        if classification.validity.value == "invalid":
+            lines.append(
+                "- Warning: Current review context is invalid. Historical identity remains available, "
+                "but current provenance comparisons cannot be used."
+            )
+        else:
+            lines.append(
+                "- Note: Historical identity, assurance, freshness, and recency classifications "
+                "were evaluated where evidence was available."
+            )
     elif inspection.status == RunIdentityStatus.MISSING:
         if any(finding.id == "provenance_results_unbound" for finding in inspection.findings):
             lines.append(
@@ -288,6 +314,10 @@ def _lifecycle_display(status: str) -> str:
     if status == "aborted":
         return "incomplete"
     return status
+
+
+def _provenance_display(value: str) -> str:
+    return value.replace("_", " ").capitalize()
 
 
 def _hard_blocker_summary(blockers: list[HardBlocker]) -> str:

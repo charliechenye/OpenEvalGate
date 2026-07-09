@@ -5,8 +5,8 @@ from __future__ import annotations
 import csv
 import hashlib
 import re
-from dataclasses import dataclass
-from datetime import datetime, timezone
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -18,6 +18,7 @@ from openevalgate.local_paths import resolve_local_evidence_path
 from openevalgate.resources.schemas import (
     ARTIFACT_INDEX_SCHEMA_NAME,
     MANIFEST_SCHEMA_NAME,
+    REVIEW_CONTEXT_SCHEMA_NAME,
     load_schema,
 )
 
@@ -28,11 +29,46 @@ class RunIdentityStatus(str, Enum):
     INVALID = "invalid"
 
 
+class ProvenanceValidity(str, Enum):
+    VALID = "valid"
+    INVALID = "invalid"
+    NOT_EVALUATED = "not_evaluated"
+
+
+class ProvenanceFreshness(str, Enum):
+    CURRENT = "current"
+    STALE = "stale"
+    UNKNOWN = "unknown"
+    NOT_EVALUATED = "not_evaluated"
+
+
+class ProvenanceRecency(str, Enum):
+    ACCEPTABLE = "acceptable"
+    EXPIRED = "expired"
+    UNKNOWN = "unknown"
+    NOT_CONFIGURED = "not_configured"
+    NOT_EVALUATED = "not_evaluated"
+
+
+class ProvenanceAssurance(str, Enum):
+    UNAVAILABLE = "unavailable"
+    DECLARED = "declared"
+    VERIFIED = "verified"
+
+
 @dataclass(frozen=True, kw_only=True)
 class ProvenanceFinding:
     id: str
     path: str
     message: str
+
+
+@dataclass(frozen=True, kw_only=True)
+class ProvenanceClassification:
+    validity: ProvenanceValidity
+    freshness: ProvenanceFreshness
+    recency: ProvenanceRecency
+    assurance: ProvenanceAssurance
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -67,6 +103,15 @@ class RunIdentityInspection:
     identity: RunIdentity | None
     findings: tuple[ProvenanceFinding, ...]
     results_path: Path | None
+    classification: ProvenanceClassification = field(
+        default_factory=lambda: ProvenanceClassification(
+            validity=ProvenanceValidity.NOT_EVALUATED,
+            freshness=ProvenanceFreshness.NOT_EVALUATED,
+            recency=ProvenanceRecency.NOT_EVALUATED,
+            assurance=ProvenanceAssurance.UNAVAILABLE,
+        )
+    )
+    review_context_path: Path | None = None
 
     @property
     def results_present(self) -> bool:
@@ -99,6 +144,15 @@ _FINDING_ORDER = {
     "provenance_lifecycle_incomplete": 20,
     "provenance_manifest_absent": 21,
     "provenance_results_unbound": 22,
+    "provenance_review_context_schema_invalid": 23,
+    "provenance_review_context_digest_mismatch": 24,
+    "provenance_duplicate_current_resource": 25,
+    "provenance_future_timestamp_invalid": 26,
+    "provenance_candidate_stale": 27,
+    "provenance_evidence_stale": 28,
+    "provenance_freshness_unknown": 29,
+    "provenance_recency_unknown": 30,
+    "provenance_evidence_expired": 31,
 }
 
 _MANIFEST_VALIDATOR = Draft202012Validator(
@@ -107,6 +161,10 @@ _MANIFEST_VALIDATOR = Draft202012Validator(
 )
 _ARTIFACT_INDEX_VALIDATOR = Draft202012Validator(
     load_schema(ARTIFACT_INDEX_SCHEMA_NAME),
+    format_checker=FormatChecker(),
+)
+_REVIEW_CONTEXT_VALIDATOR = Draft202012Validator(
+    load_schema(REVIEW_CONTEXT_SCHEMA_NAME),
     format_checker=FormatChecker(),
 )
 _METADATA_READ_LIMIT = 64 * 1024
@@ -268,12 +326,39 @@ def inspect_run_identity(
 
     sorted_findings = _sort_findings(findings)
     invalid_findings = [f for f in sorted_findings if f.id not in _lifecycle_finding_ids()]
+    historical_assurance = _historical_assurance(authoritative, manifest)
+    if invalid_findings:
+        return RunIdentityInspection(
+            status=RunIdentityStatus.INVALID,
+            manifest_path=authoritative,
+            identity=None,
+            findings=sorted_findings,
+            results_path=identity.results_path,
+            classification=ProvenanceClassification(
+                validity=ProvenanceValidity.INVALID,
+                freshness=ProvenanceFreshness.NOT_EVALUATED,
+                recency=ProvenanceRecency.NOT_EVALUATED,
+                assurance=ProvenanceAssurance.UNAVAILABLE,
+            ),
+        )
+
+    review_context_path = root / "review_context.yaml"
+    classification, review_findings = _classify_review_context(
+        authoritative,
+        manifest,
+        review_context_path,
+        historical_assurance=historical_assurance,
+    )
+    findings.extend(review_findings)
+    sorted_findings = _sort_findings(findings)
     return RunIdentityInspection(
-        status=RunIdentityStatus.INVALID if invalid_findings else RunIdentityStatus.COMPLETE,
+        status=RunIdentityStatus.COMPLETE,
         manifest_path=authoritative,
-        identity=None if invalid_findings else identity,
+        identity=identity,
         findings=sorted_findings,
         results_path=identity.results_path,
+        classification=classification,
+        review_context_path=review_context_path if review_context_path.is_file() else None,
     )
 
 
@@ -438,6 +523,364 @@ def _identity_from_manifest(
         evidence_root=path.parent,
     )
     return identity, list(_sort_findings(findings)), identity.results_path
+
+
+def _historical_assurance(
+    manifest_path: Path,
+    manifest: dict[str, Any],
+) -> ProvenanceAssurance:
+    for _, descriptor, _ in _manifest_descriptors(manifest_path, manifest):
+        if _descriptor_digest(descriptor) is None:
+            return ProvenanceAssurance.DECLARED
+
+    artifact_index = manifest["outputs"].get("artifact_index")
+    if not isinstance(artifact_index, dict) or "path" not in artifact_index:
+        return ProvenanceAssurance.VERIFIED
+    artifact_index_path = resolve_local_evidence_path(
+        manifest_path.parent,
+        artifact_index["path"],
+        allowed_root=manifest_path.parent,
+        require_file=True,
+    ).path
+    if artifact_index_path is None:
+        return ProvenanceAssurance.DECLARED
+    try:
+        artifact_index_data = yaml.safe_load(
+            artifact_index_path.read_text(encoding="utf-8")
+        )
+    except (OSError, UnicodeError, yaml.YAMLError):
+        return ProvenanceAssurance.DECLARED
+    if not isinstance(artifact_index_data, dict):
+        return ProvenanceAssurance.DECLARED
+    for artifact in artifact_index_data.get("artifacts", []) or []:
+        if not isinstance(artifact, dict) or _descriptor_digest(artifact) is None:
+            return ProvenanceAssurance.DECLARED
+    return ProvenanceAssurance.VERIFIED
+
+
+def _classify_review_context(
+    manifest_path: Path,
+    manifest: dict[str, Any],
+    review_context_path: Path,
+    *,
+    historical_assurance: ProvenanceAssurance,
+) -> tuple[ProvenanceClassification, list[ProvenanceFinding]]:
+    base = dict(
+        validity=ProvenanceValidity.VALID,
+        freshness=ProvenanceFreshness.UNKNOWN,
+        recency=ProvenanceRecency.NOT_CONFIGURED,
+        assurance=historical_assurance,
+    )
+    if not review_context_path.is_file():
+        return (
+            ProvenanceClassification(**base),
+            [
+                ProvenanceFinding(
+                    id="provenance_freshness_unknown",
+                    path=str(review_context_path),
+                    message="No review context was provided for current-release comparison.",
+                )
+            ],
+        )
+
+    review_context, schema_findings = _load_review_context(review_context_path)
+    if review_context is None:
+        return (
+            ProvenanceClassification(
+                validity=ProvenanceValidity.INVALID,
+                freshness=ProvenanceFreshness.NOT_EVALUATED,
+                recency=ProvenanceRecency.NOT_EVALUATED,
+                assurance=historical_assurance,
+            ),
+            schema_findings,
+        )
+
+    findings = _validate_review_context_descriptors(review_context_path, review_context)
+    if any(finding.id in _REVIEW_CONTEXT_INVALID_FINDINGS for finding in findings):
+        return (
+            ProvenanceClassification(
+                validity=ProvenanceValidity.INVALID,
+                freshness=ProvenanceFreshness.NOT_EVALUATED,
+                recency=ProvenanceRecency.NOT_EVALUATED,
+                assurance=historical_assurance,
+            ),
+            findings,
+        )
+    freshness, freshness_findings = _compare_freshness(
+        manifest_path,
+        manifest,
+        review_context_path,
+        review_context,
+    )
+    recency, recency_findings = _classify_recency(
+        manifest_path,
+        manifest,
+        review_context_path,
+        review_context,
+    )
+    findings.extend(freshness_findings)
+    findings.extend(recency_findings)
+    if any(finding.id in _REVIEW_CONTEXT_INVALID_FINDINGS for finding in findings):
+        return (
+            ProvenanceClassification(
+                validity=ProvenanceValidity.INVALID,
+                freshness=ProvenanceFreshness.NOT_EVALUATED,
+                recency=ProvenanceRecency.NOT_EVALUATED,
+                assurance=historical_assurance,
+            ),
+            findings,
+        )
+    return (
+        ProvenanceClassification(
+            validity=ProvenanceValidity.VALID,
+            freshness=freshness,
+            recency=recency,
+            assurance=historical_assurance,
+        ),
+        findings,
+    )
+
+
+_REVIEW_CONTEXT_INVALID_FINDINGS = {
+    "provenance_review_context_schema_invalid",
+    "provenance_review_context_digest_mismatch",
+    "provenance_duplicate_current_resource",
+    "provenance_unsafe_path",
+    "provenance_local_file_missing",
+    "provenance_future_timestamp_invalid",
+}
+
+
+def _load_review_context(
+    path: Path,
+) -> tuple[dict[str, Any] | None, list[ProvenanceFinding]]:
+    try:
+        data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except Exception as exc:  # noqa: BLE001
+        return None, [
+            ProvenanceFinding(
+                id="provenance_review_context_schema_invalid",
+                path=str(path),
+                message=f"Could not parse review context: {exc}",
+            )
+        ]
+    if not isinstance(data, dict):
+        return None, [
+            ProvenanceFinding(
+                id="provenance_review_context_schema_invalid",
+                path=str(path),
+                message="Review context must be a YAML object.",
+            )
+        ]
+    errors = sorted(_REVIEW_CONTEXT_VALIDATOR.iter_errors(data), key=lambda item: list(item.path))
+    if errors:
+        error = errors[0]
+        return None, [
+            ProvenanceFinding(
+                id="provenance_review_context_schema_invalid",
+                path=f"{path}:{'.'.join(str(part) for part in error.path)}",
+                message=error.message,
+            )
+        ]
+    return data, []
+
+
+def _validate_review_context_descriptors(
+    review_context_path: Path,
+    review_context: dict[str, Any],
+) -> list[ProvenanceFinding]:
+    findings: list[ProvenanceFinding] = []
+    candidate = review_context.get("candidate", {})
+    if isinstance(candidate, dict) and isinstance(candidate.get("artifact"), dict):
+        findings.extend(
+            _validate_current_descriptor(
+                review_context_path,
+                f"{review_context_path}:candidate.artifact",
+                candidate["artifact"],
+            )
+        )
+
+    seen: dict[tuple[str | None, str | None], int] = {}
+    for index, descriptor in enumerate(review_context.get("inputs", []) or []):
+        findings.extend(
+            _validate_current_descriptor(
+                review_context_path,
+                f"{review_context_path}:inputs[{index}]",
+                descriptor,
+            )
+        )
+        key = _historical_resource_key(descriptor)
+        if key in seen:
+            findings.append(
+                ProvenanceFinding(
+                    id="provenance_duplicate_current_resource",
+                    path=f"{review_context_path}:inputs[{index}]",
+                    message="Review context inputs repeat a current resource role and name.",
+                )
+            )
+        else:
+            seen[key] = index
+    return findings
+
+
+def _validate_current_descriptor(
+    review_context_path: Path,
+    path_label: str,
+    descriptor: dict[str, Any],
+) -> list[ProvenanceFinding]:
+    if "path" not in descriptor:
+        return []
+    resolution = resolve_local_evidence_path(
+        review_context_path.parent,
+        descriptor["path"],
+        allowed_root=review_context_path.parent,
+        require_file=True,
+    )
+    if resolution.error is not None or resolution.path is None:
+        return [_path_finding(resolution.error or "unsafe", f"{path_label}.path")]
+    return _validate_resolved_descriptor_digest(
+        resolution.path,
+        f"{path_label}.digest.sha256",
+        descriptor,
+        finding_id="provenance_review_context_digest_mismatch",
+    ) if "digest" in descriptor else []
+
+
+def _compare_freshness(
+    manifest_path: Path,
+    manifest: dict[str, Any],
+    review_context_path: Path,
+    review_context: dict[str, Any],
+) -> tuple[ProvenanceFreshness, list[ProvenanceFinding]]:
+    findings: list[ProvenanceFinding] = []
+    stale = False
+    unknown = False
+    historical_candidate = manifest["candidate"]
+    current_candidate = review_context["candidate"]
+    if (
+        historical_candidate["id"] != current_candidate["id"]
+        or historical_candidate["version"] != current_candidate["version"]
+    ):
+        stale = True
+        findings.append(
+            ProvenanceFinding(
+                id="provenance_candidate_stale",
+                path=f"{review_context_path}:candidate",
+                message="Current candidate identity differs from historical evidence.",
+            )
+        )
+
+    historical_artifact = historical_candidate.get("artifact")
+    if isinstance(historical_artifact, dict):
+        current_artifact = current_candidate.get("artifact")
+        if not isinstance(current_artifact, dict):
+            unknown = True
+        else:
+            historical_digest = _descriptor_digest(historical_artifact)
+            current_digest = _descriptor_digest(current_artifact)
+            if historical_digest is None or current_digest is None:
+                unknown = True
+            elif historical_digest != current_digest:
+                stale = True
+                findings.append(
+                    ProvenanceFinding(
+                        id="provenance_candidate_stale",
+                        path=f"{review_context_path}:candidate.artifact",
+                        message="Current candidate artifact differs from historical evidence.",
+                    )
+                )
+
+    current_by_key = {
+        _historical_resource_key(descriptor): descriptor
+        for descriptor in review_context.get("inputs", []) or []
+    }
+    historical_keys = set()
+    for index, historical in enumerate(manifest.get("inputs", []) or []):
+        key = _historical_resource_key(historical)
+        historical_keys.add(key)
+        current = current_by_key.get(key)
+        if current is None:
+            unknown = True
+            continue
+        historical_digest = _descriptor_digest(historical)
+        current_digest = _descriptor_digest(current)
+        if historical_digest is None or current_digest is None:
+            unknown = True
+        elif historical_digest != current_digest:
+            stale = True
+            findings.append(
+                ProvenanceFinding(
+                    id="provenance_evidence_stale",
+                    path=f"{review_context_path}:inputs[{key[0]}:{key[1]}]",
+                    message="Current input evidence differs from historical evidence.",
+                )
+            )
+
+    for _, fixed_descriptor, key in _canonical_input_mirrors(manifest_path, manifest):
+        if key not in historical_keys:
+            unknown = True
+
+    if stale:
+        return ProvenanceFreshness.STALE, findings
+    if unknown:
+        findings.append(
+            ProvenanceFinding(
+                id="provenance_freshness_unknown",
+                path=str(review_context_path),
+                message="Historical evidence could not be fully compared with current release state.",
+            )
+        )
+        return ProvenanceFreshness.UNKNOWN, findings
+    return ProvenanceFreshness.CURRENT, findings
+
+
+def _classify_recency(
+    manifest_path: Path,
+    manifest: dict[str, Any],
+    review_context_path: Path,
+    review_context: dict[str, Any],
+) -> tuple[ProvenanceRecency, list[ProvenanceFinding]]:
+    policy = review_context.get("recency_policy")
+    if not isinstance(policy, dict):
+        return ProvenanceRecency.NOT_CONFIGURED, []
+    observed_at = _parse_datetime(review_context.get("observed_at"))
+    completed_at = _parse_datetime(manifest["run"].get("completed_at"))
+    if observed_at is None or completed_at is None:
+        return (
+            ProvenanceRecency.UNKNOWN,
+            [
+                ProvenanceFinding(
+                    id="provenance_recency_unknown",
+                    path=f"{manifest_path}:run.completed_at",
+                    message="Evidence age cannot be computed without run.completed_at.",
+                )
+            ],
+        )
+    max_future_clock_skew = int(policy["max_future_clock_skew_seconds"])
+    if completed_at > observed_at + timedelta(seconds=max_future_clock_skew):
+        return (
+            ProvenanceRecency.NOT_EVALUATED,
+            [
+                ProvenanceFinding(
+                    id="provenance_future_timestamp_invalid",
+                    path=f"{manifest_path}:run.completed_at",
+                    message="Run completed_at exceeds the review context future-clock-skew allowance.",
+                )
+            ],
+        )
+    age = observed_at - completed_at
+    if age <= timedelta(days=int(policy["max_age_days"])):
+        return ProvenanceRecency.ACCEPTABLE, []
+    return (
+        ProvenanceRecency.EXPIRED,
+        [
+            ProvenanceFinding(
+                id="provenance_evidence_expired",
+                path=f"{review_context_path}:recency_policy.max_age_days",
+                message="Historical evidence is older than the configured recency limit.",
+            )
+        ],
+    )
 
 
 def _validate_csv_identity(identity: RunIdentity) -> list[ProvenanceFinding]:
@@ -1197,6 +1640,12 @@ def _invalid(
         identity=None,
         findings=tuple(_sort_findings(findings)),
         results_path=results_path,
+        classification=ProvenanceClassification(
+            validity=ProvenanceValidity.INVALID,
+            freshness=ProvenanceFreshness.NOT_EVALUATED,
+            recency=ProvenanceRecency.NOT_EVALUATED,
+            assurance=ProvenanceAssurance.UNAVAILABLE,
+        ),
     )
 
 

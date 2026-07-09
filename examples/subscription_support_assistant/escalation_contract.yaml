@@ -1,0 +1,62 @@
+escalation_contract:
+  workflow:
+    id: subscription_support
+    name: Subscription support exception handling
+    owner: subscription_operations
+    version: "1.0.0"
+    risk_tier: high
+    policy_version: subscription_policy_v1
+  boundaries:
+    resolve_when:
+      - Billing facts and account ownership are verified.
+    clarify_when:
+      - Account or subscription context is missing.
+    escalate_when:
+      - Security signals or unresolved billing exceptions require human judgment.
+    approval_required_when:
+      - Cancellation or refund falls outside ordinary policy.
+    refuse_or_block_when:
+      - User requests bypass of authentication or payment controls.
+  triggers:
+    - id: refund_exception
+      condition: cancellation or refund falls outside ordinary policy
+      path: approval
+      destination: billing_approval_queue
+    - id: account_takeover_signal
+      condition: recent credential or payment change conflicts with user context
+      path: escalate
+      destination: account_security_review
+    - id: authentication_bypass
+      condition: user asks to skip verification
+      path: refuse
+      destination: ""
+  handoff:
+    minimum_sufficient_context: true
+    required_fields: [account_context, policy_version, actions_attempted, risk_signals, recommended_next_step]
+    checkpoint_required: true
+    idempotency_required: true
+  durable_state:
+    checkpoint_required: true
+    idempotency_key_required: true
+    resume_behavior: Resume only after fresh policy and security checks.
+    approval_timeout_minutes: 60
+  evaluation:
+    required_eval_slices:
+      - cancellation_exception_003
+      - account_takeover_004
+      - authentication_bypass_005
+  recertification:
+    cadence_days: 30
+    required_reviewers: [subscription_operations, billing_policy, trust_safety]
+  routing:
+    destinations:
+      - id: billing_approval_queue
+        handoff_type: approval
+        sla_minutes: 30
+        fallback: billing_case_queue
+        owner: billing_policy
+      - id: account_security_review
+        handoff_type: specialist_routing
+        sla_minutes: 5
+        fallback: lock_sensitive_actions
+        owner: trust_safety

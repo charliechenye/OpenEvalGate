@@ -19,6 +19,11 @@
 ## Eval-Run Identity
 - Status: Complete
 - Manifest: run_manifest.yaml
+- Provenance validity: Valid
+- Freshness: Current
+- Recency: Acceptable
+- Assurance: Verified
+- Review context: review_context.yaml
 - Run ID: run_002
 - Lifecycle: complete
 - Candidate: gpt-4.1-mini
@@ -27,7 +32,7 @@
 - Evaluator ID: human_review
 - Results path: eval_results.csv
 - Findings: none
-- Limitation: Run and output identity checks passed. Digests and release freshness were not evaluated.
+- Note: Historical identity, assurance, freshness, and recency classifications were evaluated where evidence was available.
 
 ## Evidence Completeness Score
 90/100

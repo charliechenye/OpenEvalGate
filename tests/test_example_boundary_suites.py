@@ -12,12 +12,19 @@ ROOT = Path(__file__).resolve().parents[1]
 EXAMPLE_PROJECTS = {
     "customer_support_assistant": {
         "required_routes": {"answer", "clarify", "act", "approval", "escalate", "refuse"},
+        "has_artifact_index": False,
     },
     "education_assistant": {
         "required_routes": {"answer", "clarify", "approval", "escalate", "refuse"},
+        "has_artifact_index": False,
     },
     "presales_assistant": {
         "required_routes": {"answer", "clarify", "approval", "escalate", "refuse"},
+        "has_artifact_index": False,
+    },
+    "subscription_support_assistant": {
+        "required_routes": {"answer", "clarify", "approval", "escalate", "refuse"},
+        "has_artifact_index": True,
     },
 }
 
@@ -52,7 +59,10 @@ def test_canonical_examples_have_manifest_backed_run_identity() -> None:
         assert inspection.status == RunIdentityStatus.COMPLETE, project_name
         assert inspection.results_path == (project / "eval_results.csv").resolve(strict=False)
         assert inspection.identity is not None, project_name
-        assert not (project / "artifact_index.yaml").exists(), project_name
+        assert (
+            (project / "artifact_index.yaml").exists()
+            == EXAMPLE_PROJECTS[project_name]["has_artifact_index"]
+        ), project_name
 
 
 def test_escalation_contract_triggers_and_destinations_have_eval_coverage() -> None:

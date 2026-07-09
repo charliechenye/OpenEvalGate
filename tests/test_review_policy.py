@@ -27,9 +27,18 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "examples" / "customer_support_assistant"
 
 
+def _copy_mutable_project(source: Path, target: Path) -> Path:
+    copytree(source, target)
+    manifest_path = target / "run_manifest.yaml"
+    manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+    manifest["outputs"]["results"].pop("digest", None)
+    manifest_path.write_text(yaml.safe_dump(manifest, sort_keys=False), encoding="utf-8")
+    return target
+
+
 def _project(tmp_path: Path) -> Path:
     target = tmp_path / "project"
-    copytree(SOURCE, target)
+    _copy_mutable_project(SOURCE, target)
     (target / "review_policy.yaml").unlink(missing_ok=True)
     return target
 

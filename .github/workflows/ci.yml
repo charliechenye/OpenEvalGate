@@ -265,7 +265,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for example in customer_support_assistant presales_assistant education_assistant; do
+          for example in subscription_support_assistant customer_support_assistant presales_assistant education_assistant; do
             openevalgate validate "examples/${example}/eval_cases.yaml"
             openevalgate check "examples/${example}/"
             openevalgate report "examples/${example}/" --output "/tmp/${example}.md"
@@ -304,7 +304,7 @@ jobs:
           "${venv_python}" -m pip install "${wheel_path}"
 
           mkdir -p "${smoke_dir}"
-          for example in customer_support_assistant presales_assistant education_assistant; do
+          for example in subscription_support_assistant customer_support_assistant presales_assistant education_assistant; do
             cp -R "${GITHUB_WORKSPACE}/examples/${example}" "${smoke_dir}/${example}"
           done
 
@@ -349,6 +349,7 @@ jobs:
           assert version_result.stderr == b"", version_result.stderr
 
           for example in (
+              "subscription_support_assistant",
               "customer_support_assistant",
               "presales_assistant",
               "education_assistant",

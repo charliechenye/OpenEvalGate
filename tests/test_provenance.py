@@ -215,6 +215,86 @@ def test_valid_root_manifest_is_complete(tmp_path: Path) -> None:
     assert inspection.identity.evaluator.evaluator_id == "human-review"
 
 
+def test_missing_review_context_classifies_freshness_as_unknown(tmp_path: Path) -> None:
+    results = tmp_path / "eval_results.csv"
+    _write_results(results)
+    _write_manifest(
+        tmp_path / "run_manifest.yaml",
+        _base_manifest(
+            run={
+                "id": "run_001",
+                "status": "complete",
+                "completed_at": "2026-06-18T17:14:22Z",
+            },
+            outputs={"results": {"path": "eval_results.csv", "digest": {"sha256": _sha256(results)}}},
+        ),
+    )
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.classification.validity.value == "valid"
+    assert inspection.classification.freshness.value == "unknown"
+    assert inspection.classification.recency.value == "not_configured"
+    assert inspection.classification.assurance.value == "verified"
+    assert "provenance_freshness_unknown" in _finding_ids(inspection)
+
+
+def test_matching_review_context_is_current_and_acceptable(tmp_path: Path) -> None:
+    results = tmp_path / "eval_results.csv"
+    historical_input = tmp_path / "inputs" / "eval_cases.yaml"
+    current_input = tmp_path / "current" / "eval_cases.yaml"
+    _write_results(results)
+    _write_output(historical_input, "cases\n")
+    _write_output(current_input, "cases\n")
+    input_digest = _sha256(historical_input)
+    _write_manifest(
+        tmp_path / "run_manifest.yaml",
+        _base_manifest(
+            run={
+                "id": "run_001",
+                "status": "complete",
+                "completed_at": "2026-06-18T17:14:22Z",
+            },
+            inputs=[
+                {
+                    "role": "eval_cases",
+                    "path": "inputs/eval_cases.yaml",
+                    "digest": {"sha256": input_digest},
+                }
+            ],
+            outputs={"results": {"path": "eval_results.csv", "digest": {"sha256": _sha256(results)}}},
+        ),
+    )
+    _write_manifest(
+        tmp_path / "review_context.yaml",
+        {
+            "schema_version": "1",
+            "candidate": {"id": "candidate", "version": "1"},
+            "inputs": [
+                {
+                    "role": "eval_cases",
+                    "path": "current/eval_cases.yaml",
+                    "digest": {"sha256": _sha256(current_input)},
+                }
+            ],
+            "recency_policy": {
+                "max_age_days": 30,
+                "max_future_clock_skew_seconds": 300,
+            },
+            "observed_at": "2026-06-23T18:00:00Z",
+        },
+    )
+
+    inspection = inspect_run_identity(tmp_path)
+
+    assert inspection.classification.validity.value == "valid"
+    assert inspection.classification.freshness.value == "current"
+    assert inspection.classification.recency.value == "acceptable"
+    assert inspection.classification.assurance.value == "verified"
+    assert inspection.review_context_path == tmp_path / "review_context.yaml"
+    assert _finding_ids(inspection) == []
+
+
 def test_results_present_is_inspection_snapshot(tmp_path: Path) -> None:
     _write_results(tmp_path / "eval_results.csv")
     _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
@@ -441,7 +521,10 @@ def test_lifecycle_failed_remains_identity_complete(tmp_path: Path) -> None:
     assert inspection.status == RunIdentityStatus.COMPLETE
     assert inspection.identity is not None
     assert inspection.identity.run_status == "failed"
-    assert _finding_ids(inspection) == ["provenance_lifecycle_failed"]
+    assert _finding_ids(inspection) == [
+        "provenance_lifecycle_failed",
+        "provenance_freshness_unknown",
+    ]
 
 
 def test_lifecycle_aborted_remains_identity_complete(tmp_path: Path) -> None:
@@ -451,7 +534,10 @@ def test_lifecycle_aborted_remains_identity_complete(tmp_path: Path) -> None:
     inspection = inspect_run_identity(tmp_path)
 
     assert inspection.status == RunIdentityStatus.COMPLETE
-    assert _finding_ids(inspection) == ["provenance_lifecycle_incomplete"]
+    assert _finding_ids(inspection) == [
+        "provenance_lifecycle_incomplete",
+        "provenance_freshness_unknown",
+    ]
 
 
 def test_csv_rows_match_manifest_identity_exactly(tmp_path: Path) -> None:
