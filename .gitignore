@@ -1,8 +1,63 @@
+# Python
 __pycache__/
 *.py[cod]
 *.egg-info/
-/build/
-/dist/
-/.test-tmp/
 .pytest_cache/
-.editorconfig
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Model and training artifacts
+checkpoints/
+outputs/
+runs/
+wandb/
+mlruns/
+
+# Model files
+*.bin
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+*.onnx
+
+# Large datasets
+data/raw/
+data/downloaded/
+*.parquet
+*.arrow
+
+# IDE
+.vscode/
+.idea/
+
+# Operating systems
+.DS_Store
+Thumbs.db
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+.python-version
+.env
+
+# Other folders
+notepad/
