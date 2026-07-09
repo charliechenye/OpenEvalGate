@@ -1,7 +1,7 @@
 # Subscription Support Assistant
 
-**Assistant type:** subscription_support  
-**Launch owner:** Subscription Operations  
+**Assistant type:** subscription_support
+**Launch owner:** Subscription Operations
 **Review date:** 2026-06-18
 
 ## Purpose

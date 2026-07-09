@@ -25,7 +25,7 @@ It is not an eval runner, hosted governance platform, runtime guardrail, or comp
 5. Implement one coherent change.
 6. Run focused validation while iterating.
 7. Run broader validation once, near completion, only when required by [docs/development/validation-matrix.md](docs/development/validation-matrix.md).
-8. Inspect the final diff; commit only when explicitly requested.
+8. Run `git diff --check` and fix all reported whitespace errors before inspecting the final diff; commit only when explicitly requested.
 
 ## Context And Token Discipline
 

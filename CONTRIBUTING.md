@@ -43,6 +43,8 @@ python -m build
 git diff --check
 ```
 
+Run `git diff --check` before every commit or pull request. Fix all reported trailing whitespace and other whitespace errors before handoff; GitHub's whitespace validation should be a final confirmation, not the first detection.
+
 Try the canonical workflow:
 
 ```bash
