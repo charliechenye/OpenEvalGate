@@ -1,6 +1,6 @@
 # Eval-Run Provenance Contract v1
 
-Status: proposed contract; runtime historical envelope subset implemented
+Status: proposed contract; runtime provenance classification subset implemented
 
 ## Purpose
 
@@ -8,7 +8,7 @@ OpenEvalGate evaluates externally produced evidence for AI-assistant and agent l
 
 This contract defines a vendor-neutral, run-scoped evidence envelope for existing OpenEvalGate-compatible eval results. The provenance manifest wraps an existing compatible `eval_results.csv`. It does not require external eval systems to adopt new provenance columns or rewrite every row.
 
-PR 18 defines the contract, schemas, fixtures, and fixture-development validation. The runtime subset implements manifest schema loading, deterministic authoritative-manifest selection, selected run and candidate checks, evaluator identity checks, lifecycle findings, result CSV identity checks, output identity consistency, artifact-index identity checks, local digest verification for historical descriptors, historical envelope consistency checks, missing-manifest detection, unbound-result exclusion, report visibility, and controlled-launch blocking for missing, invalid, failed, or incomplete identity evidence. Verified assurance, freshness, recency, `review_context.yaml`, and complete contract authorization remain deferred.
+PR 18 defines the contract, schemas, fixtures, and fixture-development validation. The runtime subset implements manifest schema loading, deterministic authoritative-manifest selection, selected run and candidate checks, evaluator identity checks, lifecycle findings, result CSV identity checks, output identity consistency, artifact-index identity checks, local digest verification for historical descriptors, historical envelope consistency checks, review-context validation, assurance, freshness, recency, missing-manifest detection, unbound-result exclusion, and report visibility. Complete contract authorization remains deferred.
 
 ## Scope
 
@@ -22,7 +22,7 @@ Version 1 defines:
 - lifecycle, validity, freshness, recency, assurance, finding, and authorization vocabulary;
 - missing-manifest and unbound-result classifications.
 
-Version 1 does not define a new CSV row schema, remote attestation, vendor adapters, or OpenEvalGate review provenance. The implemented runtime subset reports identity and lifecycle status, and fails closed on local historical digest mismatches and historical envelope contradictions; freshness, recency, verified assurance, and full authorization output remain deferred.
+Version 1 does not define a new CSV row schema, remote attestation, vendor adapters, or OpenEvalGate review provenance. The implemented runtime subset reports identity, lifecycle, assurance, freshness, and recency status, and fails closed on local historical or current review-context contradictions; full authorization output remains deferred.
 
 ## Existing CSV Compatibility
 
@@ -491,24 +491,24 @@ References:
 
 ## Conformance Fixtures
 
-Self-contained fixture directories under `spec/fixtures/provenance/v1/` include real input, result, artifact, review-context, and expected-classification files. Recorded SHA-256 values are computed from fixture bytes. PR 18 machine-checks schema validity, fixture inventory, referenced files, recorded digests, orphan-file hygiene, and selected scenario invariants. Runtime tests project those fixtures into the implemented historical envelope subset, while freshness, recency, assurance classification, and authorization outputs remain normative future work.
+Self-contained fixture directories under `spec/fixtures/provenance/v1/` include real input, result, artifact, review-context, and expected-classification files. Recorded SHA-256 values are computed from fixture bytes. PR 18 machine-checks schema validity, fixture inventory, referenced files, recorded digests, orphan-file hygiene, and selected scenario invariants. Runtime tests now project historical assurance, freshness, recency, review-context validity, and historical envelope behavior from those fixtures.
 
-The fixtures are normative contract examples. Runtime tests now cover identity-relevant, local digest, and historical envelope consistency fixture projections, but deliberately defer stale evidence, recency, freshness, verified assurance, and review-context expectations.
+The fixtures are normative contract examples. Runtime tests cover identity-relevant, local digest, historical envelope consistency, review-context validation, stale evidence, recency, freshness, and verified assurance projections. Complete authorization output remains deferred.
 
 ## Implementation Sequence
 
-Implemented runtime identity work:
+Implemented runtime provenance work:
 
 1. Parse manifests, existing compatible result CSVs, and artifact indexes.
 2. Validate schema, selected identity, uniqueness, containment, lifecycle, output metadata, artifact-index identity, local historical descriptor digests, historical input uniqueness, canonical mirror consistency, and run timestamp order.
-3. Classify runtime identity as `complete`, `missing`, or `invalid`, with lifecycle reported separately.
-4. Surface identity and lifecycle classifications in CLI status and reports.
-5. Block controlled launch for missing, invalid, failed, or incomplete identity evidence.
+3. Validate project-level review context, current descriptors, current-resource uniqueness, current digests, and future-clock-skew bounds.
+4. Classify runtime identity as `complete`, `missing`, or `invalid`, with lifecycle, assurance, freshness, and recency reported separately.
+5. Surface identity and provenance classifications in reports.
+6. Block controlled launch for missing, invalid, failed, or incomplete identity evidence.
 
 Deferred work remains:
 
-1. Classify verified assurance, freshness, recency, and complete contract authorization.
-2. Parse and enforce `review_context.yaml` for current-release comparison.
-3. Extend report output beyond runtime identity and lifecycle status.
+1. Produce complete contract authorization classifications.
+2. Enforce freshness, recency, and assurance classifications through controlled-launch policy.
 
 Each implementation step must preserve fail-closed behavior.

@@ -131,6 +131,11 @@ def test_report_identity_section_includes_manifest_backed_identity(customer_supp
     assert "- Manifest: run_manifest.yaml" in customer_support_report
     assert "- Results path: eval_results.csv" in customer_support_report
     assert "- Candidate version: customer-support-example-v1" in customer_support_report
+    assert "- Provenance validity: Valid" in customer_support_report
+    assert "- Freshness: Unknown" in customer_support_report
+    assert "- Recency: Not configured" in customer_support_report
+    assert "- Assurance: Declared" in customer_support_report
+    assert "- Review context: not provided" in customer_support_report
     assert "missing_eval_run_provenance" not in customer_support_report
 
 

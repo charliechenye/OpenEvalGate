@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+import yaml
 
 from openevalgate.provenance import RunIdentityStatus, inspect_run_identity
 
@@ -55,14 +56,6 @@ EXPECTED_STATUS = {
     "verified-freshness-unknown": RunIdentityStatus.COMPLETE,
 }
 
-DEFERRED_FINDING_FRAGMENTS = (
-    "stale",
-    "freshness",
-    "recency",
-    "expired",
-)
-
-
 def fixture_dirs() -> list[Path]:
     return sorted(path for path in FIXTURE_ROOT.iterdir() if path.is_dir())
 
@@ -74,8 +67,30 @@ def test_runtime_projection_matrix_is_exhaustive() -> None:
 @pytest.mark.parametrize("fixture", fixture_dirs(), ids=lambda path: path.name)
 def test_runtime_identity_fixture_projection(fixture: Path) -> None:
     inspection = inspect_run_identity(fixture)
+    expected = yaml.safe_load((fixture / "expected.yaml").read_text(encoding="utf-8"))
+    classification = inspection.classification
 
     assert inspection.status == EXPECTED_STATUS[fixture.name]
-    finding_ids = [finding.id for finding in inspection.findings]
-    for fragment in DEFERRED_FINDING_FRAGMENTS:
-        assert not any(fragment in finding_id for finding_id in finding_ids), fixture.name
+    assert {
+        "validity": classification.validity.value,
+        "freshness": classification.freshness.value,
+        "recency": classification.recency.value,
+        "assurance": classification.assurance.value,
+    } == {
+        key: expected["provenance"][key]
+        for key in ("validity", "freshness", "recency", "assurance")
+    }
+    expected_findings = set(expected["findings"])
+    finding_ids = {finding.id for finding in inspection.findings}
+    if expected_findings & {
+        "provenance_candidate_stale",
+        "provenance_evidence_stale",
+        "provenance_freshness_unknown",
+        "provenance_recency_unknown",
+        "provenance_evidence_expired",
+        "provenance_review_context_schema_invalid",
+        "provenance_review_context_digest_mismatch",
+        "provenance_duplicate_current_resource",
+        "provenance_future_timestamp_invalid",
+    }:
+        assert expected_findings <= finding_ids

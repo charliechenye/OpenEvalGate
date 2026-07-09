@@ -9,6 +9,7 @@ from typing import Any
 
 MANIFEST_SCHEMA_NAME = "eval-run-manifest-v1.schema.json"
 ARTIFACT_INDEX_SCHEMA_NAME = "eval-run-artifact-index-v1.schema.json"
+REVIEW_CONTEXT_SCHEMA_NAME = "eval-run-review-context-v1.schema.json"
 
 
 def read_schema_bytes(name: str) -> bytes:
