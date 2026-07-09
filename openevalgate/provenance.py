@@ -6,6 +6,7 @@ import csv
 import hashlib
 import re
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -86,14 +87,18 @@ _FINDING_ORDER = {
     "provenance_evaluator_alias_mismatch": 8,
     "provenance_input_digest_mismatch": 9,
     "provenance_output_digest_mismatch": 10,
-    "provenance_artifact_identity_mismatch": 11,
-    "provenance_duplicate_artifact_id": 12,
-    "provenance_duplicate_artifact_path": 13,
-    "provenance_duplicate_hybrid_component_id": 14,
-    "provenance_lifecycle_failed": 15,
-    "provenance_lifecycle_incomplete": 16,
-    "provenance_manifest_absent": 17,
-    "provenance_results_unbound": 18,
+    "provenance_duplicate_singleton_role": 11,
+    "provenance_duplicate_historical_resource": 12,
+    "provenance_duplicate_resource_mismatch": 13,
+    "provenance_timestamp_order_invalid": 14,
+    "provenance_artifact_identity_mismatch": 15,
+    "provenance_duplicate_artifact_id": 16,
+    "provenance_duplicate_artifact_path": 17,
+    "provenance_duplicate_hybrid_component_id": 18,
+    "provenance_lifecycle_failed": 19,
+    "provenance_lifecycle_incomplete": 20,
+    "provenance_manifest_absent": 21,
+    "provenance_results_unbound": 22,
 }
 
 _MANIFEST_VALIDATOR = Draft202012Validator(
@@ -110,6 +115,14 @@ _METADATA_LABEL_PATTERN = re.compile(
     r"(?P<label>Run ID|Case ID|Candidate|Evaluator)"
     r"\s*:\s*(?:\*\*)?\s*(?P<value>.*?)\s*$"
 )
+_SINGLETON_INPUT_ROLES = {
+    "eval_cases",
+    "evaluation_policy",
+    "review_policy",
+    "routing_policy",
+    "escalation_contract",
+    "action_risk_matrix",
+}
 
 
 def _unbound_result_paths(
@@ -401,7 +414,7 @@ def _identity_from_manifest(
             )
         )
 
-    findings.extend(_validate_manifest_descriptor_digests(path, manifest))
+    findings.extend(_validate_manifest_historical_envelope(path, manifest))
 
     framework = evaluation.get("framework") or {}
     identity = RunIdentity(
@@ -624,24 +637,36 @@ def _validate_artifact_index_identity(identity: RunIdentity) -> list[ProvenanceF
     return findings
 
 
-def _validate_manifest_descriptor_digests(
+def _validate_manifest_historical_envelope(
     manifest_path: Path,
     manifest: dict[str, Any],
 ) -> list[ProvenanceFinding]:
     findings: list[ProvenanceFinding] = []
-    for path_label, descriptor, finding_id in _manifest_digest_descriptors(manifest_path, manifest):
+    for path_label, descriptor, finding_id in _manifest_descriptors(manifest_path, manifest):
         findings.extend(
-            _validate_descriptor_digest(
+            _validate_descriptor_path_and_digest(
                 manifest_path.parent,
                 path_label,
                 descriptor,
                 finding_id=finding_id,
             )
         )
+    if any(f.id in {"provenance_unsafe_path", "provenance_local_file_missing"} for f in findings):
+        return findings
+
+    findings.extend(_validate_historical_input_keys(manifest_path, manifest))
+    if findings:
+        return findings
+
+    findings.extend(_validate_canonical_input_mirrors(manifest_path, manifest))
+    if findings:
+        return findings
+
+    findings.extend(_validate_run_timestamp_order(manifest_path, manifest))
     return findings
 
 
-def _manifest_digest_descriptors(
+def _manifest_descriptors(
     manifest_path: Path,
     manifest: dict[str, Any],
 ) -> list[tuple[str, dict[str, Any], str]]:
@@ -731,14 +756,14 @@ def _manifest_digest_descriptors(
     return descriptors
 
 
-def _validate_descriptor_digest(
+def _validate_descriptor_path_and_digest(
     descriptor_root: Path,
     path_label: str,
     descriptor: dict[str, Any],
     *,
     finding_id: str,
 ) -> list[ProvenanceFinding]:
-    if "path" not in descriptor or "digest" not in descriptor:
+    if "path" not in descriptor:
         return []
     resolution = resolve_local_evidence_path(
         descriptor_root,
@@ -748,12 +773,187 @@ def _validate_descriptor_digest(
     )
     if resolution.error is not None or resolution.path is None:
         return [_path_finding(resolution.error or "unsafe", f"{path_label}.path")]
+    if "digest" not in descriptor:
+        return []
     return _validate_resolved_descriptor_digest(
         resolution.path,
         f"{path_label}.digest.sha256",
         descriptor,
         finding_id=finding_id,
     )
+
+
+def _validate_historical_input_keys(
+    manifest_path: Path,
+    manifest: dict[str, Any],
+) -> list[ProvenanceFinding]:
+    inputs = manifest.get("inputs", []) or []
+    seen: dict[tuple[str | None, str | None], int] = {}
+    for index, descriptor in enumerate(inputs):
+        key = _historical_resource_key(descriptor)
+        if key not in seen:
+            seen[key] = index
+            continue
+        if key[0] in _SINGLETON_INPUT_ROLES:
+            return [
+                ProvenanceFinding(
+                    id="provenance_duplicate_singleton_role",
+                    path=f"{manifest_path}:inputs[{index}].role",
+                    message="Manifest inputs repeat a singleton resource role.",
+                )
+            ]
+        return [
+            ProvenanceFinding(
+                id="provenance_duplicate_historical_resource",
+                path=f"{manifest_path}:inputs[{index}]",
+                message="Manifest inputs repeat a historical resource role and name.",
+            )
+        ]
+    return []
+
+
+def _historical_resource_key(descriptor: dict[str, Any]) -> tuple[str | None, str | None]:
+    role = descriptor.get("role")
+    if role in _SINGLETON_INPUT_ROLES:
+        return str(role), None
+    name = descriptor.get("name")
+    return str(role) if role is not None else None, str(name) if name is not None else None
+
+
+def _validate_canonical_input_mirrors(
+    manifest_path: Path,
+    manifest: dict[str, Any],
+) -> list[ProvenanceFinding]:
+    inputs_by_key = {
+        _historical_resource_key(descriptor): descriptor
+        for descriptor in manifest.get("inputs", []) or []
+    }
+    for path_label, fixed_descriptor, key in _canonical_input_mirrors(manifest_path, manifest):
+        mirror = inputs_by_key.get(key)
+        if mirror is None:
+            continue
+        if not _descriptors_are_equivalent(manifest_path.parent, fixed_descriptor, mirror):
+            return [
+                ProvenanceFinding(
+                    id="provenance_duplicate_resource_mismatch",
+                    path=path_label,
+                    message="Fixed-purpose descriptor and canonical input mirror disagree.",
+                )
+            ]
+    return []
+
+
+def _canonical_input_mirrors(
+    manifest_path: Path,
+    manifest: dict[str, Any],
+) -> list[tuple[str, dict[str, Any], tuple[str | None, str | None]]]:
+    mirrors: list[tuple[str, dict[str, Any], tuple[str | None, str | None]]] = []
+    evaluation = manifest["evaluation"]
+    evaluator = evaluation["evaluator"]
+    evaluator_id = str(evaluator["id"])
+    if isinstance(evaluation.get("policy"), dict):
+        mirrors.append(
+            (
+                f"{manifest_path}:evaluation.policy",
+                evaluation["policy"],
+                ("evaluation_policy", None),
+            )
+        )
+    if isinstance(evaluator.get("configuration"), dict):
+        mirrors.append(
+            (
+                f"{manifest_path}:evaluation.evaluator.configuration",
+                evaluator["configuration"],
+                ("evaluator_configuration", evaluator_id),
+            )
+        )
+    if isinstance(evaluator.get("decision_policy"), dict):
+        mirrors.append(
+            (
+                f"{manifest_path}:evaluation.evaluator.decision_policy",
+                evaluator["decision_policy"],
+                ("hybrid_decision_policy", evaluator_id),
+            )
+        )
+    for index, component in enumerate(evaluator.get("components", []) or []):
+        if isinstance(component.get("configuration"), dict):
+            mirrors.append(
+                (
+                    f"{manifest_path}:evaluation.evaluator.components[{index}].configuration",
+                    component["configuration"],
+                    ("evaluator_component_configuration", str(component["id"])),
+                )
+            )
+    return mirrors
+
+
+def _descriptors_are_equivalent(
+    descriptor_root: Path,
+    fixed: dict[str, Any],
+    mirror: dict[str, Any],
+) -> bool:
+    if ("path" in fixed or "path" in mirror) and _descriptor_relative_path(descriptor_root, fixed) != _descriptor_relative_path(
+        descriptor_root,
+        mirror,
+    ):
+        return False
+    if ("uri" in fixed or "uri" in mirror) and fixed.get("uri") != mirror.get("uri"):
+        return False
+    if ("digest" in fixed or "digest" in mirror) and _descriptor_digest(fixed) != _descriptor_digest(mirror):
+        return False
+    return True
+
+
+def _descriptor_relative_path(
+    descriptor_root: Path,
+    descriptor: dict[str, Any],
+) -> str | None:
+    if "path" not in descriptor:
+        return None
+    resolution = resolve_local_evidence_path(
+        descriptor_root,
+        descriptor["path"],
+        allowed_root=descriptor_root,
+        require_file=True,
+    )
+    if resolution.error is not None or resolution.path is None:
+        return None
+    return _relative_to_root(resolution.path, descriptor_root)
+
+
+def _descriptor_digest(descriptor: dict[str, Any]) -> str | None:
+    digest = descriptor.get("digest")
+    if not isinstance(digest, dict):
+        return None
+    value = digest.get("sha256")
+    return value if isinstance(value, str) else None
+
+
+def _validate_run_timestamp_order(
+    manifest_path: Path,
+    manifest: dict[str, Any],
+) -> list[ProvenanceFinding]:
+    run = manifest["run"]
+    started = _parse_datetime(run.get("started_at"))
+    completed = _parse_datetime(run.get("completed_at"))
+    if started is None or completed is None or started <= completed:
+        return []
+    return [
+        ProvenanceFinding(
+            id="provenance_timestamp_order_invalid",
+            path=f"{manifest_path}:run.started_at",
+            message="Run started_at must not be later than completed_at.",
+        )
+    ]
+
+
+def _parse_datetime(value: Any) -> datetime | None:
+    if not isinstance(value, str):
+        return None
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
 
 
 def _validate_resolved_descriptor_digest(
