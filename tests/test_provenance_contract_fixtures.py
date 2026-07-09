@@ -1,10 +1,10 @@
 """Contract-development checks for eval-run provenance fixtures.
 
 This module validates provenance schemas, fixture integrity, referenced evidence,
-recorded digests, orphan-file hygiene, and selected scenario invariants. It is
-not the production provenance parser or classifier. PR 19 will implement complete
-classification, finding precedence, authorization evaluation, and full comparison
-against the normative expected outputs.
+recorded digests, orphan-file hygiene, and selected scenario invariants. Runtime
+projection tests separately compare the production parser's implemented
+historical, assurance, freshness, recency, and review-context classifications.
+Complete authorization evaluation remains deferred.
 """
 
 import csv

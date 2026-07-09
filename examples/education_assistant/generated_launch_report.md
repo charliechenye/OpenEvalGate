@@ -19,6 +19,11 @@
 ## Eval-Run Identity
 - Status: Complete
 - Manifest: run_manifest.yaml
+- Provenance validity: Valid
+- Freshness: Unknown
+- Recency: Not configured
+- Assurance: Declared
+- Review context: not provided
 - Run ID: run_001
 - Lifecycle: complete
 - Candidate: education_candidate
@@ -26,8 +31,8 @@
 - Evaluator kind: human
 - Evaluator ID: human_review
 - Results path: eval_results.csv
-- Findings: none
-- Limitation: Run and output identity checks passed. Digests and release freshness were not evaluated.
+- Findings: provenance_freshness_unknown: No review context was provided for current-release comparison.
+- Note: Historical identity, assurance, freshness, and recency classifications were evaluated where evidence was available.
 
 ## Evidence Completeness Score
 34/100
