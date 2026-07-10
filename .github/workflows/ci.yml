@@ -125,6 +125,7 @@ jobs:
                   docs/* | \
                   AGENTS.md | TODO.md | CHANGELOG.md | CITATION.cff | \
                   SECURITY.md | CODE_OF_CONDUCT.md | GOVERNANCE.md | SUPPORT.md | \
+                  AUTHORS.md | CONTRIBUTING.md | README.md | \
                   .github/ISSUE_TEMPLATE/* | .github/pull_request_template.md)
                     ;;
                   *)
