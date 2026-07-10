@@ -97,16 +97,28 @@ def generate_report(project_dir: str | Path) -> str:
         _hard_blocker_summary(blockers),
         "",
         "## Trust Preservation Summary",
-        _artifact_summary(root / "trust_preservation_review.md", "Trust preservation review is present.", "Trust preservation review is missing."),
+        _artifact_summary(
+            root / "trust_preservation_review.md",
+            "Trust preservation review is present.",
+            "Trust preservation review is missing.",
+        ),
         "",
         "## Business Behavior Contract Summary",
-        _artifact_summary(root / "business_behavior_contract.md", "Business behavior contract is present.", "Business behavior contract is missing."),
+        _artifact_summary(
+            root / "business_behavior_contract.md",
+            "Business behavior contract is present.",
+            "Business behavior contract is missing.",
+        ),
         "",
         "## Golden Eval Summary",
         _eval_summary(cases),
         "",
         "## Tail-Risk / P0 Failure Mode Summary",
-        _artifact_summary(root / "p0_failure_mode_checklist.md", "P0 failure mode checklist is present.", "P0 failure mode checklist is missing."),
+        _artifact_summary(
+            root / "p0_failure_mode_checklist.md",
+            "P0 failure mode checklist is present.",
+            "P0 failure mode checklist is missing.",
+        ),
         "",
         "## Automation Boundary Summary",
         _table_file_summary(root / "automation_boundary_matrix.md", "Automation boundary matrix"),
@@ -121,16 +133,26 @@ def generate_report(project_dir: str | Path) -> str:
         _input_output_summary(root),
         "",
         "## Model Arena Summary",
-        _csv_summary(root / "model_arena_scorecard.csv", "model", "No model arena scorecard found."),
+        _csv_summary(
+            root / "model_arena_scorecard.csv", "model", "No model arena scorecard found."
+        ),
         "",
         "## Routing / Capability Allocation Summary",
         _routing_policy_summary(root),
         "",
         "## Metric Stack Summary",
-        _artifact_summary(root / "chatbot_success_metric_stack.md", "Chatbot success metric stack is present.", "Chatbot success metric stack is missing."),
+        _artifact_summary(
+            root / "chatbot_success_metric_stack.md",
+            "Chatbot success metric stack is present.",
+            "Chatbot success metric stack is missing.",
+        ),
         "",
         "## Domain-Owner Feedback Loop Summary",
-        _artifact_summary(root / "domain_owner_feedback_loop.md", "Domain-owner feedback loop evidence is present.", "No domain-owner feedback loop artifact found."),
+        _artifact_summary(
+            root / "domain_owner_feedback_loop.md",
+            "Domain-owner feedback loop evidence is present.",
+            "No domain-owner feedback loop artifact found.",
+        ),
         "",
         "## Observability / Rollback Summary",
         _observability_rollback_summary(gates, inspection.evaluations),
@@ -204,16 +226,18 @@ def _executive_summary(
             f"- **Effective review mode:** {_mode_display(assessment.effective_review_mode)}",
             (
                 "- **Sufficiency for effective review mode:** "
-                + ("Sufficient" if assessment.behavioral_sufficiency.sufficient_for_effective_mode else "Insufficient")
+                + (
+                    "Sufficient"
+                    if assessment.behavioral_sufficiency.sufficient_for_effective_mode
+                    else "Insufficient"
+                )
             ),
             f"- **Critical-control status:** {assessment.critical_control_status}",
             f"- **Maximum permitted stage:** {assessment.maximum_permitted_stage}",
             f"- **Final launch recommendation:** {assessment.recommendation}",
             "- **Recommended next actions:** "
             + (
-                "; ".join(
-                    action.rstrip(".") for action in assessment.recommended_next_actions
-                )
+                "; ".join(action.rstrip(".") for action in assessment.recommended_next_actions)
                 + "."
                 if assessment.recommended_next_actions
                 else "No additional actions recorded."
@@ -237,7 +261,9 @@ def _eval_run_identity_section(inspection: RunIdentityInspection, root: Path) ->
         ]
     )
     if inspection.review_context_path is not None:
-        lines.append(f"- Review context: {_display_project_path(inspection.review_context_path, root)}")
+        lines.append(
+            f"- Review context: {_display_project_path(inspection.review_context_path, root)}"
+        )
     else:
         lines.append("- Review context: not provided")
     if inspection.identity is not None:
@@ -261,7 +287,10 @@ def _eval_run_identity_section(inspection: RunIdentityInspection, root: Path) ->
                 framework += f" {identity.framework_version}"
             lines.append(f"- Framework: {framework}")
     if inspection.findings:
-        lines.append("- Findings: " + "; ".join(f"{finding.id}: {finding.message}" for finding in inspection.findings))
+        lines.append(
+            "- Findings: "
+            + "; ".join(f"{finding.id}: {finding.message}" for finding in inspection.findings)
+        )
     else:
         lines.append("- Findings: none")
     if inspection.status == RunIdentityStatus.COMPLETE:
@@ -279,14 +308,18 @@ def _eval_run_identity_section(inspection: RunIdentityInspection, root: Path) ->
         if any(finding.id == "provenance_results_unbound" for finding in inspection.findings):
             lines.append(
                 "- Action required: eval_results.csv was found without an authoritative "
-                "run_manifest.yaml. The file failed provenance validation. Its rows were " \
-                "excluded from row validation, behavioral metrics, and launch decisions. " \
+                "run_manifest.yaml. The file failed provenance validation. Its rows were "
+                "excluded from row validation, behavioral metrics, and launch decisions. "
                 "Add a valid manifest or remove the unbound result file."
             )
         else:
-            lines.append("- Note: No eval-run evidence was provided. A manifest is required when result evidence is added.")
+            lines.append(
+                "- Note: No eval-run evidence was provided. A manifest is required when result evidence is added."
+            )
     else:
-        lines.append("- Warning: Run identity is invalid. Behavioral evidence from this run was excluded from launch evaluation.")
+        lines.append(
+            "- Warning: Run identity is invalid. Behavioral evidence from this run was excluded from launch evaluation."
+        )
     return "\n".join(lines)
 
 
@@ -323,7 +356,9 @@ def _provenance_display(value: str) -> str:
 def _hard_blocker_summary(blockers: list[HardBlocker]) -> str:
     if not blockers:
         return "No hard blockers detected."
-    return "\n".join(f"- **{blocker.id}:** {blocker.reason} Evidence: {blocker.evidence}" for blocker in blockers)
+    return "\n".join(
+        f"- **{blocker.id}:** {blocker.reason} Evidence: {blocker.evidence}" for blocker in blockers
+    )
 
 
 def _hard_gate_evaluation_table(
@@ -361,7 +396,11 @@ def _artifact_summary(path: Path, present: str, missing: str) -> str:
 def _table_file_summary(path: Path, label: str) -> str:
     if not path.is_file():
         return f"- {label} is missing."
-    rows = [line for line in path.read_text(encoding="utf-8").splitlines() if line.strip().startswith("|") and "---" not in line]
+    rows = [
+        line
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip().startswith("|") and "---" not in line
+    ]
     data_rows = max(len(rows) - 1, 0)
     return f"- {label} is present with {data_rows} row(s)."
 
@@ -440,7 +479,11 @@ def _action_risk_summary(review: ActionRiskReview) -> str:
         )
     rows = review.rows
     risk_counts = Counter(row.get("risk_tier", "unknown").lower() for row in rows)
-    high_actions = [row.get("action", "") for row in rows if row.get("risk_tier", "").lower() in {"high", "prohibited"}]
+    high_actions = [
+        row.get("action", "")
+        for row in rows
+        if row.get("risk_tier", "").lower() in {"high", "prohibited"}
+    ]
     lines = [
         f"- Rows: {len(rows)}",
         "- Risk tiers: " + _counter_summary(risk_counts),
@@ -452,7 +495,9 @@ def _action_risk_summary(review: ActionRiskReview) -> str:
 
 def _input_output_summary(root: Path) -> str:
     input_filter = "Input filter gate evidence is in launch_gate_review.md."
-    critic = _csv_summary(root / "output_critic_rubric.csv", "dimension", "No output critic rubric found.")
+    critic = _csv_summary(
+        root / "output_critic_rubric.csv", "dimension", "No output critic rubric found."
+    )
     return f"- {input_filter}\n{critic}"
 
 
@@ -490,16 +535,14 @@ def _diagnostic_action_risk_counts(
     risk_index = positions[0]
     counts: Counter[str] = Counter()
     for row in review.rows:
-        value = (
-            row.raw_cells[risk_index].strip().lower()
-            if risk_index < len(row.raw_cells)
-            else ""
-        )
+        value = row.raw_cells[risk_index].strip().lower() if risk_index < len(row.raw_cells) else ""
         counts[value or "unknown"] += 1
     return counts
 
 
-def _required_mitigations(weak_gates: list[GateRow], missing_required: list[str], blockers: list[HardBlocker]) -> str:
+def _required_mitigations(
+    weak_gates: list[GateRow], missing_required: list[str], blockers: list[HardBlocker]
+) -> str:
     lines: list[str] = []
     for blocker in blockers:
         lines.append(f"- Launch blocker: {blocker.reason}")
@@ -572,11 +615,14 @@ def _observed_behavioral_quality(evidence: BehavioralEvidence) -> str:
         "",
         f"- Total result rows: {summary.row_count}",
         f"- Latest run ID: {summary.latest_run_id or 'unknown'}",
-        "- Candidate coverage: " + (", ".join(summary.candidates) if summary.candidates else "unknown"),
+        "- Candidate coverage: "
+        + (", ".join(summary.candidates) if summary.candidates else "unknown"),
         f"- Eval pass rate: {_format_rate(summary.pass_rate)}",
         f"- Admission-route match rate: {_format_rate(summary.route_match_rate)}",
-        "- Failed case IDs: " + (", ".join(summary.failed_case_ids) if summary.failed_case_ids else "none"),
-        "- Top failure categories: " + (_counter_summary(summary.failure_categories) if summary.failure_categories else "none"),
+        "- Failed case IDs: "
+        + (", ".join(summary.failed_case_ids) if summary.failed_case_ids else "none"),
+        "- Top failure categories: "
+        + (_counter_summary(summary.failure_categories) if summary.failure_categories else "none"),
         f"- Workflow-route accuracy: {_format_rate(summary.workflow_route_accuracy)}",
         f"- Workflow-assignment accuracy: {_format_rate(summary.workflow_assignment_accuracy)}",
         f"- Model-policy compliance: {_format_rate(summary.model_policy_compliance)}",
@@ -632,16 +678,11 @@ def _critical_control_summary(assessment: LaunchAssessment) -> str:
 
 
 def _recommended_next_actions(assessment: LaunchAssessment) -> str:
-    return "\n".join(
-        f"- {action}" for action in assessment.recommended_next_actions
-    )
+    return "\n".join(f"- {action}" for action in assessment.recommended_next_actions)
 
 
 def _non_behavioral_issues(issues: list[ValidationIssue]) -> list[ValidationIssue]:
-    return [
-        issue for issue in issues
-        if issue.source not in {"eval_results", "review_policy"}
-    ]
+    return [issue for issue in issues if issue.source not in {"eval_results", "review_policy"}]
 
 
 def _non_eval_result_issues(issues: list[ValidationIssue]) -> list[ValidationIssue]:
@@ -708,25 +749,29 @@ def _behavioral_sufficiency_summary(assessment: LaunchAssessment) -> str:
             lines.append(
                 f"| {metric} | {actual} | >= {outcome.configured_threshold:.0%} | {_status_display(outcome.status)} |"
             )
-    lines.extend([
-        "",
-        "Controlled-launch behavioral invariants",
-        "",
-        "| Invariant | Status | Reason |",
-        "| --- | --- | --- |",
-    ])
+    lines.extend(
+        [
+            "",
+            "Controlled-launch behavioral invariants",
+            "",
+            "| Invariant | Status | Reason |",
+            "| --- | --- | --- |",
+        ]
+    )
     for outcome in value.invariant_outcomes:
         lines.append(
             f"| {outcome.invariant_id} | {_status_display(outcome.status)} | {outcome.reason} |"
         )
     if value.effective_mode != ReviewMode.CONTROLLED_LAUNCH:
-        lines.extend([
-            "",
-            (
-                "These invariants are informational in the current review mode "
-                "and do not authorize controlled launch."
-            ),
-        ])
+        lines.extend(
+            [
+                "",
+                (
+                    "These invariants are informational in the current review mode "
+                    "and do not authorize controlled launch."
+                ),
+            ]
+        )
     return "\n".join(lines)
 
 
@@ -801,9 +846,7 @@ def _safe_load_cases(path: Path) -> list[dict[str, Any]]:
 def _eval_handoff_coverage(root: Path) -> str:
     cases = _safe_load_cases(root / "eval_cases.yaml")
     required = [
-        case
-        for case in cases
-        if case.get("expected_workflow_route") in {"approval", "escalate"}
+        case for case in cases if case.get("expected_workflow_route") in {"approval", "escalate"}
     ]
     covered = sum(1 for case in required if isinstance(case.get("expected_handoff"), dict))
     return f"{covered}/{len(required)} required-handoff cases"

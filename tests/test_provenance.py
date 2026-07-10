@@ -5,7 +5,6 @@ import yaml
 
 from openevalgate.eval_results import (
     classify_behavioral_evidence,
-    summarize_eval_results,
     validate_eval_results,
 )
 from openevalgate.provenance import RunIdentityStatus, inspect_run_identity
@@ -141,13 +140,9 @@ def test_scoped_results_without_manifest_are_unbound(
     ]
 
     unbound_findings = [
-        finding
-        for finding in inspection.findings
-        if finding.id == "provenance_results_unbound"
+        finding for finding in inspection.findings if finding.id == "provenance_results_unbound"
     ]
-    assert [finding.path for finding in unbound_findings] == [
-        str(scoped_results)
-    ]
+    assert [finding.path for finding in unbound_findings] == [str(scoped_results)]
 
 
 def test_scoped_unbound_results_do_not_mislabel_bound_root_results(
@@ -226,7 +221,9 @@ def test_missing_review_context_classifies_freshness_as_unknown(tmp_path: Path) 
                 "status": "complete",
                 "completed_at": "2026-06-18T17:14:22Z",
             },
-            outputs={"results": {"path": "eval_results.csv", "digest": {"sha256": _sha256(results)}}},
+            outputs={
+                "results": {"path": "eval_results.csv", "digest": {"sha256": _sha256(results)}}
+            },
         ),
     )
 
@@ -262,7 +259,9 @@ def test_matching_review_context_is_current_and_acceptable(tmp_path: Path) -> No
                     "digest": {"sha256": input_digest},
                 }
             ],
-            outputs={"results": {"path": "eval_results.csv", "digest": {"sha256": _sha256(results)}}},
+            outputs={
+                "results": {"path": "eval_results.csv", "digest": {"sha256": _sha256(results)}}
+            },
         ),
     )
     _write_manifest(
@@ -325,7 +324,10 @@ def test_valid_selected_run_manifest_is_authoritative(tmp_path: Path) -> None:
 
 def test_root_manifest_fallback_must_declare_selected_run(tmp_path: Path) -> None:
     _write_results(tmp_path / "eval_results.csv")
-    _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest(run={"id": "other_run", "status": "complete"}))
+    _write_manifest(
+        tmp_path / "run_manifest.yaml",
+        _base_manifest(run={"id": "other_run", "status": "complete"}),
+    )
 
     inspection = inspect_run_identity(tmp_path, selected_run_id="run_001")
 
@@ -393,7 +395,9 @@ def test_valid_deterministic_evaluator(tmp_path: Path) -> None:
 
 
 def test_deterministic_evaluator_without_version_is_invalid(tmp_path: Path) -> None:
-    manifest = _base_manifest(evaluation={"kind": "deterministic", "evaluator": {"id": "det-checker"}})
+    manifest = _base_manifest(
+        evaluation={"kind": "deterministic", "evaluator": {"id": "det-checker"}}
+    )
     _write_manifest(tmp_path / "run_manifest.yaml", manifest)
 
     inspection = inspect_run_identity(tmp_path)
@@ -514,7 +518,9 @@ def test_conflicting_root_and_run_scoped_manifests_are_invalid(tmp_path: Path) -
 
 def test_lifecycle_failed_remains_identity_complete(tmp_path: Path) -> None:
     _write_results(tmp_path / "eval_results.csv")
-    _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest(run={"id": "run_001", "status": "failed"}))
+    _write_manifest(
+        tmp_path / "run_manifest.yaml", _base_manifest(run={"id": "run_001", "status": "failed"})
+    )
 
     inspection = inspect_run_identity(tmp_path)
 
@@ -529,7 +535,9 @@ def test_lifecycle_failed_remains_identity_complete(tmp_path: Path) -> None:
 
 def test_lifecycle_aborted_remains_identity_complete(tmp_path: Path) -> None:
     _write_results(tmp_path / "eval_results.csv")
-    _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest(run={"id": "run_001", "status": "aborted"}))
+    _write_manifest(
+        tmp_path / "run_manifest.yaml", _base_manifest(run={"id": "run_001", "status": "aborted"})
+    )
 
     inspection = inspect_run_identity(tmp_path)
 
@@ -589,7 +597,9 @@ def test_csv_row_identity_is_case_sensitive(tmp_path: Path) -> None:
 
 
 def test_manifest_backed_csv_rejects_mixed_runs(tmp_path: Path) -> None:
-    _write_result_rows(tmp_path / "eval_results.csv", [{"run_id": "run_001"}, {"run_id": "run_002"}])
+    _write_result_rows(
+        tmp_path / "eval_results.csv", [{"run_id": "run_001"}, {"run_id": "run_002"}]
+    )
     _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
 
     inspection = inspect_run_identity(tmp_path)
@@ -604,7 +614,9 @@ def test_manifest_backed_csv_rejects_mixed_runs(tmp_path: Path) -> None:
 
 
 def test_manifest_backed_csv_rejects_mixed_candidates(tmp_path: Path) -> None:
-    _write_result_rows(tmp_path / "eval_results.csv", [{"candidate": "candidate"}, {"candidate": "other"}])
+    _write_result_rows(
+        tmp_path / "eval_results.csv", [{"candidate": "candidate"}, {"candidate": "other"}]
+    )
     _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
 
     inspection = inspect_run_identity(tmp_path)
@@ -614,7 +626,9 @@ def test_manifest_backed_csv_rejects_mixed_candidates(tmp_path: Path) -> None:
 
 
 def test_manifest_backed_csv_rejects_mixed_evaluators(tmp_path: Path) -> None:
-    _write_result_rows(tmp_path / "eval_results.csv", [{"evaluator": "human-review"}, {"evaluator": "other"}])
+    _write_result_rows(
+        tmp_path / "eval_results.csv", [{"evaluator": "human-review"}, {"evaluator": "other"}]
+    )
     _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
 
     inspection = inspect_run_identity(tmp_path)
@@ -638,7 +652,9 @@ def test_selected_candidate_mismatch_is_invalid(tmp_path: Path) -> None:
     _write_result_rows(tmp_path / "eval_results.csv", [{"candidate": "candidate"}])
     _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
 
-    inspection = inspect_run_identity(tmp_path, selected_run_id="run_001", selected_candidate="other")
+    inspection = inspect_run_identity(
+        tmp_path, selected_run_id="run_001", selected_candidate="other"
+    )
 
     assert inspection.status == RunIdentityStatus.INVALID
     assert _finding_ids(inspection) == ["provenance_candidate_alias_mismatch"]
@@ -675,7 +691,9 @@ def _write_artifact_index(path: Path, artifacts: list[dict], *, run_id: str = "r
 def test_matching_conventional_output_directory_is_complete(tmp_path: Path) -> None:
     output = tmp_path / "eval_runs" / "run_001" / "case_001.md"
     _write_output(output)
-    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "eval_runs/run_001/case_001.md"}])
+    _write_result_rows(
+        tmp_path / "eval_results.csv", [{"observed_output_path": "eval_runs/run_001/case_001.md"}]
+    )
     _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
 
     inspection = inspect_run_identity(tmp_path)
@@ -686,7 +704,9 @@ def test_matching_conventional_output_directory_is_complete(tmp_path: Path) -> N
 def test_mismatching_conventional_output_directory_is_invalid(tmp_path: Path) -> None:
     output = tmp_path / "eval_runs" / "run_002" / "case_001.md"
     _write_output(output)
-    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "eval_runs/run_002/case_001.md"}])
+    _write_result_rows(
+        tmp_path / "eval_results.csv", [{"observed_output_path": "eval_runs/run_002/case_001.md"}]
+    )
     _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
 
     inspection = inspect_run_identity(tmp_path)
@@ -697,7 +717,9 @@ def test_mismatching_conventional_output_directory_is_invalid(tmp_path: Path) ->
 
 def test_safe_nonconventional_output_path_is_allowed(tmp_path: Path) -> None:
     _write_output(tmp_path / "outputs" / "case_001.md")
-    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "outputs/case_001.md"}])
+    _write_result_rows(
+        tmp_path / "eval_results.csv", [{"observed_output_path": "outputs/case_001.md"}]
+    )
     _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
 
     inspection = inspect_run_identity(tmp_path)
@@ -710,7 +732,9 @@ def test_matching_markdown_metadata_styles_are_complete(tmp_path: Path) -> None:
         tmp_path / "outputs" / "case_001.md",
         "**Run ID:** run_001  \n**Case ID:** case_001  \n- **Candidate:** candidate\n- **Evaluator:** human-review\n",
     )
-    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "outputs/case_001.md"}])
+    _write_result_rows(
+        tmp_path / "eval_results.csv", [{"observed_output_path": "outputs/case_001.md"}]
+    )
     _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
 
     inspection = inspect_run_identity(tmp_path)
@@ -720,7 +744,9 @@ def test_matching_markdown_metadata_styles_are_complete(tmp_path: Path) -> None:
 
 def test_missing_markdown_metadata_is_allowed(tmp_path: Path) -> None:
     _write_output(tmp_path / "outputs" / "case_001.md", "plain output\n")
-    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "outputs/case_001.md"}])
+    _write_result_rows(
+        tmp_path / "eval_results.csv", [{"observed_output_path": "outputs/case_001.md"}]
+    )
     _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
 
     assert inspect_run_identity(tmp_path).status == RunIdentityStatus.COMPLETE
@@ -728,7 +754,9 @@ def test_missing_markdown_metadata_is_allowed(tmp_path: Path) -> None:
 
 def test_mismatching_markdown_run_metadata_is_invalid(tmp_path: Path) -> None:
     _write_output(tmp_path / "outputs" / "case_001.md", "Run ID: run_002\n")
-    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "outputs/case_001.md"}])
+    _write_result_rows(
+        tmp_path / "eval_results.csv", [{"observed_output_path": "outputs/case_001.md"}]
+    )
     _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
 
     inspection = inspect_run_identity(tmp_path)
@@ -739,7 +767,9 @@ def test_mismatching_markdown_run_metadata_is_invalid(tmp_path: Path) -> None:
 
 def test_mismatching_markdown_case_metadata_is_invalid(tmp_path: Path) -> None:
     _write_output(tmp_path / "outputs" / "case_001.md", "Case ID: other_case\n")
-    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "outputs/case_001.md"}])
+    _write_result_rows(
+        tmp_path / "eval_results.csv", [{"observed_output_path": "outputs/case_001.md"}]
+    )
     _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
 
     inspection = inspect_run_identity(tmp_path)
@@ -750,7 +780,9 @@ def test_mismatching_markdown_case_metadata_is_invalid(tmp_path: Path) -> None:
 
 def test_mismatching_markdown_candidate_metadata_is_invalid(tmp_path: Path) -> None:
     _write_output(tmp_path / "outputs" / "case_001.md", "Candidate: other\n")
-    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "outputs/case_001.md"}])
+    _write_result_rows(
+        tmp_path / "eval_results.csv", [{"observed_output_path": "outputs/case_001.md"}]
+    )
     _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
 
     inspection = inspect_run_identity(tmp_path)
@@ -761,7 +793,9 @@ def test_mismatching_markdown_candidate_metadata_is_invalid(tmp_path: Path) -> N
 
 def test_mismatching_markdown_evaluator_metadata_is_invalid(tmp_path: Path) -> None:
     _write_output(tmp_path / "outputs" / "case_001.md", "Evaluator: other\n")
-    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "outputs/case_001.md"}])
+    _write_result_rows(
+        tmp_path / "eval_results.csv", [{"observed_output_path": "outputs/case_001.md"}]
+    )
     _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
 
     inspection = inspect_run_identity(tmp_path)
@@ -772,7 +806,9 @@ def test_mismatching_markdown_evaluator_metadata_is_invalid(tmp_path: Path) -> N
 
 def test_conflicting_duplicate_markdown_metadata_is_invalid(tmp_path: Path) -> None:
     _write_output(tmp_path / "outputs" / "case_001.md", "Case ID: case_001\nCase ID: other\n")
-    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "outputs/case_001.md"}])
+    _write_result_rows(
+        tmp_path / "eval_results.csv", [{"observed_output_path": "outputs/case_001.md"}]
+    )
     _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
 
     inspection = inspect_run_identity(tmp_path)
@@ -785,13 +821,17 @@ def test_undecodable_optional_markdown_metadata_is_unavailable(tmp_path: Path) -
     output = tmp_path / "outputs" / "case_001.md"
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_bytes(b"\xff\xfe\xfd")
-    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "outputs/case_001.md"}])
+    _write_result_rows(
+        tmp_path / "eval_results.csv", [{"observed_output_path": "outputs/case_001.md"}]
+    )
     _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
 
     assert inspect_run_identity(tmp_path).status == RunIdentityStatus.COMPLETE
 
 
-def test_manifestless_results_are_unbound_without_output_identity_validation(tmp_path: Path) -> None:
+def test_manifestless_results_are_unbound_without_output_identity_validation(
+    tmp_path: Path,
+) -> None:
     output = tmp_path / "eval_runs" / "wrong_run" / "case_001.md"
     output.parent.mkdir(parents=True)
     output.write_text("- Run ID: wrong_run\n", encoding="utf-8")
@@ -809,6 +849,7 @@ def test_manifestless_results_are_unbound_without_output_identity_validation(tmp
         "provenance_results_unbound",
     ]
 
+
 def test_no_artifact_index_remains_complete(tmp_path: Path) -> None:
     _write_result_rows(tmp_path / "eval_results.csv", [{"case_id": "case_001"}])
     _write_manifest(tmp_path / "run_manifest.yaml", _base_manifest())
@@ -820,7 +861,13 @@ def test_valid_artifact_index_is_complete(tmp_path: Path) -> None:
     _write_output(tmp_path / "artifacts" / "case_001.md")
     _write_result_rows(
         tmp_path / "eval_results.csv",
-        [{"case_id": "case_001", "trial_id": "trial_001", "observed_output_path": "artifacts/case_001.md"}],
+        [
+            {
+                "case_id": "case_001",
+                "trial_id": "trial_001",
+                "observed_output_path": "artifacts/case_001.md",
+            }
+        ],
     )
     _write_artifact_index(
         tmp_path / "artifact_index.yaml",
@@ -845,7 +892,9 @@ def test_valid_artifact_index_is_complete(tmp_path: Path) -> None:
 def test_matching_artifact_digest_is_complete(tmp_path: Path) -> None:
     artifact = tmp_path / "artifacts" / "case_001.md"
     _write_output(artifact)
-    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "artifacts/case_001.md"}])
+    _write_result_rows(
+        tmp_path / "eval_results.csv", [{"observed_output_path": "artifacts/case_001.md"}]
+    )
     _write_artifact_index(
         tmp_path / "artifact_index.yaml",
         [
@@ -866,7 +915,9 @@ def test_matching_artifact_digest_is_complete(tmp_path: Path) -> None:
 
 def test_results_digest_mismatch_is_invalid(tmp_path: Path) -> None:
     _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": ""}])
-    manifest = _base_manifest(outputs={"results": {"path": "eval_results.csv", "digest": {"sha256": "0" * 64}}})
+    manifest = _base_manifest(
+        outputs={"results": {"path": "eval_results.csv", "digest": {"sha256": "0" * 64}}}
+    )
     _write_manifest(tmp_path / "run_manifest.yaml", manifest)
 
     inspection = inspect_run_identity(tmp_path)
@@ -1055,10 +1106,18 @@ def test_schema_invalid_artifact_index_is_invalid(tmp_path: Path) -> None:
 
 def test_artifact_index_run_mismatch_is_invalid(tmp_path: Path) -> None:
     _write_output(tmp_path / "artifacts" / "case_001.md")
-    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "artifacts/case_001.md"}])
+    _write_result_rows(
+        tmp_path / "eval_results.csv", [{"observed_output_path": "artifacts/case_001.md"}]
+    )
     _write_artifact_index(
         tmp_path / "artifact_index.yaml",
-        [{"artifact_id": "artifact-001", "artifact_type": "markdown", "path": "artifacts/case_001.md"}],
+        [
+            {
+                "artifact_id": "artifact-001",
+                "artifact_type": "markdown",
+                "path": "artifacts/case_001.md",
+            }
+        ],
         run_id="run_002",
     )
     _write_manifest(tmp_path / "run_manifest.yaml", _manifest_with_artifact_index())
@@ -1072,7 +1131,9 @@ def test_artifact_index_run_mismatch_is_invalid(tmp_path: Path) -> None:
 def test_duplicate_artifact_id_is_invalid(tmp_path: Path) -> None:
     _write_output(tmp_path / "artifacts" / "case_001.md")
     _write_output(tmp_path / "artifacts" / "case_002.md")
-    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "artifacts/case_001.md"}])
+    _write_result_rows(
+        tmp_path / "eval_results.csv", [{"observed_output_path": "artifacts/case_001.md"}]
+    )
     _write_artifact_index(
         tmp_path / "artifact_index.yaml",
         [
@@ -1087,7 +1148,9 @@ def test_duplicate_artifact_id_is_invalid(tmp_path: Path) -> None:
 
 def test_duplicate_normalized_artifact_path_is_invalid(tmp_path: Path) -> None:
     _write_output(tmp_path / "artifacts" / "case_001.md")
-    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "artifacts/case_001.md"}])
+    _write_result_rows(
+        tmp_path / "eval_results.csv", [{"observed_output_path": "artifacts/case_001.md"}]
+    )
     _write_artifact_index(
         tmp_path / "artifact_index.yaml",
         [
@@ -1102,10 +1165,19 @@ def test_duplicate_normalized_artifact_path_is_invalid(tmp_path: Path) -> None:
 
 def test_artifact_index_allows_omitted_case_and_trial_identity(tmp_path: Path) -> None:
     _write_output(tmp_path / "artifacts" / "case_001.md")
-    _write_result_rows(tmp_path / "eval_results.csv", [{"case_id": "case_001", "trial_id": "", "observed_output_path": "artifacts/case_001.md"}])
+    _write_result_rows(
+        tmp_path / "eval_results.csv",
+        [{"case_id": "case_001", "trial_id": "", "observed_output_path": "artifacts/case_001.md"}],
+    )
     _write_artifact_index(
         tmp_path / "artifact_index.yaml",
-        [{"artifact_id": "artifact-001", "artifact_type": "markdown", "path": "artifacts/case_001.md"}],
+        [
+            {
+                "artifact_id": "artifact-001",
+                "artifact_type": "markdown",
+                "path": "artifacts/case_001.md",
+            }
+        ],
     )
     _write_manifest(tmp_path / "run_manifest.yaml", _manifest_with_artifact_index())
 
@@ -1114,10 +1186,20 @@ def test_artifact_index_allows_omitted_case_and_trial_identity(tmp_path: Path) -
 
 def test_artifact_index_case_mismatch_is_invalid(tmp_path: Path) -> None:
     _write_output(tmp_path / "artifacts" / "case_001.md")
-    _write_result_rows(tmp_path / "eval_results.csv", [{"case_id": "case_001", "observed_output_path": "artifacts/case_001.md"}])
+    _write_result_rows(
+        tmp_path / "eval_results.csv",
+        [{"case_id": "case_001", "observed_output_path": "artifacts/case_001.md"}],
+    )
     _write_artifact_index(
         tmp_path / "artifact_index.yaml",
-        [{"artifact_id": "artifact-001", "artifact_type": "markdown", "path": "artifacts/case_001.md", "case_id": "other"}],
+        [
+            {
+                "artifact_id": "artifact-001",
+                "artifact_type": "markdown",
+                "path": "artifacts/case_001.md",
+                "case_id": "other",
+            }
+        ],
     )
     _write_manifest(tmp_path / "run_manifest.yaml", _manifest_with_artifact_index())
 
@@ -1126,10 +1208,27 @@ def test_artifact_index_case_mismatch_is_invalid(tmp_path: Path) -> None:
 
 def test_artifact_index_trial_mismatch_is_invalid(tmp_path: Path) -> None:
     _write_output(tmp_path / "artifacts" / "case_001.md")
-    _write_result_rows(tmp_path / "eval_results.csv", [{"case_id": "case_001", "trial_id": "trial_001", "observed_output_path": "artifacts/case_001.md"}])
+    _write_result_rows(
+        tmp_path / "eval_results.csv",
+        [
+            {
+                "case_id": "case_001",
+                "trial_id": "trial_001",
+                "observed_output_path": "artifacts/case_001.md",
+            }
+        ],
+    )
     _write_artifact_index(
         tmp_path / "artifact_index.yaml",
-        [{"artifact_id": "artifact-001", "artifact_type": "markdown", "path": "artifacts/case_001.md", "case_id": "case_001", "trial_id": "trial_002"}],
+        [
+            {
+                "artifact_id": "artifact-001",
+                "artifact_type": "markdown",
+                "path": "artifacts/case_001.md",
+                "case_id": "case_001",
+                "trial_id": "trial_002",
+            }
+        ],
     )
     _write_manifest(tmp_path / "run_manifest.yaml", _manifest_with_artifact_index())
 
@@ -1145,7 +1244,14 @@ def test_valid_hybrid_component_evaluator_ref_is_complete(tmp_path: Path) -> Non
     )
     _write_artifact_index(
         tmp_path / "artifact_index.yaml",
-        [{"artifact_id": "artifact-001", "artifact_type": "markdown", "path": "artifacts/case_001.md", "evaluator_ref": "det"}],
+        [
+            {
+                "artifact_id": "artifact-001",
+                "artifact_type": "markdown",
+                "path": "artifacts/case_001.md",
+                "evaluator_ref": "det",
+            }
+        ],
     )
     manifest = _manifest_with_artifact_index()
     manifest["evaluation"] = {
@@ -1163,10 +1269,19 @@ def test_valid_hybrid_component_evaluator_ref_is_complete(tmp_path: Path) -> Non
 
 def test_invalid_artifact_evaluator_ref_is_invalid(tmp_path: Path) -> None:
     _write_output(tmp_path / "artifacts" / "case_001.md")
-    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "artifacts/case_001.md"}])
+    _write_result_rows(
+        tmp_path / "eval_results.csv", [{"observed_output_path": "artifacts/case_001.md"}]
+    )
     _write_artifact_index(
         tmp_path / "artifact_index.yaml",
-        [{"artifact_id": "artifact-001", "artifact_type": "markdown", "path": "artifacts/case_001.md", "evaluator_ref": "other"}],
+        [
+            {
+                "artifact_id": "artifact-001",
+                "artifact_type": "markdown",
+                "path": "artifacts/case_001.md",
+                "evaluator_ref": "other",
+            }
+        ],
     )
     _write_manifest(tmp_path / "run_manifest.yaml", _manifest_with_artifact_index())
 
@@ -1176,10 +1291,18 @@ def test_invalid_artifact_evaluator_ref_is_invalid(tmp_path: Path) -> None:
 def test_artifact_mapping_must_be_unambiguous(tmp_path: Path) -> None:
     _write_output(tmp_path / "artifacts" / "case_001.md")
     _write_output(tmp_path / "artifacts" / "other.md")
-    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "artifacts/case_001.md"}])
+    _write_result_rows(
+        tmp_path / "eval_results.csv", [{"observed_output_path": "artifacts/case_001.md"}]
+    )
     _write_artifact_index(
         tmp_path / "artifact_index.yaml",
-        [{"artifact_id": "artifact-001", "artifact_type": "markdown", "path": "artifacts/other.md"}],
+        [
+            {
+                "artifact_id": "artifact-001",
+                "artifact_type": "markdown",
+                "path": "artifacts/other.md",
+            }
+        ],
     )
     _write_manifest(tmp_path / "run_manifest.yaml", _manifest_with_artifact_index())
 
@@ -1193,7 +1316,9 @@ def test_unsafe_artifact_path_is_invalid(tmp_path: Path) -> None:
         link.symlink_to(tmp_path / "artifacts" / "target.md")
     except (NotImplementedError, OSError):
         return
-    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "artifacts/target.md"}])
+    _write_result_rows(
+        tmp_path / "eval_results.csv", [{"observed_output_path": "artifacts/target.md"}]
+    )
     _write_artifact_index(
         tmp_path / "artifact_index.yaml",
         [{"artifact_id": "artifact-001", "artifact_type": "markdown", "path": "artifacts/link.md"}],
@@ -1207,7 +1332,13 @@ def test_missing_artifact_file_is_invalid(tmp_path: Path) -> None:
     _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": ""}])
     _write_artifact_index(
         tmp_path / "artifact_index.yaml",
-        [{"artifact_id": "artifact-001", "artifact_type": "markdown", "path": "artifacts/missing.md"}],
+        [
+            {
+                "artifact_id": "artifact-001",
+                "artifact_type": "markdown",
+                "path": "artifacts/missing.md",
+            }
+        ],
     )
     _write_manifest(tmp_path / "run_manifest.yaml", _manifest_with_artifact_index())
 
@@ -1216,7 +1347,9 @@ def test_missing_artifact_file_is_invalid(tmp_path: Path) -> None:
 
 def test_artifact_digest_mismatch_is_invalid(tmp_path: Path) -> None:
     _write_output(tmp_path / "artifacts" / "case_001.md")
-    _write_result_rows(tmp_path / "eval_results.csv", [{"observed_output_path": "artifacts/case_001.md"}])
+    _write_result_rows(
+        tmp_path / "eval_results.csv", [{"observed_output_path": "artifacts/case_001.md"}]
+    )
     _write_artifact_index(
         tmp_path / "artifact_index.yaml",
         [

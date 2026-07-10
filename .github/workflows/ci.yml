@@ -125,6 +125,7 @@ jobs:
                   docs/* | \
                   AGENTS.md | TODO.md | CHANGELOG.md | CITATION.cff | \
                   SECURITY.md | CODE_OF_CONDUCT.md | GOVERNANCE.md | SUPPORT.md | \
+                  AUTHORS.md | CONTRIBUTING.md | README.md | \
                   .github/ISSUE_TEMPLATE/* | .github/pull_request_template.md)
                     ;;
                   *)
@@ -180,6 +181,9 @@ jobs:
         run: |
           echo "CI completed without Python setup or tests."
           echo "Scope decision: ${{ steps.scope.outputs.reason_code }}"
+
+      - name: Validate Markdown links
+        run: python scripts/check_markdown_links.py
 
       - name: Set up Python 3.10
         if: steps.scope.outputs.run_expensive == 'true'
@@ -237,6 +241,23 @@ jobs:
           python -c "import openevalgate; from openevalgate.cli import main; assert callable(main)"
           openevalgate validate examples/customer_support_assistant/eval_cases.yaml
 
+      - name: Set up Python 3.14
+        if: steps.scope.outputs.run_expensive == 'true'
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+
+      - name: Install package on Python 3.14
+        if: steps.scope.outputs.run_expensive == 'true'
+        run: python -m pip install -e .
+
+      - name: Check compatibility on Python 3.14
+        if: steps.scope.outputs.run_expensive == 'true'
+        run: |
+          python -m compileall -q openevalgate
+          python -c "import openevalgate; from openevalgate.cli import main; assert callable(main)"
+          openevalgate validate examples/customer_support_assistant/eval_cases.yaml
+
       - name: Set up Python 3.13
         if: steps.scope.outputs.run_expensive == 'true'
         uses: actions/setup-python@v6
@@ -259,6 +280,15 @@ jobs:
             --durations=20 \
             --durations-min=1.0
           python -m compileall -q openevalgate
+
+      - name: Run quality and security checks
+        if: steps.scope.outputs.run_expensive == 'true'
+        run: |
+          ruff check .
+          ruff format --check scripts/check_markdown_links.py
+          mypy --follow-imports=skip openevalgate/cli.py scripts
+          bandit -q -r openevalgate -ll
+          pip-audit
 
       - name: Validate canonical examples
         if: steps.scope.outputs.run_expensive == 'true'

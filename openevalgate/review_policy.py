@@ -145,8 +145,13 @@ def validate_review_policy(project_dir: str | Path) -> ReviewPolicyResult:
     path = Path(project_dir) / "review_policy.yaml"
     if not path.is_file():
         return ReviewPolicyResult(
-            False, True, None, ReviewMode.SHADOW_LAUNCH,
-            "backward_compatible_default", None, (),
+            False,
+            True,
+            None,
+            ReviewMode.SHADOW_LAUNCH,
+            "backward_compatible_default",
+            None,
+            (),
         )
     try:
         data = load_review_policy(path)
@@ -154,17 +159,29 @@ def validate_review_policy(project_dir: str | Path) -> ReviewPolicyResult:
         return _invalid(path, [ValidationIssue(str(path), str(exc), "review_policy")])
     issues: list[ValidationIssue] = []
     if not isinstance(data, dict):
-        return _invalid(path, [ValidationIssue(str(path), "Review policy must be an object.", "review_policy")])
+        return _invalid(
+            path, [ValidationIssue(str(path), "Review policy must be an object.", "review_policy")]
+        )
     _unknown_keys(data, POLICY_KEYS, "review_policy", issues)
     version = data.get("schema_version")
     if version != "1" or not isinstance(version, str):
-        issues.append(ValidationIssue("review_policy.schema_version", 'Must be exactly the string "1".', "review_policy"))
+        issues.append(
+            ValidationIssue(
+                "review_policy.schema_version", 'Must be exactly the string "1".', "review_policy"
+            )
+        )
     mode_value = data.get("requested_mode")
     try:
         mode = ReviewMode(mode_value)
     except (ValueError, TypeError):
         mode = None
-        issues.append(ValidationIssue("review_policy.requested_mode", "Must be one of: controlled_launch, documentation, shadow_launch.", "review_policy"))
+        issues.append(
+            ValidationIssue(
+                "review_policy.requested_mode",
+                "Must be one of: controlled_launch, documentation, shadow_launch.",
+                "review_policy",
+            )
+        )
 
     scope = _parse_scope(data.get("evaluation_scope"), mode, issues)
     coverage = _parse_coverage(data.get("coverage"), mode, issues)
@@ -191,19 +208,15 @@ def evaluate_behavioral_sufficiency(
             selected_candidate=scope.candidate if scope else None,
         )
     evidence = classify_behavioral_evidence(root, identity_inspection=inspection)
-    selected_results_path = (
-        inspection.results_path
-        if evidence.state == "available"
-        else None
-    )
+    selected_results_path = inspection.results_path if evidence.state == "available" else None
     cases: list[dict[str, Any]] = []
     eval_path = root / "eval_cases.yaml"
     if eval_path.is_file() and validate_eval_cases(eval_path).valid:
         cases = load_eval_cases(eval_path)
     expected_ids = tuple(sorted({str(case["id"]).strip() for case in cases}))
-    critical_ids = tuple(sorted(
-        str(case["id"]).strip() for case in cases if is_critical_eval_case(case)
-    ))
+    critical_ids = tuple(
+        sorted(str(case["id"]).strip() for case in cases if is_critical_eval_case(case))
+    )
     coverage_policy = policy_result.policy.coverage if policy_result.policy else None
     selected = (
         summarize_selected_eval_results(
@@ -216,18 +229,20 @@ def evaluate_behavioral_sufficiency(
         else None
     )
     counts = dict(selected.case_trial_counts) if selected else {}
-    observed = tuple(sorted(set(expected_ids) & set(selected.observed_case_ids if selected else ())))
+    observed = tuple(
+        sorted(set(expected_ids) & set(selected.observed_case_ids if selected else ()))
+    )
     missing = tuple(sorted(set(expected_ids) - set(observed)))
     minimum_trials = coverage_policy.minimum_trials_per_case if coverage_policy else 1
-    below_depth = tuple(sorted(
-        case_id for case_id in observed if counts.get(case_id, 0) < minimum_trials
-    ))
+    below_depth = tuple(
+        sorted(case_id for case_id in observed if counts.get(case_id, 0) < minimum_trials)
+    )
     meeting_depth = sum(1 for case_id in observed if counts.get(case_id, 0) >= minimum_trials)
     observed_critical = tuple(sorted(set(critical_ids) & set(observed)))
     missing_critical = tuple(sorted(set(critical_ids) - set(observed_critical)))
-    critical_below = tuple(sorted(
-        case_id for case_id in observed_critical if counts.get(case_id, 0) < minimum_trials
-    ))
+    critical_below = tuple(
+        sorted(case_id for case_id in observed_critical if counts.get(case_id, 0) < minimum_trials)
+    )
     failed_critical = _failed_critical_ids(
         scope,
         critical_ids,
@@ -235,9 +250,7 @@ def evaluate_behavioral_sufficiency(
         results_path=selected_results_path,
     )
     case_coverage = len(observed) / len(expected_ids) if expected_ids else None
-    critical_coverage = (
-        len(observed_critical) / len(critical_ids) if critical_ids else None
-    )
+    critical_coverage = len(observed_critical) / len(critical_ids) if critical_ids else None
     coverage_sufficient = bool(
         coverage_policy
         and case_coverage is not None
@@ -248,8 +261,13 @@ def evaluate_behavioral_sufficiency(
     )
     thresholds = _threshold_outcomes(policy_result.policy, selected)
     invariants = _invariant_outcomes(
-        policy_result.effective_mode, selected, critical_ids, missing_critical,
-        critical_below, failed_critical, cases,
+        policy_result.effective_mode,
+        selected,
+        critical_ids,
+        missing_critical,
+        critical_below,
+        failed_critical,
+        cases,
     )
     thresholds_satisfied = all(item.status in {"pass", "not_applicable"} for item in thresholds)
     invariants_satisfied = all(item.status in {"pass", "not_applicable"} for item in invariants)
@@ -271,84 +289,158 @@ def evaluate_behavioral_sufficiency(
     else:
         sufficient = False
     return BehavioralSufficiency(
-        evidence.state, policy_result.declared_mode, mode,
-        policy_result.policy_present, policy_result.policy_valid,
-        scope.run_id if scope else None, scope.candidate if scope else None,
+        evidence.state,
+        policy_result.declared_mode,
+        mode,
+        policy_result.policy_present,
+        policy_result.policy_valid,
+        scope.run_id if scope else None,
+        scope.candidate if scope else None,
         selected.row_count if selected else 0,
-        len(expected_ids), len(observed), case_coverage, meeting_depth, missing,
-        below_depth, len(critical_ids), len(observed_critical), critical_coverage,
-        missing_critical, critical_below, failed_critical, coverage_sufficient,
-        thresholds, invariants, thresholds_satisfied, invariants_satisfied,
-        sufficient, tuple(sorted(policy_result.issues, key=lambda item: (item.path, item.message))),
+        len(expected_ids),
+        len(observed),
+        case_coverage,
+        meeting_depth,
+        missing,
+        below_depth,
+        len(critical_ids),
+        len(observed_critical),
+        critical_coverage,
+        missing_critical,
+        critical_below,
+        failed_critical,
+        coverage_sufficient,
+        thresholds,
+        invariants,
+        thresholds_satisfied,
+        invariants_satisfied,
+        sufficient,
+        tuple(sorted(policy_result.issues, key=lambda item: (item.path, item.message))),
     )
 
 
 def _invalid(path: Path, issues: list[ValidationIssue]) -> ReviewPolicyResult:
-    normalized = tuple(sorted(
-        (replace(issue, source="review_policy") for issue in issues),
-        key=lambda item: (item.path, item.message),
-    ))
+    normalized = tuple(
+        sorted(
+            (replace(issue, source="review_policy") for issue in issues),
+            key=lambda item: (item.path, item.message),
+        )
+    )
     return ReviewPolicyResult(True, False, None, None, "invalid", None, normalized)
 
 
-def _parse_scope(value: Any, mode: ReviewMode | None, issues: list[ValidationIssue]) -> EvaluationScope | None:
+def _parse_scope(
+    value: Any, mode: ReviewMode | None, issues: list[ValidationIssue]
+) -> EvaluationScope | None:
     if value is None:
         if mode == ReviewMode.CONTROLLED_LAUNCH:
-            issues.append(ValidationIssue("review_policy.evaluation_scope", "Required for controlled-launch review.", "review_policy"))
+            issues.append(
+                ValidationIssue(
+                    "review_policy.evaluation_scope",
+                    "Required for controlled-launch review.",
+                    "review_policy",
+                )
+            )
         return None
     if not isinstance(value, dict):
-        issues.append(ValidationIssue("review_policy.evaluation_scope", "Must be an object.", "review_policy"))
+        issues.append(
+            ValidationIssue("review_policy.evaluation_scope", "Must be an object.", "review_policy")
+        )
         return None
     _unknown_keys(value, {"run_id", "candidate"}, "review_policy.evaluation_scope", issues)
     valid = True
     for field in ("run_id", "candidate"):
         if not isinstance(value.get(field), str) or not value[field].strip():
             valid = False
-            issues.append(ValidationIssue(f"review_policy.evaluation_scope.{field}", "Must be a non-empty string.", "review_policy"))
+            issues.append(
+                ValidationIssue(
+                    f"review_policy.evaluation_scope.{field}",
+                    "Must be a non-empty string.",
+                    "review_policy",
+                )
+            )
     return EvaluationScope(value["run_id"].strip(), value["candidate"].strip()) if valid else None
 
 
-def _parse_coverage(value: Any, mode: ReviewMode | None, issues: list[ValidationIssue]) -> CoveragePolicy | None:
+def _parse_coverage(
+    value: Any, mode: ReviewMode | None, issues: list[ValidationIssue]
+) -> CoveragePolicy | None:
     if value is None:
         if mode == ReviewMode.CONTROLLED_LAUNCH:
-            issues.append(ValidationIssue("review_policy.coverage", "Required for controlled-launch review.", "review_policy"))
+            issues.append(
+                ValidationIssue(
+                    "review_policy.coverage",
+                    "Required for controlled-launch review.",
+                    "review_policy",
+                )
+            )
         return None
     if not isinstance(value, dict):
-        issues.append(ValidationIssue("review_policy.coverage", "Must be an object.", "review_policy"))
+        issues.append(
+            ValidationIssue("review_policy.coverage", "Must be an object.", "review_policy")
+        )
         return None
     _unknown_keys(value, COVERAGE_KEYS, "review_policy.coverage", issues)
     values: dict[str, float | int] = {}
     for field in ("minimum_case_coverage", "minimum_critical_case_coverage"):
         raw = value.get(field)
         if isinstance(raw, bool) or not isinstance(raw, (int, float)) or not 0 <= raw <= 1:
-            issues.append(ValidationIssue(f"review_policy.coverage.{field}", "Must be numeric from 0 through 1.", "review_policy"))
+            issues.append(
+                ValidationIssue(
+                    f"review_policy.coverage.{field}",
+                    "Must be numeric from 0 through 1.",
+                    "review_policy",
+                )
+            )
         else:
             values[field] = float(raw)
     trials = value.get("minimum_trials_per_case")
     if isinstance(trials, bool) or not isinstance(trials, int) or trials < 1:
-        issues.append(ValidationIssue("review_policy.coverage.minimum_trials_per_case", "Must be an integer of at least 1.", "review_policy"))
+        issues.append(
+            ValidationIssue(
+                "review_policy.coverage.minimum_trials_per_case",
+                "Must be an integer of at least 1.",
+                "review_policy",
+            )
+        )
     else:
         values["minimum_trials_per_case"] = trials
     if mode == ReviewMode.CONTROLLED_LAUNCH and values.get("minimum_critical_case_coverage") != 1.0:
-        issues.append(ValidationIssue(
-            "review_policy.coverage.minimum_critical_case_coverage",
-            "Controlled-launch review requires minimum_critical_case_coverage to be exactly 1.0.",
-            "review_policy",
-        ))
-    return CoveragePolicy(
-        float(values["minimum_case_coverage"]),
-        float(values["minimum_critical_case_coverage"]),
-        int(values["minimum_trials_per_case"]),
-    ) if len(values) == 3 else None
+        issues.append(
+            ValidationIssue(
+                "review_policy.coverage.minimum_critical_case_coverage",
+                "Controlled-launch review requires minimum_critical_case_coverage to be exactly 1.0.",
+                "review_policy",
+            )
+        )
+    return (
+        CoveragePolicy(
+            float(values["minimum_case_coverage"]),
+            float(values["minimum_critical_case_coverage"]),
+            int(values["minimum_trials_per_case"]),
+        )
+        if len(values) == 3
+        else None
+    )
 
 
-def _parse_thresholds(value: Any, mode: ReviewMode | None, issues: list[ValidationIssue]) -> tuple[tuple[str, MetricThreshold], ...]:
+def _parse_thresholds(
+    value: Any, mode: ReviewMode | None, issues: list[ValidationIssue]
+) -> tuple[tuple[str, MetricThreshold], ...]:
     if value is None:
         if mode == ReviewMode.CONTROLLED_LAUNCH:
-            issues.append(ValidationIssue("review_policy.thresholds", "Required for controlled-launch review.", "review_policy"))
+            issues.append(
+                ValidationIssue(
+                    "review_policy.thresholds",
+                    "Required for controlled-launch review.",
+                    "review_policy",
+                )
+            )
         return ()
     if not isinstance(value, dict):
-        issues.append(ValidationIssue("review_policy.thresholds", "Must be an object.", "review_policy"))
+        issues.append(
+            ValidationIssue("review_policy.thresholds", "Must be an object.", "review_policy")
+        )
         return ()
     _unknown_keys(value, set(THRESHOLD_METRICS), "review_policy.thresholds", issues)
     outcomes: list[tuple[str, MetricThreshold]] = []
@@ -356,21 +448,39 @@ def _parse_thresholds(value: Any, mode: ReviewMode | None, issues: list[Validati
         nested = value.get(metric)
         if nested is None:
             if mode == ReviewMode.CONTROLLED_LAUNCH:
-                issues.append(ValidationIssue(f"review_policy.thresholds.{metric}", "Required for controlled-launch review.", "review_policy"))
+                issues.append(
+                    ValidationIssue(
+                        f"review_policy.thresholds.{metric}",
+                        "Required for controlled-launch review.",
+                        "review_policy",
+                    )
+                )
             continue
         if not isinstance(nested, dict):
-            issues.append(ValidationIssue(f"review_policy.thresholds.{metric}", "Must be an object.", "review_policy"))
+            issues.append(
+                ValidationIssue(
+                    f"review_policy.thresholds.{metric}", "Must be an object.", "review_policy"
+                )
+            )
             continue
         _unknown_keys(nested, {"minimum"}, f"review_policy.thresholds.{metric}", issues)
         raw = nested.get("minimum")
         if isinstance(raw, bool) or not isinstance(raw, (int, float)) or not 0 <= raw <= 1:
-            issues.append(ValidationIssue(f"review_policy.thresholds.{metric}.minimum", "Must be numeric from 0 through 1.", "review_policy"))
+            issues.append(
+                ValidationIssue(
+                    f"review_policy.thresholds.{metric}.minimum",
+                    "Must be numeric from 0 through 1.",
+                    "review_policy",
+                )
+            )
         else:
             outcomes.append((metric, MetricThreshold(float(raw))))
     return tuple(outcomes)
 
 
-def _unknown_keys(value: dict[str, Any], allowed: set[str], path: str, issues: list[ValidationIssue]) -> None:
+def _unknown_keys(
+    value: dict[str, Any], allowed: set[str], path: str, issues: list[ValidationIssue]
+) -> None:
     for key in sorted(set(value) - allowed):
         issues.append(ValidationIssue(f"{path}.{key}", "Unknown field.", "review_policy"))
 
@@ -382,10 +492,13 @@ def _threshold_outcomes(policy: ReviewPolicy | None, selected: Any) -> tuple[Thr
     }
     return tuple(
         ThresholdOutcome(
-            metric, values[metric], "minimum", threshold.minimum,
-            "not_evaluated" if values[metric] is None else (
-                "pass" if values[metric] >= threshold.minimum else "fail"
-            ),
+            metric,
+            values[metric],
+            "minimum",
+            threshold.minimum,
+            "not_evaluated"
+            if values[metric] is None
+            else ("pass" if values[metric] >= threshold.minimum else "fail"),
         )
         for metric, threshold in (policy.thresholds if policy else ())
     )
@@ -404,31 +517,67 @@ def _invariant_outcomes(
         prohibited = InvariantOutcome(
             "no_prohibited_actions",
             "pass" if selected.prohibited_action_rate == 0 else "fail",
-            "No prohibited actions occurred." if selected.prohibited_action_rate == 0 else "A prohibited action occurred.",
+            "No prohibited actions occurred."
+            if selected.prohibited_action_rate == 0
+            else "A prohibited action occurred.",
         )
     else:
         status = "not_evaluated" if mode == ReviewMode.CONTROLLED_LAUNCH else "not_applicable"
-        prohibited = InvariantOutcome("no_prohibited_actions", status, "Prohibited-action evidence is unavailable.")
+        prohibited = InvariantOutcome(
+            "no_prohibited_actions", status, "Prohibited-action evidence is unavailable."
+        )
     if mode != ReviewMode.CONTROLLED_LAUNCH and not selected:
-        critical = InvariantOutcome("all_critical_cases_pass", "not_applicable", "No selected controlled-launch scope is configured.")
+        critical = InvariantOutcome(
+            "all_critical_cases_pass",
+            "not_applicable",
+            "No selected controlled-launch scope is configured.",
+        )
     elif not critical_ids:
-        critical = InvariantOutcome("all_critical_cases_pass", "not_applicable", "No critical eval cases are defined.")
+        critical = InvariantOutcome(
+            "all_critical_cases_pass", "not_applicable", "No critical eval cases are defined."
+        )
     elif missing_critical or critical_below or failed_critical:
-        critical = InvariantOutcome("all_critical_cases_pass", "fail", "Critical cases are missing, under depth, or failing.")
+        critical = InvariantOutcome(
+            "all_critical_cases_pass",
+            "fail",
+            "Critical cases are missing, under depth, or failing.",
+        )
     else:
-        critical = InvariantOutcome("all_critical_cases_pass", "pass", "Every critical case is covered at depth and passing.")
+        critical = InvariantOutcome(
+            "all_critical_cases_pass",
+            "pass",
+            "Every critical case is covered at depth and passing.",
+        )
     escalation_ids = {
-        str(case.get("id", "")).strip() for case in cases if case.get("expected_route") == "escalate"
+        str(case.get("id", "")).strip()
+        for case in cases
+        if case.get("expected_route") == "escalate"
     }
     if mode != ReviewMode.CONTROLLED_LAUNCH and not selected:
-        escalation = InvariantOutcome("required_escalations_pass", "not_applicable", "No selected controlled-launch scope is configured.")
+        escalation = InvariantOutcome(
+            "required_escalations_pass",
+            "not_applicable",
+            "No selected controlled-launch scope is configured.",
+        )
     elif not escalation_ids:
-        escalation = InvariantOutcome("required_escalations_pass", "not_applicable", "No eval cases require escalation.")
+        escalation = InvariantOutcome(
+            "required_escalations_pass", "not_applicable", "No eval cases require escalation."
+        )
     elif not selected or selected.required_escalation_recall is None:
-        escalation = InvariantOutcome("required_escalations_pass", "not_evaluated", "Required-escalation evidence is unavailable.")
+        escalation = InvariantOutcome(
+            "required_escalations_pass",
+            "not_evaluated",
+            "Required-escalation evidence is unavailable.",
+        )
     else:
         passed = selected.required_escalation_recall == 1.0
-        escalation = InvariantOutcome("required_escalations_pass", "pass" if passed else "fail", "All required escalations passed." if passed else "At least one required escalation failed.")
+        escalation = InvariantOutcome(
+            "required_escalations_pass",
+            "pass" if passed else "fail",
+            "All required escalations passed."
+            if passed
+            else "At least one required escalation failed.",
+        )
     return (prohibited, critical, escalation)
 
 
@@ -442,11 +591,16 @@ def _failed_critical_ids(
     if not scope or evidence_state != "available" or results_path is None:
         return ()
     from openevalgate.eval_results import _cell, read_eval_results
-    return tuple(sorted({
-        _cell(row, "case_id")
-        for row in read_eval_results(results_path)
-        if _cell(row, "run_id") == scope.run_id.strip()
-        and _cell(row, "candidate") == scope.candidate.strip()
-        and _cell(row, "case_id") in critical_ids
-        and _cell(row, "passed").lower() == "false"
-    }))
+
+    return tuple(
+        sorted(
+            {
+                _cell(row, "case_id")
+                for row in read_eval_results(results_path)
+                if _cell(row, "run_id") == scope.run_id.strip()
+                and _cell(row, "candidate") == scope.candidate.strip()
+                and _cell(row, "case_id") in critical_ids
+                and _cell(row, "passed").lower() == "false"
+            }
+        )
+    )

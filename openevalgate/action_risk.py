@@ -10,9 +10,7 @@ from pathlib import Path
 from openevalgate.schema import ValidationIssue
 
 
-ALLOWED_ACTION_RISK_TIERS = frozenset(
-    {"low", "medium", "high", "prohibited"}
-)
+ALLOWED_ACTION_RISK_TIERS = frozenset({"low", "medium", "high", "prohibited"})
 HIGH_IMPACT_ACTION_RISK_TIERS = frozenset({"high", "prohibited"})
 ALLOWED_BOOLEAN_VALUES = frozenset({"true", "false"})
 
@@ -42,9 +40,7 @@ class ActionRiskReview:
     rows: list[ActionRiskRow]
     issues: list[ValidationIssue]
     normalized_headers: tuple[str, ...] = ()
-    header_positions: dict[str, tuple[int, ...]] = field(
-        default_factory=dict
-    )
+    header_positions: dict[str, tuple[int, ...]] = field(default_factory=dict)
 
 
 def inspect_action_risk_matrix(path: str | Path) -> ActionRiskReview:
@@ -65,16 +61,11 @@ def inspect_action_risk_matrix(path: str | Path) -> ActionRiskReview:
                 header_row_present = False
             if header_row_present and not raw_headers:
                 raw_headers = [""]
-            normalized_headers = tuple(
-                header.strip() for header in raw_headers
-            )
+            normalized_headers = tuple(header.strip() for header in raw_headers)
             positions: dict[str, list[int]] = {}
             for index, header in enumerate(normalized_headers):
                 positions.setdefault(header, []).append(index)
-            header_positions = {
-                header: tuple(indexes)
-                for header, indexes in positions.items()
-            }
+            header_positions = {header: tuple(indexes) for header, indexes in positions.items()}
             blank_header_issues = [
                 ValidationIssue(
                     f"{matrix_path}:header[{index + 1}]",
@@ -88,11 +79,7 @@ def inspect_action_risk_matrix(path: str | Path) -> ActionRiskReview:
             seen_duplicates: set[str] = set()
             duplicate_headers: list[str] = []
             for header in normalized_headers:
-                if (
-                    header
-                    and header_counts[header] > 1
-                    and header not in seen_duplicates
-                ):
+                if header and header_counts[header] > 1 and header not in seen_duplicates:
                     seen_duplicates.add(header)
                     duplicate_headers.append(header)
             duplicate_header_issues = [
@@ -104,9 +91,7 @@ def inspect_action_risk_matrix(path: str | Path) -> ActionRiskReview:
                 for header in duplicate_headers
             ]
             missing = [
-                column
-                for column in REQUIRED_ACTION_RISK_COLUMNS
-                if column not in header_positions
+                column for column in REQUIRED_ACTION_RISK_COLUMNS if column not in header_positions
             ]
             missing_header_issues = [
                 ValidationIssue(
@@ -133,9 +118,7 @@ def inspect_action_risk_matrix(path: str | Path) -> ActionRiskReview:
                     continue
                 padded_cells = list(raw_cells)
                 if len(padded_cells) < len(normalized_headers):
-                    padded_cells.extend(
-                        [""] * (len(normalized_headers) - len(padded_cells))
-                    )
+                    padded_cells.extend([""] * (len(normalized_headers) - len(padded_cells)))
                 row_issues: list[ValidationIssue] = []
                 if len(raw_cells) > len(normalized_headers):
                     row_issues.append(
@@ -146,14 +129,11 @@ def inspect_action_risk_matrix(path: str | Path) -> ActionRiskReview:
                         )
                     )
                 raw_values = {
-                    header: padded_cells[index].strip()
-                    for header, index in usable_headers.items()
+                    header: padded_cells[index].strip() for header, index in usable_headers.items()
                 }
                 normalized_values = dict(raw_values)
                 if "risk_tier" in raw_values:
-                    normalized_values["risk_tier"] = raw_values[
-                        "risk_tier"
-                    ].lower()
+                    normalized_values["risk_tier"] = raw_values["risk_tier"].lower()
                 if "human_review_required" in raw_values:
                     normalized_values["human_review_required"] = raw_values[
                         "human_review_required"
@@ -178,61 +158,38 @@ def inspect_action_risk_matrix(path: str | Path) -> ActionRiskReview:
                                 source="action_risk_matrix",
                             )
                         )
-                    elif (
-                        normalized_risk_tier
-                        not in ALLOWED_ACTION_RISK_TIERS
-                    ):
+                    elif normalized_risk_tier not in ALLOWED_ACTION_RISK_TIERS:
                         row_issues.append(
                             ValidationIssue(
                                 f"{matrix_path}:{row_number}.risk_tier",
                                 (
                                     f"Unsupported risk tier `{raw_risk_tier}`; "
                                     "expected one of: "
-                                    + ", ".join(
-                                        sorted(ALLOWED_ACTION_RISK_TIERS)
-                                    )
+                                    + ", ".join(sorted(ALLOWED_ACTION_RISK_TIERS))
                                     + "."
                                 ),
                                 source="action_risk_matrix",
                             )
                         )
                 if "human_review_required" in usable_headers:
-                    raw_human_review = raw_values[
-                        "human_review_required"
-                    ]
-                    normalized_human_review = normalized_values[
-                        "human_review_required"
-                    ]
+                    raw_human_review = raw_values["human_review_required"]
+                    normalized_human_review = normalized_values["human_review_required"]
                     if not raw_human_review:
                         row_issues.append(
                             ValidationIssue(
-                                (
-                                    f"{matrix_path}:{row_number}."
-                                    "human_review_required"
-                                ),
-                                (
-                                    "Human-review requirement must be nonblank "
-                                    "for a populated row."
-                                ),
+                                (f"{matrix_path}:{row_number}.human_review_required"),
+                                ("Human-review requirement must be nonblank for a populated row."),
                                 source="action_risk_matrix",
                             )
                         )
-                    elif (
-                        normalized_human_review
-                        not in ALLOWED_BOOLEAN_VALUES
-                    ):
+                    elif normalized_human_review not in ALLOWED_BOOLEAN_VALUES:
                         row_issues.append(
                             ValidationIssue(
-                                (
-                                    f"{matrix_path}:{row_number}."
-                                    "human_review_required"
-                                ),
+                                (f"{matrix_path}:{row_number}.human_review_required"),
                                 (
                                     "Unsupported human-review requirement "
                                     f"`{raw_human_review}`; expected one of: "
-                                    + ", ".join(
-                                        sorted(ALLOWED_BOOLEAN_VALUES)
-                                    )
+                                    + ", ".join(sorted(ALLOWED_BOOLEAN_VALUES))
                                     + "."
                                 ),
                                 source="action_risk_matrix",

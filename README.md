@@ -1,12 +1,15 @@
 # OpenEvalGate
 
-Local release assurance for production AI assistants and agents.
+Turn evaluation evidence into a bounded launch decision for production AI assistants and agents.
 
 [![CI](https://github.com/charliechenye/OpenEvalGate/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/charliechenye/OpenEvalGate/actions/workflows/ci.yml?query=branch%3Amain)
-[![Python 3.10-3.13](https://img.shields.io/badge/python-3.10--3.13-blue.svg)](https://www.python.org/)
+[![Python 3.10-3.14](https://img.shields.io/badge/python-3.10--3.14-blue.svg)](https://www.python.org/)
+[![Status: public alpha](https://img.shields.io/badge/status-public%20alpha-orange.svg)](docs/roadmap/release-milestones.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-OpenEvalGate is an open-source, local release-assurance framework for production AI assistants and agents. It deterministically assesses declared review evidence and produces a bounded launch recommendation for the requested review stage.
+OpenEvalGate is an open-source, local release-assurance framework for AI product and platform teams. It deterministically assesses declared review evidence and produces a bounded recommendation for the requested review stage.
+
+Use it after your existing eval runner, harness, or manual review has produced evidence. OpenEvalGate validates the evidence package, fails closed on contradictions and missing critical controls, identifies launch blockers, and writes a reproducible Markdown report.
 
 It helps teams assemble and review evidence for three questions:
 
@@ -15,6 +18,8 @@ It helps teams assemble and review evidence for three questions:
 3. **Release evidence:** Do eval results, critical controls, mitigations, owners, and rollback plans support the requested review stage?
 
 OpenEvalGate does not run the candidate system. Teams run evaluations with their existing tools, record the results locally, and use the CLI to validate the evidence package, identify blockers, and generate a release-assurance report.
+
+> **Public alpha:** This project is pre-1.0. Its schemas, policy defaults, and CLI behavior may change in later `0.x` releases. See [governance and compatibility policy](GOVERNANCE.md).
 
 ## The Production Problem
 
@@ -47,20 +52,22 @@ These repository-authored scenarios are synthetic and illustrative. They are not
 | [Presales](examples/presales_assistant/generated_launch_report.md) | Discount authority, roadmap claims, legal/security commitments | Account-owner follow-up, pricing approval, specialist review | Unsupported commitment, late escalation |
 | [Education](examples/education_assistant/generated_launch_report.md) | Graded work, learner safety, accommodation exception | Instructor review, safety route, accessibility approval | Missing handoff context, unnecessary escalation, failed resume |
 
-See the [examples index](examples/README.md) for scenario purposes, inputs, and reproduction commands. Compare the [passing subscription-support report](examples/subscription_support_assistant/generated_launch_report.md) with the [blocked refund-support report](examples/customer_support_assistant/generated_launch_report.md) to see why evidence completeness and launch readiness are separate decisions.
+See the [examples index](examples/README.md) for scenario purposes, inputs, and reproduction commands. Start with the [passing subscription-support report](examples/subscription_support_assistant/generated_launch_report.md), then compare it with the [blocked refund-support report](examples/customer_support_assistant/generated_launch_report.md) to see why evidence completeness and launch readiness are separate decisions.
 
 ## Quickstart
 
 New to the repository? Start with [Getting Started for Practitioners](docs/00_getting_started_for_practitioners.md).
 
 ```bash
-python -m pip install -e ".[dev]"
+python -m pip install -e .
 openevalgate --version
 openevalgate validate examples/subscription_support_assistant/eval_cases.yaml
 openevalgate check examples/subscription_support_assistant/
 openevalgate report examples/subscription_support_assistant/ \
-  --output examples/subscription_support_assistant/generated_launch_report.md
+  --output /tmp/openevalgate-subscription-report.md
 ```
+
+The quickest path is to copy the [subscription-support scenario](examples/subscription_support_assistant/README.md) into a new project, replace its synthetic evidence with your own artifacts, and rerun the same three commands. The report is written to `/tmp` so the canonical example remains unchanged.
 
 The generated report separates evidence completeness from observed behavior and critical controls:
 
@@ -101,13 +108,13 @@ The complete gate list, scoring weights, evidence bands, and hard-gate semantics
 
 The [Eval-Run Provenance Contract v1](docs/contracts/eval-run-provenance-v1.md) defines how a small `run_manifest.yaml` can wrap an existing OpenEvalGate-compatible `eval_results.csv`. Existing compatible CSVs do not need new provenance columns.
 
-OpenEvalGate classifies selected eval-run identity as `complete`, `missing`, or `invalid`. `complete` means the run, candidate, evaluator, result CSV, output paths, recognized output metadata, and declared artifact-index identities are coherent. It does not mean the run lifecycle is complete, rows exist, the run passed, digests were verified, evidence is fresh or recent, behavioral evidence is sufficient, or controlled launch is authorized.
+OpenEvalGate classifies selected eval-run identity as `complete`, `missing`, or `invalid`. `complete` means the run, candidate, evaluator, result CSV, output paths, recognized output metadata, and declared artifact-index identities are coherent. It does not mean the run passed, behavioral evidence is sufficient, or controlled launch is authorized.
 
 Projects may omit empirical results while documenting controls. Once a conventional `eval_results.csv` is present, an authoritative `run_manifest.yaml` is required.
 
 A manifestless result file is surfaced as a provenance validation failure, while its rows are excluded from row validation, summaries, metrics, coverage, behavioral invariants, behavior-derived blockers, and launch authorization. No new CSV columns are required.
 
-Artifact indexes remain optional. Runtime digest verification, verified assurance, freshness and recency comparison, and `review_context.yaml` enforcement are implemented for local historical and current evidence. Complete authorization classification remains deferred.
+Artifact indexes remain optional. Runtime validation currently includes local SHA-256 digest verification, verified assurance, freshness and recency comparison, and `review_context.yaml` enforcement for local historical and current evidence. Complete authorization classification, enriched workflow and handoff claims, and broader artifact-version policy remain deferred.
 
 Minimal manifest:
 
@@ -184,7 +191,7 @@ OpenEvalGate is an early, pre-1.0 framework with practitioner-defined defaults a
 - It does not execute candidate models, call LLM APIs, or evaluate live behavior by itself.
 - It does not replace eval runners, observability systems, runtime guardrails, security controls, or organizational approval.
 - It validates submitted artifacts and declared evidence; it does not independently verify that every claim in those artifacts is true, current, or complete.
-- The current implementation validates core result identities, selected eval-run identity, expected-route consistency, duplicate identities, review timestamps, supplied output references, output identity metadata, artifact-index identity, and basic route-match derivation. It does not yet verify provenance digests, evidence freshness or recency, artifact-version pinning beyond declared runtime identity, enriched workflow-route claims, handoff claims, or every routing-policy and model-policy field.
+- The current implementation validates core result identities, selected eval-run identity, expected-route consistency, duplicate identities, review timestamps, supplied output references, output identity metadata, artifact-index identity, local provenance digests, evidence freshness and recency, review-context validity, assurance, and basic route-match derivation. It does not yet provide complete authorization classification, enriched workflow-route claims, handoff claims, or every routing-policy and model-policy field.
 - A recommendation is only as reliable as the quality, completeness, provenance, and freshness of the supplied evidence.
 - A passing check, high evidence score, or bounded recommendation does not guarantee safe, reliable, compliant, or successful deployment.
 - It does not certify compliance or provide legal, regulatory, security, or risk-management certification.
@@ -219,6 +226,6 @@ tests/         Schema, policy, assessment, and report tests.
 
 OpenEvalGate was created and is maintained by [Chenye Zhu](https://chenyezhu.com/) and is released under the [MIT License](LICENSE).
 
-For references, use [CITATION.cff](CITATION.cff). Release history is in [CHANGELOG.md](CHANGELOG.md). Contributions should follow [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md). Report suspected vulnerabilities according to [SECURITY.md](SECURITY.md).
+For references, use [CITATION.cff](CITATION.cff). Release history is in [CHANGELOG.md](CHANGELOG.md). Contributions should follow [CONTRIBUTING.md](CONTRIBUTING.md), [GOVERNANCE.md](GOVERNANCE.md), and the [Code of Conduct](CODE_OF_CONDUCT.md). See [SUPPORT.md](SUPPORT.md) for support boundaries and report suspected vulnerabilities according to [SECURITY.md](SECURITY.md).
 
 Keep the CLI small, deterministic, local-first, and dependency-light.

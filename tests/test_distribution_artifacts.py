@@ -47,14 +47,11 @@ def _wheel_files(
     files = _source_files()
     files.update(
         {
-            f"{dist_info}/METADATA": (
-                f"Name: {name}\nVersion: {version}\n"
-            ).encode(),
+            f"{dist_info}/METADATA": (f"Name: {name}\nVersion: {version}\n").encode(),
             f"{dist_info}/WHEEL": b"Wheel-Version: 1.0\n",
             f"{dist_info}/RECORD": b"",
             f"{dist_info}/entry_points.txt": (
-                b"[console_scripts]\n"
-                b"openevalgate = openevalgate.cli:main\n"
+                b"[console_scripts]\nopenevalgate = openevalgate.cli:main\n"
             ),
         }
     )
@@ -98,16 +95,9 @@ def _sdist_files(
         f"{SDIST_ROOT}/README.md": b"# Fixture\n",
         f"{SDIST_ROOT}/LICENSE": b"MIT\n",
         f"{SDIST_ROOT}/CHANGELOG.md": b"# Changelog\n",
-        f"{SDIST_ROOT}/PKG-INFO": (
-            f"Name: {name}\nVersion: {version}\n"
-        ).encode(),
+        f"{SDIST_ROOT}/PKG-INFO": (f"Name: {name}\nVersion: {version}\n").encode(),
     }
-    files.update(
-        {
-            f"{SDIST_ROOT}/{path}": payload
-            for path, payload in _source_files().items()
-        }
-    )
+    files.update({f"{SDIST_ROOT}/{path}": payload for path, payload in _source_files().items()})
     return files
 
 

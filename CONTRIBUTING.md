@@ -2,7 +2,7 @@
 
 OpenEvalGate is a launch-readiness framework, not another eval platform. Contributions should help teams make better launch decisions before a GenAI assistant or agent reaches real users.
 
-By participating, you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md). Suspected vulnerabilities must be reported privately according to [SECURITY.md](SECURITY.md).
+By participating, you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md). Project decision-making and compatibility expectations are documented in [GOVERNANCE.md](GOVERNANCE.md). Suspected vulnerabilities must be reported privately according to [SECURITY.md](SECURITY.md).
 
 ## Good contributions
 
@@ -27,7 +27,8 @@ By participating, you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Development setup
 
-OpenEvalGate supports Python 3.10 through 3.13.
+OpenEvalGate supports Python 3.10 through 3.14. The current local development
+environment uses Python 3.12; CI verifies the supported range.
 
 ```bash
 python -m pip install --upgrade pip
@@ -40,6 +41,10 @@ Run the complete local validation set before opening a pull request:
 python -m pytest
 python -m compileall -q openevalgate
 python -m build
+ruff check .
+ruff format --check scripts/check_markdown_links.py
+mypy --follow-imports=skip openevalgate/cli.py scripts
+python scripts/check_markdown_links.py
 git diff --check
 ```
 
@@ -92,7 +97,7 @@ Use synthetic or fully redacted examples. Do not commit:
 
 ## Pull requests
 
-Keep each pull request focused on one coherent policy, validation, documentation, or adoption change. Complete the pull request template, document intentional non-goals, and update user-facing documentation when behavior changes.
+Keep each pull request focused on one coherent policy, validation, documentation, or adoption change. Complete the pull request template, document intentional non-goals, and update user-facing documentation when behavior changes. For release, schema, deprecation, and rollback expectations, follow [GOVERNANCE.md](GOVERNANCE.md).
 
 Cross-domain escalation contributions are especially useful. A good example should name the stopping boundary, accountable human destination, minimum handoff context, fallback behavior, expected workflow route, and evidence that the workflow resumes safely.
 

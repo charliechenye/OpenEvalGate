@@ -7,7 +7,7 @@ name = "openevalgate"
 version = "0.1.1"
 description = "Local release-assurance framework for evidence-backed launch decisions for production AI assistants and agents."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.15"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [
@@ -46,6 +46,7 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Topic :: Software Development :: Quality Assurance",
 ]
 dependencies = [
@@ -55,9 +56,13 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+  "bandit>=1.7.9",
   "build>=1.2.2",
+  "mypy>=1.11.0",
+  "pip-audit>=2.7.3",
   "pytest>=8.0.0",
   "pytest-xdist>=3.6.1",
+  "ruff>=0.6.9",
 ]
 
 [project.urls]
@@ -80,3 +85,19 @@ include = ["openevalgate*"]
 testpaths = ["tests"]
 addopts = "-p no:cacheprovider"
 pythonpath = ["."]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+extend-exclude = ["examples", "spec"]
+
+[tool.ruff.lint]
+# Keep the first public baseline focused on correctness findings; the existing
+# source predates a repository-wide formatter baseline.
+select = ["F"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+warn_unused_ignores = true

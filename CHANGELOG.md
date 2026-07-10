@@ -8,6 +8,10 @@ The project follows semantic versioning while it remains in alpha. Until a stabl
 
 ### Added
 
+- Public-alpha governance, support, attribution, compatibility, release, and rollback guidance.
+- Enforceable Ruff, mypy, pip-audit, Bandit, and Markdown-link validation in CI.
+- A copy-and-report onboarding path that keeps canonical example reports unchanged.
+- Python support metadata and CI cover Python 3.10 through 3.14; local development currently uses Python 3.12.
 - Runtime eval-run identity inspection for `run_manifest.yaml`, selected review-policy scope, manifest-backed result CSV identity, conventional output-directory identity, recognized Markdown output metadata, optional artifact-index identity, lifecycle findings, and missing/no-results classification, and unbound-result exclusion.
 - Explicit packaged runtime provenance schemas, with wheel and source-distribution checks that compare packaged resources byte-for-byte against the normative top-level schemas.
 - Expanded provenance contract fixture coverage for unsafe single-dot path segments and optional artifact identity fields, including positive omitted-identity mapping, negative wrong-trial mapping, and runtime fixture projection coverage.

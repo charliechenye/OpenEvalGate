@@ -115,9 +115,7 @@ def write_policy(path: Path, policy: dict) -> Path:
 
 
 def test_valid_fixed_adaptive_and_no_model_assignments_pass(tmp_path: Path) -> None:
-    result = validate_routing_policy(
-        write_policy(tmp_path / "routing_policy.yaml", VALID_POLICY)
-    )
+    result = validate_routing_policy(write_policy(tmp_path / "routing_policy.yaml", VALID_POLICY))
 
     assert result.valid
     assert result.model_count == 2
@@ -170,13 +168,13 @@ def test_assignment_modes_and_high_risk_controls_are_enforced(tmp_path: Path) ->
     }
     review["mandatory_controls"] = []
 
-    result = validate_routing_policy(
-        write_policy(tmp_path / "routing_policy.yaml", policy)
-    )
+    result = validate_routing_policy(write_policy(tmp_path / "routing_policy.yaml", policy))
 
     assert not result.valid
     assert any("Unknown model id" in issue.message for issue in result.issues)
-    assert any("Deterministic and human workflows require none" in issue.message for issue in result.issues)
+    assert any(
+        "Deterministic and human workflows require none" in issue.message for issue in result.issues
+    )
     assert any("require at least one control" in issue.message for issue in result.issues)
 
 

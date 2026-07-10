@@ -2,7 +2,7 @@
 
 ## Status
 
-**Core semantics and runtime eval-run identity enforcement are complete; provenance freshness remains open.** Review modes, controlled-launch behavioral sufficiency, centralized hard-gate policy, fail-closed applicability, deterministic reporting, the proposed eval-run provenance contract, and runtime identity enforcement are documented. Remaining work is to verify provenance digests, compare freshness and recency against current release context, and make empirical evidence attributable to exact artifact versions beyond the implemented identity envelope.
+**Core semantics and runtime provenance classification are complete for the implemented local contract subset.** Review modes, controlled-launch behavioral sufficiency, centralized hard-gate policy, fail-closed applicability, deterministic reporting, the proposed eval-run provenance contract, runtime identity enforcement, local digest verification, freshness and recency comparison, review-context validation, and assurance classification are implemented. Remaining work covers complete authorization classification, enriched workflow and handoff claims, and broader artifact-version policy beyond the implemented identity envelope.
 
 This iteration supports two milestones:
 
@@ -92,7 +92,7 @@ These items protect the central public claim that OpenEvalGate produces determin
 
 ### Add versioned run provenance
 
-Introduce explicit run evidence through the proposed eval-run provenance contract. The contract wraps an existing compatible `eval_results.csv`; runtime identity parsing and enforcement are implemented for selected evidence, while digest verification, verified assurance, freshness, recency, and `review_context.yaml` comparison remain deferred.
+Introduce explicit run evidence through the proposed eval-run provenance contract. The contract wraps an existing compatible `eval_results.csv`; runtime identity parsing, local digest verification, assurance, freshness, recency, and `review_context.yaml` comparison are implemented for selected evidence.
 
 Required concepts:
 
@@ -104,10 +104,10 @@ Required concepts:
 - current release context for freshness and recency comparison.
 
 - [x] Define evaluator type: human, deterministic, model judge, or hybrid and enforce evaluator identity at runtime.
-- [~] Define candidate identity, lifecycle, descriptors, artifact indexing, freshness, recency, and assurance. Runtime identity and lifecycle checks are implemented; digest verification, verified assurance, freshness, and recency remain deferred.
+- [x] Define candidate identity, lifecycle, descriptors, artifact indexing, freshness, recency, and assurance. Runtime validation covers the local digest, lifecycle, assurance, freshness, and recency subset.
 - [x] Parse and enforce selected run evidence against current project result rows, output identity, and declared artifact index identity.
-- [ ] Surface stale evidence in reports after freshness comparison is implemented.
-- [~] Require versioned evidence for controlled-launch authorization. Complete runtime identity and non-failed lifecycle are required; non-stale evidence waits on freshness and recency implementation.
+- [x] Surface stale and expired evidence classifications in reports.
+- [~] Require versioned evidence for controlled-launch authorization. Complete runtime identity, non-failed lifecycle, and local freshness/recency classifications are available; complete authorization classification remains deferred.
 - [x] Require manifest-backed result evidence; manifestless conventional result files fail provenance validation while their rows are excluded from behavioral processing and launch decisions.
 
 ### Distinguish evidence provenance
@@ -116,15 +116,15 @@ Initial contract categories are manifest presence, validity, freshness, recency,
 
 - [x] Add runtime identity and lifecycle classifications where they change interpretation.
 - [x] Report identity and lifecycle for the selected controlled-launch evidence.
-- [~] Require stronger provenance for controlled-launch hard controls. Complete runtime identity and non-failed lifecycle are enforced; verified assurance, freshness, and recency remain deferred.
+- [~] Require stronger provenance for controlled-launch hard controls. Complete runtime identity, non-failed lifecycle, local assurance, freshness, and recency are enforced where implemented; complete authorization remains deferred.
 - [~] Prevent blank or placeholder hard-gate evidence from satisfying centralized hard gates; broader artifact-depth validation remains open.
 
 ### Acceptance criteria
 
 - [x] The report identifies runtime identity status, lifecycle, run, candidate, evaluator, framework, results path, and artifact-index path used for the decision when available.
-- [~] Contract fixtures define stale candidate, stale input, recency, lifecycle, artifact, unsafe-path, optional artifact-identity, and invalidity branches; runtime identity projection is covered, while freshness and recency reporting remain pending.
-- [~] Missing, complete, and invalid identity are visibly different, and unbound or invalid evidence cannot be used as behavioral evidence. Declared-versus-verified assurance remains deferred until digest verification.
-- [~] Controlled launch cannot be authorized using unversioned selected-run identity or failed/incomplete lifecycle. Stale-run blocking remains deferred until freshness comparison is implemented.
+- [x] Contract fixtures define stale candidate, stale input, recency, lifecycle, artifact, unsafe-path, optional artifact-identity, and invalidity branches; runtime projections cover freshness, recency, and assurance.
+- [x] Missing, complete, and invalid identity are visibly different, and unbound or invalid evidence cannot be used as behavioral evidence. Declared and verified assurance are distinguished.
+- [~] Controlled launch cannot be authorized using unversioned selected-run identity or failed/incomplete lifecycle. Freshness and recency are classified and surfaced; complete authorization enforcement for those classifications remains deferred.
 
 ## Deferred Correctness Work
 
@@ -152,7 +152,7 @@ Iteration 1 is complete when:
 - [x] Partial critical gates block advancement.
 - [x] Initial controlled-launch thresholds and denominators are explicit.
 - [x] Core eval results are internally consistent and duplicate-safe.
-- [~] Controlled-launch provenance and freshness contract is proposed; runtime identity enforcement is implemented while digest verification, freshness, recency, and verified assurance remain pending.
+- [~] Controlled-launch provenance and freshness contract is proposed; runtime identity, digest, freshness, recency, and assurance classification are implemented while complete authorization remains pending.
 - [x] Selected evidence identity vocabulary is visible in reports.
 - [x] Centralized gate semantics are covered by regression tests.
 - [x] Canonical examples regenerate without undocumented manual edits.

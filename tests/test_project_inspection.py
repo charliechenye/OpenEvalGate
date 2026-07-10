@@ -27,6 +27,7 @@ SCOPED_CANDIDATE = "gpt-4.1-mini"
 SCOPED_EVALUATOR = "human_review"
 HIGH_RISK_HANDOFF_CASE_ID = "refund_abuse_history_002"
 
+
 def _copy_project(tmp_path: Path) -> Path:
     project = tmp_path / "project"
     copytree(CUSTOMER_SUPPORT, project)
@@ -97,8 +98,7 @@ def _write_handoff_result_variant(
                 row["score"] = "0"
                 row["failure_category"] = "under_escalation"
                 row["failure_reason"] = (
-                    "Intentional high-risk handoff regression for source-selection "
-                    "testing."
+                    "Intentional high-risk handoff regression for source-selection testing."
                 )
 
         if failing_case_id is not None and not found_failure_row:
@@ -109,6 +109,7 @@ def _write_handoff_result_variant(
             writer = csv.DictWriter(handle, fieldnames=headers, lineterminator="\n")
             writer.writeheader()
             writer.writerows(rows)
+
 
 def _prepare_scoped_handoff_results(
     project: Path,
@@ -139,10 +140,25 @@ def _prepare_scoped_handoff_results(
     )
     manifest = {
         "schema_version": "1",
-        "run": {"id": SCOPED_RUN_ID, "status": "complete",},
-        "candidate": {"id": SCOPED_CANDIDATE, "version": "project-inspection-test-v1",},
-        "evaluation": {"kind": "human", "evaluator": {"id": SCOPED_EVALUATOR,}, },
-        "outputs": { "results": { "path": "eval_results.csv", }, },
+        "run": {
+            "id": SCOPED_RUN_ID,
+            "status": "complete",
+        },
+        "candidate": {
+            "id": SCOPED_CANDIDATE,
+            "version": "project-inspection-test-v1",
+        },
+        "evaluation": {
+            "kind": "human",
+            "evaluator": {
+                "id": SCOPED_EVALUATOR,
+            },
+        },
+        "outputs": {
+            "results": {
+                "path": "eval_results.csv",
+            },
+        },
     }
 
     (run_dir / "run_manifest.yaml").write_text(
@@ -152,15 +168,14 @@ def _prepare_scoped_handoff_results(
 
     return scoped_results.resolve(strict=False)
 
+
 def test_valid_partial_declaration_passes_check_but_blocks_launch() -> None:
     inspection = inspect_project(CUSTOMER_SUPPORT)
 
     assert inspection.check.valid
     assert inspection.valid
     assert inspection.launch_blocked
-    assert "missing_monitoring" in {
-        blocker.id for blocker in inspection.hard_blockers
-    }
+    assert "missing_monitoring" in {blocker.id for blocker in inspection.hard_blockers}
 
 
 def test_valid_fail_declaration_passes_check_but_blocks_launch(
@@ -174,9 +189,7 @@ def test_valid_fail_declaration_passes_check_but_blocks_launch(
     assert inspection.check.valid
     assert inspection.valid
     assert inspection.launch_blocked
-    assert "missing_rollback" in {
-        blocker.id for blocker in inspection.hard_blockers
-    }
+    assert "missing_rollback" in {blocker.id for blocker in inspection.hard_blockers}
 
 
 def test_missing_applicable_gate_is_launch_blocked_not_malformed(
@@ -190,11 +203,7 @@ def test_missing_applicable_gate_is_launch_blocked_not_malformed(
     assert inspection.check.valid
     assert inspection.valid
     assert inspection.launch_blocked
-    evaluation = next(
-        item
-        for item in inspection.evaluations
-        if item.gate == "rollback gate"
-    )
+    evaluation = next(item for item in inspection.evaluations if item.gate == "rollback gate")
     assert evaluation.actual_status == "missing"
     assert evaluation.outcome == "Blocked"
 
@@ -229,8 +238,7 @@ def test_duplicate_standard_gate_fails_structural_check(
 
     assert not result.valid
     assert any(
-        "Duplicate standard launch-gate declaration" in issue.message
-        for issue in result.issues
+        "Duplicate standard launch-gate declaration" in issue.message for issue in result.issues
     )
 
 
@@ -349,9 +357,7 @@ def test_low_impact_missing_human_gate_is_nonblocking_but_design_is_required(
 
     inspection = inspect_project(project)
     evaluation = next(
-        item
-        for item in inspection.evaluations
-        if item.gate == "human escalation gate"
+        item for item in inspection.evaluations if item.gate == "human escalation gate"
     )
 
     assert inspection.context.high_impact is False
@@ -378,22 +384,19 @@ def test_unsafe_action_blocker_remains_independent_of_gate_pass(
 
     inspection = inspect_project(project)
 
-    assert next(
-        item
-        for item in inspection.evaluations
-        if item.gate == "tool/action safety gate"
-    ).outcome == "Satisfied"
-    assert "ungated_high_risk_action" in {
-        blocker.id for blocker in inspection.hard_blockers
-    }
+    assert (
+        next(
+            item for item in inspection.evaluations if item.gate == "tool/action safety gate"
+        ).outcome
+        == "Satisfied"
+    )
+    assert "ungated_high_risk_action" in {blocker.id for blocker in inspection.hard_blockers}
 
 
 def test_missing_policy_preserves_manifest_scoped_behavioral_blocker() -> None:
     inspection = inspect_project(CUSTOMER_SUPPORT)
 
-    assert "critical_escalation_regression" in {
-        blocker.id for blocker in inspection.hard_blockers
-    }
+    assert "critical_escalation_regression" in {blocker.id for blocker in inspection.hard_blockers}
 
 
 def test_invalid_policy_skips_scope_dependent_behavioral_blocker(
@@ -463,9 +466,7 @@ def test_placeholder_deterministic_gate_is_blocked_end_to_end(
     inspection = inspect_project(project)
 
     assert inspection.check.action_risk_review.valid
-    assert "ungated_high_risk_action" in {
-        blocker.id for blocker in inspection.hard_blockers
-    }
+    assert "ungated_high_risk_action" in {blocker.id for blocker in inspection.hard_blockers}
 
 
 def test_action_matrix_rejects_blank_and_raw_unsupported_semantic_values(
@@ -495,18 +496,11 @@ def test_action_matrix_rejects_blank_and_raw_unsupported_semantic_values(
     assert review.rows[1].raw_values["human_review_required"] == "YES"
     assert review.rows[1].normalized_values["human_review_required"] == "yes"
     assert "Risk tier must be nonblank for a populated row." in messages
+    assert "Human-review requirement must be nonblank for a populated row." in messages
     assert (
-        "Human-review requirement must be nonblank for a populated row."
-        in messages
-    )
-    assert (
-        "Unsupported risk tier `Critical`; expected one of: high, low, "
-        "medium, prohibited."
+        "Unsupported risk tier `Critical`; expected one of: high, low, medium, prohibited."
     ) in messages
-    assert (
-        "Unsupported human-review requirement `YES`; expected one of: "
-        "false, true."
-    ) in messages
+    assert ("Unsupported human-review requirement `YES`; expected one of: false, true.") in messages
     assert "Action must be nonblank for a populated row." in messages
 
 
@@ -606,10 +600,7 @@ def test_action_matrix_header_ambiguity_and_issue_order(
     path.write_text(
         "\n".join(
             [
-                (
-                    "action,,risk_tier,risk_tier,extra,extra,"
-                    "human_review_required"
-                ),
+                ("action,,risk_tier,risk_tier,extra,extra,human_review_required"),
                 ",,low,high,value,value,maybe,unexpected",
             ]
         )
@@ -627,10 +618,7 @@ def test_action_matrix_header_ambiguity_and_issue_order(
         "Required action-risk column is missing.",
         "Action-risk row contains more cells than the header.",
         "Action must be nonblank for a populated row.",
-        (
-            "Unsupported human-review requirement `maybe`; expected one of: "
-            "false, true."
-        ),
+        ("Unsupported human-review requirement `maybe`; expected one of: false, true."),
     ]
     assert "risk_tier" not in review.rows[0].raw_values
     assert "extra" not in review.rows[0].raw_values
@@ -640,19 +628,13 @@ def test_action_matrix_header_ambiguity_and_issue_order(
     ("header", "row", "duplicate_field", "expected_risk_tier"),
     [
         (
-            (
-                "action,risk_tier,risk_tier,deterministic_gate,"
-                "human_review_required"
-            ),
+            ("action,risk_tier,risk_tier,deterministic_gate,human_review_required"),
             "refund,low,high,,false",
             "risk_tier",
             None,
         ),
         (
-            (
-                "action,risk_tier,extra,extra,deterministic_gate,"
-                "human_review_required"
-            ),
+            ("action,risk_tier,extra,extra,deterministic_gate,human_review_required"),
             "refund,high,a,b,,false",
             "extra",
             "high",
@@ -682,10 +664,7 @@ def test_duplicate_action_risk_headers_preserve_only_unambiguous_values(
         assert "risk_tier" not in review.rows[0].normalized_values
     else:
         assert review.rows[0].raw_values["risk_tier"] == expected_risk_tier
-        assert (
-            review.rows[0].normalized_values["risk_tier"]
-            == expected_risk_tier
-        )
+        assert review.rows[0].normalized_values["risk_tier"] == expected_risk_tier
 
 
 def test_triplicate_header_emits_one_duplicate_issue_and_unique_extra_is_valid(
@@ -700,10 +679,13 @@ def test_triplicate_header_emits_one_duplicate_issue_and_unique_extra_is_valid(
         encoding="utf-8",
     )
     triplicate_review = inspect_action_risk_matrix(triplicate)
-    assert sum(
-        issue.message == "Duplicate action-risk header: extra."
-        for issue in triplicate_review.issues
-    ) == 1
+    assert (
+        sum(
+            issue.message == "Duplicate action-risk header: extra."
+            for issue in triplicate_review.issues
+        )
+        == 1
+    )
 
     unique = tmp_path / "unique.csv"
     unique.write_text(
@@ -723,10 +705,7 @@ def test_case_mismatched_header_is_missing_and_short_rows_are_padded(
 ) -> None:
     path = tmp_path / "action_risk_matrix.csv"
     path.write_text(
-        (
-            "Action,risk_tier,deterministic_gate,human_review_required\n"
-            "lookup,low\n"
-        ),
+        ("Action,risk_tier,deterministic_gate,human_review_required\nlookup,low\n"),
         encoding="utf-8",
     )
 
@@ -761,9 +740,7 @@ def test_excess_only_row_is_populated_and_blank_rows_are_ignored(
 
     assert len(review.rows) == 1
     assert review.rows[0].raw_cells == ("", "", "", "", "unexpected")
-    assert review.issues[0].message == (
-        "Action-risk row contains more cells than the header."
-    )
+    assert review.issues[0].message == ("Action-risk row contains more cells than the header.")
     assert [issue.path.rsplit(".", 1)[-1] for issue in review.issues[1:]] == [
         "action",
         "risk_tier",
@@ -792,15 +769,11 @@ def test_invalid_mixed_action_matrix_is_untrusted_with_low_risk_evals(
     assert inspection.context.high_impact is None
     assert not inspection.check.valid
     tool_evaluation = next(
-        item
-        for item in inspection.evaluations
-        if item.gate == "tool/action safety gate"
+        item for item in inspection.evaluations if item.gate == "tool/action safety gate"
     )
     assert tool_evaluation.applicable is None
     assert tool_evaluation.outcome == "Blocked"
-    assert "ungated_high_risk_action" not in {
-        blocker.id for blocker in inspection.hard_blockers
-    }
+    assert "ungated_high_risk_action" not in {blocker.id for blocker in inspection.hard_blockers}
 
 
 def test_invalid_mixed_action_matrix_does_not_override_high_risk_evals(
@@ -816,15 +789,11 @@ def test_invalid_mixed_action_matrix_does_not_override_high_risk_evals(
     assert inspection.context.high_impact is True
     assert not inspection.check.valid
     tool_evaluation = next(
-        item
-        for item in inspection.evaluations
-        if item.gate == "tool/action safety gate"
+        item for item in inspection.evaluations if item.gate == "tool/action safety gate"
     )
     assert tool_evaluation.applicable is None
     assert tool_evaluation.outcome == "Blocked"
-    assert "ungated_high_risk_action" not in {
-        blocker.id for blocker in inspection.hard_blockers
-    }
+    assert "ungated_high_risk_action" not in {blocker.id for blocker in inspection.hard_blockers}
 
 
 def _write_mixed_invalid_action_matrix(project: Path) -> None:
@@ -841,10 +810,11 @@ def _write_mixed_invalid_action_matrix(project: Path) -> None:
     )
 
 
-
 def test_invalid_run_identity_fails_project_validation(tmp_path: Path) -> None:
     project = _copy_project(tmp_path)
-    (project / "eval_runs" / "run_002" / "run_manifest.yaml").write_text("schema_version: ['1'\n", encoding="utf-8")
+    (project / "eval_runs" / "run_002" / "run_manifest.yaml").write_text(
+        "schema_version: ['1'\n", encoding="utf-8"
+    )
 
     inspection = inspect_project(project)
 
@@ -856,17 +826,23 @@ def test_invalid_run_identity_fails_project_validation(tmp_path: Path) -> None:
 
 def test_invalid_run_identity_makes_behavioral_evidence_unavailable(tmp_path: Path) -> None:
     project = _copy_project(tmp_path)
-    (project / "eval_runs" / "run_002" / "run_manifest.yaml").write_text("schema_version: ['1'\n", encoding="utf-8")
+    (project / "eval_runs" / "run_002" / "run_manifest.yaml").write_text(
+        "schema_version: ['1'\n", encoding="utf-8"
+    )
 
     inspection = inspect_project(project)
 
     assert inspection.run_identity_inspection.status == "invalid"
-    assert "critical_escalation_regression" not in {blocker.id for blocker in inspection.hard_blockers}
+    assert "critical_escalation_regression" not in {
+        blocker.id for blocker in inspection.hard_blockers
+    }
 
 
 def test_present_invalid_manifest_never_becomes_missing(tmp_path: Path) -> None:
     project = _copy_project(tmp_path)
-    (project / "eval_runs" / "run_002" / "run_manifest.yaml").write_text("schema_version: ['1'\n", encoding="utf-8")
+    (project / "eval_runs" / "run_002" / "run_manifest.yaml").write_text(
+        "schema_version: ['1'\n", encoding="utf-8"
+    )
 
     inspection = inspect_project(project)
 
@@ -917,8 +893,9 @@ outputs:
     assert "missing_monitoring" in {blocker.id for blocker in inspection.hard_blockers}
 
 
-
-def test_manifestless_controlled_launch_is_blocked_by_missing_eval_run_provenance(tmp_path: Path) -> None:
+def test_manifestless_controlled_launch_is_blocked_by_missing_eval_run_provenance(
+    tmp_path: Path,
+) -> None:
     project = _copy_project(tmp_path)
     (project / "run_manifest.yaml").unlink()
 
@@ -926,10 +903,27 @@ def test_manifestless_controlled_launch_is_blocked_by_missing_eval_run_provenanc
 
     assert "missing_eval_run_provenance" in {blocker.id for blocker in inspection.hard_blockers}
 
+
 @pytest.mark.parametrize(
-    ("root_fails", "scoped_fails", "expect_escalation_blocker",),
-    [pytest.param( True, False, False, id="root-fails-scoped-passes", ),
-     pytest.param( False, True, True, id="root-passes-scoped-fails", ), ],
+    (
+        "root_fails",
+        "scoped_fails",
+        "expect_escalation_blocker",
+    ),
+    [
+        pytest.param(
+            True,
+            False,
+            False,
+            id="root-fails-scoped-passes",
+        ),
+        pytest.param(
+            False,
+            True,
+            True,
+            id="root-passes-scoped-fails",
+        ),
+    ],
 )
 def test_scoped_manifest_results_control_escalation_blocker(
     tmp_path: Path,
@@ -938,7 +932,11 @@ def test_scoped_manifest_results_control_escalation_blocker(
     expect_escalation_blocker: bool,
 ) -> None:
     project = _copy_project(tmp_path)
-    scoped_results = _prepare_scoped_handoff_results( project, root_fails=root_fails, scoped_fails=scoped_fails, )
+    scoped_results = _prepare_scoped_handoff_results(
+        project,
+        root_fails=root_fails,
+        scoped_fails=scoped_fails,
+    )
 
     inspection = inspect_project(project)
     assert inspection.run_identity_inspection.status == "complete"
@@ -947,7 +945,7 @@ def test_scoped_manifest_results_control_escalation_blocker(
     blockers = {blocker.id: blocker for blocker in inspection.hard_blockers}
     assert ("critical_escalation_regression" in blockers) is expect_escalation_blocker
     if expect_escalation_blocker:
-        assert ( blockers["critical_escalation_regression"].evidence == HIGH_RISK_HANDOFF_CASE_ID )
+        assert blockers["critical_escalation_regression"].evidence == HIGH_RISK_HANDOFF_CASE_ID
 
 
 def test_scoped_results_without_manifest_fail_project_validation(
@@ -958,12 +956,7 @@ def test_scoped_results_without_manifest_fail_project_validation(
     root_results = project / "eval_results.csv"
     root_manifest = project / "run_manifest.yaml"
 
-    scoped_results = (
-        project
-        / "eval_runs"
-        / SCOPED_RUN_ID
-        / "eval_results.csv"
-    )
+    scoped_results = project / "eval_runs" / SCOPED_RUN_ID / "eval_results.csv"
     scoped_results.parent.mkdir(parents=True, exist_ok=True)
     scoped_results.write_text(
         "this,is,intentionally,not,validated\n",
@@ -983,8 +976,6 @@ def test_scoped_results_without_manifest_fail_project_validation(
         for finding in inspection.run_identity_inspection.findings
         if finding.id == "provenance_results_unbound"
     ]
-    assert [finding.path for finding in unbound_findings] == [
-        str(scoped_results)
-    ]
+    assert [finding.path for finding in unbound_findings] == [str(scoped_results)]
 
     assert main(["check", str(project)]) == 1

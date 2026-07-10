@@ -17,7 +17,7 @@ The eval-run provenance contract is paired with four Draft 2020-12 schemas:
 
 Fixture expectations under `spec/fixtures/provenance/v1/` are schema-validated and fixture-integrity checked by `tests/test_provenance_contract_fixtures.py`. PR 18 established the contract, schemas, fixture inventory, referenced-file checks, recorded-digest checks, orphan-file hygiene, and selected scenario invariants.
 
-The runtime provenance subset implements manifest loading, selected run and candidate checks, evaluator identity checks, manifest-backed result selection, local digest verification for historical descriptors, historical envelope consistency checks, missing-manifest detection, unbound-result exclusion, report visibility, and controlled-launch blocking for missing, invalid, failed, or incomplete identity evidence. Verified assurance, freshness, recency, `review_context.yaml`, and complete contract authorization remain deferred.
+The runtime provenance subset implements manifest loading, selected run and candidate checks, evaluator identity checks, manifest-backed result selection, local digest verification for historical descriptors, historical envelope consistency checks, review-context validation, freshness and recency comparison, assurance classification, missing-manifest detection, unbound-result exclusion, report visibility, and controlled-launch blocking for missing, invalid, failed, incomplete, stale, or expired identity evidence. Complete contract authorization and enriched workflow or handoff claims remain deferred.
 
 ## Contract principles
 
@@ -32,4 +32,4 @@ Contracts in this directory are:
 
 A contract may be published before the CLI enforces it. The document, schemas, and fixtures establish intended semantics; implementation status remains documented separately in the roadmap and release notes.
 
-The eval-run provenance contract is proposed as a broader v1 contract. The current runtime implements its identity-enforcement subset and does not require new provenance columns in `eval_results.csv`.
+The eval-run provenance contract is proposed as a broader v1 contract. The current runtime implements its local identity, digest, lifecycle, assurance, freshness, and recency subset and does not require new provenance columns in `eval_results.csv`.

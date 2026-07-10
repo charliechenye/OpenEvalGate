@@ -34,11 +34,15 @@ def build_parser() -> argparse.ArgumentParser:
     validate_parser.add_argument("eval_cases", type=Path)
     validate_parser.set_defaults(func=_validate)
 
-    check_parser = subparsers.add_parser("check", help="Check a launch-readiness project directory.")
+    check_parser = subparsers.add_parser(
+        "check", help="Check a launch-readiness project directory."
+    )
     check_parser.add_argument("project_dir", type=Path)
     check_parser.set_defaults(func=_check)
 
-    report_parser = subparsers.add_parser("report", help="Generate a Markdown launch readiness report.")
+    report_parser = subparsers.add_parser(
+        "report", help="Generate a Markdown launch readiness report."
+    )
     report_parser.add_argument("project_dir", type=Path)
     report_parser.add_argument("--output", "-o", type=Path, help="Output Markdown path.")
     report_parser.set_defaults(func=_report)

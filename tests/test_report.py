@@ -124,7 +124,9 @@ def test_report_generation_returns_expected_sections(
     assert "Overall Readiness Score" not in report
 
 
-def test_report_identity_section_includes_manifest_backed_identity(customer_support_report: str) -> None:
+def test_report_identity_section_includes_manifest_backed_identity(
+    customer_support_report: str,
+) -> None:
     assert "- **Run identity status:** Complete" in customer_support_report
     assert "## Eval-Run Identity" in customer_support_report
     assert "- Status: Complete" in customer_support_report
@@ -142,12 +144,17 @@ def test_report_identity_section_includes_manifest_backed_identity(customer_supp
 def test_subscription_support_reference_is_ready_for_bounded_controlled_launch(
     subscription_support_report: str,
 ) -> None:
-    assert "# Launch Readiness Report: Subscription Support Assistant" in subscription_support_report
+    assert (
+        "# Launch Readiness Report: Subscription Support Assistant" in subscription_support_report
+    )
     assert "**Evidence completeness score:** 100/100" in subscription_support_report
     assert "Freshness: Current" in subscription_support_report
     assert "Recency: Acceptable" in subscription_support_report
     assert "Assurance: Verified" in subscription_support_report
-    assert "**Final launch recommendation:** Ready for bounded controlled launch" in subscription_support_report
+    assert (
+        "**Final launch recommendation:** Ready for bounded controlled launch"
+        in subscription_support_report
+    )
     assert "**Hard blockers:** 0" in subscription_support_report
     assert "Missing eval cases: none" in subscription_support_report
     assert "Missing critical cases: none" in subscription_support_report
@@ -194,7 +201,9 @@ def test_high_evidence_completeness_can_still_be_not_ready(
 
     assert "**Evidence completeness score:** 90/100" in report
     assert "**Evidence package band:** Substantially complete" in report
-    assert "**Behavioral evidence status:** Evaluated — valid empirical rows are available." in report
+    assert (
+        "**Behavioral evidence status:** Evaluated — valid empirical rows are available." in report
+    )
     assert "**Run identity status:** Complete" in report
     assert "**Critical-control status:** Fail" in report
     assert "**Maximum permitted stage:** Shadow evaluation with remediation" in report
@@ -269,7 +278,10 @@ def test_report_eval_results_summary_includes_feedback_metrics(
 
     assert "Eval pass rate: 33%" in report
     assert "Admission-route match rate: 50%" in report
-    assert "Failed case IDs: refund_abuse_history_002, refund_boundary_case_001, routine_status_no_escalation_013, wrong_destination_fraud_012" in report
+    assert (
+        "Failed case IDs: refund_abuse_history_002, refund_boundary_case_001, routine_status_no_escalation_013, wrong_destination_fraud_012"
+        in report
+    )
     assert "Workflow-route accuracy: 50%" in report
     assert "Contrast-family reliability: 33%" in report
     assert "Required-escalation recall: 67%" in report
@@ -278,7 +290,9 @@ def test_report_eval_results_summary_includes_feedback_metrics(
     assert "Context-preservation rate: 67%" in report
 
 
-def test_missing_eval_results_are_not_evaluated_and_cap_launch_recommendation(tmp_path: Path) -> None:
+def test_missing_eval_results_are_not_evaluated_and_cap_launch_recommendation(
+    tmp_path: Path,
+) -> None:
     project = tmp_path / "project"
     copytree(CUSTOMER_SUPPORT, project)
     (project / "eval_results.csv").unlink()
@@ -307,7 +321,9 @@ def test_empty_eval_results_are_distinguished_from_missing_results(tmp_path: Pat
 
     report = generate_report(project)
 
-    assert "**Behavioral evidence status:** Not evaluated — results file contains no rows." in report
+    assert (
+        "**Behavioral evidence status:** Not evaluated — results file contains no rows." in report
+    )
     assert "**Critical-control status:** Fail" in report
     assert "**Final launch recommendation:** Not ready for controlled launch" in report
     assert "**Maximum permitted stage:** Shadow evaluation" in report
@@ -318,9 +334,7 @@ def test_empirical_results_without_hard_blockers_remain_shadow_only(tmp_path: Pa
     copytree(CUSTOMER_SUPPORT, project)
     (project / "review_policy.yaml").unlink()
     low_risk_case = next(
-        case
-        for case in load_eval_cases(project / "eval_cases.yaml")
-        if case["risk_tier"] == "low"
+        case for case in load_eval_cases(project / "eval_cases.yaml") if case["risk_tier"] == "low"
     )
     (project / "eval_results.csv").write_text(
         "\n".join(
@@ -357,7 +371,9 @@ def test_empirical_results_without_hard_blockers_remain_shadow_only(tmp_path: Pa
     report = generate_report(project)
 
     assert "**Evidence completeness score:** 90/100" in report
-    assert "**Behavioral evidence status:** Evaluated — valid empirical rows are available." in report
+    assert (
+        "**Behavioral evidence status:** Evaluated — valid empirical rows are available." in report
+    )
     assert "**Critical-control status:** No known blockers detected" in report
     assert "**Maximum permitted stage:** Shadow evaluation" in report
     assert "**Final launch recommendation:** Ready for bounded shadow evaluation" in report
@@ -428,9 +444,7 @@ def test_generated_example_reports_are_reproducible(example_name: str) -> None:
     project = ROOT / "examples" / example_name
     report = generate_report(project)
 
-    assert (project / "generated_launch_report.md").read_text(
-        encoding="utf-8"
-    ) == report
+    assert (project / "generated_launch_report.md").read_text(encoding="utf-8") == report
     assert "Ready for bounded controlled launch" not in report
     assert "Critical-control status: Pass" not in report
     assert "**Pass**" not in report
@@ -472,9 +486,7 @@ def test_canonical_examples_demonstrate_distinct_review_modes(
     request: pytest.FixtureRequest,
 ) -> None:
     project = ROOT / "examples" / example_name
-    policy = yaml.safe_load(
-        (project / "review_policy.yaml").read_text(encoding="utf-8")
-    )
+    policy = yaml.safe_load((project / "review_policy.yaml").read_text(encoding="utf-8"))
     report = request.getfixturevalue(
         {
             "customer_support_assistant": "customer_support_report",
@@ -537,10 +549,7 @@ def test_canonical_scores_and_rollback_sections_are_consistent(
     )
 
     assert f"## Evidence Completeness Score\n{expected_score}/100" in report
-    assert (
-        f"| rollback gate | Yes | pass | {rollback_status} |"
-        in report
-    )
+    assert f"| rollback gate | Yes | pass | {rollback_status} |" in report
     assert f"- Rollback gate: {rollback_status}" in report
 
 
@@ -551,10 +560,7 @@ def test_non_scored_hard_gate_mitigations_remain_in_example_reports(
     assert "- Rollback gate: Define launch stop criteria." in presales_report
     assert "- Owner signoff gate: Complete final review." in presales_report
     assert "- Rollback gate: Define stop criteria." in education_report
-    assert (
-        "- Owner signoff gate: Complete signoff after arena and drift plan."
-        in education_report
-    )
+    assert "- Owner signoff gate: Complete signoff after arena and drift plan." in education_report
 
 
 @pytest.mark.parametrize(
@@ -756,7 +762,10 @@ outputs:
     report = generate_report(project)
 
     assert "**Run identity status:** Invalid" in report
-    assert "Run identity is invalid. Behavioral evidence from this run was excluded from launch evaluation." in report
+    assert (
+        "Run identity is invalid. Behavioral evidence from this run was excluded from launch evaluation."
+        in report
+    )
     assert "**Final launch recommendation:** Not ready for shadow evaluation" in report
     assert "critical_escalation_regression" not in report
     assert "Eval pass rate: 94%" not in report
@@ -767,10 +776,7 @@ def test_selected_critical_failure_blocks_controlled_launch(
 ) -> None:
     project, cases = _controlled_launch_project(tmp_path)
     critical = next(case for case in cases if case["id"] == "refund_abuse_history_002")
-    rows = [
-        row for row in _passing_rows(cases)
-        if f",{critical['id']}," not in row
-    ]
+    rows = [row for row in _passing_rows(cases) if f",{critical['id']}," not in row]
     rows.append(
         f"release-run,{critical['id']},candidate-v3,harness,show,"
         f"{critical['expected_route']},false,false,0,route,selected failure,,"
@@ -821,6 +827,7 @@ def test_unselected_identity_rows_are_excluded_from_report_metrics(
     assert "Unavailable due to invalid behavioral evidence" in report
     assert "- Selected result rows: 0" not in report
 
+
 def test_invalid_behavioral_evidence_has_distinct_selected_scope_wording(
     tmp_path: Path,
 ) -> None:
@@ -846,9 +853,10 @@ def test_critical_trial_depth_has_dedicated_report_line(
     report = generate_report(project)
 
     assert "- Critical cases below trial depth: " in report
-    assert "refund_abuse_history_002" in report.split(
-        "- Critical cases below trial depth: ", 1
-    )[1].splitlines()[0]
+    assert (
+        "refund_abuse_history_002"
+        in report.split("- Critical cases below trial depth: ", 1)[1].splitlines()[0]
+    )
     assert "**Final launch recommendation:** Not ready for controlled launch" in report
 
 
@@ -876,9 +884,7 @@ def test_shadow_report_keeps_failed_invariant_informational(
         encoding="utf-8",
     )
     low_risk_case = next(
-        case
-        for case in load_eval_cases(project / "eval_cases.yaml")
-        if case["risk_tier"] == "low"
+        case for case in load_eval_cases(project / "eval_cases.yaml") if case["risk_tier"] == "low"
     )
     policy = {
         "schema_version": "1",
@@ -1037,10 +1043,7 @@ def test_report_renders_duplicate_gate_as_invalid(tmp_path: Path) -> None:
 
     report = generate_report(project)
 
-    assert (
-        "| rollback gate | Yes | pass | invalid: duplicate rows | Invalid |"
-        in report
-    )
+    assert "| rollback gate | Yes | pass | invalid: duplicate rows | Invalid |" in report
     assert "- Rollback gate: invalid: duplicate rows" in report
     assert "`missing_rollback`" in report
 
@@ -1061,10 +1064,7 @@ def test_report_renders_unsupported_gate_status_as_invalid(
 
     report = generate_report(project)
 
-    assert (
-        "| rollback gate | Yes | pass | invalid: warning | Invalid |"
-        in report
-    )
+    assert "| rollback gate | Yes | pass | invalid: warning | Invalid |" in report
     assert "- Rollback gate: invalid: warning" in report
 
 
@@ -1095,10 +1095,7 @@ def test_invalid_duplicate_risk_header_summary_uses_unknown_counts(
     (project / "action_risk_matrix.csv").write_text(
         "\n".join(
             [
-                (
-                    "action,risk_tier,risk_tier,deterministic_gate,"
-                    "human_review_required"
-                ),
+                ("action,risk_tier,risk_tier,deterministic_gate,human_review_required"),
                 "refund,low,high,,false",
             ]
         )
@@ -1130,10 +1127,7 @@ def test_invalid_unrelated_duplicate_header_preserves_unique_tier_counts(
     (project / "action_risk_matrix.csv").write_text(
         "\n".join(
             [
-                (
-                    "action,risk_tier,extra,extra,deterministic_gate,"
-                    "human_review_required"
-                ),
+                ("action,risk_tier,extra,extra,deterministic_gate,human_review_required"),
                 "refund,high,a,b,,false",
             ]
         )
@@ -1167,7 +1161,4 @@ def test_missing_and_valid_action_risk_summaries_keep_existing_behavior(
     copytree(CUSTOMER_SUPPORT, project)
     (project / "action_risk_matrix.csv").unlink()
     missing_report = generate_report(project)
-    assert (
-        "## Tool/Action Safety Summary\nNo action risk matrix found."
-        in missing_report
-    )
+    assert "## Tool/Action Safety Summary\nNo action risk matrix found." in missing_report

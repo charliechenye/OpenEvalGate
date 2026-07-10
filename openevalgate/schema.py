@@ -92,6 +92,7 @@ class ReadinessCategory(str, Enum):
     COST_LATENCY_READINESS = "cost_latency_readiness"
     JOURNEY_BUSINESS_METRICS_READINESS = "journey_business_metrics_readiness"
 
+
 REQUIRED_FIELDS = [
     "id",
     "assistant_type",
@@ -322,13 +323,19 @@ def _validate_case(case: dict[str, Any], case_path: str) -> list[ValidationIssue
     if isinstance(tool_behavior, dict):
         for key in ("allowed_tools", "blocked_tools"):
             if key in tool_behavior and not isinstance(tool_behavior[key], list):
-                issues.append(ValidationIssue(f"{case_path}.expected_tool_behavior.{key}", "Must be a list."))
+                issues.append(
+                    ValidationIssue(f"{case_path}.expected_tool_behavior.{key}", "Must be a list.")
+                )
 
     rubric = case.get("grading_rubric")
     if isinstance(rubric, dict):
         for name, value in rubric.items():
             if not isinstance(value, int) or not 1 <= value <= 5:
-                issues.append(ValidationIssue(f"{case_path}.grading_rubric.{name}", "Must be an integer from 1 to 5."))
+                issues.append(
+                    ValidationIssue(
+                        f"{case_path}.grading_rubric.{name}", "Must be an integer from 1 to 5."
+                    )
+                )
 
     boundary = case.get("boundary")
     if isinstance(boundary, dict):
@@ -342,10 +349,18 @@ def _validate_case(case: dict[str, Any], case_path: str) -> list[ValidationIssue
         )
         for field in required_boundary_fields:
             if field not in boundary:
-                issues.append(ValidationIssue(f"{case_path}.boundary.{field}", "Required boundary field is missing."))
+                issues.append(
+                    ValidationIssue(
+                        f"{case_path}.boundary.{field}", "Required boundary field is missing."
+                    )
+                )
         for field in ("family_id", "anchor_case_id", "controlling_fact"):
-            if field in boundary and (not isinstance(boundary[field], str) or not boundary[field].strip()):
-                issues.append(ValidationIssue(f"{case_path}.boundary.{field}", "Must be a non-empty string."))
+            if field in boundary and (
+                not isinstance(boundary[field], str) or not boundary[field].strip()
+            ):
+                issues.append(
+                    ValidationIssue(f"{case_path}.boundary.{field}", "Must be a non-empty string.")
+                )
         variation_type = boundary.get("variation_type")
         if variation_type is not None and variation_type not in BOUNDARY_VARIATION_TYPES:
             issues.append(
@@ -359,16 +374,30 @@ def _validate_case(case: dict[str, Any], case_path: str) -> list[ValidationIssue
     if isinstance(trajectory, dict):
         for field in ("required_events", "prohibited_events"):
             if field not in trajectory:
-                issues.append(ValidationIssue(f"{case_path}.expected_trajectory.{field}", "Required trajectory field is missing."))
+                issues.append(
+                    ValidationIssue(
+                        f"{case_path}.expected_trajectory.{field}",
+                        "Required trajectory field is missing.",
+                    )
+                )
             elif not isinstance(trajectory[field], list):
-                issues.append(ValidationIssue(f"{case_path}.expected_trajectory.{field}", "Must be a list."))
+                issues.append(
+                    ValidationIssue(f"{case_path}.expected_trajectory.{field}", "Must be a list.")
+                )
 
     end_state = case.get("expected_end_state")
     if isinstance(end_state, dict):
         if "assertions" not in end_state:
-            issues.append(ValidationIssue(f"{case_path}.expected_end_state.assertions", "Required end-state field is missing."))
+            issues.append(
+                ValidationIssue(
+                    f"{case_path}.expected_end_state.assertions",
+                    "Required end-state field is missing.",
+                )
+            )
         elif not isinstance(end_state["assertions"], list):
-            issues.append(ValidationIssue(f"{case_path}.expected_end_state.assertions", "Must be a list."))
+            issues.append(
+                ValidationIssue(f"{case_path}.expected_end_state.assertions", "Must be a list.")
+            )
 
     handoff = case.get("expected_handoff")
     if isinstance(handoff, dict):
@@ -412,9 +441,13 @@ def _validate_case(case: dict[str, Any], case_path: str) -> list[ValidationIssue
             try:
                 date.fromisoformat(reviewed)
             except ValueError:
-                issues.append(ValidationIssue(f"{case_path}.last_reviewed", "Must use YYYY-MM-DD format."))
+                issues.append(
+                    ValidationIssue(f"{case_path}.last_reviewed", "Must use YYYY-MM-DD format.")
+                )
         else:
-            issues.append(ValidationIssue(f"{case_path}.last_reviewed", "Must use YYYY-MM-DD format."))
+            issues.append(
+                ValidationIssue(f"{case_path}.last_reviewed", "Must use YYYY-MM-DD format.")
+            )
 
     return issues
 
@@ -440,7 +473,9 @@ def _validate_case_relationships(cases: list[dict[str, Any]]) -> list[Validation
         if not isinstance(case_id, str) or not case_id.strip():
             continue
         if case_id in case_by_id:
-            issues.append(ValidationIssue(f"case[{index}].id", f"Duplicate eval case id: {case_id}."))
+            issues.append(
+                ValidationIssue(f"case[{index}].id", f"Duplicate eval case id: {case_id}.")
+            )
         else:
             case_by_id[case_id] = (index, case)
 
@@ -505,4 +540,6 @@ def _require_type(
     case_path: str,
 ) -> None:
     if field in case and not isinstance(case[field], expected_type):
-        issues.append(ValidationIssue(f"{case_path}.{field}", f"Must be a {expected_type.__name__}."))
+        issues.append(
+            ValidationIssue(f"{case_path}.{field}", f"Must be a {expected_type.__name__}.")
+        )

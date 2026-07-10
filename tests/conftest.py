@@ -14,12 +14,9 @@ READABLE_NODE_ID_LIMIT = 96
 
 
 def _read_canonical_report(example_name: str) -> str:
-    return (
-        ROOT
-        / "examples"
-        / example_name
-        / "generated_launch_report.md"
-    ).read_text(encoding="utf-8")
+    return (ROOT / "examples" / example_name / "generated_launch_report.md").read_text(
+        encoding="utf-8"
+    )
 
 
 def _worker_id(config: pytest.Config) -> str:
@@ -56,9 +53,7 @@ def tmp_path(
 ) -> Path:
     """Windows-safe replacement for pytest's tmp_path in locked temp setups."""
 
-    path = _worker_scratch_root / _safe_test_directory_name(
-        request.node.nodeid
-    )
+    path = _worker_scratch_root / _safe_test_directory_name(request.node.nodeid)
     if path.exists():
         shutil.rmtree(path, ignore_errors=True)
     path.mkdir()

@@ -11,10 +11,10 @@ license: MIT
 repository-code: "https://github.com/charliechenye/OpenEvalGate"
 url: "https://chenyezhu.com/"
 abstract: >-
-  OpenEvalGate is a local-first GenAI governance and launch-readiness framework.
-  It organizes golden evals, action-risk controls, human escalation evidence,
-  hard blockers, operational ownership, observability, and rollback evidence
-  into deterministic launch-readiness reports.
+  OpenEvalGate is a local, deterministic release-assurance framework for
+  production AI assistants and agents. It organizes golden evals, action-risk
+  controls, human escalation evidence, hard blockers, operational ownership,
+  observability, and rollback evidence into bounded launch-readiness reports.
 keywords:
   - generative AI
   - AI governance
