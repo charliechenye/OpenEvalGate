@@ -245,8 +245,7 @@ def inspect_run_identity(
                 id="provenance_manifest_absent",
                 path=str(expected_manifest),
                 message=(
-                    "No authoritative run_manifest.yaml was found for the "
-                    "selected eval-run scope."
+                    "No authoritative run_manifest.yaml was found for the selected eval-run scope."
                 ),
             )
         ]
@@ -279,7 +278,9 @@ def inspect_run_identity(
     if loaded[0] is None:
         return _invalid(authoritative, loaded[1])
     manifest = loaded[0]
-    identity, findings_tuple, resolved_results_path = _identity_from_manifest(root, authoritative, manifest)
+    identity, findings_tuple, resolved_results_path = _identity_from_manifest(
+        root, authoritative, manifest
+    )
     findings = list(findings_tuple)
     if identity is None:
         return _invalid(authoritative, list(findings_tuple), results_path=resolved_results_path)
@@ -307,7 +308,9 @@ def inspect_run_identity(
     if compare_root:
         root_loaded = _load_manifest(root_manifest)
         if root_loaded[0] is not None:
-            root_identity, root_findings, _ = _identity_from_manifest(root, root_manifest, root_loaded[0])
+            root_identity, root_findings, _ = _identity_from_manifest(
+                root, root_manifest, root_loaded[0]
+            )
             if root_identity is not None and root_identity.run_id == identity.run_id:
                 if _identity_signature(root_identity) != _identity_signature(identity):
                     findings.append(
@@ -403,7 +406,9 @@ def _load_manifest(path: Path) -> tuple[dict[str, Any] | None, list[ProvenanceFi
                 message='Run manifest schema_version must be exactly "1".',
             )
         ]
-    results = data.get("outputs", {}).get("results") if isinstance(data.get("outputs"), dict) else None
+    results = (
+        data.get("outputs", {}).get("results") if isinstance(data.get("outputs"), dict) else None
+    )
     if isinstance(results, dict) and "path" not in results:
         return None, [
             ProvenanceFinding(
@@ -445,7 +450,9 @@ def _identity_from_manifest(
     evaluator = evaluation["evaluator"]
     kind = evaluation["kind"]
 
-    component_ids = tuple(str(component["id"]) for component in evaluator.get("components", []) or [])
+    component_ids = tuple(
+        str(component["id"]) for component in evaluator.get("components", []) or []
+    )
     if len(component_ids) != len(set(component_ids)):
         findings.append(
             ProvenanceFinding(
@@ -476,7 +483,9 @@ def _identity_from_manifest(
             require_file=True,
         )
         if artifact_resolution.error is not None:
-            findings.append(_path_finding(artifact_resolution.error, f"{path}:outputs.artifact_index.path"))
+            findings.append(
+                _path_finding(artifact_resolution.error, f"{path}:outputs.artifact_index.path")
+            )
             return None, list(_sort_findings(findings)), results_resolution.path
         artifact_index_path = artifact_resolution.path
 
@@ -506,12 +515,16 @@ def _identity_from_manifest(
         run_status=run_status,
         candidate_id=str(candidate["id"]),
         candidate_version=str(candidate["version"]),
-        candidate_accepted_aliases=tuple(str(value) for value in candidate.get("accepted_aliases", ()) or ()),
+        candidate_accepted_aliases=tuple(
+            str(value) for value in candidate.get("accepted_aliases", ()) or ()
+        ),
         evaluator=EvaluatorIdentity(
             kind=str(kind),
             evaluator_id=str(evaluator["id"]),
             evaluator_version=str(evaluator["version"]) if "version" in evaluator else None,
-            accepted_aliases=tuple(str(value) for value in evaluator.get("accepted_aliases", ()) or ()),
+            accepted_aliases=tuple(
+                str(value) for value in evaluator.get("accepted_aliases", ()) or ()
+            ),
             component_ids=component_ids,
         ),
         framework_id=str(framework["id"]) if "id" in framework else None,
@@ -544,9 +557,7 @@ def _historical_assurance(
     if artifact_index_path is None:
         return ProvenanceAssurance.DECLARED
     try:
-        artifact_index_data = yaml.safe_load(
-            artifact_index_path.read_text(encoding="utf-8")
-        )
+        artifact_index_data = yaml.safe_load(artifact_index_path.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, yaml.YAMLError):
         return ProvenanceAssurance.DECLARED
     if not isinstance(artifact_index_data, dict):
@@ -737,12 +748,16 @@ def _validate_current_descriptor(
     )
     if resolution.error is not None or resolution.path is None:
         return [_path_finding(resolution.error or "unsafe", f"{path_label}.path")]
-    return _validate_resolved_descriptor_digest(
-        resolution.path,
-        f"{path_label}.digest.sha256",
-        descriptor,
-        finding_id="provenance_review_context_digest_mismatch",
-    ) if "digest" in descriptor else []
+    return (
+        _validate_resolved_descriptor_digest(
+            resolution.path,
+            f"{path_label}.digest.sha256",
+            descriptor,
+            finding_id="provenance_review_context_digest_mismatch",
+        )
+        if "digest" in descriptor
+        else []
+    )
 
 
 def _compare_freshness(
@@ -957,7 +972,11 @@ def _validate_artifact_index_identity(identity: RunIdentity) -> list[ProvenanceF
         ]
     errors = sorted(_ARTIFACT_INDEX_VALIDATOR.iter_errors(data), key=lambda item: list(item.path))
     if not isinstance(data, dict) or errors:
-        message = "Artifact index must be a YAML object." if not isinstance(data, dict) else errors[0].message
+        message = (
+            "Artifact index must be a YAML object."
+            if not isinstance(data, dict)
+            else errors[0].message
+        )
         return [
             ProvenanceFinding(
                 id="provenance_artifact_index_schema_invalid",
@@ -1002,7 +1021,11 @@ def _validate_artifact_index_identity(identity: RunIdentity) -> list[ProvenanceF
             require_file=True,
         )
         if resolution.error is not None or resolution.path is None:
-            findings.append(_path_finding(resolution.error or "unsafe", f"{identity.artifact_index_path}:artifacts.path"))
+            findings.append(
+                _path_finding(
+                    resolution.error or "unsafe", f"{identity.artifact_index_path}:artifacts.path"
+                )
+            )
             continue
         findings.extend(
             _validate_resolved_descriptor_digest(
@@ -1334,14 +1357,18 @@ def _descriptors_are_equivalent(
     fixed: dict[str, Any],
     mirror: dict[str, Any],
 ) -> bool:
-    if ("path" in fixed or "path" in mirror) and _descriptor_relative_path(descriptor_root, fixed) != _descriptor_relative_path(
+    if ("path" in fixed or "path" in mirror) and _descriptor_relative_path(
+        descriptor_root, fixed
+    ) != _descriptor_relative_path(
         descriptor_root,
         mirror,
     ):
         return False
     if ("uri" in fixed or "uri" in mirror) and fixed.get("uri") != mirror.get("uri"):
         return False
-    if ("digest" in fixed or "digest" in mirror) and _descriptor_digest(fixed) != _descriptor_digest(mirror):
+    if ("digest" in fixed or "digest" in mirror) and _descriptor_digest(
+        fixed
+    ) != _descriptor_digest(mirror):
         return False
     return True
 
@@ -1469,7 +1496,11 @@ def _validate_output_identity(
         return [_path_finding(resolution.error or "unsafe", f"{row_path}.observed_output_path")]
 
     findings: list[ProvenanceFinding] = []
-    findings.extend(_validate_conventional_output_directory(project_root, resolution.path, row, row_path, manifest_identity))
+    findings.extend(
+        _validate_conventional_output_directory(
+            project_root, resolution.path, row, row_path, manifest_identity
+        )
+    )
     findings.extend(_validate_markdown_metadata(resolution.path, row, row_path, manifest_identity))
     return findings
 
@@ -1543,7 +1574,10 @@ def _validate_markdown_metadata(
         elif label == "Candidate":
             allowed = {_csv_cell(row, "candidate")}
             if manifest_identity is not None:
-                allowed = {manifest_identity.candidate_id, *manifest_identity.candidate_accepted_aliases}
+                allowed = {
+                    manifest_identity.candidate_id,
+                    *manifest_identity.candidate_accepted_aliases,
+                }
             if value not in allowed:
                 findings.append(
                     ProvenanceFinding(
@@ -1555,7 +1589,10 @@ def _validate_markdown_metadata(
         elif label == "Evaluator":
             allowed = {_csv_cell(row, "evaluator")}
             if manifest_identity is not None:
-                allowed = {manifest_identity.evaluator.evaluator_id, *manifest_identity.evaluator.accepted_aliases}
+                allowed = {
+                    manifest_identity.evaluator.evaluator_id,
+                    *manifest_identity.evaluator.accepted_aliases,
+                }
             if value not in allowed:
                 findings.append(
                     ProvenanceFinding(
@@ -1623,7 +1660,9 @@ def _identity_signature(identity: RunIdentity) -> tuple[Any, ...]:
         identity.framework_id,
         identity.framework_version,
         identity.results_path.resolve(strict=False),
-        identity.artifact_index_path.resolve(strict=False) if identity.artifact_index_path else None,
+        identity.artifact_index_path.resolve(strict=False)
+        if identity.artifact_index_path
+        else None,
     )
 
 
@@ -1649,7 +1688,11 @@ def _invalid(
 
 
 def _sort_findings(findings: list[ProvenanceFinding]) -> tuple[ProvenanceFinding, ...]:
-    return tuple(sorted(findings, key=lambda item: (_FINDING_ORDER.get(item.id, 99), item.path, item.message)))
+    return tuple(
+        sorted(
+            findings, key=lambda item: (_FINDING_ORDER.get(item.id, 99), item.path, item.message)
+        )
+    )
 
 
 def _lifecycle_finding_ids() -> set[str]:

@@ -63,7 +63,9 @@ def _policy(**updates: object) -> dict[str, object]:
 
 
 def _write_policy(project: Path, data: object) -> None:
-    (project / "review_policy.yaml").write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+    (project / "review_policy.yaml").write_text(
+        yaml.safe_dump(data, sort_keys=False), encoding="utf-8"
+    )
 
 
 def test_missing_policy_uses_exact_backward_compatible_state(tmp_path: Path) -> None:
@@ -99,12 +101,36 @@ def test_invalid_policy_cannot_configure_selected_scope(tmp_path: Path) -> None:
         {"unknown": True},
         {"evaluation_scope": {"run_id": "", "candidate": "x"}},
         {"evaluation_scope": {"run_id": "x", "candidate": ""}},
-        {"coverage": {"minimum_case_coverage": True, "minimum_critical_case_coverage": 1.0, "minimum_trials_per_case": 1}},
-        {"coverage": {"minimum_case_coverage": 1.1, "minimum_critical_case_coverage": 1.0, "minimum_trials_per_case": 1}},
-        {"coverage": {"minimum_case_coverage": 1.0, "minimum_critical_case_coverage": 0.9, "minimum_trials_per_case": 1}},
+        {
+            "coverage": {
+                "minimum_case_coverage": True,
+                "minimum_critical_case_coverage": 1.0,
+                "minimum_trials_per_case": 1,
+            }
+        },
+        {
+            "coverage": {
+                "minimum_case_coverage": 1.1,
+                "minimum_critical_case_coverage": 1.0,
+                "minimum_trials_per_case": 1,
+            }
+        },
+        {
+            "coverage": {
+                "minimum_case_coverage": 1.0,
+                "minimum_critical_case_coverage": 0.9,
+                "minimum_trials_per_case": 1,
+            }
+        },
         {"thresholds": {"pass_rate": {"minimum": True}, "route_match_rate": {"minimum": 1.0}}},
         {"thresholds": {"pass_rate": {"maximum": 1.0}, "route_match_rate": {"minimum": 1.0}}},
-        {"thresholds": {"other": {"minimum": 1.0}, "pass_rate": {"minimum": 1.0}, "route_match_rate": {"minimum": 1.0}}},
+        {
+            "thresholds": {
+                "other": {"minimum": 1.0},
+                "pass_rate": {"minimum": 1.0},
+                "route_match_rate": {"minimum": 1.0},
+            }
+        },
     ],
 )
 def test_invalid_present_policy_has_no_fallback(tmp_path: Path, change: dict[str, object]) -> None:
@@ -131,7 +157,9 @@ def test_critical_field_and_inference(tmp_path: Path) -> None:
     project = _project(tmp_path)
     data = yaml.safe_load((project / "eval_cases.yaml").read_text(encoding="utf-8"))
     data["eval_cases"][0]["critical"] = "true"
-    (project / "eval_cases.yaml").write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+    (project / "eval_cases.yaml").write_text(
+        yaml.safe_dump(data, sort_keys=False), encoding="utf-8"
+    )
     assert not validate_eval_cases(project / "eval_cases.yaml").valid
     assert is_critical_eval_case({"critical": True, "risk_tier": "low", "expected_route": "show"})
     assert is_critical_eval_case({"critical": False, "risk_tier": "high", "expected_route": "show"})
@@ -142,7 +170,10 @@ def test_selected_scope_is_exact_and_empty_rates_stay_none(tmp_path: Path) -> No
     project = _project(tmp_path)
     summary = summarize_selected_eval_results(project, run_id="run_002", candidate="gpt-4.1-mini")
     assert summary.row_count == 6
-    assert summarize_selected_eval_results(project, run_id="other", candidate="gpt-4.1-mini").row_count == 0
+    assert (
+        summarize_selected_eval_results(project, run_id="other", candidate="gpt-4.1-mini").row_count
+        == 0
+    )
     empty = summarize_selected_eval_results(project, run_id="run_002", candidate="other")
     assert empty.pass_rate is None and empty.route_match_rate is None
 
@@ -191,7 +222,9 @@ def test_thresholds_invariants_and_order_are_deterministic(tmp_path: Path) -> No
     assert first == second
     assert [item.metric for item in first.threshold_outcomes] == ["pass_rate", "route_match_rate"]
     assert [item.invariant_id for item in first.invariant_outcomes] == [
-        "no_prohibited_actions", "all_critical_cases_pass", "required_escalations_pass"
+        "no_prohibited_actions",
+        "all_critical_cases_pass",
+        "required_escalations_pass",
     ]
 
 
@@ -200,7 +233,10 @@ def test_zero_matching_rows_fail_closed_without_zero_rates(tmp_path: Path) -> No
     _write_policy(project, _policy(evaluation_scope={"run_id": "missing", "candidate": "missing"}))
     result = evaluate_behavioral_sufficiency(project)
     assert result.selected_row_count == 0
-    assert all(item.actual_value is None and item.status == "not_evaluated" for item in result.threshold_outcomes)
+    assert all(
+        item.actual_value is None and item.status == "not_evaluated"
+        for item in result.threshold_outcomes
+    )
     assert not result.sufficient_for_requested_mode
 
 
@@ -270,47 +306,57 @@ def test_invalid_row_outside_selected_scope_invalidates_whole_file(
             "Unknown field.",
         ),
         (
-            {"coverage": {
-                "minimum_case_coverage": 1.0,
-                "minimum_critical_case_coverage": 1.0,
-                "minimum_trials_per_case": 1,
-                "extra": 1,
-            }},
+            {
+                "coverage": {
+                    "minimum_case_coverage": 1.0,
+                    "minimum_critical_case_coverage": 1.0,
+                    "minimum_trials_per_case": 1,
+                    "extra": 1,
+                }
+            },
             "review_policy.coverage.extra",
             "Unknown field.",
         ),
         (
-            {"coverage": {
-                "minimum_case_coverage": 1.0,
-                "minimum_critical_case_coverage": 1.0,
-                "minimum_trials_per_case": 0,
-            }},
+            {
+                "coverage": {
+                    "minimum_case_coverage": 1.0,
+                    "minimum_critical_case_coverage": 1.0,
+                    "minimum_trials_per_case": 0,
+                }
+            },
             "review_policy.coverage.minimum_trials_per_case",
             "Must be an integer of at least 1.",
         ),
         (
-            {"thresholds": {
-                "pass_rate": "invalid",
-                "route_match_rate": {"minimum": 1.0},
-            }},
+            {
+                "thresholds": {
+                    "pass_rate": "invalid",
+                    "route_match_rate": {"minimum": 1.0},
+                }
+            },
             "review_policy.thresholds.pass_rate",
             "Must be an object.",
         ),
         (
-            {"coverage": {
-                "minimum_case_coverage": 1.0,
-                "minimum_critical_case_coverage": 0.9,
-                "minimum_trials_per_case": 1,
-            }},
+            {
+                "coverage": {
+                    "minimum_case_coverage": 1.0,
+                    "minimum_critical_case_coverage": 0.9,
+                    "minimum_trials_per_case": 1,
+                }
+            },
             "review_policy.coverage.minimum_critical_case_coverage",
             "Controlled-launch review requires minimum_critical_case_coverage to be exactly 1.0.",
         ),
         (
-            {"coverage": {
-                "minimum_case_coverage": 1.0,
-                "minimum_critical_case_coverage": 1.1,
-                "minimum_trials_per_case": 1,
-            }},
+            {
+                "coverage": {
+                    "minimum_case_coverage": 1.0,
+                    "minimum_critical_case_coverage": 1.1,
+                    "minimum_trials_per_case": 1,
+                }
+            },
             "review_policy.coverage.minimum_critical_case_coverage",
             "Controlled-launch review requires minimum_critical_case_coverage to be exactly 1.0.",
         ),
@@ -328,8 +374,7 @@ def test_controlled_policy_validation_paths(
     issues = validate_review_policy(project).issues
 
     assert any(
-        issue.path == expected_path and issue.message == expected_message
-        for issue in issues
+        issue.path == expected_path and issue.message == expected_message for issue in issues
     )
 
 
@@ -354,7 +399,9 @@ RESULT_HEADER = [
 ]
 
 
-def _write_source_selection_project(project: Path, *, root_passed: bool, manifest_passed: bool) -> Path:
+def _write_source_selection_project(
+    project: Path, *, root_passed: bool, manifest_passed: bool
+) -> Path:
     project.mkdir()
     case = {
         "id": "critical_case",
@@ -466,8 +513,12 @@ def _critical_outcome(result):
 
 def test_scoped_manifest_results_override_failing_root_results(tmp_path: Path) -> None:
     project = tmp_path / "project"
-    manifest_results = _write_source_selection_project(project, root_passed=False, manifest_passed=True)
-    inspection = inspect_run_identity(project, selected_run_id="release-run", selected_candidate="candidate")
+    manifest_results = _write_source_selection_project(
+        project, root_passed=False, manifest_passed=True
+    )
+    inspection = inspect_run_identity(
+        project, selected_run_id="release-run", selected_candidate="candidate"
+    )
 
     validation = validate_eval_results(project, identity_inspection=inspection)
     evidence = classify_behavioral_evidence(project, identity_inspection=inspection)
@@ -491,8 +542,12 @@ def test_scoped_manifest_results_override_failing_root_results(tmp_path: Path) -
 
 def test_scoped_manifest_results_override_passing_root_results(tmp_path: Path) -> None:
     project = tmp_path / "project"
-    manifest_results = _write_source_selection_project(project, root_passed=True, manifest_passed=False)
-    inspection = inspect_run_identity(project, selected_run_id="release-run", selected_candidate="candidate")
+    manifest_results = _write_source_selection_project(
+        project, root_passed=True, manifest_passed=False
+    )
+    inspection = inspect_run_identity(
+        project, selected_run_id="release-run", selected_candidate="candidate"
+    )
 
     full = summarize_eval_results(project, identity_inspection=inspection)
     selected = summarize_selected_eval_results(

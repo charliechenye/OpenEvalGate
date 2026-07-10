@@ -59,10 +59,9 @@ def test_canonical_examples_have_manifest_backed_run_identity() -> None:
         assert inspection.status == RunIdentityStatus.COMPLETE, project_name
         assert inspection.results_path == (project / "eval_results.csv").resolve(strict=False)
         assert inspection.identity is not None, project_name
-        assert (
-            (project / "artifact_index.yaml").exists()
-            == EXAMPLE_PROJECTS[project_name]["has_artifact_index"]
-        ), project_name
+        assert (project / "artifact_index.yaml").exists() == EXAMPLE_PROJECTS[project_name][
+            "has_artifact_index"
+        ], project_name
 
 
 def test_escalation_contract_triggers_and_destinations_have_eval_coverage() -> None:
@@ -82,14 +81,9 @@ def test_escalation_contract_triggers_and_destinations_have_eval_coverage() -> N
         covered_destinations = {handoff["destination"] for handoff in handoffs}
 
         non_refusal_triggers = {
-            trigger["id"]
-            for trigger in contract["triggers"]
-            if trigger["path"] != "refuse"
+            trigger["id"] for trigger in contract["triggers"] if trigger["path"] != "refuse"
         }
-        destinations = {
-            destination["id"]
-            for destination in contract["routing"]["destinations"]
-        }
+        destinations = {destination["id"] for destination in contract["routing"]["destinations"]}
 
         assert non_refusal_triggers.issubset(covered_trigger_ids), project_name
         assert destinations.issubset(covered_destinations), project_name

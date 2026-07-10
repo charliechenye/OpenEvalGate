@@ -66,9 +66,7 @@ def normalize_archive_member(
     if ".." in components:
         _fail(artifact, name, "archive path traversal is forbidden")
 
-    normalized_components = [
-        component for component in components if component not in {"", "."}
-    ]
+    normalized_components = [component for component in components if component not in {"", "."}]
     if not normalized_components:
         _fail(artifact, name, "archive member has an empty normalized path")
     return PurePosixPath(*normalized_components).as_posix()
@@ -218,9 +216,7 @@ def verify_wheel(
                 (info.filename for info in infos),
                 artifact=artifact,
             )
-            original_by_normalized = dict(
-                zip(normalized, (info.filename for info in infos))
-            )
+            original_by_normalized = dict(zip(normalized, (info.filename for info in infos)))
             normalized_set = set(normalized)
 
             print(f"{artifact} contents:")
@@ -234,8 +230,7 @@ def verify_wheel(
             )
 
             expected_dist_info = (
-                f"{_wheel_escape(DISTRIBUTION_NAME)}-"
-                f"{_wheel_escape(expected_version)}.dist-info"
+                f"{_wheel_escape(DISTRIBUTION_NAME)}-{_wheel_escape(expected_version)}.dist-info"
             )
             dist_info_directories = {
                 PurePosixPath(path).parts[0]
@@ -334,8 +329,7 @@ def verify_wheel(
                 _fail(
                     artifact,
                     entry_points_path,
-                    "missing console script "
-                    "'openevalgate = openevalgate.cli:main'",
+                    "missing console script 'openevalgate = openevalgate.cli:main'",
                 )
     except (OSError, zipfile.BadZipFile) as exc:
         _fail(artifact, wheel_path, f"cannot open wheel: {exc}")
@@ -501,10 +495,7 @@ def main(argv: list[str] | None = None) -> int:
     except VerificationError as exc:
         print(str(exc), file=sys.stderr)
         return 1
-    print(
-        f"Verified OpenEvalGate wheel and source distribution version "
-        f"{expected_version}."
-    )
+    print(f"Verified OpenEvalGate wheel and source distribution version {expected_version}.")
     return 0
 
 

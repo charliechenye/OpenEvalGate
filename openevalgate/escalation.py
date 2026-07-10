@@ -73,7 +73,9 @@ def validate_escalation_contract(
 
     workflow = contract.get("workflow")
     if not isinstance(workflow, dict):
-        issues.append(ValidationIssue("escalation_contract.workflow", "Required object is missing."))
+        issues.append(
+            ValidationIssue("escalation_contract.workflow", "Required object is missing.")
+        )
     else:
         for field in ("id", "name", "owner", "version", "risk_tier", "policy_version"):
             _require_non_empty_string(workflow, field, issues, "escalation_contract.workflow")
@@ -87,7 +89,9 @@ def validate_escalation_contract(
 
     boundaries = contract.get("boundaries")
     if not isinstance(boundaries, dict):
-        issues.append(ValidationIssue("escalation_contract.boundaries", "Required object is missing."))
+        issues.append(
+            ValidationIssue("escalation_contract.boundaries", "Required object is missing.")
+        )
     else:
         for field in (
             "resolve_when",
@@ -118,7 +122,9 @@ def validate_escalation_contract(
 
     durable_state = contract.get("durable_state")
     if not isinstance(durable_state, dict):
-        issues.append(ValidationIssue("escalation_contract.durable_state", "Required object is missing."))
+        issues.append(
+            ValidationIssue("escalation_contract.durable_state", "Required object is missing.")
+        )
     else:
         for field in ("checkpoint_required", "idempotency_key_required"):
             if not isinstance(durable_state.get(field), bool):
@@ -136,14 +142,20 @@ def validate_escalation_contract(
         )
 
     if _has_approval_path(triggers, boundaries):
-        if not isinstance(durable_state, dict) or durable_state.get("checkpoint_required") is not True:
+        if (
+            not isinstance(durable_state, dict)
+            or durable_state.get("checkpoint_required") is not True
+        ):
             issues.append(
                 ValidationIssue(
                     "escalation_contract.durable_state.checkpoint_required",
                     "Approval paths require checkpoint_required: true.",
                 )
             )
-        if not isinstance(durable_state, dict) or durable_state.get("idempotency_key_required") is not True:
+        if (
+            not isinstance(durable_state, dict)
+            or durable_state.get("idempotency_key_required") is not True
+        ):
             issues.append(
                 ValidationIssue(
                     "escalation_contract.durable_state.idempotency_key_required",
@@ -154,14 +166,18 @@ def validate_escalation_contract(
     evaluation = contract.get("evaluation")
     required_slices: list[Any] = []
     if not isinstance(evaluation, dict):
-        issues.append(ValidationIssue("escalation_contract.evaluation", "Required object is missing."))
+        issues.append(
+            ValidationIssue("escalation_contract.evaluation", "Required object is missing.")
+        )
     else:
         required_slices = evaluation.get("required_eval_slices", [])
         _require_list(evaluation, "required_eval_slices", issues, "escalation_contract.evaluation")
 
     recertification = contract.get("recertification")
     if not isinstance(recertification, dict):
-        issues.append(ValidationIssue("escalation_contract.recertification", "Required object is missing."))
+        issues.append(
+            ValidationIssue("escalation_contract.recertification", "Required object is missing.")
+        )
     else:
         cadence = recertification.get("cadence_days")
         if not isinstance(cadence, int) or cadence <= 0:
@@ -235,7 +251,9 @@ def summarize_escalation_contract(path: str | Path) -> EscalationContractSummary
     return EscalationContractSummary(
         present=True,
         valid=validation.valid,
-        workflow_id=str(workflow.get("id", "")).strip() or None if isinstance(workflow, dict) else None,
+        workflow_id=str(workflow.get("id", "")).strip() or None
+        if isinstance(workflow, dict)
+        else None,
         trigger_count=validation.trigger_count,
         destination_count=validation.destination_count,
         destinations=destination_ids,
@@ -249,8 +267,12 @@ def summarize_escalation_contract(path: str | Path) -> EscalationContractSummary
         ),
         sla_coverage=_coverage(destinations, "sla_minutes"),
         fallback_coverage=_coverage(destinations, "fallback"),
-        checkpoint_required=durable_state.get("checkpoint_required") if isinstance(durable_state, dict) else None,
-        idempotency_required=durable_state.get("idempotency_key_required") if isinstance(durable_state, dict) else None,
+        checkpoint_required=durable_state.get("checkpoint_required")
+        if isinstance(durable_state, dict)
+        else None,
+        idempotency_required=durable_state.get("idempotency_key_required")
+        if isinstance(durable_state, dict)
+        else None,
         resume_behavior_defined=(
             bool(str(durable_state.get("resume_behavior", "")).strip())
             if isinstance(durable_state, dict)
@@ -258,7 +280,8 @@ def summarize_escalation_contract(path: str | Path) -> EscalationContractSummary
         ),
         required_eval_slice_count=(
             len(evaluation.get("required_eval_slices", []))
-            if isinstance(evaluation, dict) and isinstance(evaluation.get("required_eval_slices"), list)
+            if isinstance(evaluation, dict)
+            and isinstance(evaluation.get("required_eval_slices"), list)
             else 0
         ),
     )
@@ -298,7 +321,9 @@ def _validate_destinations(
         if not isinstance(destination_id, str) or not destination_id.strip():
             issues.append(ValidationIssue(f"{path}.id", "Must be a non-empty string."))
         elif destination_id in destination_ids:
-            issues.append(ValidationIssue(f"{path}.id", f"Duplicate destination id: {destination_id}."))
+            issues.append(
+                ValidationIssue(f"{path}.id", f"Duplicate destination id: {destination_id}.")
+            )
         else:
             destination_ids.add(destination_id)
         handoff_type = destination.get("handoff_type")
@@ -372,11 +397,15 @@ def _validate_case_handoff_references(
     destinations: list[Any],
 ) -> list[ValidationIssue]:
     issues: list[ValidationIssue] = []
-    trigger_map = {
-        str(trigger.get("id", "")).strip(): trigger
-        for trigger in triggers
-        if isinstance(trigger, dict) and str(trigger.get("id", "")).strip()
-    } if isinstance(triggers, list) else {}
+    trigger_map = (
+        {
+            str(trigger.get("id", "")).strip(): trigger
+            for trigger in triggers
+            if isinstance(trigger, dict) and str(trigger.get("id", "")).strip()
+        }
+        if isinstance(triggers, list)
+        else {}
+    )
     destination_map = {
         str(destination.get("id", "")).strip(): destination
         for destination in destinations
@@ -411,10 +440,9 @@ def _validate_case_handoff_references(
                 )
             )
         destination_contract = destination_map.get(destination)
-        if (
-            destination_contract is not None
-            and destination_contract.get("handoff_type") != handoff.get("handoff_type")
-        ):
+        if destination_contract is not None and destination_contract.get(
+            "handoff_type"
+        ) != handoff.get("handoff_type"):
             issues.append(
                 ValidationIssue(
                     f"case[{index}].expected_handoff.handoff_type",
@@ -429,8 +457,7 @@ def _validate_case_handoff_references(
 
 def _has_approval_path(triggers: Any, boundaries: Any) -> bool:
     if isinstance(triggers, list) and any(
-        isinstance(trigger, dict) and trigger.get("path") == "approval"
-        for trigger in triggers
+        isinstance(trigger, dict) and trigger.get("path") == "approval" for trigger in triggers
     ):
         return True
     return (

@@ -178,20 +178,124 @@ def test_enriched_eval_results_validate_and_calculate_boundary_metrics(tmp_path:
     )
 
     headers = [
-        "run_id", "case_id", "candidate", "evaluator", "actual_route", "expected_route",
-        "route_match", "passed", "score", "failure_category", "failure_reason",
-        "observed_output_path", "reviewed_by", "reviewed_at", "notes", "trial_id",
-        "actual_workflow_route", "workflow_route_match", "trajectory_pass",
-        "end_state_pass", "prohibited_action_occurred",
+        "run_id",
+        "case_id",
+        "candidate",
+        "evaluator",
+        "actual_route",
+        "expected_route",
+        "route_match",
+        "passed",
+        "score",
+        "failure_category",
+        "failure_reason",
+        "observed_output_path",
+        "reviewed_by",
+        "reviewed_at",
+        "notes",
+        "trial_id",
+        "actual_workflow_route",
+        "workflow_route_match",
+        "trajectory_pass",
+        "end_state_pass",
+        "prohibited_action_occurred",
     ]
     anchor_route = anchor["expected_route"]
     variant_route = variant["expected_route"]
     variant_mismatch_route = "show" if variant_route != "show" else "escalate"
     rows = [
-        ["run_002", anchor["id"], "gpt-4.1-mini", "human_review", anchor_route, anchor_route, "true", "true", "1", "", "", "", "qa", "2026-06-18", "", "trial_1", "act", "true", "true", "true", "false"],
-        ["run_002", variant["id"], "gpt-4.1-mini", "human_review", variant_route, variant_route, "true", "true", "1", "", "", "", "qa", "2026-06-18", "", "trial_1", "act", "true", "true", "true", "false"],
-        ["run_002", anchor["id"], "gpt-4.1-mini", "human_review", anchor_route, anchor_route, "true", "true", "1", "", "", "", "qa", "2026-06-18", "", "trial_2", "act", "true", "true", "true", "false"],
-        ["run_002", variant["id"], "gpt-4.1-mini", "human_review", variant_mismatch_route, variant_route, "false", "false", "0", "route", "unstable", "", "qa", "2026-06-18", "", "trial_2", "answer", "false", "false", "false", "true"],
+        [
+            "run_002",
+            anchor["id"],
+            "gpt-4.1-mini",
+            "human_review",
+            anchor_route,
+            anchor_route,
+            "true",
+            "true",
+            "1",
+            "",
+            "",
+            "",
+            "qa",
+            "2026-06-18",
+            "",
+            "trial_1",
+            "act",
+            "true",
+            "true",
+            "true",
+            "false",
+        ],
+        [
+            "run_002",
+            variant["id"],
+            "gpt-4.1-mini",
+            "human_review",
+            variant_route,
+            variant_route,
+            "true",
+            "true",
+            "1",
+            "",
+            "",
+            "",
+            "qa",
+            "2026-06-18",
+            "",
+            "trial_1",
+            "act",
+            "true",
+            "true",
+            "true",
+            "false",
+        ],
+        [
+            "run_002",
+            anchor["id"],
+            "gpt-4.1-mini",
+            "human_review",
+            anchor_route,
+            anchor_route,
+            "true",
+            "true",
+            "1",
+            "",
+            "",
+            "",
+            "qa",
+            "2026-06-18",
+            "",
+            "trial_2",
+            "act",
+            "true",
+            "true",
+            "true",
+            "false",
+        ],
+        [
+            "run_002",
+            variant["id"],
+            "gpt-4.1-mini",
+            "human_review",
+            variant_mismatch_route,
+            variant_route,
+            "false",
+            "false",
+            "0",
+            "route",
+            "unstable",
+            "",
+            "qa",
+            "2026-06-18",
+            "",
+            "trial_2",
+            "answer",
+            "false",
+            "false",
+            "false",
+            "true",
+        ],
     ]
     with (project / "eval_results.csv").open("w", encoding="utf-8", newline="") as handle:
         writer = csv.writer(handle)
@@ -272,8 +376,7 @@ def test_truncated_result_row_fails_closed(tmp_path: Path) -> None:
 
     assert not result.valid
     assert any(
-        issue.path.endswith("row[2].candidate")
-        and issue.message == "Must be a non-empty value."
+        issue.path.endswith("row[2].candidate") and issue.message == "Must be a non-empty value."
         for issue in result.issues
     )
     assert evidence.state == "invalid"
@@ -296,8 +399,7 @@ def test_required_result_values_must_be_nonempty(
 
     assert not result.valid
     assert any(
-        issue.path.endswith(f"row[2].{field}")
-        and issue.message == "Must be a non-empty value."
+        issue.path.endswith(f"row[2].{field}") and issue.message == "Must be a non-empty value."
         for issue in result.issues
     )
 
@@ -436,8 +538,7 @@ def test_duplicate_identity_with_blank_trial_ids_fails(tmp_path: Path) -> None:
     result = validate_eval_results(project)
 
     assert any(
-        "trial_id=<blank>" in issue.message
-        and "first declared on row 2" in issue.message
+        "trial_id=<blank>" in issue.message and "first declared on row 2" in issue.message
         for issue in result.issues
     )
 
@@ -503,8 +604,14 @@ def test_existing_regular_output_reference_passes(tmp_path: Path) -> None:
         (r"C:\private\output.md", "Must be a project-relative filesystem path."),
         ("C:/private/output.md", "Must be a project-relative filesystem path."),
         (r"\\server\share\output.md", "Must be a project-relative filesystem path."),
-        (r"\eval_runs\run_001\refund_boundary_case_001.md", "Must be a project-relative filesystem path."),
-        (r"eval_runs\run_001\refund_boundary_case_001.md", "Must be a project-relative filesystem path."),
+        (
+            r"\eval_runs\run_001\refund_boundary_case_001.md",
+            "Must be a project-relative filesystem path.",
+        ),
+        (
+            r"eval_runs\run_001\refund_boundary_case_001.md",
+            "Must be a project-relative filesystem path.",
+        ),
         ("https://example.com/output.md", "Must be a project-relative filesystem path."),
         ("file:///tmp/output.md", "Must be a project-relative filesystem path."),
         ("../outside.md", "Parent-directory traversal is not allowed."),
@@ -542,10 +649,7 @@ def test_embedded_nul_output_reference_is_rejected(tmp_path: Path) -> None:
         allowed_root=project,
     )
 
-    assert (
-        issue
-        == "Referenced output file does not exist or is not a regular file."
-    )
+    assert issue == "Referenced output file does not exist or is not a regular file."
 
 
 def test_output_reference_final_symlink_fails(tmp_path: Path) -> None:
@@ -753,8 +857,7 @@ def test_nonfinite_scores_fail_validation(tmp_path: Path, score: str) -> None:
 
     assert not result.valid
     assert any(
-        issue.path.endswith("row[2].score")
-        and issue.message == "Must be numeric from 0 to 1."
+        issue.path.endswith("row[2].score") and issue.message == "Must be numeric from 0 to 1."
         for issue in result.issues
     )
 
@@ -911,10 +1014,7 @@ def test_unbound_results_are_never_opened(
     inspection = inspect_run_identity(project)
 
     assert inspection.status.value == "missing"
-    assert any(
-        finding.id == "provenance_results_unbound"
-        for finding in inspection.findings
-    )
+    assert any(finding.id == "provenance_results_unbound" for finding in inspection.findings)
 
     original_open = Path.open
     resolved_unbound = unbound_results.resolve(strict=False)
@@ -945,10 +1045,7 @@ def test_unbound_results_are_never_opened(
 
     assert not validation.valid
     assert validation.row_count == 0
-    assert all(
-        issue.source == "provenance"
-        for issue in validation.issues
-    )
+    assert all(issue.source == "provenance" for issue in validation.issues)
 
     assert evidence.state == "invalid"
     assert evidence.summary is None

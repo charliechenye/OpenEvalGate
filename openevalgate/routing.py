@@ -104,7 +104,9 @@ def validate_routing_policy(
 
     observability = policy.get("observability")
     if not isinstance(observability, dict):
-        issues.append(ValidationIssue("routing_policy.observability", "Required object is missing."))
+        issues.append(
+            ValidationIssue("routing_policy.observability", "Required object is missing.")
+        )
     else:
         required_fields = observability.get("required_fields")
         _require_list(observability, "required_fields", issues, "routing_policy.observability")
@@ -121,11 +123,13 @@ def validate_routing_policy(
                         f"Must include {field}.",
                     )
                 )
-            if any(
-                isinstance(workflow, dict)
-                and workflow.get("kind") == "subagent"
-                for workflow in workflows or []
-            ) and "model_id" not in normalized:
+            if (
+                any(
+                    isinstance(workflow, dict) and workflow.get("kind") == "subagent"
+                    for workflow in workflows or []
+                )
+                and "model_id" not in normalized
+            ):
                 issues.append(
                     ValidationIssue(
                         "routing_policy.observability.required_fields",
@@ -157,7 +161,9 @@ def validate_routing_policy(
 
     recertification = policy.get("recertification")
     if not isinstance(recertification, dict):
-        issues.append(ValidationIssue("routing_policy.recertification", "Required object is missing."))
+        issues.append(
+            ValidationIssue("routing_policy.recertification", "Required object is missing.")
+        )
     else:
         cadence = recertification.get("cadence_days")
         if not isinstance(cadence, int) or cadence <= 0:
@@ -177,9 +183,7 @@ def validate_routing_policy(
     if eval_cases_path is not None and Path(eval_cases_path).is_file():
         cases = load_eval_cases(eval_cases_path)
         case_ids = {
-            str(case.get("id", "")).strip()
-            for case in cases
-            if str(case.get("id", "")).strip()
+            str(case.get("id", "")).strip() for case in cases if str(case.get("id", "")).strip()
         }
         referenced_cases: dict[str, str] = {}
         for index, workflow in enumerate(workflows or []):
@@ -231,18 +235,14 @@ def summarize_routing_policy(path: str | Path) -> RoutingPolicySummary:
         )
 
     metadata = policy.get("metadata", {})
-    workflows = [
-        workflow for workflow in policy.get("workflows", []) if isinstance(workflow, dict)
-    ]
+    workflows = [workflow for workflow in policy.get("workflows", []) if isinstance(workflow, dict)]
     assignments = [
         workflow.get("model_assignment", {})
         for workflow in workflows
         if isinstance(workflow.get("model_assignment"), dict)
     ]
     high_risk = [
-        workflow
-        for workflow in workflows
-        if workflow.get("risk_tier") in {"high", "prohibited"}
+        workflow for workflow in workflows if workflow.get("risk_tier") in {"high", "prohibited"}
     ]
     rollback = policy.get("rollback")
     return RoutingPolicySummary(
@@ -250,9 +250,7 @@ def summarize_routing_policy(path: str | Path) -> RoutingPolicySummary:
         valid=validation.valid,
         policy_id=str(metadata.get("id", "")).strip() or None,
         version=str(metadata.get("version", "")).strip() or None,
-        model_count=len(
-            [model for model in policy.get("models", []) if isinstance(model, dict)]
-        ),
+        model_count=len([model for model in policy.get("models", []) if isinstance(model, dict)]),
         workflow_count=len(workflows),
         subagent_count=sum(1 for workflow in workflows if workflow.get("kind") == "subagent"),
         deterministic_count=sum(
@@ -260,9 +258,7 @@ def summarize_routing_policy(path: str | Path) -> RoutingPolicySummary:
         ),
         human_count=sum(1 for workflow in workflows if workflow.get("kind") == "human"),
         fixed_count=sum(1 for assignment in assignments if assignment.get("mode") == "fixed"),
-        adaptive_count=sum(
-            1 for assignment in assignments if assignment.get("mode") == "adaptive"
-        ),
+        adaptive_count=sum(1 for assignment in assignments if assignment.get("mode") == "adaptive"),
         no_model_count=sum(1 for assignment in assignments if assignment.get("mode") == "none"),
         fallback_coverage=_workflow_coverage(workflows, "fallback_workflow_id"),
         eval_coverage=_workflow_list_coverage(workflows, "eval_cases"),

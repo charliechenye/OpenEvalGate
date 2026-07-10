@@ -120,9 +120,7 @@ def check_project(
     launch_gate_review = parse_launch_gate_review(root / "launch_gate_review.md")
     issues.extend(launch_gate_review.issues)
 
-    action_risk_review = inspect_action_risk_matrix(
-        root / "action_risk_matrix.csv"
-    )
+    action_risk_review = inspect_action_risk_matrix(root / "action_risk_matrix.csv")
     issues.extend(action_risk_review.issues)
 
     valid = not missing and not issues

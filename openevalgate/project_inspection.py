@@ -81,18 +81,13 @@ def inspect_project(project_dir: str | Path) -> ProjectInspection:
     action_review = check.action_risk_review
 
     eval_high_impact = (
-        any(
-            str(case.get("risk_tier", "")).lower()
-            in {"high", "prohibited"}
-            for case in cases
-        )
+        any(str(case.get("risk_tier", "")).lower() in {"high", "prohibited"} for case in cases)
         if eval_valid
         else None
     )
     action_high_impact = (
         any(
-            row.get("risk_tier", "").lower()
-            in HIGH_IMPACT_ACTION_RISK_TIERS
+            row.get("risk_tier", "").lower() in HIGH_IMPACT_ACTION_RISK_TIERS
             for row in action_review.rows
         )
         if action_review.valid
@@ -111,13 +106,9 @@ def inspect_project(project_dir: str | Path) -> ProjectInspection:
     evidence = HardGateEvidence(
         scope_evidence_valid=(root / "assistant_prd.md").is_file(),
         golden_eval_evidence_valid=eval_valid,
-        tail_risk_evidence_valid=(
-            root / "p0_failure_mode_checklist.md"
-        ).is_file(),
+        tail_risk_evidence_valid=(root / "p0_failure_mode_checklist.md").is_file(),
         tool_action_evidence_valid=action_review.valid,
-        escalation_evidence_valid=(
-            root / "human_escalation_design.md"
-        ).is_file(),
+        escalation_evidence_valid=(root / "human_escalation_design.md").is_file(),
     )
     evaluations = evaluate_hard_gate_policy(
         review,
@@ -125,14 +116,10 @@ def inspect_project(project_dir: str | Path) -> ProjectInspection:
         evidence,
     )
     policy_issues = [
-        evaluation.policy_issue
-        for evaluation in evaluations
-        if evaluation.policy_issue is not None
+        evaluation.policy_issue for evaluation in evaluations if evaluation.policy_issue is not None
     ]
     policy_blockers = [
-        evaluation.blocker
-        for evaluation in evaluations
-        if evaluation.blocker is not None
+        evaluation.blocker for evaluation in evaluations if evaluation.blocker is not None
     ]
     independent_blockers = _evaluate_independent_blockers(
         root,
@@ -150,9 +137,7 @@ def inspect_project(project_dir: str | Path) -> ProjectInspection:
         ),
         run_identity_inspection=run_identity,
     )
-    hard_blockers = _deduplicate_blockers(
-        [*policy_blockers, *independent_blockers]
-    )
+    hard_blockers = _deduplicate_blockers([*policy_blockers, *independent_blockers])
     return ProjectInspection(
         check,
         review,
@@ -199,9 +184,7 @@ def _evaluate_independent_blockers(
     blockers: list[HardBlocker] = []
 
     unsafe_actions = _high_risk_actions_without_controls(
-        check.action_risk_review.rows
-        if check.action_risk_review.valid
-        else []
+        check.action_risk_review.rows if check.action_risk_review.valid else []
     )
     if unsafe_actions:
         blockers.append(
@@ -233,10 +216,7 @@ def _evaluate_independent_blockers(
                 HardBlocker(
                     "missing_eval_run_provenance",
                     "Controlled-launch review requires a complete manifest-backed eval-run identity.",
-                    (
-                        f"eval_runs/{behavioral_scope.run_id}/run_manifest.yaml "
-                        "or run_manifest.yaml"
-                    ),
+                    (f"eval_runs/{behavioral_scope.run_id}/run_manifest.yaml or run_manifest.yaml"),
                 )
             )
         lifecycle_findings = {finding.id for finding in run_identity_inspection.findings}
@@ -301,18 +281,12 @@ def _high_risk_actions_without_controls(
 ) -> list[str]:
     unsafe: list[str] = []
     for row in rows:
-        if (
-            row.get("risk_tier", "").lower()
-            not in HIGH_IMPACT_ACTION_RISK_TIERS
-        ):
+        if row.get("risk_tier", "").lower() not in HIGH_IMPACT_ACTION_RISK_TIERS:
             continue
         deterministic_gate = row.get("deterministic_gate", "")
         human_review = row.get("human_review_required", "").lower()
         has_gate = is_meaningful_value(deterministic_gate)
-        has_review = (
-            human_review in ALLOWED_BOOLEAN_VALUES
-            and human_review == "true"
-        )
+        has_review = human_review in ALLOWED_BOOLEAN_VALUES and human_review == "true"
         if not has_gate and not has_review:
             unsafe.append(row.get("action", "") or "unknown_action")
     return unsafe
@@ -325,7 +299,8 @@ def _critical_escalation_failures(
     run_identity_inspection: RunIdentityInspection,
 ) -> list[str]:
     high_risk_handoff_cases = {
-        str(case.get("id", "")).strip() for case in cases
+        str(case.get("id", "")).strip()
+        for case in cases
         if str(case.get("risk_tier", "")).lower() in {"high", "prohibited"}
         and isinstance(case.get("expected_handoff"), dict)
     }
@@ -337,8 +312,7 @@ def _critical_escalation_failures(
         return []
     for row in read_eval_results(results_path):
         if scope is not None and (
-            row.get("run_id", "") != scope.run_id
-            or row.get("candidate", "") != scope.candidate
+            row.get("run_id", "") != scope.run_id or row.get("candidate", "") != scope.candidate
         ):
             continue
         case_id = row.get("case_id", "").strip()

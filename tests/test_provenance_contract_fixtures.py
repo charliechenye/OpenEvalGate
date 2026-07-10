@@ -59,7 +59,10 @@ def schemas():
 @pytest.fixture(scope="module")
 def validators(schemas):
     checker = FormatChecker()
-    return {name: Draft202012Validator(schema, format_checker=checker) for name, schema in schemas.items()}
+    return {
+        name: Draft202012Validator(schema, format_checker=checker)
+        for name, schema in schemas.items()
+    }
 
 
 def fixture_dirs():
@@ -112,6 +115,7 @@ def norm_rel(root, rel, allowed_root=None):
     except ValueError:
         return None, "provenance_unsafe_path"
     return full, None
+
 
 def manifest_descriptor_paths(manifest):
     if not manifest:
@@ -206,7 +210,11 @@ def validate_csv_headers(fieldnames, path="<csv>"):
     duplicates = {name for name in fieldnames if fieldnames.count(name) > 1}
     assert not duplicates, f"Duplicate CSV headers in {path}: {sorted(duplicates)}"
     missing = [column for column in REQUIRED_EVAL_RESULT_COLUMNS if column not in fieldnames]
-    missing += [column for column in PROVENANCE_CSV_COLUMNS if column not in fieldnames and column not in missing]
+    missing += [
+        column
+        for column in PROVENANCE_CSV_COLUMNS
+        if column not in fieldnames and column not in missing
+    ]
     assert not missing, f"Missing CSV headers in {path}: {missing}"
 
 
@@ -239,7 +247,9 @@ def resolve_artifact_index_path(manifest_path, manifest):
     artifact_index = manifest.get("outputs", {}).get("artifact_index", {}) if manifest else {}
     if "path" not in artifact_index:
         return None, None
-    return resolve_descriptor(manifest_path.parent, artifact_index, allowed_root=manifest_path.parent)
+    return resolve_descriptor(
+        manifest_path.parent, artifact_index, allowed_root=manifest_path.parent
+    )
 
 
 def referenced_fixture_files(fixture):
@@ -284,6 +294,7 @@ def referenced_fixture_files(fixture):
 
     return referenced
 
+
 def resource_key(desc):
     role = desc.get("role")
     if role in SINGLETON_ROLES:
@@ -311,20 +322,29 @@ def canonical_mirrors(manifest):
     if "policy" in evaluation:
         mirrors.append((evaluation["policy"], ("evaluation_policy", None)))
     if "configuration" in evaluator:
-        mirrors.append((evaluator["configuration"], ("evaluator_configuration", evaluator.get("id"))))
+        mirrors.append(
+            (evaluator["configuration"], ("evaluator_configuration", evaluator.get("id")))
+        )
     if "decision_policy" in evaluator:
-        mirrors.append((evaluator["decision_policy"], ("hybrid_decision_policy", evaluator.get("id"))))
+        mirrors.append(
+            (evaluator["decision_policy"], ("hybrid_decision_policy", evaluator.get("id")))
+        )
     for component in evaluator.get("components", []) or []:
         if "configuration" in component:
-            mirrors.append((component["configuration"], ("evaluator_component_configuration", component.get("id"))))
+            mirrors.append(
+                (
+                    component["configuration"],
+                    ("evaluator_component_configuration", component.get("id")),
+                )
+            )
     return mirrors
+
 
 def contains_unsafe_local_path(doc):
     for _, desc in descriptor_paths(doc):
         if "path" in desc and norm_rel(Path("."), desc["path"])[1] == "provenance_unsafe_path":
             return True
     return False
-
 
 
 def validate_fixture(fixture, validators):
@@ -338,7 +358,9 @@ def validate_fixture(fixture, validators):
         artifact_path, artifact_path_issue = resolve_artifact_index_path(manifest_path, manifest)
     schema = {
         "manifest": schema_status(manifest_path, validators["manifest"]),
-        "artifact_index": schema_status(artifact_path, validators["artifact_index"]) if artifact_path else "not_present",
+        "artifact_index": schema_status(artifact_path, validators["artifact_index"])
+        if artifact_path
+        else "not_present",
         "review_context": schema_status(review_path, validators["review_context"]),
     }
     assert schema == expected["schema_validation"], fixture.name
@@ -355,7 +377,11 @@ def validate_fixture(fixture, validators):
     if schema["manifest"] == "invalid":
         if manifest.get("schema_version") != "1":
             findings.add("provenance_unsupported_schema_version")
-        elif "outputs" in manifest and "results" in manifest.get("outputs", {}) and "path" not in manifest["outputs"]["results"]:
+        elif (
+            "outputs" in manifest
+            and "results" in manifest.get("outputs", {})
+            and "path" not in manifest["outputs"]["results"]
+        ):
             findings.add("provenance_results_path_required")
         elif contains_unsafe_local_path(manifest):
             findings.add("provenance_unsafe_path")
@@ -373,10 +399,26 @@ def validate_fixture(fixture, validators):
 
     run_root = manifest_path.parent.resolve(strict=False)
     for context, desc in descriptor_paths(manifest):
-        digest_finding = "provenance_output_digest_mismatch" if context in {"results", "artifact_index", "output"} else "provenance_input_digest_mismatch"
-        verify_descriptor(manifest_path.parent, context, desc, findings, digest_finding=digest_finding, allowed_root=run_root)
+        digest_finding = (
+            "provenance_output_digest_mismatch"
+            if context in {"results", "artifact_index", "output"}
+            else "provenance_input_digest_mismatch"
+        )
+        verify_descriptor(
+            manifest_path.parent,
+            context,
+            desc,
+            findings,
+            digest_finding=digest_finding,
+            allowed_root=run_root,
+        )
 
-    if findings & {"provenance_unsafe_path", "provenance_local_file_missing", "provenance_input_digest_mismatch", "provenance_output_digest_mismatch"}:
+    if findings & {
+        "provenance_unsafe_path",
+        "provenance_local_file_missing",
+        "provenance_input_digest_mismatch",
+        "provenance_output_digest_mismatch",
+    }:
         return findings
 
     inputs = manifest.get("inputs", []) or []
@@ -401,7 +443,9 @@ def validate_fixture(fixture, validators):
         mirror = mirrors[0]
         mismatch = False
         if "path" in fixed or "path" in mirror:
-            mismatch = mismatch or norm_descriptor_path(run_root, fixed) != norm_descriptor_path(run_root, mirror)
+            mismatch = mismatch or norm_descriptor_path(run_root, fixed) != norm_descriptor_path(
+                run_root, mirror
+            )
         if "uri" in fixed or "uri" in mirror:
             mismatch = mismatch or fixed.get("uri") != mirror.get("uri")
         if "digest" in fixed or "digest" in mirror:
@@ -428,7 +472,10 @@ def validate_fixture(fixture, validators):
         findings.add(issue)
         return findings
     rows = read_csv_rows(results_path)
-    candidate_allowed = {manifest["candidate"]["id"], *manifest["candidate"].get("accepted_aliases", [])}
+    candidate_allowed = {
+        manifest["candidate"]["id"],
+        *manifest["candidate"].get("accepted_aliases", []),
+    }
     evaluator_allowed = {evaluator["id"], *evaluator.get("accepted_aliases", [])}
     for row in rows:
         if row["run_id"].strip() != manifest["run"]["id"]:
@@ -452,13 +499,23 @@ def validate_fixture(fixture, validators):
         artifact_root = artifact_path.parent.resolve(strict=False)
         norm_paths = []
         for artifact in artifact_index.get("artifacts", []):
-            verify_descriptor(artifact_root, "artifact", artifact, findings, digest_finding="provenance_output_digest_mismatch", allowed_root=run_root)
+            verify_descriptor(
+                artifact_root,
+                "artifact",
+                artifact,
+                findings,
+                digest_finding="provenance_output_digest_mismatch",
+                allowed_root=run_root,
+            )
             path, issue = resolve_descriptor(artifact_root, artifact, allowed_root=run_root)
             if issue:
                 findings.add(issue)
             elif path:
                 norm_paths.append(run_relative(path, run_root))
-            if artifact.get("evaluator_ref") and artifact["evaluator_ref"] not in {evaluator["id"], *component_ids}:
+            if artifact.get("evaluator_ref") and artifact["evaluator_ref"] not in {
+                evaluator["id"],
+                *component_ids,
+            }:
                 findings.add("provenance_artifact_identity_mismatch")
         if findings:
             return findings
@@ -489,7 +546,9 @@ def validate_fixture(fixture, validators):
             artifact_trial_id = normalized_optional(artifact.get("trial_id"))
             csv_trial_id = normalized_optional(row.get("trial_id"))
 
-            if (artifact_case_id is not None and artifact_case_id != csv_case_id) or (artifact_trial_id is not None and artifact_trial_id != csv_trial_id):
+            if (artifact_case_id is not None and artifact_case_id != csv_case_id) or (
+                artifact_trial_id is not None and artifact_trial_id != csv_trial_id
+            ):
                 findings.add("provenance_artifact_identity_mismatch")
                 return findings
 
@@ -498,11 +557,25 @@ def validate_fixture(fixture, validators):
             findings.add("provenance_review_context_schema_invalid")
             return findings
         review_root = review_path.parent.resolve(strict=False)
-        for desc in [review.get("candidate", {}).get("artifact"), *(review.get("inputs", []) or [])]:
+        for desc in [
+            review.get("candidate", {}).get("artifact"),
+            *(review.get("inputs", []) or []),
+        ]:
             if not desc:
                 continue
-            verify_descriptor(review_path.parent, "review_context", desc, findings, digest_finding="provenance_review_context_digest_mismatch", allowed_root=review_root)
-        if findings & {"provenance_review_context_digest_mismatch", "provenance_unsafe_path", "provenance_local_file_missing"}:
+            verify_descriptor(
+                review_path.parent,
+                "review_context",
+                desc,
+                findings,
+                digest_finding="provenance_review_context_digest_mismatch",
+                allowed_root=review_root,
+            )
+        if findings & {
+            "provenance_review_context_digest_mismatch",
+            "provenance_unsafe_path",
+            "provenance_local_file_missing",
+        }:
             return findings
         current_by_key = {}
         for desc in review.get("inputs", []) or []:
@@ -530,13 +603,17 @@ def validate_fixture(fixture, validators):
     # Freshness comparison.
     if missing_canonical_mirror:
         findings.add("provenance_freshness_unknown")
-    if review["candidate"].get("id") != manifest["candidate"]["id"] or review["candidate"].get("version") != manifest["candidate"].get("version"):
+    if review["candidate"].get("id") != manifest["candidate"]["id"] or review["candidate"].get(
+        "version"
+    ) != manifest["candidate"].get("version"):
         findings.add("provenance_candidate_stale")
     elif "artifact" in manifest.get("candidate", {}):
         current_artifact = review.get("candidate", {}).get("artifact")
         if not current_artifact or "digest" not in current_artifact:
             findings.add("provenance_freshness_unknown")
-        elif manifest["candidate"]["artifact"].get("digest", {}).get("sha256") != current_artifact.get("digest", {}).get("sha256"):
+        elif manifest["candidate"]["artifact"].get("digest", {}).get(
+            "sha256"
+        ) != current_artifact.get("digest", {}).get("sha256"):
             findings.add("provenance_candidate_stale")
 
     current_inputs = review.get("inputs", []) or []
@@ -564,6 +641,7 @@ def validate_fixture(fixture, validators):
                 findings.add("provenance_evidence_expired")
 
     return findings
+
 
 def test_path_only_descriptors_are_schema_location_discovered():
     manifest = {
@@ -679,7 +757,6 @@ inputs:
     assert orphans == []
 
 
-
 def _symlink_or_skip(link, target, *, target_is_directory=False):
     try:
         link.symlink_to(target, target_is_directory=target_is_directory)
@@ -721,7 +798,17 @@ def test_path_validation_rejects_symlink_to_outside_fixture(tmp_path):
     assert norm_rel(tmp_path, "outside-link.txt") == (None, "provenance_unsafe_path")
 
 
-@pytest.mark.parametrize("unsafe", ["/absolute.txt", "C:/absolute.txt", "C:relative.txt", "//server/share/file.txt", r"dir\\file.txt", "inputs/../file.txt"])
+@pytest.mark.parametrize(
+    "unsafe",
+    [
+        "/absolute.txt",
+        "C:/absolute.txt",
+        "C:relative.txt",
+        "//server/share/file.txt",
+        r"dir\\file.txt",
+        "inputs/../file.txt",
+    ],
+)
 def test_path_validation_rejects_portable_unsafe_forms(tmp_path, unsafe):
     assert norm_rel(tmp_path, unsafe) == (None, "provenance_unsafe_path")
 
@@ -734,9 +821,11 @@ def test_path_validation_accepts_ordinary_safe_nested_path(tmp_path):
     assert issue is None
     assert resolved == target.resolve(strict=False)
 
+
 @pytest.mark.parametrize("unsafe", [".", "./file.txt", "inputs/./file.txt", "inputs/."])
 def test_path_validation_rejects_dot_segments(tmp_path, unsafe):
     assert norm_rel(tmp_path, unsafe) == (None, "provenance_unsafe_path")
+
 
 def test_nested_resolution_roots_follow_declaring_file(tmp_path):
     fixture = tmp_path
@@ -745,15 +834,27 @@ def test_nested_resolution_roots_follow_declaring_file(tmp_path):
     artifact = fixture / "evidence" / "metadata" / "artifacts" / "case_001.md"
     current = fixture / "review" / "current" / "eval_cases.yaml"
     for target, content in [
-        (results, ",".join(BASE_CSV_HEADERS) + "\nrun_001,case_001,candidate,reviewer,support,support,true,true,1.0,,,,qa,2026-06-18T17:13:00Z,,\n"),
-        (artifact_index_path, "schema_version: '1'\nrun_id: run_001\nartifacts:\n  - artifact_id: output-001\n    artifact_type: text\n    path: artifacts/case_001.md\n"),
+        (
+            results,
+            ",".join(BASE_CSV_HEADERS)
+            + "\nrun_001,case_001,candidate,reviewer,support,support,true,true,1.0,,,,qa,2026-06-18T17:13:00Z,,\n",
+        ),
+        (
+            artifact_index_path,
+            "schema_version: '1'\nrun_id: run_001\nartifacts:\n  - artifact_id: output-001\n    artifact_type: text\n    path: artifacts/case_001.md\n",
+        ),
         (artifact, "output\n"),
         (current, "cases: current\n"),
     ]:
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(content, encoding="utf-8")
 
-    manifest = {"outputs": {"results": {"path": "evidence/eval_results.csv"}, "artifact_index": {"path": "evidence/metadata/artifact_index.yaml"}}}
+    manifest = {
+        "outputs": {
+            "results": {"path": "evidence/eval_results.csv"},
+            "artifact_index": {"path": "evidence/metadata/artifact_index.yaml"},
+        }
+    }
     manifest_path = fixture / "run_manifest.yaml"
     manifest_path.write_text("placeholder\n", encoding="utf-8")
     resolved_results, issue = resolve_results_path(manifest_path, manifest)
@@ -764,15 +865,24 @@ def test_nested_resolution_roots_follow_declaring_file(tmp_path):
     assert resolved_index == artifact_index_path.resolve(strict=False)
 
     loaded_index = load_yaml(artifact_index_path)
-    resolved_artifact, issue = resolve_descriptor(artifact_index_path.parent, loaded_index["artifacts"][0], allowed_root=fixture)
+    resolved_artifact, issue = resolve_descriptor(
+        artifact_index_path.parent, loaded_index["artifacts"][0], allowed_root=fixture
+    )
     assert issue is None
     assert resolved_artifact == artifact.resolve(strict=False)
-    resolved_observed, issue = norm_rel(results.parent, "metadata/artifacts/case_001.md", allowed_root=fixture)
+    resolved_observed, issue = norm_rel(
+        results.parent, "metadata/artifacts/case_001.md", allowed_root=fixture
+    )
     assert issue is None
     assert resolved_observed == artifact.resolve(strict=False)
-    review_context = {"candidate": {"id": "candidate", "version": "1"}, "inputs": [{"role": "eval_cases", "path": "current/eval_cases.yaml"}]}
+    review_context = {
+        "candidate": {"id": "candidate", "version": "1"},
+        "inputs": [{"role": "eval_cases", "path": "current/eval_cases.yaml"}],
+    }
     review_path = fixture / "review" / "review_context.yaml"
-    resolved_current, issue = resolve_descriptor(review_path.parent, review_context["inputs"][0], allowed_root=review_path.parent)
+    resolved_current, issue = resolve_descriptor(
+        review_path.parent, review_context["inputs"][0], allowed_root=review_path.parent
+    )
     assert issue is None
     assert resolved_current == current.resolve(strict=False)
 
@@ -789,7 +899,11 @@ def test_csv_headers_accept_required_columns_in_different_order(tmp_path):
 
 
 def test_csv_headers_accept_known_optional_and_extra_columns(tmp_path):
-    headers = [*REQUIRED_EVAL_RESULT_COLUMNS, *OPTIONAL_EVAL_RESULT_COLUMNS, "project_specific_extra"]
+    headers = [
+        *REQUIRED_EVAL_RESULT_COLUMNS,
+        *OPTIONAL_EVAL_RESULT_COLUMNS,
+        "project_specific_extra",
+    ]
     path = tmp_path / "eval_results.csv"
     _write_csv(path, headers)
     assert read_csv_rows(path) == []
@@ -815,7 +929,9 @@ def test_blank_csv_trial_id_matches_absent_artifact_trial_id(tmp_path):
     rows = [{"case_id": " case_001 ", "trial_id": ""}]
     artifact = {"case_id": "case_001"}
     assert artifact.get("case_id") == rows[0].get("case_id", "").strip()
-    assert normalized_optional(artifact.get("trial_id")) == normalized_optional(rows[0].get("trial_id"))
+    assert normalized_optional(artifact.get("trial_id")) == normalized_optional(
+        rows[0].get("trial_id")
+    )
 
 
 def test_schemas_are_draft_2020_12_valid(schemas):
@@ -834,21 +950,20 @@ def test_format_assertions_are_enabled(validators):
     assert any("date-time" in m for m in messages)
     assert any("uri" in m for m in messages)
 
+
 @pytest.mark.parametrize("unsafe", [".", "./file.txt", "inputs/./file.txt", "inputs/."])
 def test_relative_path_schemas_reject_dot_segments(schemas, unsafe):
     for schema_name in ("manifest", "artifact_index", "review_context"):
-        validator = Draft202012Validator(
-            schemas[schema_name]["$defs"]["relativePath"]
-        )
+        validator = Draft202012Validator(schemas[schema_name]["$defs"]["relativePath"])
         assert list(validator.iter_errors(unsafe))
+
 
 @pytest.mark.parametrize("safe", [".hidden", "inputs/.hidden", "inputs/.config/file.yaml"])
 def test_relative_path_schemas_allow_hidden_names(schemas, safe):
     for schema_name in ("manifest", "artifact_index", "review_context"):
-        validator = Draft202012Validator(
-            schemas[schema_name]["$defs"]["relativePath"]
-        )
+        validator = Draft202012Validator(schemas[schema_name]["$defs"]["relativePath"])
         assert list(validator.iter_errors(safe)) == []
+
 
 def test_fixture_inventory_matches_readme():
     dirs = {p.name for p in fixture_dirs()}

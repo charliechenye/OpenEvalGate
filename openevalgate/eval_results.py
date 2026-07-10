@@ -79,9 +79,7 @@ _AWARE_DATETIME_PATTERN = re.compile(
     r"\d{2}:\d{2}:\d{2}(?:\.\d+)?"
     r"(?:Z|[+-]\d{2}:\d{2})$"
 )
-_NAIVE_DATETIME_PATTERN = re.compile(
-    r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?$"
-)
+_NAIVE_DATETIME_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?$")
 _EvalResultRow = dict[str, str | None]
 
 
@@ -189,9 +187,15 @@ def validate_eval_results(
         with results_path.open("r", encoding="utf-8", newline="") as handle:
             reader = csv.DictReader(handle)
             fieldnames = reader.fieldnames or []
-            missing_headers = [column for column in REQUIRED_EVAL_RESULT_COLUMNS if column not in fieldnames]
+            missing_headers = [
+                column for column in REQUIRED_EVAL_RESULT_COLUMNS if column not in fieldnames
+            ]
             for header in missing_headers:
-                issues.append(ValidationIssue(f"{results_path}:{header}", "Required eval result column is missing."))
+                issues.append(
+                    ValidationIssue(
+                        f"{results_path}:{header}", "Required eval result column is missing."
+                    )
+                )
             rows = list(reader)
     except (csv.Error, OSError, UnicodeError) as exc:
         return EvalResultsValidationResult(
@@ -280,7 +284,11 @@ def validate_eval_results(
         for route_field in ("actual_route", "expected_route"):
             route = _cell(row, route_field)
             if route not in EXPECTED_ROUTES:
-                issues.append(ValidationIssue(f"{prefix}.{route_field}", "Must be one of: block, escalate, revise, show."))
+                issues.append(
+                    ValidationIssue(
+                        f"{prefix}.{route_field}", "Must be one of: block, escalate, revise, show."
+                    )
+                )
 
         for bool_field in ("route_match", "passed"):
             value = _cell(row, bool_field).lower()
@@ -289,9 +297,7 @@ def validate_eval_results(
 
         case = cases_by_id.get(case_id) if cases_by_id is not None else None
         case_expected_route = (
-            str(case.get("expected_route", "")).strip()
-            if case is not None
-            else ""
+            str(case.get("expected_route", "")).strip() if case is not None else ""
         )
         result_expected_route = _cell(row, "expected_route")
         actual_route = _cell(row, "actual_route")
@@ -313,8 +319,7 @@ def validate_eval_results(
             and case_expected_route in EXPECTED_ROUTES
             and actual_route in EXPECTED_ROUTES
             and declared_route_match in {"true", "false"}
-            and (declared_route_match == "true")
-            != (actual_route == case_expected_route)
+            and (declared_route_match == "true") != (actual_route == case_expected_route)
         ):
             issues.append(
                 ValidationIssue(
@@ -356,7 +361,9 @@ def validate_eval_results(
                 continue
             value = _cell(row, bool_field).lower()
             if value and value not in {"true", "false"}:
-                issues.append(ValidationIssue(f"{prefix}.{bool_field}", "Must be true, false, or blank."))
+                issues.append(
+                    ValidationIssue(f"{prefix}.{bool_field}", "Must be true, false, or blank.")
+                )
 
         if (
             "destination_match" in fieldnames
@@ -498,20 +505,18 @@ def summarize_eval_results(
 
     cases = list(cases_by_id.values())
     candidates = sorted({_cell(row, "candidate") for row in rows if _cell(row, "candidate")})
-    failed_case_ids = sorted({
-        _cell(row, "case_id")
-        for row in rows
-        if _cell(row, "passed").lower() == "false" and _cell(row, "case_id")
-    })
+    failed_case_ids = sorted(
+        {
+            _cell(row, "case_id")
+            for row in rows
+            if _cell(row, "passed").lower() == "false" and _cell(row, "case_id")
+        }
+    )
     failure_categories = Counter(
-        _cell(row, "failure_category")
-        for row in rows
-        if _cell(row, "failure_category")
+        _cell(row, "failure_category") for row in rows if _cell(row, "failure_category")
     )
     observed_output_paths = [
-        _cell(row, "observed_output_path")
-        for row in rows
-        if _cell(row, "observed_output_path")
+        _cell(row, "observed_output_path") for row in rows if _cell(row, "observed_output_path")
     ]
 
     passed_values = [_cell(row, "passed").lower() for row in rows]
@@ -583,20 +588,14 @@ def summarize_selected_eval_results(
         if path is not None and path.is_file()
         else []
     )
-    case_counts = Counter(
-        _cell(row, "case_id")
-        for row in rows
-        if _cell(row, "case_id")
-    )
+    case_counts = Counter(_cell(row, "case_id") for row in rows if _cell(row, "case_id"))
     cases = list(cases_by_id.values())
     escalation_case_ids = {
         str(case.get("id", "")).strip()
         for case in cases
         if case.get("expected_route") == "escalate"
     }
-    escalation_rows = [
-        row for row in rows if _cell(row, "case_id") in escalation_case_ids
-    ]
+    escalation_rows = [row for row in rows if _cell(row, "case_id") in escalation_case_ids]
     return SelectedEvalResultsSummary(
         row_count=len(rows),
         observed_case_ids=tuple(sorted(case_counts)),
@@ -671,9 +670,8 @@ def _provenance_issues(inspection: RunIdentityInspection) -> list[ValidationIssu
     issues: list[ValidationIssue] = []
     for finding in inspection.findings:
         issues.append(ValidationIssue(finding.path, finding.message, source="provenance"))
-        if (
-            finding.id == "provenance_local_file_missing"
-            and finding.path.endswith(".observed_output_path")
+        if finding.id == "provenance_local_file_missing" and finding.path.endswith(
+            ".observed_output_path"
         ):
             issues.append(
                 ValidationIssue(
@@ -757,7 +755,9 @@ def _optional_true_rate(rows: list[_EvalResultRow], field: str) -> float | None:
     return _true_rate([_cell(row, field).lower() for row in rows])
 
 
-def _boundary_metrics(cases: list[dict[str, object]], rows: list[_EvalResultRow]) -> dict[str, object]:
+def _boundary_metrics(
+    cases: list[dict[str, object]], rows: list[_EvalResultRow]
+) -> dict[str, object]:
     boundary_cases = {
         str(case.get("id", "")): case
         for case in cases
@@ -850,9 +850,7 @@ def _escalation_metrics(
     rows: list[_EvalResultRow],
 ) -> dict[str, float | None]:
     cases_by_id = {
-        str(case.get("id", "")).strip(): case
-        for case in cases
-        if str(case.get("id", "")).strip()
+        str(case.get("id", "")).strip(): case for case in cases if str(case.get("id", "")).strip()
     }
     required_rows: list[_EvalResultRow] = []
     routine_rows: list[_EvalResultRow] = []
@@ -880,9 +878,7 @@ def _escalation_metrics(
         "required_escalation_recall": (
             required_successes / len(required_rows) if required_rows else None
         ),
-        "over_escalation_rate": (
-            over_escalations / len(routine_rows) if routine_rows else None
-        ),
+        "over_escalation_rate": (over_escalations / len(routine_rows) if routine_rows else None),
     }
 
 
@@ -904,11 +900,7 @@ def _handoff_true_rate(
         if isinstance(case.get("expected_handoff"), dict)
     }
     return _true_rate(
-        [
-            _cell(row, field).lower()
-            for row in rows
-            if _cell(row, "case_id") in handoff_case_ids
-        ]
+        [_cell(row, field).lower() for row in rows if _cell(row, "case_id") in handoff_case_ids]
     )
 
 

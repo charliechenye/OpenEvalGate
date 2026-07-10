@@ -122,10 +122,7 @@ def evaluate_hard_gate_policy(
 ) -> list[HardGateEvaluation]:
     """Evaluate the centralized hard gates in deterministic policy order."""
 
-    return [
-        _evaluate_rule(rule, review, context, evidence)
-        for rule in HARD_GATE_RULES
-    ]
+    return [_evaluate_rule(rule, review, context, evidence) for rule in HARD_GATE_RULES]
 
 
 def _evaluate_rule(
@@ -161,10 +158,7 @@ def _evaluate_rule(
             applicable,
             f"invalid: {row.status.strip()}",
             "Invalid",
-            (
-                f"{_gate_label(rule)} declares unsupported status "
-                f"`{row.status.strip()}`."
-            ),
+            (f"{_gate_label(rule)} declares unsupported status `{row.status.strip()}`."),
         )
 
     actual_status = row.normalized_status if row is not None else "missing"
@@ -209,19 +203,9 @@ def _evaluate_rule(
             "not_applicable is prohibited for an applicable hard gate.",
             source="hard_gate_policy",
         )
-        reasons = [
-            (
-                f"{_gate_requirement(rule)}; actual status is "
-                "`not_applicable`."
-            )
-        ]
-        if (
-            rule.artifact_field is not None
-            and not getattr(evidence, rule.artifact_field)
-        ):
-            reasons.append(
-                f"Required evidence is missing or invalid: {rule.artifact_label}."
-            )
+        reasons = [(f"{_gate_requirement(rule)}; actual status is `not_applicable`.")]
+        if rule.artifact_field is not None and not getattr(evidence, rule.artifact_field):
+            reasons.append(f"Required evidence is missing or invalid: {rule.artifact_label}.")
         return _blocked_evaluation(
             rule,
             True,
@@ -235,18 +219,10 @@ def _evaluate_rule(
         if actual_status == "missing":
             status_reason = f"{_gate_requirement(rule)}; the gate is missing."
         else:
-            status_reason = (
-                f"{_gate_requirement(rule)}; actual status is "
-                f"`{actual_status}`."
-            )
+            status_reason = f"{_gate_requirement(rule)}; actual status is `{actual_status}`."
         reasons = [status_reason]
-        if (
-            rule.artifact_field is not None
-            and not getattr(evidence, rule.artifact_field)
-        ):
-            reasons.append(
-                f"Required evidence is missing or invalid: {rule.artifact_label}."
-            )
+        if rule.artifact_field is not None and not getattr(evidence, rule.artifact_field):
+            reasons.append(f"Required evidence is missing or invalid: {rule.artifact_label}.")
         return _blocked_evaluation(
             rule,
             True,
@@ -259,18 +235,10 @@ def _evaluate_rule(
     reasons: list[str] = []
     if not is_meaningful_evidence(row.evidence):
         reasons.append(
-            (
-                f"{_gate_label(rule)} is declared `pass` but does not "
-                "contain meaningful evidence."
-            )
+            (f"{_gate_label(rule)} is declared `pass` but does not contain meaningful evidence.")
         )
-    if (
-        rule.artifact_field is not None
-        and not getattr(evidence, rule.artifact_field)
-    ):
-        reasons.append(
-            f"Required evidence is missing or invalid: {rule.artifact_label}."
-        )
+    if rule.artifact_field is not None and not getattr(evidence, rule.artifact_field):
+        reasons.append(f"Required evidence is missing or invalid: {rule.artifact_label}.")
     if reasons:
         return _blocked_evaluation(
             rule,
@@ -323,11 +291,7 @@ def _blocked_evaluation(
 
 
 def _required_status(rule: HardGateRule) -> str:
-    return (
-        "pass"
-        if rule.applicability == "always"
-        else "pass when applicable"
-    )
+    return "pass" if rule.applicability == "always" else "pass when applicable"
 
 
 def _gate_requirement(rule: HardGateRule) -> str:

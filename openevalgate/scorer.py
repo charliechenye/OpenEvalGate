@@ -99,7 +99,10 @@ def score_gates(
 
     # Backward-compatible hint from older report code; ignored by the new model
     # except when no tail-risk gate exists.
-    if boundary_coverage_status in ALLOWED_GATE_STATUSES and not category_statuses["tail_risk_p0_failure_readiness"]:
+    if (
+        boundary_coverage_status in ALLOWED_GATE_STATUSES
+        and not category_statuses["tail_risk_p0_failure_readiness"]
+    ):
         category_statuses["tail_risk_p0_failure_readiness"] = [boundary_coverage_status]
 
     raw_score = 0.0
@@ -157,21 +160,14 @@ def _valid_standard_rows(
         normalized_rows = [
             replace(
                 row,
-                canonical_gate=(
-                    row.canonical_gate
-                    or canonicalize_gate_name(row.gate)
-                ),
+                canonical_gate=(row.canonical_gate or canonicalize_gate_name(row.gate)),
             )
             for row in gates
         ]
         counts = Counter(
-            row.canonical_gate
-            for row in normalized_rows
-            if row.canonical_gate is not None
+            row.canonical_gate for row in normalized_rows if row.canonical_gate is not None
         )
-        duplicates = {
-            gate for gate, count in counts.items() if count > 1
-        }
+        duplicates = {gate for gate, count in counts.items() if count > 1}
         rows = [
             row
             for row in normalized_rows
@@ -182,8 +178,4 @@ def _valid_standard_rows(
 
 
 def _scorable_rows(valid_standard_rows: list[GateRow]) -> list[GateRow]:
-    return [
-        row
-        for row in valid_standard_rows
-        if row.canonical_gate in GATE_TO_CATEGORY
-    ]
+    return [row for row in valid_standard_rows if row.canonical_gate in GATE_TO_CATEGORY]

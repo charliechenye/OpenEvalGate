@@ -53,13 +53,11 @@ def test_hidden_files_and_directories_are_allowed(tmp_path: Path) -> None:
     hidden_file = _write(tmp_path / ".hidden")
     hidden_nested = _write(tmp_path / ".config" / "file.yaml")
 
-    assert (
-        resolve_local_evidence_path(tmp_path, ".hidden").path
-        == hidden_file.resolve(strict=False)
+    assert resolve_local_evidence_path(tmp_path, ".hidden").path == hidden_file.resolve(
+        strict=False
     )
-    assert (
-        resolve_local_evidence_path(tmp_path, ".config/file.yaml").path
-        == hidden_nested.resolve(strict=False)
+    assert resolve_local_evidence_path(tmp_path, ".config/file.yaml").path == hidden_nested.resolve(
+        strict=False
     )
 
 

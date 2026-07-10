@@ -19,8 +19,7 @@ def assess_launch(
     """Apply mode-aware launch precedence to already evaluated inputs."""
 
     sufficient_control = (
-        evidence_completeness_score >= EVIDENCE_SUFFICIENCY_SCORE
-        and project_evidence_valid
+        evidence_completeness_score >= EVIDENCE_SUFFICIENCY_SCORE and project_evidence_valid
     )
     mode = behavioral_sufficiency.effective_mode
     state = behavioral_sufficiency.behavioral_evidence_state
@@ -59,7 +58,10 @@ def assess_launch(
         elif hard_blockers:
             stage = "Shadow evaluation with remediation"
             recommendation = "Not ready for controlled launch"
-        elif not behavioral_sufficiency.selected_run_id or not behavioral_sufficiency.selected_candidate:
+        elif (
+            not behavioral_sufficiency.selected_run_id
+            or not behavioral_sufficiency.selected_candidate
+        ):
             stage = "Shadow evaluation with remediation"
             recommendation = "Not ready for controlled launch"
             actions.append("Provide a selected run and candidate for controlled-launch review.")
@@ -75,9 +77,7 @@ def assess_launch(
             stage = "Controlled launch"
             recommendation = "Ready for bounded controlled launch"
 
-    critical_status = _critical_control_status(
-        behavioral_sufficiency, hard_blockers, stage
-    )
+    critical_status = _critical_control_status(behavioral_sufficiency, hard_blockers, stage)
     return LaunchAssessment(
         evidence_completeness_score=evidence_completeness_score,
         evidence_band=evidence_completeness_band(evidence_completeness_score),
@@ -94,9 +94,7 @@ def assess_launch(
     )
 
 
-def _append_behavioral_actions(
-    actions: list[str], sufficiency: BehavioralSufficiency
-) -> None:
+def _append_behavioral_actions(actions: list[str], sufficiency: BehavioralSufficiency) -> None:
     if sufficiency.missing_case_ids:
         actions.append("Add result coverage for missing eval cases.")
     if sufficiency.observed_cases_below_trial_depth:

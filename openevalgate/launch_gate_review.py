@@ -35,9 +35,7 @@ STANDARD_GATE_NAMES = (
     "owner signoff gate",
 )
 
-ALLOWED_GATE_STATUSES = frozenset(
-    {"pass", "partial", "fail", "not_applicable"}
-)
+ALLOWED_GATE_STATUSES = frozenset({"pass", "partial", "fail", "not_applicable"})
 
 NON_EVIDENCE_VALUES = frozenset(
     {
@@ -144,12 +142,8 @@ def parse_launch_gate_review(path: str | Path) -> LaunchGateReview:
                 )
             )
 
-    canonical_counts = Counter(
-        row.canonical_gate for row in rows if row.canonical_gate is not None
-    )
-    duplicates = frozenset(
-        gate for gate, count in canonical_counts.items() if count > 1
-    )
+    canonical_counts = Counter(row.canonical_gate for row in rows if row.canonical_gate is not None)
+    duplicates = frozenset(gate for gate, count in canonical_counts.items() if count > 1)
     for canonical_gate in STANDARD_GATE_NAMES:
         if canonical_gate in duplicates:
             issues.append(
@@ -163,8 +157,7 @@ def parse_launch_gate_review(path: str | Path) -> LaunchGateReview:
     valid_rows = [
         row
         for row in rows
-        if row.normalized_status in ALLOWED_GATE_STATUSES
-        and row.canonical_gate not in duplicates
+        if row.normalized_status in ALLOWED_GATE_STATUSES and row.canonical_gate not in duplicates
     ]
     return LaunchGateReview(rows, valid_rows, duplicates, issues)
 

@@ -123,9 +123,7 @@ def test_always_required_gate_status_matrix(
 
     assert evaluation.outcome == outcome
     assert (evaluation.blocker is None) == (outcome == "Satisfied")
-    assert (evaluation.policy_issue is not None) == (
-        status == "not_applicable"
-    )
+    assert (evaluation.policy_issue is not None) == (status == "not_applicable")
 
 
 @pytest.mark.parametrize("gate", HARD_GATE_NAMES)
@@ -194,9 +192,7 @@ def test_missing_conditional_gate_distinguishes_not_applicable_from_unknown(
         if item.gate == "tail-risk / p0 failure mode gate"
     )
 
-    assert evaluation.outcome == (
-        "Not applicable" if applicable is False else "Blocked"
-    )
+    assert evaluation.outcome == ("Not applicable" if applicable is False else "Blocked")
 
 
 @pytest.mark.parametrize("placeholder", sorted(NON_EVIDENCE_VALUES))
@@ -240,8 +236,7 @@ def test_one_policy_blocker_reports_status_and_artifact_failures() -> None:
     assert evaluation.blocker is not None
     assert evaluation.blocker.id == "missing_scope"
     assert (
-        evaluation.reason
-        == "Scope gate requires `pass`; actual status is `partial`. "
+        evaluation.reason == "Scope gate requires `pass`; actual status is `partial`. "
         "Required evidence is missing or invalid: assistant_prd.md."
     )
     assert "assistant_prd.md" in evaluation.reason
@@ -269,9 +264,7 @@ def test_duplicate_alias_rows_are_invalid_and_receive_no_score(
         VALID_EVIDENCE,
     )[2]
 
-    assert review.invalid_canonical_gates == frozenset(
-        {"tail-risk / p0 failure mode gate"}
-    )
+    assert review.invalid_canonical_gates == frozenset({"tail-risk / p0 failure mode gate"})
     assert not review.valid_rows
     assert evaluation.actual_status == "invalid: duplicate rows"
     assert evaluation.outcome == "Invalid"
@@ -309,9 +302,7 @@ def test_valid_custom_gate_is_allowed_but_unscored() -> None:
 
 
 def test_recognized_alias_receives_canonical_scoring_credit() -> None:
-    result = score_gates(
-        [_row("Tail-risk/P0 failure mode gate", "pass")]
-    )
+    result = score_gates([_row("Tail-risk/P0 failure mode gate", "pass")])
 
     assert result.score == 10
 
@@ -442,16 +433,12 @@ def test_gate_specific_reasons_distinguish_status_missing_and_evidence() -> None
         VALID_EVIDENCE,
     )[-1]
 
-    assert (
-        partial.reason
-        == "Rollback gate requires `pass`; actual status is `partial`."
-    )
+    assert partial.reason == "Rollback gate requires `pass`; actual status is `partial`."
     assert missing.reason == (
         "Tail-risk / P0 failure mode gate requires `pass` for high-impact "
         "projects; the gate is missing. Required evidence is missing or "
         "invalid: p0_failure_mode_checklist.md."
     )
     assert no_evidence.reason == (
-        "Owner signoff gate is declared `pass` but does not contain "
-        "meaningful evidence."
+        "Owner signoff gate is declared `pass` but does not contain meaningful evidence."
     )

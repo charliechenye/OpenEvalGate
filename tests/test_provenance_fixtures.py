@@ -56,6 +56,7 @@ EXPECTED_STATUS = {
     "verified-freshness-unknown": RunIdentityStatus.COMPLETE,
 }
 
+
 def fixture_dirs() -> list[Path]:
     return sorted(path for path in FIXTURE_ROOT.iterdir() if path.is_dir())
 
