@@ -2,7 +2,11 @@
 __pycache__/
 *.py[cod]
 *.egg-info/
+build/
+dist/
+.test-tmp/
 .pytest_cache/
+.editorconfig
 .mypy_cache/
 .ruff_cache/
 
