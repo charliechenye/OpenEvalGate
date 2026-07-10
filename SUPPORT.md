@@ -17,4 +17,3 @@ Support can cover the local CLI, repository templates, documented schemas, deter
 OpenEvalGate does not provide deployment approval, compliance certification, legal advice, security certification, runtime incident response, hosted execution, vendor-specific integration support, or assistance with private customer data. Do not post credentials, proprietary prompts, confidential policies, or unredacted evaluation traces.
 
 Suspected vulnerabilities must be reported privately according to [SECURITY.md](SECURITY.md). The [Code of Conduct](CODE_OF_CONDUCT.md) applies to all project discussions.
-

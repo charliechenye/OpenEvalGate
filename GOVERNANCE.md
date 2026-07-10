@@ -39,4 +39,3 @@ If a release is found to produce unsafe, non-deterministic, or materially broken
 ## Security and conduct
 
 Security vulnerabilities must follow [SECURITY.md](SECURITY.md), not a public issue. Community behavior is governed by the [Code of Conduct](CODE_OF_CONDUCT.md). Support expectations are described in [SUPPORT.md](SUPPORT.md).
-
