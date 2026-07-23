@@ -1,6 +1,11 @@
 # Validation Matrix
 
 Use this table to choose the smallest validation that proves a change. `.github/workflows/ci.yml` remains the source of truth for required CI behavior.
+The workflow runs documentation-link validation, full pytest on Python 3.10 and
+3.13, compatibility smoke checks on Python 3.11, 3.12, and 3.14, and a Python
+3.13 quality/package job in parallel. A final aggregate `CI` job is the stable
+required check; intentionally skipped expensive jobs are accepted for
+documentation-only changes.
 
 ## Principles
 
@@ -61,6 +66,10 @@ git diff --check
 - If shared report behavior changed, reproduce all canonical reports.
 - Packaging changes require build, artifact inspection, clean-wheel install, and installed CLI smoke testing consistent with CI.
 - CI-only changes are primarily validated by the workflow run, not by repeatedly running unrelated local tests.
+- Ruff's current correctness baseline is `E4,E7,E9,F`; formatting covers
+  `openevalgate/` and `scripts/`. The scoped mypy command is intentionally
+  limited to `openevalgate/cli.py` and `scripts`; full-package typing is
+  deferred to a dedicated change.
 
 ## Escalation Rule
 

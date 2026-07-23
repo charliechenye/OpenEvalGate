@@ -2,7 +2,7 @@
 
 ## Status
 
-**Not started as a public milestone.** This iteration begins after the repository is public. It covers the first substantive public-alpha release, external practitioner validation, ecosystem integration, and the compatibility work required before `1.0.0`.
+**Not started as a public milestone.** This iteration begins after the repository is public. It covers the next substantive public-alpha release, external practitioner validation, ecosystem integration, and the compatibility work required before `1.0.0`.
 
 ## Objective
 
@@ -28,18 +28,18 @@ The `0.2.0` theme is **evidence integrity and minimal adoption**.
 
 ### Minimal onboarding
 
-- [ ] Add `openevalgate init <project> --profile minimal`, or an equivalently deterministic packaged scaffold.
+- [x] Add `openevalgate init <project> --profile minimal`, with a deterministic placeholder scaffold.
 - [ ] Keep the initial profile set small until repeated user demand justifies additional profiles.
 - [x] Add a five-minute quickstart from an installed checkout package.
-- [ ] Add Linux/macOS and Windows PowerShell instructions.
+- [x] Add Linux/macOS and Windows PowerShell instructions.
 - [x] Allow a user to produce a useful first report through a documented copy-and-report path.
 
 ### Machine-consumable output
 
-- [ ] Add versioned JSON output for `validate`, `check`, and `report`.
-- [ ] Define stable finding and blocker IDs in machine output.
-- [ ] Document validation, blocked-launch, and internal-error exit behavior.
-- [ ] Add an opt-in CI mode that fails when launch is blocked.
+- [x] Add versioned JSON output for `validate`, `check`, and `report`.
+- [x] Define stable finding and blocker IDs in machine output.
+- [x] Document validation, blocked-launch, and internal-error exit behavior.
+- [x] Add an opt-in CI mode that fails when launch is blocked.
 - [ ] Defer SARIF until the JSON finding contract is stable.
 
 ### Release execution

@@ -12,6 +12,20 @@ Use it to answer:
 
 ## The Fastest Path
 
+For a new review project, start with a minimal deterministic scaffold:
+
+```bash
+openevalgate init my_assistant --profile minimal
+cd my_assistant
+openevalgate validate eval_cases.yaml
+openevalgate check .
+openevalgate report . --format card
+```
+
+The scaffold contains synthetic placeholders, not production evidence. Replace
+them before using the result in a release decision. The existing flagship
+scenario remains useful when you want a complete reference package:
+
 Start with the flagship example:
 
 ```text
@@ -149,6 +163,11 @@ Generate a launch readiness report:
 ```bash
 openevalgate report examples/my_assistant/ --output examples/my_assistant/generated_launch_report.md
 ```
+
+Use `openevalgate report . --format json` for CI or internal tooling. Add
+`--fail-on-blocked` when the report command should return exit code `1` for a
+blocked recommendation. The default report command continues to generate a
+report without changing its existing exit behavior.
 
 ## Where Eval Outputs Feed Back
 

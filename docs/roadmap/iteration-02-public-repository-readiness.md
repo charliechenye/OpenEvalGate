@@ -194,8 +194,7 @@ Review the current tree and all retained Git history for:
 
 The following are valuable but do not block public visibility:
 
-- `openevalgate init` and profile scaffolding;
-- versioned JSON output;
+- broader `openevalgate init` profile scaffolding;
 - SARIF output;
 - stable automation exit codes beyond current behavior;
 - vendor-specific adapters;

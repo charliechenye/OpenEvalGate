@@ -1,7 +1,7 @@
 # Documentation schema for OpenEvalGate-compatible golden eval cases.
 # This file is a reference artifact, not a runtime validator.
 schema_name: golden_eval_case_schema
-schema_version: 0.1.1
+schema_version: 0.1.0
 required_fields:
   id:
     type: string

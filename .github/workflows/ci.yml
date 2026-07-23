@@ -15,17 +15,19 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  ci:
-    name: CI
+  scope:
+    name: Determine CI scope
     runs-on: ubuntu-latest
-
+    outputs:
+      run_expensive: ${{ steps.scope.outputs.run_expensive }}
+      reason_code: ${{ steps.scope.outputs.reason_code }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - name: Determine CI scope
+      - name: Determine whether the full matrix is required
         id: scope
         shell: bash
         env:
@@ -44,21 +46,16 @@ jobs:
           comparison_available=false
 
           check_fallback_whitespace() {
-            fallback_base=""
+            local fallback_base=""
+            local head_commit
             head_commit="$(git rev-parse HEAD)"
             if git rev-parse --verify origin/main >/dev/null 2>&1; then
               fallback_base="$(git merge-base HEAD origin/main || true)"
             fi
 
             if [[ -n "${fallback_base}" && "${fallback_base}" != "${head_commit}" ]]; then
-              echo "Using merge-base whitespace fallback: ${fallback_base}..HEAD"
-              git diff \
-                --check \
-                --no-renames \
-                "${fallback_base}" \
-                HEAD
+              git diff --check --no-renames "${fallback_base}" HEAD
             else
-              echo "No non-empty comparison range is available; checking the current commit."
               git show --check --format= HEAD
             fi
           }
@@ -80,10 +77,6 @@ jobs:
               ;;
           esac
 
-          echo "Event: ${EVENT_NAME}"
-          echo "Base SHA: ${base_sha:-<not applicable>}"
-          echo "Head SHA: ${head_sha:-<not applicable>}"
-
           if [[ "${EVENT_NAME}" == "pull_request" || "${EVENT_NAME}" == "push" ]]; then
             if [[ -z "${base_sha}" || -z "${head_sha}" ]]; then
               reason_code=missing_comparison_sha
@@ -99,37 +92,22 @@ jobs:
           fi
 
           if [[ "${comparison_available}" == "true" ]]; then
-            git diff \
-              --check \
-              --no-renames \
-              "${base_sha}" \
-              "${head_sha}"
-
+            git diff --check --no-renames "${base_sha}" "${head_sha}"
             changed_file_list="$(mktemp)"
-            if git diff \
-              --name-only \
-              -z \
-              --no-renames \
-              "${base_sha}" \
-              "${head_sha}" \
-              > "${changed_file_list}"
-            then
+            if git diff --name-only -z --no-renames "${base_sha}" "${head_sha}" > "${changed_file_list}"; then
               changed_count=0
               non_allowlisted_path_found=false
-
-              echo "Changed paths:"
               while IFS= read -r -d '' path; do
                 changed_count=$((changed_count + 1))
-                printf '  %q\n' "${path}"
                 case "${path}" in
                   docs/* | \
                   AGENTS.md | TODO.md | CHANGELOG.md | CITATION.cff | \
                   SECURITY.md | CODE_OF_CONDUCT.md | GOVERNANCE.md | SUPPORT.md | \
                   AUTHORS.md | CONTRIBUTING.md | README.md | \
-                  .github/ISSUE_TEMPLATE/* | .github/pull_request_template.md)
+                  .github/CODEOWNERS | .github/ISSUE_TEMPLATE/* | \
+                  .github/pull_request_template.md)
                     ;;
                   *)
-                    printf 'Non-allowlisted path requiring full CI: %q\n' "${path}"
                     non_allowlisted_path_found=true
                     ;;
                 esac
@@ -151,54 +129,45 @@ jobs:
             check_fallback_whitespace
           fi
 
-          case "${reason_code}" in
-            workflow_dispatch | \
-            unknown_event | \
-            missing_comparison_sha | \
-            zero_base_sha | \
-            unavailable_base_commit | \
-            unavailable_head_commit | \
-            changed_file_detection_failed | \
-            empty_changed_file_set | \
-            non_allowlisted_path | \
-            documentation_only | \
-            fail_closed_default)
-              ;;
-            *)
-              echo "Unexpected reason code; reverting to fail-closed behavior."
-              run_expensive=true
-              reason_code=fail_closed_default
-              ;;
-          esac
-
-          echo "Decision: run_expensive=${run_expensive}"
-          echo "Reason code: ${reason_code}"
           printf 'run_expensive=%s\n' "${run_expensive}" >> "${GITHUB_OUTPUT}"
           printf 'reason_code=%s\n' "${reason_code}" >> "${GITHUB_OUTPUT}"
 
-      - name: Report documentation-only shortcut
-        if: steps.scope.outputs.run_expensive == 'false'
-        run: |
-          echo "CI completed without Python setup or tests."
-          echo "Scope decision: ${{ steps.scope.outputs.reason_code }}"
+  docs:
+    name: Documentation links
+    needs: scope
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
 
       - name: Validate Markdown links
         run: python scripts/check_markdown_links.py
 
-      - name: Set up Python 3.10
-        if: steps.scope.outputs.run_expensive == 'true'
+  full_tests:
+    name: Full pytest (Python ${{ matrix.python-version }})
+    needs: scope
+    if: needs.scope.outputs.run_expensive == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.13"]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.10"
+          python-version: ${{ matrix.python-version }}
           cache: pip
           cache-dependency-path: pyproject.toml
 
-      - name: Install development dependencies on Python 3.10
-        if: steps.scope.outputs.run_expensive == 'true'
+      - name: Install development dependencies
         run: python -m pip install -e ".[dev]"
 
-      - name: Test on Python 3.10
-        if: steps.scope.outputs.run_expensive == 'true'
+      - name: Run full test suite
         run: >-
           python -m pytest
           -n 4
@@ -207,91 +176,62 @@ jobs:
           --durations=20
           --durations-min=1.0
 
-      - name: Set up Python 3.11
-        if: steps.scope.outputs.run_expensive == 'true'
+  compatibility:
+    name: Compatibility smoke (Python ${{ matrix.python-version }})
+    needs: scope
+    if: needs.scope.outputs.run_expensive == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.14"]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version }}
 
-      - name: Install package on Python 3.11
-        if: steps.scope.outputs.run_expensive == 'true'
+      - name: Install package
         run: python -m pip install -e .
 
-      - name: Check compatibility on Python 3.11
-        if: steps.scope.outputs.run_expensive == 'true'
+      - name: Run compatibility smoke checks
         run: |
           python -m compileall -q openevalgate
           python -c "import openevalgate; from openevalgate.cli import main; assert callable(main)"
           openevalgate validate examples/customer_support_assistant/eval_cases.yaml
 
-      - name: Set up Python 3.12
-        if: steps.scope.outputs.run_expensive == 'true'
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.12"
-
-      - name: Install package on Python 3.12
-        if: steps.scope.outputs.run_expensive == 'true'
-        run: python -m pip install -e .
-
-      - name: Check compatibility on Python 3.12
-        if: steps.scope.outputs.run_expensive == 'true'
-        run: |
-          python -m compileall -q openevalgate
-          python -c "import openevalgate; from openevalgate.cli import main; assert callable(main)"
-          openevalgate validate examples/customer_support_assistant/eval_cases.yaml
-
-      - name: Set up Python 3.14
-        if: steps.scope.outputs.run_expensive == 'true'
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.14"
-
-      - name: Install package on Python 3.14
-        if: steps.scope.outputs.run_expensive == 'true'
-        run: python -m pip install -e .
-
-      - name: Check compatibility on Python 3.14
-        if: steps.scope.outputs.run_expensive == 'true'
-        run: |
-          python -m compileall -q openevalgate
-          python -c "import openevalgate; from openevalgate.cli import main; assert callable(main)"
-          openevalgate validate examples/customer_support_assistant/eval_cases.yaml
+  quality_package:
+    name: Quality and package
+    needs: scope
+    if: needs.scope.outputs.run_expensive == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
 
       - name: Set up Python 3.13
-        if: steps.scope.outputs.run_expensive == 'true'
         uses: actions/setup-python@v6
         with:
           python-version: "3.13"
           cache: pip
           cache-dependency-path: pyproject.toml
 
-      - name: Install development dependencies on Python 3.13
-        if: steps.scope.outputs.run_expensive == 'true'
+      - name: Install development dependencies
         run: python -m pip install -e ".[dev]"
 
-      - name: Test and compile on Python 3.13
-        if: steps.scope.outputs.run_expensive == 'true'
-        run: |
-          python -m pytest \
-            -n 4 \
-            --dist=load \
-            --maxschedchunk=1 \
-            --durations=20 \
-            --durations-min=1.0
-          python -m compileall -q openevalgate
-
       - name: Run quality and security checks
-        if: steps.scope.outputs.run_expensive == 'true'
         run: |
-          ruff check .
-          ruff format --check scripts/check_markdown_links.py
+          ruff check openevalgate scripts
+          ruff format --check openevalgate scripts
           mypy --follow-imports=skip openevalgate/cli.py scripts
           bandit -q -r openevalgate -ll
           pip-audit
+          python -m compileall -q openevalgate
 
       - name: Validate canonical examples
-        if: steps.scope.outputs.run_expensive == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -303,26 +243,21 @@ jobs:
           done
 
       - name: Build distribution artifacts
-        if: steps.scope.outputs.run_expensive == 'true'
         run: |
           rm -rf build dist
           python -m build
 
       - name: Verify distribution artifact contents
-        if: steps.scope.outputs.run_expensive == 'true'
         run: python scripts/verify_distribution_artifacts.py --dist-dir dist
 
       - name: Smoke-test installed wheel
-        if: steps.scope.outputs.run_expensive == 'true'
         shell: bash
         run: |
           set -euo pipefail
-
           venv_dir="${RUNNER_TEMP}/openevalgate-wheel-venv"
           smoke_dir="${RUNNER_TEMP}/openevalgate-wheel-smoke"
           rm -rf "${venv_dir}" "${smoke_dir}"
           python -m venv "${venv_dir}"
-
           venv_python="${venv_dir}/bin/python"
           venv_cli="${venv_dir}/bin/openevalgate"
           mapfile -t wheels < <(find "${GITHUB_WORKSPACE}/dist" -maxdepth 1 -type f -name '*.whl' -print)
@@ -330,83 +265,67 @@ jobs:
             echo "Expected exactly one wheel; found ${#wheels[@]}: ${wheels[*]-}"
             exit 1
           fi
-          wheel_path="$(realpath "${wheels[0]}")"
-          "${venv_python}" -m pip install "${wheel_path}"
-
+          "${venv_python}" -m pip install "$(realpath "${wheels[0]}")"
           mkdir -p "${smoke_dir}"
           for example in subscription_support_assistant customer_support_assistant presales_assistant education_assistant; do
             cp -R "${GITHUB_WORKSPACE}/examples/${example}" "${smoke_dir}/${example}"
           done
-
           cd "${smoke_dir}"
-          unset PYTHONPATH
-          unset PYTHONHOME
+          unset PYTHONPATH PYTHONHOME
           export PYTHONNOUSERSITE=1
           export GITHUB_WORKSPACE
           export VENV_PYTHON="${venv_python}"
           export VENV_CLI="${venv_cli}"
-
           "${venv_python}" - <<'PY'
           from importlib.metadata import version
           from pathlib import Path
           import os
           import subprocess
-          import sys
-
           import openevalgate
 
           workspace = Path(os.environ["GITHUB_WORKSPACE"]).resolve()
           package_path = Path(openevalgate.__file__).resolve()
           assert not package_path.is_relative_to(workspace), package_path
-
           installed_version = version("openevalgate")
           assert openevalgate.__version__ == installed_version
           assert openevalgate.__version__ != "0+unknown"
-
-          venv_python = Path(os.environ["VENV_PYTHON"]).resolve()
-          venv_cli = Path(os.environ["VENV_CLI"]).resolve()
-          print(f"Virtual-environment Python: {venv_python}")
-          print(f"Installed package path: {package_path}")
-          print(f"Installed distribution version: {installed_version}")
-
-          version_result = subprocess.run(
-              [str(venv_cli), "--version"],
-              check=True,
-              capture_output=True,
-          )
-          expected_output = f"openevalgate {installed_version}\n".encode()
-          assert version_result.stdout == expected_output, version_result.stdout
-          assert version_result.stderr == b"", version_result.stderr
-
-          for example in (
-              "subscription_support_assistant",
-              "customer_support_assistant",
-              "presales_assistant",
-              "education_assistant",
-          ):
-              example_path = Path(example)
-              subprocess.run(
-                  [str(venv_cli), "validate", str(example_path / "eval_cases.yaml")],
-                  check=True,
-              )
-              subprocess.run(
-                  [str(venv_cli), "check", str(example_path)],
-                  check=True,
-              )
-              generated = Path(f"{example}-installed-report.md")
-              subprocess.run(
-                  [
-                      str(venv_cli),
-                      "report",
-                      str(example_path),
-                      "--output",
-                      str(generated),
-                  ],
-                  check=True,
-              )
-              canonical = example_path / "generated_launch_report.md"
-              assert generated.read_bytes() == canonical.read_bytes(), example
+          cli = os.environ["VENV_CLI"]
+          result = subprocess.run([cli, "--version"], check=True, capture_output=True)
+          assert result.stdout == f"openevalgate {installed_version}\n".encode()
+          for example in ("subscription_support_assistant", "customer_support_assistant", "presales_assistant", "education_assistant"):
+              root = Path(example)
+              subprocess.run([cli, "validate", str(root / "eval_cases.yaml")], check=True)
+              subprocess.run([cli, "check", str(root)], check=True)
+              output = Path(os.environ["RUNNER_TEMP"]) / f"{example}-wheel-report.md"
+              subprocess.run([cli, "report", str(root), "--output", str(output)], check=True)
+              assert output.read_bytes() == (root / "generated_launch_report.md").read_bytes()
           PY
 
-          "${venv_python}" -m pip show openevalgate
-          "${venv_python}" -m pip show -f openevalgate
+  CI:
+    name: CI
+    if: always()
+    needs:
+      - scope
+      - docs
+      - full_tests
+      - compatibility
+      - quality_package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if a required CI job failed
+        shell: bash
+        env:
+          SCOPE_RESULT: ${{ needs.scope.result }}
+          DOCS_RESULT: ${{ needs.docs.result }}
+          TEST_RESULT: ${{ needs.full_tests.result }}
+          COMPATIBILITY_RESULT: ${{ needs.compatibility.result }}
+          QUALITY_RESULT: ${{ needs.quality_package.result }}
+        run: |
+          set -euo pipefail
+          for result in "${SCOPE_RESULT}" "${DOCS_RESULT}" "${TEST_RESULT}" "${COMPATIBILITY_RESULT}" "${QUALITY_RESULT}"; do
+            if [[ "${result}" == "failure" || "${result}" == "cancelled" ]]; then
+              echo "A required CI job returned ${result}."
+              exit 1
+            fi
+          done
+          echo "All required CI jobs passed or were intentionally skipped."

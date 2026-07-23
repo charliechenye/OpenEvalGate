@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "openevalgate"
-version = "0.1.1"
+version = "0.1.0"
 description = "Local release-assurance framework for evidence-backed launch decisions for production AI assistants and agents."
 readme = "README.md"
 requires-python = ">=3.10,<3.15"
@@ -92,12 +92,14 @@ line-length = 100
 extend-exclude = ["examples", "spec"]
 
 [tool.ruff.lint]
-# Keep the first public baseline focused on correctness findings; the existing
-# source predates a repository-wide formatter baseline.
-select = ["F"]
+# Keep the baseline focused on correctness and the most actionable pycodestyle
+# errors while the repository continues its broader typing cleanup separately.
+select = ["E4", "E7", "E9", "F"]
 ignore = ["E501"]
 
 [tool.mypy]
+# This is an intentionally scoped CI baseline. Full-package typing cleanup is
+# tracked separately and is not implied by the commands below.
 python_version = "3.10"
 ignore_missing_imports = true
 warn_unused_ignores = true

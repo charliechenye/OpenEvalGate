@@ -1,18 +1,19 @@
 # OpenEvalGate Release Milestones
 
-This document defines the dependency order from private development to public visibility, the first substantive public release, and eventual stable `1.0.0` contracts.
+This document defines the dependency order from private development to the first public `0.1.0` release, post-release stabilization, and eventual stable `1.0.0` contracts.
 
 ## Milestone Sequence
 
 ```text
 Private repository
   -> Public repository (pre-1.0, no stable-release claim)
-  -> OpenEvalGate 0.2.0 public alpha
+  -> OpenEvalGate 0.1.0 public alpha
+  -> OpenEvalGate 0.2.0 evidence-integrity and adoption hardening
   -> 0.x adoption and compatibility stabilization
   -> OpenEvalGate 1.0.0 stable contracts
 ```
 
-These milestones are intentionally separate. Public visibility is a disclosure, governance, and claim-safety decision. `0.2.0` is a product release. `1.0.0` is a compatibility commitment.
+These milestones are intentionally separate. Public visibility is a disclosure, governance, and claim-safety decision. `0.1.0` is the first public alpha release, `0.2.0` is the next product-hardening release, and `1.0.0` is a compatibility commitment.
 
 ## Milestone A: Public Repository
 
@@ -53,10 +54,10 @@ Evidence-integrity work is included before public visibility because it protects
 - The exact visibility commit passes required checks and clean-wheel reproduction.
 - The project remains explicitly pre-1.0.
 
-### Deferred until after visibility
+### Deferred until after the `0.1.0` release
 
 - scaffolding breadth;
-- JSON and SARIF integration output;
+- SARIF integration output;
 - vendor adapters;
 - hosted services;
 - external case studies;
@@ -66,7 +67,7 @@ Evidence-integrity work is included before public visibility because it protects
 
 ### Goal
 
-Ship the first substantive public-alpha release around **evidence integrity and minimal adoption**.
+Ship the next substantive public-alpha release around **evidence integrity and minimal adoption**.
 
 ### Required capabilities
 
@@ -75,7 +76,7 @@ Ship the first substantive public-alpha release around **evidence integrity and 
 - proposed run provenance contract and fixture-integrity checks for selected path, artifact-identity, digest, lifecycle, freshness, and recency branches, with the local runtime identity, digest, lifecycle, assurance, freshness, and recency subset implemented;
 - controlled-launch evidence pinned to an explicit run;
 - a minimal installed-wheel onboarding path;
-- versioned JSON output and documented exit behavior;
+- versioned JSON output, decision-card output, and documented exit behavior;
 - passing and blocked canonical examples;
 - exact-release-commit verification and release artifacts.
 
