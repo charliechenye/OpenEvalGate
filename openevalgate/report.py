@@ -703,9 +703,10 @@ def _behavioral_sufficiency_summary(assessment: LaunchAssessment) -> str:
     else:
         policy_display = "Present"
     selected_state = _selected_scope_state(value)
-    selected_value = lambda actual, empty="none": _selected_scope_value(
-        value, selected_state, actual, empty=empty
-    )
+
+    def selected_value(actual: str, empty: str = "none") -> str:
+        return _selected_scope_value(value, selected_state, actual, empty=empty)
+
     lines = [
         f"- Review policy: {policy_display}",
         f"- Declared review mode: {_mode_display(value.declared_mode)}",

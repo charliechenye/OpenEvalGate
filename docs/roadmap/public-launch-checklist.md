@@ -2,7 +2,7 @@
 
 Use this checklist for the final decision to change repository visibility from private to public.
 
-Public visibility is not the same as publishing OpenEvalGate `0.2.0`, releasing to PyPI, or declaring stable `1.0.0` compatibility. This checklist covers safe disclosure, bounded claims, reproducibility, governance, repository protection, and exact-commit verification.
+Public visibility is not the same as publishing OpenEvalGate `0.1.0`, releasing to PyPI, or declaring stable `1.0.0` compatibility. This checklist covers safe disclosure, bounded claims, reproducibility, governance, repository protection, and exact-commit verification.
 
 ## 1. Release Semantics
 
@@ -61,7 +61,7 @@ Public visibility is not the same as publishing OpenEvalGate `0.2.0`, releasing 
 
 ## 4. Tests, Packaging, and Security Checks
 
-- [x] Consolidated CI covers Python 3.10 through 3.14.
+- [x] Consolidated CI covers Python 3.10 through 3.14 with parallel jobs and an aggregate `CI` check.
 - [x] Full tests run on Python 3.10 and Python 3.13.
 - [x] Lightweight install, compile, import, and CLI checks run on Python 3.11, Python 3.12, and Python 3.14.
 - [x] Source and wheel builds pass.
@@ -70,9 +70,9 @@ Public visibility is not the same as publishing OpenEvalGate `0.2.0`, releasing 
 - [x] The installed CLI reports the package version.
 - [x] Canonical CLI smoke tests pass through the installed wheel.
 - [x] Dependabot configuration is present.
-- [x] Linting is defined in CI.
-- [x] Formatting checks are defined in CI.
-- [x] An enforceable type-checking baseline is defined in CI.
+- [x] Linting is defined in CI with Ruff correctness checks.
+- [x] Formatting checks cover `openevalgate/` and `scripts/`.
+- [x] An enforceable scoped type-checking baseline is defined in CI; full-package typing is explicitly deferred.
 - [x] Dependency auditing is defined in CI.
 - [x] Lightweight static-security scanning is defined in CI.
 - [x] Documentation links resolve in the current tree.
@@ -143,9 +143,10 @@ Public visibility is not the same as publishing OpenEvalGate `0.2.0`, releasing 
 
 These items do not block public repository visibility:
 
-- [ ] `openevalgate init` or packaged project scaffolding.
+- [x] `openevalgate init --profile minimal` deterministic project scaffolding.
 - [ ] Minimal, standard, high-risk, or multi-agent profile breadth.
-- [ ] Versioned JSON output.
+- [x] Versioned JSON output for `validate`, `check`, and `report`.
+- [x] Compact decision-card output for CI summaries and cross-functional review.
 - [ ] SARIF output.
 - [ ] Vendor-specific integration adapters.
 - [ ] PyPI publication.

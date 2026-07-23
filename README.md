@@ -7,7 +7,7 @@ Turn evaluation evidence into a bounded launch decision for production AI assist
 [![Status: public alpha](https://img.shields.io/badge/status-public%20alpha-orange.svg)](docs/roadmap/release-milestones.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-OpenEvalGate is an open-source, local release-assurance framework for AI product and platform teams. It deterministically assesses declared review evidence and produces a bounded recommendation for the requested review stage.
+OpenEvalGate is an open-source, local evidence-admission layer for enterprise AI product and platform teams. It deterministically assesses declared review evidence and turns it into a bounded recommendation for the requested review stage.
 
 Use it after your existing eval runner, harness, or manual review has produced evidence. OpenEvalGate validates the evidence package, fails closed on contradictions and missing critical controls, identifies launch blockers, and writes a reproducible Markdown report.
 
@@ -68,6 +68,18 @@ openevalgate report examples/subscription_support_assistant/ \
 ```
 
 The quickest path is to copy the [subscription-support scenario](examples/subscription_support_assistant/README.md) into a new project, replace its synthetic evidence with your own artifacts, and rerun the same three commands. The report is written to `/tmp` so the canonical example remains unchanged.
+
+For a clean project scaffold, use the deterministic minimal profile:
+
+```bash
+openevalgate init my-assistant --profile minimal
+cd my-assistant
+openevalgate validate eval_cases.yaml
+openevalgate check .
+openevalgate report . --format card
+```
+
+The generated files are synthetic placeholders and the initial result is expected to be incomplete. Replace them with reviewed evidence before treating the report as a release input. Use `--format json` for automation and `--fail-on-blocked` when a CI job should fail on a blocked recommendation. See the [CLI output contract](docs/contracts/cli-output-v1.md).
 
 The generated report separates evidence completeness from observed behavior and critical controls:
 
@@ -141,7 +153,7 @@ outputs:
 
 ## Where OpenEvalGate Fits
 
-OpenEvalGate complements eval runners, observability platforms, runtime controls, security tooling, and internal review systems.
+OpenEvalGate complements eval runners, observability platforms, runtime controls, security tooling, and internal review systems. Its specific job is evidence admission: checking that the package is internally coherent, provenance-aware, and sufficient for the requested review stage before a cross-functional decision.
 
 ```text
 Business intent / policy / trust risk
@@ -160,6 +172,18 @@ OpenEvalGate validation, blockers, and bounded recommendation
 ```
 
 Eval and LLMOps tools execute tests, collect traces, monitor behavior, or enforce runtime policy. OpenEvalGate consumes their outputs through local artifacts and organizes that evidence for a defined release review. It does not require an official vendor integration.
+
+For CI summaries and review meetings, generate a compact decision card:
+
+```bash
+openevalgate report . --format card
+```
+
+For automation, consume the versioned JSON envelope instead of parsing Markdown:
+
+```bash
+openevalgate report . --format json --output /tmp/openevalgate-decision.json
+```
 
 See [Research Context and Adjacent Tools](docs/16_research_evidence_and_competitive_landscape.md) for conceptual relationships with external guidance and tooling.
 
@@ -183,6 +207,11 @@ For multi-agent systems, optional `routing_policy.yaml` evidence records fixed, 
 - ML, AI, and platform engineers;
 - trust, safety, legal, compliance, and security reviewers;
 - teams preparing a cross-functional review of an assistant or agent.
+
+The same decision packet is intended to give builders reproducible CI evidence,
+operators and product owners clear mitigation work, reviewers stable blocker
+identifiers, and decision makers a bounded recommendation rather than a generic
+quality score.
 
 ## Limitations and Non-Claims
 

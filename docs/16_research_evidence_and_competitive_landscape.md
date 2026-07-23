@@ -1,10 +1,13 @@
 # Research Context and Adjacent Tools
 
-OpenEvalGate is not an eval runner, observability platform, or runtime guardrails system. It is a local release-assurance framework that helps teams define and assess evidence for a bounded review stage.
+OpenEvalGate is not an eval runner, observability platform, or runtime guardrails system. It is a local evidence-admission and release-assurance layer that helps teams define and assess evidence for a bounded review stage.
 
 This document provides conceptual context from external guidance and adjacent tooling. It does not establish certification, formal standards alignment, endorsement, partnership, official integration, or external validation of OpenEvalGate.
 
 ## Relevant External Guidance
+
+This landscape was reviewed on 2026-07-11. External tools and guidance change
+independently of this repository; links below are context, not endorsements.
 
 Production AI release review can involve more than average model performance. Relevant evidence may span governance, risk management, evaluation, human oversight, security, monitoring, escalation, and business ownership.
 
@@ -45,6 +48,20 @@ These projects are relevant to overlapping parts of the workflow. The descriptio
 | Agent skill / MCP security scanning | [SkillGate](https://github.com/charliechenye/SkillGate) | Performs static trust checks for AI-agent skills, Codex and Claude skills, MCP configs, risky capabilities, policy enforcement, baseline drift, and SARIF output. | SkillGate can provide security-review evidence; OpenEvalGate can include that evidence in a broader assistant or agent release review. |
 | Agent governance / runtime control | [Microsoft Agent Governance Toolkit](https://github.com/microsoft/agent-governance-toolkit), [EGAProtocol](https://github.com/egaprotocol/egaprotocol) | Provide agent governance, runtime controls, or protocol-level accountability patterns. | OpenEvalGate focuses on local cross-functional review artifacts, eval coverage, business ownership, blockers, and reports. |
 | Broader AI governance frameworks | [NIST AI RMF](https://www.nist.gov/itl/ai-risk-management-framework), [ISO/IEC 42001](https://www.iso.org/standard/81230.html), [OECD AI Principles](https://oecd.ai/en/ai-principles), enterprise risk frameworks | Define broad AI governance, management, and accountability expectations. | OpenEvalGate provides templates and a local CLI for a narrower release-assurance workflow. |
+
+## Positioning decision
+
+The crowded claim is “run AI quality gates.” Adjacent tools already execute
+evaluations, produce scores, inspect traces, run security probes, or enforce
+runtime policy. OpenEvalGate should make the narrower claim that it admits
+evidence into a release review and produces a deterministic, fail-closed,
+bounded decision artifact.
+
+That distinction matters for enterprise teams: engineers can keep their
+existing evaluator, product and operations owners can review the same decision
+card, and trust or security reviewers can inspect provenance and named blockers.
+It also keeps the project aligned with the [NIST AI RMF Playbook](https://www.nist.gov/itl/ai-risk-management-framework/nist-ai-rmf-playbook)
+without claiming conformance or certification.
 
 ## Where OpenEvalGate Fits
 

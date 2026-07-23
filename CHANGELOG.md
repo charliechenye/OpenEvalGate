@@ -6,6 +6,10 @@ The project follows semantic versioning while it remains in alpha. Until a stabl
 
 ## [Unreleased]
 
+_The next public release is being prepared as `0.1.0`._
+
+## [0.1.0]
+
 ### Added
 
 - Public-alpha governance, support, attribution, compatibility, release, and rollback guidance.
@@ -73,9 +77,7 @@ The project follows semantic versioning while it remains in alpha. Until a stabl
 - Contributor guidance now documents validation, evidence hygiene, compatibility review, and security reporting expectations.
 - README roadmap language reflects that centralized hard-gate semantics are implemented.
 
-## [0.1.1]
-
-### Added
+### Initial feature baseline
 
 - Deterministic launch-recommendation semantics.
 - Centralized policy evaluation for eight launch-blocking hard gates.

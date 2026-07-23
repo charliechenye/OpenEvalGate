@@ -3,13 +3,13 @@
 This roadmap separates four distinct milestones that should not be treated as one release event:
 
 1. **Public repository:** the code, claims, examples, governance, and repository settings are safe for public inspection.
-2. **OpenEvalGate 0.2.0:** the first substantive public-alpha release with stronger evidence integrity and a usable adoption path.
+2. **OpenEvalGate 0.1.0:** the first public-alpha release with the implemented deterministic evidence and adoption foundation.
 3. **0.x stabilization:** external adoption, integrations, schema refinement, and migration experience.
 4. **OpenEvalGate 1.0.0:** stable public contracts for schemas, CLI behavior, blocker semantics, and compatibility.
 
 OpenEvalGate should be positioned as an **evidence-backed release-assurance framework for production AI assistants and agents**. It is not a complete AI governance platform, eval runner, observability system, runtime guardrail, compliance certification product, or guarantee of safe deployment.
 
-> **Current state:** Public positioning and limitations, deterministic review modes, behavioral sufficiency, centralized hard-gate policy, runtime eval-run identity enforcement, package builds, clean-wheel installation, installed CLI execution, and canonical-report reproduction are implemented. Governance, repository protection, disclosure review, and exact-commit verification remain before public visibility. The first public `0.2.0` release follows after remaining evidence-integrity and onboarding work.
+> **Current state:** Public positioning and limitations, deterministic review modes, behavioral sufficiency, centralized hard-gate policy, runtime eval-run identity enforcement, package builds, clean-wheel installation, installed CLI execution, and canonical-report reproduction are implemented. Governance and repository quality work is in place; repository protection, disclosure review, exact-commit verification, and the first public `0.1.0` release handoff remain.
 
 See [Release Milestones](docs/roadmap/release-milestones.md) for the milestone definitions and dependency order.
 
@@ -33,7 +33,7 @@ See [Release Milestones](docs/roadmap/release-milestones.md) for the milestone d
 
 ## Milestone A: Make the Repository Public
 
-The repository may become public while remaining pre-1.0 and before publishing `0.2.0`. This milestone is about safe disclosure, bounded claims, governance, reproducibility, and repository protection—not feature completeness.
+The repository may become public while remaining pre-1.0 and before publishing `0.1.0`. This milestone is about safe disclosure, bounded claims, governance, reproducibility, and repository protection—not feature completeness.
 
 ### A1. Public positioning and limitations
 
@@ -43,35 +43,35 @@ The repository may become public while remaining pre-1.0 and before publishing `
 - [x] Add a dedicated limitations and non-claims section.
 - [x] State explicitly that OpenEvalGate does not certify compliance, guarantee safe deployment, execute candidate systems, or establish a universal standard.
 - [x] Reduce README repetition and move the full gate list, scoring weights, and extended methodology into documentation.
-- [ ] Review standards and competitive references for precise wording, source version, and review date.
+- [x] Review standards and competitive references for precise wording, source version, and review date.
 
 ### A2. Public example integrity
 
 - [x] Retain a reproducible blocked example showing that strong documentation cannot override failed behavioral or critical-control evidence.
-- [ ] Add a reproducible passing controlled-launch reference example.
+- [x] Add a reproducible passing controlled-launch reference example.
 - [x] Ensure every canonical example is generated from committed inputs without undocumented manual edits.
 - [x] Ensure no repository example is presented as production adoption evidence.
-- [ ] Add a concise comparison between the passing and blocked outcomes.
+- [x] Add a concise comparison between the passing and blocked outcomes.
 
 ### A3. Governance, support, and attribution
 
 - [x] Add `SECURITY.md`, `CODE_OF_CONDUCT.md`, `CHANGELOG.md`, contribution guidance, issue forms, and a pull-request template.
 - [x] Add maintainer attribution and `CITATION.cff`.
-- [ ] Add `GOVERNANCE.md`.
-- [ ] Add `SUPPORT.md`.
-- [ ] Add `AUTHORS.md` and contribution-credit rules.
-- [ ] Document release, deprecation, schema-change, and broken-release rollback policies.
+- [x] Add `GOVERNANCE.md`.
+- [x] Add `SUPPORT.md`.
+- [x] Add `AUTHORS.md` and contribution-credit rules.
+- [x] Document release, deprecation, schema-change, and broken-release rollback policies.
 - [x] Modernize setuptools license metadata.
 
 ### A4. Repository quality and protection
 
-- [x] Run consolidated CI across Python 3.10 through 3.13.
+- [x] Run consolidated CI across Python 3.10 through 3.14.
 - [x] Build and inspect source and wheel artifacts.
 - [x] Install the wheel in a clean environment and exercise the installed CLI.
 - [x] Reproduce canonical reports byte-for-byte through the installed wheel.
-- [ ] Add linting and formatting checks.
-- [ ] Add an enforceable type-checking baseline.
-- [ ] Add dependency review and lightweight security scanning.
+- [x] Add linting and formatting checks.
+- [x] Add an enforceable scoped type-checking baseline; full-package typing remains deferred.
+- [x] Add dependency review and lightweight security scanning.
 - [ ] Require pull requests and the consolidated `CI` check on `main`.
 - [ ] Require branches to be current before merge.
 - [ ] Disable force pushes and branch deletion on `main`.
@@ -93,17 +93,16 @@ The repository may become public while remaining pre-1.0 and before publishing `
 
 The following are not required merely to make the repository public:
 
-- `openevalgate init`
-- JSON or SARIF output
+- SARIF output
 - external eval-tool adapters
 - a hosted service or web UI
 - a tagged `0.2.0` release
 - published external case studies
 - `1.0.0` compatibility guarantees
 
-## Milestone B: Release OpenEvalGate 0.2.0
+## Milestone B: Post-release hardening for OpenEvalGate 0.2.0
 
-`0.2.0` is the first substantive public-alpha release. Its primary theme is **evidence integrity and minimal adoption**, not feature breadth.
+`0.2.0` is the next substantive public-alpha release after `0.1.0`. Its primary theme is **evidence integrity and minimal adoption**, not feature breadth.
 
 ### B1. Strengthen eval-result integrity
 
@@ -115,34 +114,34 @@ The following are not required merely to make the repository public:
 - [x] Validate result timestamps and remove CSV row order from informational run chronology.
 - [x] Validate supplied output references as safe, contained, existing regular files.
 - [ ] Validate candidate registries and pin case, workflow, model, and artifact versions.
-- [~] Validate referenced output artifact identity; digest verification remains deferred.
+- [x] Validate referenced output artifact identity and local SHA-256 digests.
 - [x] Prevent invalid core result evidence from influencing summaries or launch decisions.
 
 ### B2. Add run provenance and freshness
 
 - [x] Define evaluator kinds and minimum evidence in the v1 contract and enforce evaluator identity at runtime.
-- [~] Define candidate identity, run lifecycle, timestamps, and resource descriptors. Runtime identity and lifecycle classification are implemented; digest verification and freshness resource comparison remain deferred.
-- [~] Define provenance presence, validity, freshness, recency, assurance, lifecycle, and authorization classifications. Runtime identity status, lifecycle status, missing-manifest detection, unbound-result exclusion, and controlled-launch identity blocking are implemented; freshness, recency, verified assurance, and `review_context.yaml` remain deferred.
-- [~] Define stale-evidence behavior when current candidate or policy state differs from valid historical evidence. Contract proposed with selected invariant fixtures; runtime freshness comparison remains deferred.
+- [x] Define candidate identity, run lifecycle, timestamps, and resource descriptors. Runtime identity, digest verification, and freshness resource comparison are implemented.
+- [~] Define provenance presence, validity, freshness, recency, assurance, lifecycle, and authorization classifications. Runtime identity, lifecycle, freshness, recency, verified assurance, and `review_context.yaml` enforcement are implemented; complete authorization classification remains deferred.
+- [x] Define stale-evidence behavior when current candidate or policy state differs from valid historical evidence. Contract and local runtime comparison are implemented.
 - [x] Parse and enforce selected run identity against manifests and compatible result CSVs.
 - [x] Validate at runtime that referenced output-artifact metadata and directory identity agree with result rows when optional artifact identity fields are supplied.
 - [x] Display runtime identity and lifecycle status in reports.
-- [~] Enforce controlled-launch provenance requirements for complete versioned identity and lifecycle; digest verification, freshness, recency, and verified assurance remain deferred.
+- [~] Enforce controlled-launch provenance requirements for complete versioned identity, lifecycle, and acceptable local freshness/recency; complete authorization output and broader artifact-version policy remain deferred.
 
 ### B3. Provide a minimal adoption path
 
 - [ ] Add a provenance initialization command that generates a minimal run manifest and an optional artifact index from existing result evidence.
-- [ ] Add `openevalgate init <project> --profile minimal`, or package an equivalently deterministic minimal scaffold.
+- [x] Add `openevalgate init <project> --profile minimal` with a deterministic placeholder scaffold.
 - [ ] Keep the initial profile set small; defer speculative profile breadth until user demand is demonstrated.
-- [ ] Add a five-minute installed-wheel quickstart for Linux/macOS and Windows PowerShell.
-- [ ] Allow a user to produce a useful first report without copying the full customer-support example.
+- [x] Add a five-minute installed-wheel quickstart for Linux/macOS and Windows PowerShell.
+- [x] Allow a user to produce a useful first report without copying the full customer-support example.
 
 ### B4. Add machine-consumable output
 
-- [ ] Add versioned JSON output for `check`, `validate`, and `report`.
-- [ ] Define stable finding and blocker identifiers in machine output. Provenance contract fixture IDs are proposed and schema-checked; general CLI JSON emission remains pending.
-- [ ] Document exit codes for validation failures, launch blockers, and internal errors.
-- [ ] Add an opt-in CI mode that fails when launch is blocked.
+- [x] Add versioned JSON output for `check`, `validate`, and `report`.
+- [x] Define stable finding and blocker identifiers in machine output.
+- [x] Document exit codes for validation failures, launch blockers, and internal errors.
+- [x] Add an opt-in CI mode that fails when launch is blocked.
 - [ ] Defer SARIF until the finding model and JSON contract are stable.
 
 ### B5. Publish `0.2.0`

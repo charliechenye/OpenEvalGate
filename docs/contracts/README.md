@@ -4,6 +4,8 @@ This directory contains versioned, implementation-facing contracts for evidence 
 
 ## Available contracts
 
+- [CLI Output Contract v1](cli-output-v1.md) - defines opt-in deterministic JSON,
+  decision-card output, stable identifiers, and exit behavior.
 - [Eval-Run Provenance Contract v1](eval-run-provenance-v1.md) - defines how a run manifest can wrap an existing OpenEvalGate-compatible `eval_results.csv` with candidate, evaluator, policy, artifact, lifecycle, freshness, recency, assurance, finding, and authorization metadata.
 
 ## Provenance Schemas
