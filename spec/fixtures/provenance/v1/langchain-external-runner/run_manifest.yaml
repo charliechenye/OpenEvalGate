@@ -6,12 +6,20 @@ run:
   completed_at: "2026-06-18T17:14:22Z"
 
 candidate:
+  id: customer-support-agent
   version: "2026.06.18-rc2"
+
+producer:
+  id: internal-langchain-eval-exporter
+  version: "1.4.0"
 
 evaluation:
   kind: human
   evaluator:
     id: support-quality-review
+  framework:
+    id: langchain
+    version: "0.3.0"
 
 inputs:
   - role: eval_cases
@@ -23,4 +31,8 @@ outputs:
   results:
     path: eval_results.csv
     digest:
-      sha256: "f38a74eb92459229bb81c07ad5dcfc6d1536d0354dc43d8c87ecc4493f1f80d4"
+      sha256: "938aa614e8314bb59f0d9a50c896dea72293c1521a5446e19613c63285069d4a"
+  artifact_index:
+    path: artifact_index.yaml
+    digest:
+      sha256: "c91cb8d1818bd260ba8c8ec13cc645b9bd72c4bea0a75841ac7c9423885f79d1"
