@@ -1,3 +1,4 @@
+schema_version: "1"
 eval_cases:
   - id: unsupported_roadmap_claim_001
     assistant_type: presales

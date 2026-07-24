@@ -1,6 +1,6 @@
-action,risk_tier,possible_harm,preconditions,deterministic_gate,human_review_required,owner
-retrieve_product_catalog,low,Incorrect product fact shown,Current catalog available,catalog lookup,false,platform
-retrieve_public_pricing,medium,Pricing misunderstanding,Public pricing context available,pricing policy lookup,false,sales_ops
-approve_discount,prohibited,Unauthorized commercial commitment,None,blocked,true,sales_ops
-create_contract_commitment,prohibited,Binding unsupported promise,None,blocked,true,legal
-create_sales_followup,medium,Sales handoff load,Commercial boundary detected,lead routing,true,sales_ops
+schema_version,action,risk_tier,possible_harm,preconditions,deterministic_gate,human_review_required,owner
+1,retrieve_product_catalog,low,Incorrect product fact shown,Current catalog available,catalog lookup,false,platform
+1,retrieve_public_pricing,medium,Pricing misunderstanding,Public pricing context available,pricing policy lookup,false,sales_ops
+1,approve_discount,prohibited,Unauthorized commercial commitment,None,blocked,true,sales_ops
+1,create_contract_commitment,prohibited,Binding unsupported promise,None,blocked,true,legal
+1,create_sales_followup,medium,Sales handoff load,Commercial boundary detected,lead routing,true,sales_ops

@@ -1,4 +1,4 @@
-action,risk_tier,possible_harm,preconditions,deterministic_gate,human_review_required,owner
-retrieve_course_material,low,Incorrect course content shown,Course and unit identified,course catalog lookup,false,platform
-reveal_answer_key,prohibited,Academic integrity violation,None,blocked,true,learning_product
-create_instructor_escalation,medium,Operational load,Academic-integrity or policy ambiguity detected,escalation routing,true,operations
+schema_version,action,risk_tier,possible_harm,preconditions,deterministic_gate,human_review_required,owner
+1,retrieve_course_material,low,Incorrect course content shown,Course and unit identified,course catalog lookup,false,platform
+1,reveal_answer_key,prohibited,Academic integrity violation,None,blocked,true,learning_product
+1,create_instructor_escalation,medium,Operational load,Academic-integrity or policy ambiguity detected,escalation routing,true,operations
