@@ -9,7 +9,7 @@ from typing import Any
 
 import yaml
 
-from openevalgate.schema import RISK_TIERS, ValidationIssue, load_eval_cases
+from openevalgate.schema import CORE_SCHEMA_VERSION, RISK_TIERS, ValidationIssue, load_eval_cases
 
 
 WORKFLOW_KINDS = {"subagent", "deterministic", "human"}
@@ -20,6 +20,15 @@ REQUIRED_OBSERVABILITY_FIELDS = {
     "workflow_id",
     "routing_policy_version",
     "routing_reason",
+}
+ROUTING_POLICY_KEYS = {
+    "metadata",
+    "models",
+    "workflows",
+    "observability",
+    "rollback",
+    "recertification",
+    "extensions",
 }
 
 
@@ -52,11 +61,22 @@ class RoutingPolicySummary:
 
 
 def load_routing_policy(path: str | Path) -> dict[str, Any]:
-    """Load the supported wrapped routing-policy YAML shape."""
+    """Load the schema-versioned routing-policy YAML envelope."""
 
     with Path(path).open("r", encoding="utf-8") as handle:
         data = yaml.safe_load(handle)
-    if not isinstance(data, dict) or not isinstance(data.get("routing_policy"), dict):
+    if not isinstance(data, dict):
+        raise ValueError("Routing-policy document must be an object.")
+    unknown = sorted(set(data) - {"schema_version", "routing_policy", "extensions"})
+    if unknown:
+        raise ValueError(f"Routing-policy document has unsupported field(s): {', '.join(unknown)}.")
+    if data.get("schema_version") != CORE_SCHEMA_VERSION or not isinstance(
+        data.get("schema_version"), str
+    ):
+        raise ValueError('routing_policy.schema_version must be exactly the string "1".')
+    if "extensions" in data and not isinstance(data["extensions"], dict):
+        raise ValueError("routing_policy.extensions must be an object.")
+    if not isinstance(data.get("routing_policy"), dict):
         raise ValueError("YAML must contain a routing_policy object")
     return data["routing_policy"]
 
@@ -76,6 +96,16 @@ def validate_routing_policy(
             False,
             [ValidationIssue(str(policy_path), str(exc))],
         )
+
+    for field in sorted(set(policy) - ROUTING_POLICY_KEYS):
+        issues.append(
+            ValidationIssue(
+                f"routing_policy.{field}",
+                "Unsupported routing-policy field. Place non-policy metadata in extensions.",
+            )
+        )
+    if "extensions" in policy and not isinstance(policy["extensions"], dict):
+        issues.append(ValidationIssue("routing_policy.extensions", "Must be an object."))
 
     metadata = policy.get("metadata")
     if not isinstance(metadata, dict):

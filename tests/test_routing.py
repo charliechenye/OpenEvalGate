@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CUSTOMER_SUPPORT = ROOT / "examples" / "customer_support_assistant"
 
 VALID_POLICY = {
+    "schema_version": "1",
     "routing_policy": {
         "metadata": {
             "id": "support_routing",
@@ -135,6 +136,23 @@ def test_valid_fixed_adaptive_and_no_model_assignments_pass(tmp_path: Path) -> N
     assert fixed_result.valid
 
 
+def test_routing_policy_v1_envelope_and_extensions_fail_closed(tmp_path: Path) -> None:
+    policy = deepcopy(VALID_POLICY)
+    policy["routing_policy"]["extensions"] = {"vendor": {"trace_schema": "v1"}}
+    assert validate_routing_policy(write_policy(tmp_path / "extended.yaml", policy)).valid
+
+    policy["routing_policy"]["vendor_metadata"] = {"trace_schema": "v1"}
+    result = validate_routing_policy(write_policy(tmp_path / "unknown.yaml", policy))
+    assert not result.valid
+    assert any("Unsupported routing-policy field" in issue.message for issue in result.issues)
+
+    policy = deepcopy(VALID_POLICY)
+    policy["schema_version"] = "2"
+    result = validate_routing_policy(write_policy(tmp_path / "wrong-version.yaml", policy))
+    assert not result.valid
+    assert "schema_version" in result.issues[0].message
+
+
 def test_invalid_ids_fallbacks_and_eval_references_fail(tmp_path: Path) -> None:
     policy = deepcopy(VALID_POLICY)
     duplicate = deepcopy(policy["routing_policy"]["workflows"][0])
@@ -142,7 +160,10 @@ def test_invalid_ids_fallbacks_and_eval_references_fail(tmp_path: Path) -> None:
     duplicate["eval_cases"] = ["missing_case"]
     policy["routing_policy"]["workflows"].append(duplicate)
     eval_path = tmp_path / "eval_cases.yaml"
-    eval_path.write_text(yaml.safe_dump({"eval_cases": [{"id": "known_case"}]}), encoding="utf-8")
+    eval_path.write_text(
+        yaml.safe_dump({"schema_version": "1", "eval_cases": [{"id": "known_case"}]}),
+        encoding="utf-8",
+    )
 
     result = validate_routing_policy(
         write_policy(tmp_path / "routing_policy.yaml", policy),

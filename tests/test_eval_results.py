@@ -137,6 +137,71 @@ def test_invalid_eval_results_fail(tmp_path: Path) -> None:
     assert any("score" in issue.path for issue in result.issues)
 
 
+def test_eval_result_v1_headers_reject_missing_duplicate_and_unknown_columns(
+    tmp_path: Path,
+) -> None:
+    missing_root = tmp_path / "missing"
+    missing_root.mkdir()
+    project, headers, row = _single_result_project(missing_root)
+    headers.remove("schema_version")
+    row.pop("schema_version")
+    _write_result_table(project, headers, [row])
+    assert any("schema_version" in issue.path for issue in validate_eval_results(project).issues)
+
+    duplicate_root = tmp_path / "duplicate"
+    duplicate_root.mkdir()
+    project, headers, row = _single_result_project(duplicate_root)
+    headers.append("schema_version")
+    _write_result_table(project, headers, [row])
+    assert any(
+        "Duplicate eval-result header" in issue.message
+        for issue in validate_eval_results(project).issues
+    )
+
+    unknown_root = tmp_path / "unknown"
+    unknown_root.mkdir()
+    project, headers, row = _single_result_project(unknown_root)
+    headers.append("runner_trace")
+    row["runner_trace"] = "trace-001"
+    _write_result_table(project, headers, [row])
+    assert any(
+        "Unsupported eval-result header" in issue.message
+        for issue in validate_eval_results(project).issues
+    )
+
+
+def test_eval_result_x_columns_are_isolated_from_policy(tmp_path: Path) -> None:
+    project, headers, row = _single_result_project(tmp_path)
+    headers.append("x_runner_trace")
+    row["x_runner_trace"] = "trace-001"
+    _write_result_table(project, headers, [row])
+
+    assert validate_eval_results(project).valid
+
+
+def test_eval_result_blank_header_fails_closed(tmp_path: Path) -> None:
+    project, headers, row = _single_result_project(tmp_path)
+    headers.append("")
+    _write_result_table(project, headers, [row])
+
+    assert any(
+        "header name must be nonblank" in issue.message
+        for issue in validate_eval_results(project).issues
+    )
+
+
+def test_eval_result_excess_cells_fail_closed(tmp_path: Path) -> None:
+    project, _, _ = _single_result_project(tmp_path)
+    result_path = project / "eval_results.csv"
+    lines = result_path.read_text(encoding="utf-8").splitlines()
+    result_path.write_text("\n".join([lines[0], lines[1] + ",unexpected"]) + "\n", encoding="utf-8")
+
+    assert any(
+        "contains more cells than the header" in issue.message
+        for issue in validate_eval_results(project).issues
+    )
+
+
 def test_unknown_case_id_in_results_fails_project_check(tmp_path: Path) -> None:
     project = tmp_path / "project"
     _copy_mutable_project(CUSTOMER_SUPPORT, project)
@@ -173,11 +238,12 @@ def test_enriched_eval_results_validate_and_calculate_boundary_metrics(tmp_path:
         "after_value": "paraphrase",
     }
     (project / "eval_cases.yaml").write_text(
-        yaml.safe_dump({"eval_cases": [anchor, variant]}, sort_keys=False),
+        yaml.safe_dump({"schema_version": "1", "eval_cases": [anchor, variant]}, sort_keys=False),
         encoding="utf-8",
     )
 
     headers = [
+        "schema_version",
         "run_id",
         "case_id",
         "candidate",
@@ -205,6 +271,7 @@ def test_enriched_eval_results_validate_and_calculate_boundary_metrics(tmp_path:
     variant_mismatch_route = "show" if variant_route != "show" else "escalate"
     rows = [
         [
+            "1",
             "run_002",
             anchor["id"],
             "gpt-4.1-mini",
@@ -228,6 +295,7 @@ def test_enriched_eval_results_validate_and_calculate_boundary_metrics(tmp_path:
             "false",
         ],
         [
+            "1",
             "run_002",
             variant["id"],
             "gpt-4.1-mini",
@@ -251,6 +319,7 @@ def test_enriched_eval_results_validate_and_calculate_boundary_metrics(tmp_path:
             "false",
         ],
         [
+            "1",
             "run_002",
             anchor["id"],
             "gpt-4.1-mini",
@@ -274,6 +343,7 @@ def test_enriched_eval_results_validate_and_calculate_boundary_metrics(tmp_path:
             "false",
         ],
         [
+            "1",
             "run_002",
             variant["id"],
             "gpt-4.1-mini",

@@ -4,7 +4,7 @@ Turn evaluation evidence into a bounded launch decision for production AI assist
 
 [![CI](https://github.com/charliechenye/OpenEvalGate/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/charliechenye/OpenEvalGate/actions/workflows/ci.yml?query=branch%3Amain)
 [![Python 3.10-3.14](https://img.shields.io/badge/python-3.10--3.14-blue.svg)](https://www.python.org/)
-[![Status: public alpha](https://img.shields.io/badge/status-public%20alpha-orange.svg)](docs/roadmap/release-milestones.md)
+[![Status: stable core](https://img.shields.io/badge/status-stable%20core-2ea44f.svg)](docs/contracts/core-compatibility-v1.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 OpenEvalGate is an open-source, local evidence-admission layer for enterprise AI product and platform teams. It deterministically assesses declared review evidence and turns it into a bounded recommendation for the requested review stage.
@@ -19,7 +19,11 @@ It helps teams assemble and review evidence for three questions:
 
 OpenEvalGate does not run the candidate system. Teams run evaluations with their existing tools, record the results locally, and use the CLI to validate the evidence package, identify blockers, and generate a release-assurance report.
 
-> **Public alpha:** This project is pre-1.0. Its schemas, policy defaults, and CLI behavior may change in later `0.x` releases. See [governance and compatibility policy](GOVERNANCE.md).
+> **Stable core:** `0.1.0` provides Core Compatibility v1 for its defined CLI,
+> JSON, assessment, and V1 evidence surfaces. Templates, playbooks, vendor
+> adapters, and full product-scope stability remain experimental. See the
+> [Core Compatibility v1](docs/contracts/core-compatibility-v1.md) and
+> [governance](GOVERNANCE.md).
 
 ## The Production Problem
 
@@ -105,6 +109,10 @@ High evidence completeness cannot override a high-risk case that failed to stop 
 5. Save observed results in `eval_results.csv` and optional outputs in `eval_runs/`.
 6. Validate the project and generate a local report.
 7. Review the recommendation, blockers, mitigations, and required next actions.
+
+See the [external-runner handoff](docs/integrations/external-runner-handoff-v1.md)
+for a V1 evidence handoff, including a LangChain-shaped producer example that
+does not add an SDK dependency.
 
 The framework distinguishes:
 
@@ -215,7 +223,9 @@ quality score.
 
 ## Limitations and Non-Claims
 
-OpenEvalGate is an early, pre-1.0 framework with practitioner-defined defaults and repository-authored synthetic examples.
+OpenEvalGate has a stable V1 core and practitioner-defined defaults with
+repository-authored synthetic examples. Full product-scope stability and
+adoption evidence remain future `1.0` work.
 
 - It does not execute candidate models, call LLM APIs, or evaluate live behavior by itself.
 - It does not replace eval runners, observability systems, runtime guardrails, security controls, or organizational approval.

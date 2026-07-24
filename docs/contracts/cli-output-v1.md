@@ -3,8 +3,9 @@
 OpenEvalGate can emit deterministic JSON for automation and a compact Markdown
 decision card for CI summaries and cross-functional launch reviews.
 
-The default text and Markdown output remains the compatibility path. JSON is
-opt-in with `--format json`; the decision card is opt-in with
+JSON is the machine-readable compatibility path. Default text, Markdown, and
+the decision card are deterministic within a release but non-parseable. JSON
+is opt-in with `--format json`; the decision card is opt-in with
 `openevalgate report <project> --format card`.
 
 ## Commands
@@ -55,6 +56,7 @@ authorization or compliance certification.
 
 ## Compatibility
 
-The JSON schema is alpha and may change in a later `0.x` release. Consumers
-should pin `schema_version`, handle unknown fields, and use blocker IDs rather
-than matching human-readable report text.
+The JSON schema is stable for Core Compatibility v1. Consumers must pin
+`schema_version`, tolerate additive fields, and use blocker and provenance
+finding IDs rather than matching human-readable report text. See
+[Core Compatibility v1](core-compatibility-v1.md).

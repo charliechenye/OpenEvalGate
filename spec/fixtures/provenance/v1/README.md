@@ -81,6 +81,7 @@ Documentation and shadow authorization use `allowed`, `allowed_with_warning`, or
 | `future-clock-skew` | Verified historical envelope with current review observation contradicted by future clock skew. |
 | `invalid-artifact-identity` | Schema-valid artifact index contradicted by result case_id identity. |
 | `invalid-artifact-trial-identity` | Schema-valid artifact index contradicted by result trial_id identity. |
+| `langchain-external-runner` | Valid external-runner handoff that records LangChain producer and framework versions without an SDK dependency. |
 | `invalid-dot-segment-path` | Manifest rejected because a local path contains a prohibited standalone `.` segment. |
 | `invalid-input-digest` | Schema-valid manifest with a historical input digest mismatch. |
 | `invalid-output-digest` | Schema-valid manifest with a result-output digest mismatch. |

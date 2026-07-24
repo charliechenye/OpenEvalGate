@@ -6,7 +6,10 @@ Status: proposed contract; runtime provenance classification subset implemented
 
 OpenEvalGate evaluates externally produced evidence for AI-assistant and agent launch decisions. Metrics are not decision-ready unless reviewers can determine which candidate, policies, evaluator, inputs, and outputs produced them, whether the historical evidence is internally trustworthy, and whether it still matches the release under review.
 
-This contract defines a vendor-neutral, run-scoped evidence envelope for existing OpenEvalGate-compatible eval results. The provenance manifest wraps an existing compatible `eval_results.csv`. It does not require external eval systems to adopt new provenance columns or rewrite every row.
+This contract defines a vendor-neutral, run-scoped evidence envelope for V1
+OpenEvalGate eval results. The provenance manifest binds a V1
+`eval_results.csv`; external runners write the same local contract without a
+runtime SDK dependency.
 
 PR 18 defines the contract, schemas, fixtures, and fixture-development validation. The runtime subset implements manifest schema loading, deterministic authoritative-manifest selection, selected run and candidate checks, evaluator identity checks, lifecycle findings, result CSV identity checks, output identity consistency, artifact-index identity checks, local digest verification for historical descriptors, historical envelope consistency checks, review-context validation, assurance, freshness, recency, missing-manifest detection, unbound-result exclusion, and report visibility. Complete contract authorization remains deferred.
 
@@ -22,19 +25,22 @@ Version 1 defines:
 - lifecycle, validity, freshness, recency, assurance, finding, and authorization vocabulary;
 - missing-manifest and unbound-result classifications.
 
-Version 1 does not define a new CSV row schema, remote attestation, vendor adapters, or OpenEvalGate review provenance. The implemented runtime subset reports identity, lifecycle, assurance, freshness, and recency status, and fails closed on local historical or current review-context contradictions; full authorization output remains deferred.
+Version 1 does not define remote attestation, vendor adapters, or complete
+OpenEvalGate review provenance authorization. The implemented runtime subset
+reports identity, lifecycle, assurance, freshness, and recency status, and
+fails closed on local historical or current review-context contradictions.
 
 ## Existing CSV Compatibility
 
-The existing OpenEvalGate `eval_results.csv` contract remains authoritative. Fixture CSVs remain compatible with that contract: required columns may appear in any order, supported optional columns and parser-accepted extra columns are allowed, and duplicate column names are invalid because they are ambiguous. This contract does not require new CSV columns, including:
-
-- `candidate_id`
-- `candidate_version`
-- `evaluator_id`
-- `primary_output_artifact_id`
+The V1 `eval_results.csv` contract is authoritative. Every populated row
+requires the exact `schema_version` value `1`; headers may appear in any order,
+supported optional columns are allowed, and only `x_` extension headers may
+carry non-policy producer metadata. Duplicate or unnamespaced headers are
+invalid because they are ambiguous.
 
 The compatibility cross-check uses existing fields:
 
+- `schema_version`
 - `run_id`
 - `candidate`
 - `evaluator`

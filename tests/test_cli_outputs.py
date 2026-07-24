@@ -3,7 +3,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from jsonschema import Draft202012Validator
+
 from openevalgate.cli import main
+from openevalgate.resources.schemas import CLI_OUTPUT_SCHEMA_NAME, load_schema
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,6 +28,20 @@ def test_report_json_is_deterministic_and_machine_readable(
     assert payload["status"] == "blocked"
     assert payload["run_identity"]["classification"]["freshness"] == "current"
     assert all(not str(issue["path"]).startswith("/") for issue in payload["issues"])
+
+
+def test_all_cli_json_envelopes_conform_to_v1_schema(capsys) -> None:
+    validator = Draft202012Validator(load_schema(CLI_OUTPUT_SCHEMA_NAME))
+    commands = (
+        ["validate", str(CUSTOMER_SUPPORT / "eval_cases.yaml"), "--format", "json"],
+        ["check", str(CUSTOMER_SUPPORT), "--format", "json"],
+        ["report", str(CUSTOMER_SUPPORT), "--format", "json"],
+    )
+
+    for command in commands:
+        assert main(command) == 0
+        payload = json.loads(capsys.readouterr().out)
+        assert list(validator.iter_errors(payload)) == []
 
 
 def test_report_card_contains_bounded_decision_summary(capsys) -> None:

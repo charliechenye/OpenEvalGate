@@ -281,7 +281,7 @@ def test_action_matrix_context_is_true_false_or_unknown(
         matrix.unlink()
     elif state == "malformed":
         matrix.write_text(
-            "action,risk_tier\nlookup,low\n",
+            "schema_version,action,risk_tier\n1,lookup,low\n",
             encoding="utf-8",
         )
 
@@ -297,7 +297,7 @@ def test_unreadable_action_matrix_makes_tool_scope_unknown(
 ) -> None:
     path = tmp_path / "action_risk_matrix.csv"
     path.write_text(
-        "action,risk_tier,deterministic_gate,human_review_required\n",
+        "schema_version,action,risk_tier,deterministic_gate,human_review_required\n",
         encoding="utf-8",
     )
 
@@ -317,14 +317,14 @@ def test_invalid_eval_and_low_risk_action_leave_high_impact_unknown(
 ) -> None:
     project = _copy_project(tmp_path)
     (project / "eval_cases.yaml").write_text(
-        "eval_cases: []",
+        'schema_version: "1"\neval_cases: []\n',
         encoding="utf-8",
     )
     (project / "action_risk_matrix.csv").write_text(
         "\n".join(
             [
-                "action,risk_tier,deterministic_gate,human_review_required",
-                "lookup,low,authorization,false",
+                "schema_version,action,risk_tier,deterministic_gate,human_review_required",
+                "1,lookup,low,authorization,false",
             ]
         )
         + "\n",
@@ -374,8 +374,8 @@ def test_unsafe_action_blocker_remains_independent_of_gate_pass(
     (project / "action_risk_matrix.csv").write_text(
         "\n".join(
             [
-                "action,risk_tier,deterministic_gate,human_review_required",
-                "issue_refund,high,,false",
+                "schema_version,action,risk_tier,deterministic_gate,human_review_required",
+                "1,issue_refund,high,,false",
             ]
         )
         + "\n",
@@ -455,8 +455,8 @@ def test_placeholder_deterministic_gate_is_blocked_end_to_end(
     (project / "action_risk_matrix.csv").write_text(
         "\n".join(
             [
-                "action,risk_tier,deterministic_gate,human_review_required",
-                "issue_refund,high,N/A,false",
+                "schema_version,action,risk_tier,deterministic_gate,human_review_required",
+                "1,issue_refund,high,N/A,false",
             ]
         )
         + "\n",
@@ -476,10 +476,10 @@ def test_action_matrix_rejects_blank_and_raw_unsupported_semantic_values(
     path.write_text(
         "\n".join(
             [
-                "action,risk_tier,deterministic_gate,human_review_required",
-                "lookup,,,",
-                "refund,Critical,authorization,YES",
-                ",low,authorization,false",
+                "schema_version,action,risk_tier,deterministic_gate,human_review_required",
+                "1,lookup,,,",
+                "1,refund,Critical,authorization,YES",
+                "1,,low,authorization,false",
             ]
         )
         + "\n",
@@ -519,9 +519,9 @@ def test_action_matrix_accepts_trimmed_headers_and_preserves_raw_cells(
     path = tmp_path / "action_risk_matrix.csv"
     path.write_text(
         (
-            " action , risk_tier ,deterministic_gate,"
+            " schema_version , action , risk_tier ,deterministic_gate,"
             "human_review_required\n"
-            " lookup , Medium , authorization , FALSE \n"
+            " 1 , lookup , Medium , authorization , FALSE \n"
         ),
         encoding="utf-8",
     )
@@ -530,12 +530,14 @@ def test_action_matrix_accepts_trimmed_headers_and_preserves_raw_cells(
 
     assert review.valid
     assert review.normalized_headers == (
+        "schema_version",
         "action",
         "risk_tier",
         "deterministic_gate",
         "human_review_required",
     )
     assert review.rows[0].raw_cells == (
+        " 1 ",
         " lookup ",
         " Medium ",
         " authorization ",
@@ -544,6 +546,25 @@ def test_action_matrix_accepts_trimmed_headers_and_preserves_raw_cells(
     assert review.rows[0].raw_values["risk_tier"] == "Medium"
     assert review.rows[0].normalized_values["risk_tier"] == "medium"
     assert review.rows[0].normalized_values["human_review_required"] == "false"
+
+
+def test_action_matrix_v1_columns_reject_unknown_and_allow_x_extensions(tmp_path: Path) -> None:
+    path = tmp_path / "action_risk_matrix.csv"
+    path.write_text(
+        "schema_version,action,risk_tier,deterministic_gate,human_review_required,x_runner\n"
+        "1,lookup,low,authorization,false,trace-001\n",
+        encoding="utf-8",
+    )
+    assert inspect_action_risk_matrix(path).valid
+
+    path.write_text(
+        "schema_version,action,risk_tier,deterministic_gate,human_review_required,runner\n"
+        "1,lookup,low,authorization,false,trace-001\n",
+        encoding="utf-8",
+    )
+    review = inspect_action_risk_matrix(path)
+    assert not review.valid
+    assert any("Unsupported action-risk header" in issue.message for issue in review.issues)
 
 
 def test_action_matrix_file_edge_cases_are_deterministic(
@@ -556,6 +577,7 @@ def test_action_matrix_file_edge_cases_are_deterministic(
     assert not empty_review.valid
     assert empty_review.rows == []
     assert [issue.path.rsplit(":", 1)[-1] for issue in empty_review.issues] == [
+        "schema_version",
         "action",
         "risk_tier",
         "deterministic_gate",
@@ -567,6 +589,7 @@ def test_action_matrix_file_edge_cases_are_deterministic(
     blank_review = inspect_action_risk_matrix(blank_header)
     assert [issue.path.rsplit(":", 1)[-1] for issue in blank_review.issues] == [
         "header[1]",
+        "schema_version",
         "action",
         "risk_tier",
         "deterministic_gate",
@@ -575,7 +598,7 @@ def test_action_matrix_file_edge_cases_are_deterministic(
 
     header_only = tmp_path / "header-only.csv"
     header_only.write_text(
-        "action,risk_tier,deterministic_gate,human_review_required\n",
+        "schema_version,action,risk_tier,deterministic_gate,human_review_required\n",
         encoding="utf-8",
     )
     header_review = inspect_action_risk_matrix(header_only)
@@ -584,7 +607,7 @@ def test_action_matrix_file_edge_cases_are_deterministic(
 
     malformed = tmp_path / "malformed.csv"
     malformed.write_text(
-        'action,risk_tier,deterministic_gate,human_review_required\n"x,high,,false\n',
+        'schema_version,action,risk_tier,deterministic_gate,human_review_required\n"1,x,high,,false\n',
         encoding="utf-8",
     )
     malformed_review = inspect_action_risk_matrix(malformed)
@@ -600,8 +623,8 @@ def test_action_matrix_header_ambiguity_and_issue_order(
     path.write_text(
         "\n".join(
             [
-                ("action,,risk_tier,risk_tier,extra,extra,human_review_required"),
-                ",,low,high,value,value,maybe,unexpected",
+                ("schema_version,action,,risk_tier,risk_tier,x_extra,x_extra,human_review_required"),
+                "1,,,low,high,value,value,maybe,unexpected",
             ]
         )
         + "\n",
@@ -614,7 +637,7 @@ def test_action_matrix_header_ambiguity_and_issue_order(
     assert [issue.message for issue in review.issues] == [
         "Action-risk header name must be nonblank.",
         "Duplicate action-risk header: risk_tier.",
-        "Duplicate action-risk header: extra.",
+        "Duplicate action-risk header: x_extra.",
         "Required action-risk column is missing.",
         "Action-risk row contains more cells than the header.",
         "Action must be nonblank for a populated row.",
@@ -628,15 +651,15 @@ def test_action_matrix_header_ambiguity_and_issue_order(
     ("header", "row", "duplicate_field", "expected_risk_tier"),
     [
         (
-            ("action,risk_tier,risk_tier,deterministic_gate,human_review_required"),
-            "refund,low,high,,false",
+            ("schema_version,action,risk_tier,risk_tier,deterministic_gate,human_review_required"),
+            "1,refund,low,high,,false",
             "risk_tier",
             None,
         ),
         (
-            ("action,risk_tier,extra,extra,deterministic_gate,human_review_required"),
-            "refund,high,a,b,,false",
-            "extra",
+            ("schema_version,action,risk_tier,x_extra,x_extra,deterministic_gate,human_review_required"),
+            "1,refund,high,a,b,,false",
+            "x_extra",
             "high",
         ),
     ],
@@ -673,15 +696,15 @@ def test_triplicate_header_emits_one_duplicate_issue_and_unique_extra_is_valid(
     triplicate = tmp_path / "triplicate.csv"
     triplicate.write_text(
         (
-            "action,risk_tier,extra,extra,extra,deterministic_gate,"
-            "human_review_required\nlookup,low,a,b,c,gate,false\n"
+            "schema_version,action,risk_tier,x_extra,x_extra,x_extra,deterministic_gate,"
+            "human_review_required\n1,lookup,low,a,b,c,gate,false\n"
         ),
         encoding="utf-8",
     )
     triplicate_review = inspect_action_risk_matrix(triplicate)
     assert (
         sum(
-            issue.message == "Duplicate action-risk header: extra."
+            issue.message == "Duplicate action-risk header: x_extra."
             for issue in triplicate_review.issues
         )
         == 1
@@ -690,14 +713,14 @@ def test_triplicate_header_emits_one_duplicate_issue_and_unique_extra_is_valid(
     unique = tmp_path / "unique.csv"
     unique.write_text(
         (
-            "action,risk_tier,extra,deterministic_gate,"
-            "human_review_required\nlookup,low,value,gate,false\n"
+            "schema_version,action,risk_tier,x_extra,deterministic_gate,"
+            "human_review_required\n1,lookup,low,value,gate,false\n"
         ),
         encoding="utf-8",
     )
     unique_review = inspect_action_risk_matrix(unique)
     assert unique_review.valid
-    assert unique_review.rows[0].raw_values["extra"] == "value"
+    assert unique_review.rows[0].raw_values["x_extra"] == "value"
 
 
 def test_case_mismatched_header_is_missing_and_short_rows_are_padded(
@@ -705,19 +728,21 @@ def test_case_mismatched_header_is_missing_and_short_rows_are_padded(
 ) -> None:
     path = tmp_path / "action_risk_matrix.csv"
     path.write_text(
-        ("Action,risk_tier,deterministic_gate,human_review_required\nlookup,low\n"),
+        ("schema_version,Action,risk_tier,deterministic_gate,human_review_required\n1,lookup,low\n"),
         encoding="utf-8",
     )
 
     review = inspect_action_risk_matrix(path)
 
     assert not review.valid
-    assert review.rows[0].raw_cells == ("lookup", "low")
+    assert review.rows[0].raw_cells == ("1", "lookup", "low")
     assert "action" not in review.rows[0].raw_values
     assert review.rows[0].raw_values["deterministic_gate"] == ""
     assert review.rows[0].raw_values["human_review_required"] == ""
     assert review.issues[0].path.endswith(":action")
-    assert review.issues[1].path.endswith(".human_review_required")
+    assert any(
+        issue.path.endswith(".human_review_required") for issue in review.issues
+    )
 
 
 def test_excess_only_row_is_populated_and_blank_rows_are_ignored(
@@ -727,9 +752,9 @@ def test_excess_only_row_is_populated_and_blank_rows_are_ignored(
     path.write_text(
         "\n".join(
             [
-                "action,risk_tier,deterministic_gate,human_review_required",
-                "   ,   ,   ,   ",
-                ",,,,unexpected",
+                "schema_version,action,risk_tier,deterministic_gate,human_review_required",
+                "   ,   ,   ,   ,   ",
+                ",,,,,unexpected",
             ]
         )
         + "\n",
@@ -739,9 +764,10 @@ def test_excess_only_row_is_populated_and_blank_rows_are_ignored(
     review = inspect_action_risk_matrix(path)
 
     assert len(review.rows) == 1
-    assert review.rows[0].raw_cells == ("", "", "", "", "unexpected")
+    assert review.rows[0].raw_cells == ("", "", "", "", "", "unexpected")
     assert review.issues[0].message == ("Action-risk row contains more cells than the header.")
     assert [issue.path.rsplit(".", 1)[-1] for issue in review.issues[1:]] == [
+        "schema_version",
         "action",
         "risk_tier",
         "human_review_required",
@@ -800,9 +826,9 @@ def _write_mixed_invalid_action_matrix(project: Path) -> None:
     (project / "action_risk_matrix.csv").write_text(
         "\n".join(
             [
-                "action,risk_tier,deterministic_gate,human_review_required",
-                "unsafe_refund,high,,false",
-                "unclear_action,Critical,,false",
+                "schema_version,action,risk_tier,deterministic_gate,human_review_required",
+                "1,unsafe_refund,high,,false",
+                "1,unclear_action,Critical,,false",
             ]
         )
         + "\n",

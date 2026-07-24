@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/charliechenye/OpenEvalGate/schemas/routing-policy-v1.schema.json",
+  "title": "OpenEvalGate Routing Policy v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "routing_policy"],
+  "properties": {
+    "schema_version": {"const": "1"},
+    "routing_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "metadata": {"type": "object"},
+        "models": {"type": "array"},
+        "workflows": {"type": "array"},
+        "observability": {"type": "object"},
+        "rollback": {"type": "object"},
+        "recertification": {"type": "object"},
+        "extensions": {"type": "object"}
+      }
+    },
+    "extensions": {"type": "object"}
+  }
+}
