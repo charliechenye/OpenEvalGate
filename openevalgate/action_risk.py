@@ -15,11 +15,18 @@ HIGH_IMPACT_ACTION_RISK_TIERS = frozenset({"high", "prohibited"})
 ALLOWED_BOOLEAN_VALUES = frozenset({"true", "false"})
 
 REQUIRED_ACTION_RISK_COLUMNS = (
+    "schema_version",
     "action",
     "risk_tier",
     "deterministic_gate",
     "human_review_required",
 )
+OPTIONAL_ACTION_RISK_COLUMNS = (
+    "possible_harm",
+    "preconditions",
+    "owner",
+)
+ACTION_RISK_SCHEMA_VERSION = "1"
 
 
 @dataclass(frozen=True)
@@ -101,10 +108,28 @@ def inspect_action_risk_matrix(path: str | Path) -> ActionRiskReview:
                 )
                 for column in missing
             ]
+            unknown_header_issues = [
+                ValidationIssue(
+                    f"{matrix_path}:header",
+                    f"Unsupported action-risk header: {header}. Use an x_ extension column.",
+                    source="action_risk_matrix",
+                )
+                for header in sorted(
+                    {
+                        header
+                        for header in normalized_headers
+                        if header
+                        and header
+                        not in {*REQUIRED_ACTION_RISK_COLUMNS, *OPTIONAL_ACTION_RISK_COLUMNS}
+                        and not header.startswith("x_")
+                    }
+                )
+            ]
             issues = [
                 *blank_header_issues,
                 *duplicate_header_issues,
                 *missing_header_issues,
+                *unknown_header_issues,
             ]
             usable_headers = {
                 header: indexes[0]
@@ -132,6 +157,17 @@ def inspect_action_risk_matrix(path: str | Path) -> ActionRiskReview:
                     header: padded_cells[index].strip() for header, index in usable_headers.items()
                 }
                 normalized_values = dict(raw_values)
+                if (
+                    "schema_version" in raw_values
+                    and raw_values["schema_version"] != ACTION_RISK_SCHEMA_VERSION
+                ):
+                    row_issues.append(
+                        ValidationIssue(
+                            f"{matrix_path}:{row_number}.schema_version",
+                            'Must be exactly the string "1".',
+                            source="action_risk_matrix",
+                        )
+                    )
                 if "risk_tier" in raw_values:
                     normalized_values["risk_tier"] = raw_values["risk_tier"].lower()
                 if "human_review_required" in raw_values:

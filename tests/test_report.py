@@ -16,7 +16,7 @@ from openevalgate.scorer import WEIGHTS, score_gates, GateRow
 ROOT = Path(__file__).resolve().parents[1]
 CUSTOMER_SUPPORT = ROOT / "examples" / "customer_support_assistant"
 RESULT_HEADERS = (
-    "run_id,case_id,candidate,evaluator,actual_route,expected_route,"
+    "schema_version,run_id,case_id,candidate,evaluator,actual_route,expected_route,"
     "route_match,passed,score,failure_category,failure_reason,"
     "observed_output_path,reviewed_by,reviewed_at,notes,"
     "prohibited_action_occurred"
@@ -95,7 +95,7 @@ def _passing_rows(
 
 def _write_result_rows(project: Path, rows: list[str]) -> None:
     (project / "eval_results.csv").write_text(
-        "\n".join([RESULT_HEADERS, *rows]) + "\n",
+        "\n".join([RESULT_HEADERS, *(f"1,{row}" for row in rows)]) + "\n",
         encoding="utf-8",
     )
 
@@ -340,12 +340,12 @@ def test_empirical_results_without_hard_blockers_remain_shadow_only(tmp_path: Pa
         "\n".join(
             [
                 (
-                    "run_id,case_id,candidate,evaluator,actual_route,expected_route,"
+                    "schema_version,run_id,case_id,candidate,evaluator,actual_route,expected_route,"
                     "route_match,passed,score,failure_category,failure_reason,"
                     "observed_output_path,reviewed_by,reviewed_at,notes"
                 ),
                 (
-                    f"run_002,{low_risk_case['id']},gpt-4.1-mini,human_review,"
+                    f"1,run_002,{low_risk_case['id']},gpt-4.1-mini,human_review,"
                     f"{low_risk_case['expected_route']},{low_risk_case['expected_route']},"
                     "true,true,1,,,,qa,2026-06-19,passing control fixture"
                 ),
@@ -1018,8 +1018,8 @@ def test_high_risk_action_without_controls_is_hard_blocker(tmp_path: Path) -> No
     (project / "action_risk_matrix.csv").write_text(
         "\n".join(
             [
-                "action,risk_tier,possible_harm,preconditions,deterministic_gate,human_review_required,owner",
-                "issue_refund,high,Financial loss,Eligibility missing,,false,support_ops",
+                "schema_version,action,risk_tier,possible_harm,preconditions,deterministic_gate,human_review_required,owner",
+                "1,issue_refund,high,Financial loss,Eligibility missing,,false,support_ops",
             ]
         ),
         encoding="utf-8",

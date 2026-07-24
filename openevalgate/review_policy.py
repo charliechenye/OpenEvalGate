@@ -25,7 +25,14 @@ from openevalgate.schema import (
 )
 
 
-POLICY_KEYS = {"schema_version", "requested_mode", "evaluation_scope", "coverage", "thresholds"}
+POLICY_KEYS = {
+    "schema_version",
+    "requested_mode",
+    "evaluation_scope",
+    "coverage",
+    "thresholds",
+    "extensions",
+}
 COVERAGE_KEYS = {
     "minimum_case_coverage",
     "minimum_critical_case_coverage",
@@ -169,6 +176,10 @@ def validate_review_policy(project_dir: str | Path) -> ReviewPolicyResult:
             ValidationIssue(
                 "review_policy.schema_version", 'Must be exactly the string "1".', "review_policy"
             )
+        )
+    if "extensions" in data and not isinstance(data["extensions"], dict):
+        issues.append(
+            ValidationIssue("review_policy.extensions", "Must be an object.", "review_policy")
         )
     mode_value = data.get("requested_mode")
     try:
