@@ -12,9 +12,8 @@ repository-code: "https://github.com/charliechenye/OpenEvalGate"
 url: "https://chenyezhu.com/"
 abstract: >-
   OpenEvalGate is a local, deterministic release-assurance framework for
-  production AI assistants and agents. It organizes golden evals, action-risk
-  controls, human escalation evidence, hard blockers, operational ownership,
-  observability, and rollback evidence into bounded launch-readiness reports.
+  production AI assistants and agents. Its stable V1 core validates versioned
+  evidence, hard blockers, and bounded launch-readiness recommendations.
 keywords:
   - generative AI
   - AI governance
