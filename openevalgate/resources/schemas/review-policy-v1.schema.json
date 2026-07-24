@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/charliechenye/OpenEvalGate/schemas/review-policy-v1.schema.json",
+  "title": "OpenEvalGate Review Policy v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "requested_mode"],
+  "properties": {
+    "schema_version": {"const": "1"},
+    "requested_mode": {"enum": ["documentation", "shadow_launch", "controlled_launch"]},
+    "evaluation_scope": {"type": "object"},
+    "coverage": {"type": "object"},
+    "thresholds": {"type": "object"},
+    "extensions": {"type": "object"}
+  }
+}

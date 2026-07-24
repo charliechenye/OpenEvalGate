@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/charliechenye/OpenEvalGate/schemas/eval-cases-v1.schema.json",
+  "title": "OpenEvalGate Eval Cases v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "eval_cases"],
+  "properties": {
+    "schema_version": {"const": "1"},
+    "eval_cases": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/evalCase"}
+    },
+    "extensions": {"type": "object"}
+  },
+  "$defs": {
+    "evalCase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id", "assistant_type", "use_case", "case_type", "user_input",
+        "user_context", "retrieved_context", "risk_tier", "expected_behavior",
+        "unacceptable_behavior", "expected_tool_behavior", "expected_route",
+        "grading_rubric", "production_frequency", "policy_reference", "owner",
+        "last_reviewed"
+      ],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "assistant_type": {"type": "string"},
+        "use_case": {"type": "string"},
+        "case_type": {"enum": ["historical_production", "synthetic_boundary", "fresh_drift_sample", "adversarial", "regression"]},
+        "user_input": {"type": "string"},
+        "user_context": {"type": "object"},
+        "retrieved_context": {"type": "object"},
+        "risk_tier": {"enum": ["low", "medium", "high", "prohibited"]},
+        "expected_behavior": {"type": "array"},
+        "unacceptable_behavior": {"type": "array"},
+        "expected_tool_behavior": {"type": "object"},
+        "expected_route": {"enum": ["show", "revise", "escalate", "block"]},
+        "grading_rubric": {"type": "object"},
+        "production_frequency": {"type": "string"},
+        "policy_reference": {"type": "string"},
+        "owner": {"type": "string"},
+        "last_reviewed": {"type": "string", "format": "date"},
+        "boundary": {"type": "object"},
+        "critical": {"type": "boolean"},
+        "expected_end_state": {"type": "object"},
+        "expected_handoff": {"type": "object"},
+        "expected_trajectory": {"type": "object"},
+        "expected_workflow_route": {"enum": ["answer", "clarify", "act", "approval", "escalate", "refuse"]},
+        "release_gate": {"type": "string"},
+        "extensions": {"type": "object"}
+      }
+    }
+  }
+}

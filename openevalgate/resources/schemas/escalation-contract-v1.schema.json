@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/charliechenye/OpenEvalGate/schemas/escalation-contract-v1.schema.json",
+  "title": "OpenEvalGate Escalation Contract v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "escalation_contract"],
+  "properties": {
+    "schema_version": {"const": "1"},
+    "escalation_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "workflow": {"type": "object"},
+        "boundaries": {"type": "object"},
+        "triggers": {"type": "array"},
+        "handoff": {"type": "object"},
+        "routing": {"type": "object"},
+        "durable_state": {"type": "object"},
+        "evaluation": {"type": "object"},
+        "recertification": {"type": "object"},
+        "extensions": {"type": "object"}
+      }
+    },
+    "extensions": {"type": "object"}
+  }
+}

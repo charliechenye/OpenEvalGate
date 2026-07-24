@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/charliechenye/OpenEvalGate/schemas/eval-results-v1.schema.json",
+  "title": "OpenEvalGate Eval Results v1 CSV Record",
+  "description": "A JSON representation of each populated eval_results.csv row. CSV headers are these property names; x_ columns are non-policy extensions.",
+  "type": "object",
+  "additionalProperties": false,
+  "patternProperties": {"^x_": {"type": "string"}},
+  "required": ["schema_version", "run_id", "case_id", "candidate", "evaluator", "actual_route", "expected_route", "route_match", "passed", "score", "failure_category", "failure_reason", "observed_output_path", "reviewed_by", "reviewed_at", "notes"],
+  "properties": {
+    "schema_version": {"const": "1"},
+    "run_id": {"type": "string"}, "case_id": {"type": "string"}, "candidate": {"type": "string"}, "evaluator": {"type": "string"},
+    "actual_route": {"type": "string"}, "expected_route": {"type": "string"}, "route_match": {"type": "string"}, "passed": {"type": "string"}, "score": {"type": "string"},
+    "failure_category": {"type": "string"}, "failure_reason": {"type": "string"}, "observed_output_path": {"type": "string"}, "reviewed_by": {"type": "string"}, "reviewed_at": {"type": "string"}, "notes": {"type": "string"},
+    "trial_id": {"type": "string"}, "actual_workflow_route": {"type": "string"}, "workflow_route_match": {"type": "string"}, "trajectory_pass": {"type": "string"}, "end_state_pass": {"type": "string"}, "prohibited_action_occurred": {"type": "string"}
+  }
+}
