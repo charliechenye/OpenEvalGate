@@ -9,7 +9,7 @@ This roadmap separates four distinct milestones that should not be treated as on
 
 OpenEvalGate should be positioned as an **evidence-backed release-assurance framework for production AI assistants and agents**. It is not a complete AI governance platform, eval runner, observability system, runtime guardrail, compliance certification product, or guarantee of safe deployment.
 
-> **Current state:** Public positioning and limitations, deterministic review modes, behavioral sufficiency, centralized hard-gate policy, runtime eval-run identity enforcement, package builds, clean-wheel installation, installed CLI execution, and canonical-report reproduction are implemented. Governance and repository quality work is in place; repository protection, disclosure review, exact-commit verification, and the first public `0.1.0` release handoff remain.
+> **Current state:** `0.1.0` is released and tagged. Public positioning and limitations, deterministic review modes, behavioral sufficiency, centralized hard-gate policy, runtime eval-run identity enforcement, package builds, clean-wheel installation, installed CLI execution, and canonical-report reproduction are implemented. The next work is controlled-launch authorization, a product-facing decision packet, the incident-to-eval investigation loop, and a practical recipe book validated with independent practitioners.
 
 See [Release Milestones](docs/roadmap/release-milestones.md) for the milestone definitions and dependency order.
 
@@ -102,7 +102,9 @@ The following are not required merely to make the repository public:
 
 ## Milestone B: Post-release hardening for OpenEvalGate 0.2.0
 
-`0.2.0` is the next substantive public-alpha release after `0.1.0`. Its primary theme is **evidence integrity and minimal adoption**, not feature breadth.
+`0.2.0` is the next substantive public-alpha release after `0.1.0`. Its primary theme is **controlled-launch authorization and product-facing decision clarity**, supported by adoption validation rather than feature breadth.
+
+The implementation order is documented in [Iteration 3: OpenEvalGate 0.2.0, Adoption, and Stabilization](docs/roadmap/iteration-03-adoption-and-external-validation.md). The first coherent slice is authorization semantics, enforcement, and the product decision packet; investigation recipes and integrations follow that contract.
 
 ### B1. Strengthen eval-result integrity
 
@@ -121,12 +123,26 @@ The following are not required merely to make the repository public:
 
 - [x] Define evaluator kinds and minimum evidence in the v1 contract and enforce evaluator identity at runtime.
 - [x] Define candidate identity, run lifecycle, timestamps, and resource descriptors. Runtime identity, digest verification, and freshness resource comparison are implemented.
-- [~] Define provenance presence, validity, freshness, recency, assurance, lifecycle, and authorization classifications. Runtime identity, lifecycle, freshness, recency, verified assurance, and `review_context.yaml` enforcement are implemented; complete authorization classification remains deferred.
+- [ ] Complete provenance presence, validity, freshness, recency, assurance, lifecycle, and authorization classifications. Runtime identity, lifecycle, freshness, recency, verified assurance, and `review_context.yaml` enforcement are implemented; complete authorization classification remains deferred.
 - [x] Define stale-evidence behavior when current candidate or policy state differs from valid historical evidence. Contract and local runtime comparison are implemented.
 - [x] Parse and enforce selected run identity against manifests and compatible result CSVs.
 - [x] Validate at runtime that referenced output-artifact metadata and directory identity agree with result rows when optional artifact identity fields are supplied.
 - [x] Display runtime identity and lifecycle status in reports.
-- [~] Enforce controlled-launch provenance requirements for complete versioned identity, lifecycle, and acceptable local freshness/recency; complete authorization output and broader artifact-version policy remain deferred.
+- [ ] Enforce controlled-launch provenance requirements for complete versioned identity, lifecycle, acceptable local freshness/recency, and sufficient assurance; complete authorization output and broader artifact-version policy remain deferred.
+
+### B3.1 Product-facing decision packet
+
+- [ ] Show requested review stage, bounded release scope, evidence status, behavioral status, critical-control status, and authorization status separately.
+- [ ] Show evidence freshness, assurance, accountable owners, approval expiry, rollback readiness, blockers, and next actions.
+- [ ] Preserve stable V1 finding IDs, blocker IDs, JSON envelopes, and exit behavior.
+- [ ] Add passing and blocked decision fixtures suitable for a product review meeting.
+
+### B3.2 Incident-to-eval investigation loop
+
+- [ ] Add a structured incident intake artifact with impact, expected behavior, observed behavior, coverage, gate outcome, root-cause hypothesis, mitigation, owner, and follow-up date.
+- [ ] Add a recipe for converting an incident into a regression or boundary eval case.
+- [ ] Classify follow-up as evidence, policy, behavior, routing, operations, or monitoring work.
+- [ ] Record whether re-evaluation, re-approval, rollback, or documentation is required.
 
 ### B3. Provide a minimal adoption path
 
@@ -135,6 +151,7 @@ The following are not required merely to make the repository public:
 - [ ] Keep the initial profile set small; defer speculative profile breadth until user demand is demonstrated.
 - [x] Add a five-minute installed-wheel quickstart for Linux/macOS and Windows PowerShell.
 - [x] Allow a user to produce a useful first report without copying the full customer-support example.
+- [ ] Add an AI-product-manager-oriented onboarding path for reviewing a decision packet without operating the eval runner.
 
 ### B4. Add machine-consumable output
 
@@ -143,6 +160,12 @@ The following are not required merely to make the repository public:
 - [x] Document exit codes for validation failures, launch blockers, and internal errors.
 - [x] Add an opt-in CI mode that fails when launch is blocked.
 - [ ] Defer SARIF until the finding model and JSON contract are stable.
+
+### B5.1 Recipe book v1
+
+- [ ] Add role- and lifecycle-oriented recipes for safe boundaries, risk-based golden sets, shadow review, controlled launch, incident investigation, incident-to-regression conversion, behavior-change review, and evidence freshness.
+- [ ] Link recipes to inputs, commands, report sections, blocker semantics, owners, and next actions.
+- [ ] Separate normative requirements, practitioner guidance, and illustrative examples.
 
 ### B5. Publish `0.2.0`
 
