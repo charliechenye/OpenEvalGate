@@ -55,6 +55,25 @@ Work should land as small, dependency-ordered commits. Each step should be indep
 
 The first implementation slice is steps 2–4. Steps 5–6 should follow only after the authorization semantics and decision surface are stable enough that recipes can teach the real behavior.
 
+### Patch-release lane before `0.2.0`
+
+The `0.1.x` releases remain within Core Compatibility v1. They may include:
+
+- correctness fixes that preserve the documented contract;
+- clearer diagnostics, decision-card wording, and practitioner guidance;
+- additive documentation, templates, recipes, and onboarding improvements;
+- test coverage and reproducibility improvements;
+- packaging and supported-platform fixes.
+
+They should not introduce new required input fields, change blocker meaning,
+change scoring or exit behavior, or make a new authorization claim. Those
+changes require an explicit compatibility decision and belong in `0.2.0` or a
+later minor release.
+
+The first `0.1.x` batch is the product-manager controlled-launch review recipe.
+It teaches the existing behavior and evidence boundaries without pretending
+that the recipe itself grants organizational approval.
+
 ## Phase 1: OpenEvalGate 0.2.0 Public Alpha
 
 The `0.2.0` theme is **controlled-launch authorization and product-facing decision clarity**. Adoption validation remains a release input, not a substitute for contract correctness.
@@ -105,6 +124,7 @@ The `0.2.0` theme is **controlled-launch authorization and product-facing decisi
 
 ### Recipe book v1
 
+- [~] Add the first product-manager controlled-launch review recipe while preserving the V1 contract.
 - [ ] Add recipes for safe-boundary definition, risk-based golden sets, shadow review, controlled launch, incident investigation, incident-to-regression conversion, behavior-change review, and evidence-freshness review.
 - [ ] Link every recipe to the relevant input artifacts, CLI commands, report sections, blocker semantics, and decision owner.
 - [ ] Label illustrative examples, practitioner guidance, and normative contract requirements separately.

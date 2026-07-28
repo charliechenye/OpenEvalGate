@@ -62,6 +62,9 @@ See the [examples index](examples/README.md) for scenario purposes, inputs, and 
 
 New to the repository? Start with [Getting Started for Practitioners](docs/00_getting_started_for_practitioners.md).
 
+If you own the release decision, start with the [Product Manager Recipe: Review
+a Bounded Controlled Launch](docs/18_product_manager_controlled_launch_review.md).
+
 ```bash
 python -m pip install -e .
 openevalgate --version

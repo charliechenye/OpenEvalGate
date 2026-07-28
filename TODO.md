@@ -106,6 +106,14 @@ The following are not required merely to make the repository public:
 
 The implementation order is documented in [Iteration 3: OpenEvalGate 0.2.0, Adoption, and Stabilization](docs/roadmap/iteration-03-adoption-and-external-validation.md). The first coherent slice is authorization semantics, enforcement, and the product decision packet; investigation recipes and integrations follow that contract.
 
+### B0. Patch-release lane (`0.1.1`, `0.1.2`, ...)
+
+- [x] Keep patch releases within Core Compatibility v1.
+- [~] Add additive product-manager recipes and onboarding improvements.
+- [ ] Fix contract-preserving correctness and reproducibility issues as found.
+- [ ] Do not change required inputs, blocker meaning, scoring, exit behavior, or authorization claims in a patch release.
+- [ ] Release each patch with focused validation, changelog notes, and a clean artifact check.
+
 ### B1. Strengthen eval-result integrity
 
 - [x] Require non-empty values for mandatory result fields.

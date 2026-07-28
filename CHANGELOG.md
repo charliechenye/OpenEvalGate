@@ -10,6 +10,17 @@ the milestone for full product-scope stability and adoption evidence.
 Release work after `0.1.0` is tracked here once it has a documented
 compatibility decision.
 
+### Added
+
+- Initial product-manager recipe for reviewing a bounded controlled-launch
+  decision using the existing V1 artifacts and CLI outputs.
+
+### Compatibility
+
+- This work is additive and remains within Core Compatibility v1. It does not
+  change schemas, blocker identifiers, scoring, exit behavior, or authorization
+  semantics.
+
 ## [0.1.0] - Stable core release
 
 ### Added
