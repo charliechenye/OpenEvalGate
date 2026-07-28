@@ -138,6 +138,8 @@ def render_card(payload: dict[str, Any]) -> str:
     lines = [
         f"# OpenEvalGate Decision Card: {payload.get('project', {}).get('system_name', 'Project')}",
         "",
+        "## Decision summary",
+        "",
         f"- **Status:** {str(payload.get('status', 'unknown')).capitalize()}",
         f"- **Recommendation:** {assessment.get('recommendation', 'Not available')}",
         f"- **Review mode:** {assessment.get('effective_review_mode') or 'Not configured'}",
@@ -147,6 +149,12 @@ def render_card(payload: dict[str, Any]) -> str:
         f"- **Provenance:** {provenance.get('status', 'unknown')}",
         f"- **Freshness:** {provenance.get('classification', {}).get('freshness', 'unknown')}",
         f"- **Recency:** {provenance.get('classification', {}).get('recency', 'unknown')}",
+        "",
+        "## Product review checklist",
+        "- Confirm the proposed release scope matches the evaluated cases and controls.",
+        "- Confirm every blocker or next action has an accountable owner and follow-up date.",
+        "- Confirm the rollback trigger, safe fallback, and human escalation path are understood.",
+        "- Re-review after a candidate, policy, scope, or material evidence change.",
         "",
         "## Blockers",
     ]

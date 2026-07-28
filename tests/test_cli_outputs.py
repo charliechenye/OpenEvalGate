@@ -49,6 +49,9 @@ def test_report_card_contains_bounded_decision_summary(capsys) -> None:
     card = capsys.readouterr().out
 
     assert "# OpenEvalGate Decision Card" in card
+    assert "## Decision summary" in card
+    assert "## Product review checklist" in card
+    assert "Confirm the proposed release scope" in card
     assert "## Blockers" in card
     assert "critical_escalation_regression" in card
     assert "deployment authorization" in card

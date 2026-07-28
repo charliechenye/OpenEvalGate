@@ -14,6 +14,8 @@ compatibility decision.
 
 - Initial product-manager recipe for reviewing a bounded controlled-launch
   decision using the existing V1 artifacts and CLI outputs.
+- Product review checklist added to the decision card for scope, ownership,
+  rollback, escalation, and re-review discussion.
 
 ### Compatibility
 
