@@ -10,7 +10,6 @@ import sys
 import tarfile
 import zipfile
 from email.parser import Parser
-from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path, PurePosixPath
 from typing import Iterable, NoReturn
 
@@ -130,6 +129,32 @@ def _pep503_normalize(name: str) -> str:
 
 def _wheel_escape(value: str) -> str:
     return re.sub(r"[^\w\d.]+", "_", value, flags=re.UNICODE)
+
+
+def project_version(project_root: Path) -> str:
+    """Read the declared package version without relying on an installed wheel."""
+
+    pyproject_path = project_root / "pyproject.toml"
+    try:
+        text = pyproject_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        _fail("project", pyproject_path, f"cannot read package metadata: {exc}")
+
+    project_match = re.search(
+        r"^\[project\]\s*$([\s\S]*?)(?=^\[|\Z)",
+        text,
+        flags=re.MULTILINE,
+    )
+    if project_match is None:
+        _fail("project", pyproject_path, "[project] table is missing")
+    version_match = re.search(
+        r'^version\s*=\s*"(?P<version>[^"]+)"\s*$',
+        project_match.group(1),
+        flags=re.MULTILINE,
+    )
+    if version_match is None:
+        _fail("project", pyproject_path, "[project].version is missing or invalid")
+    return version_match.group("version")
 
 
 def _parse_metadata(text: str, artifact: str, path: str) -> tuple[str, str]:
@@ -477,16 +502,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     project_root = Path(__file__).resolve().parents[1]
     try:
-        expected_version = version(DISTRIBUTION_NAME)
-    except PackageNotFoundError:
-        print(
-            "dist: '.': installed development distribution metadata for "
-            "'openevalgate' is unavailable",
-            file=sys.stderr,
-        )
-        return 1
-
-    try:
+        expected_version = project_version(project_root)
         verify_distribution_artifacts(
             project_root=project_root,
             dist_dir=args.dist_dir,

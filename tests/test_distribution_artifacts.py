@@ -12,6 +12,7 @@ import pytest
 from scripts.verify_distribution_artifacts import (
     VerificationError,
     normalize_archive_member,
+    project_version,
     verify_distribution_artifacts,
     verify_sdist,
     verify_wheel,
@@ -22,6 +23,22 @@ ROOT = Path(__file__).resolve().parents[1]
 VERSION = version("openevalgate")
 DIST_INFO = f"openevalgate-{VERSION}.dist-info"
 SDIST_ROOT = f"openevalgate-{VERSION}"
+
+
+def test_project_version_reads_declared_package_metadata(tmp_path: Path) -> None:
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "openevalgate"\nversion = "9.8.7"\n',
+        encoding="utf-8",
+    )
+
+    assert project_version(tmp_path) == "9.8.7"
+
+
+def test_project_version_rejects_missing_declared_version(tmp_path: Path) -> None:
+    (tmp_path / "pyproject.toml").write_text('[project]\nname = "openevalgate"\n', encoding="utf-8")
+
+    with pytest.raises(VerificationError, match=r"\[project\]\.version is missing"):
+        project_version(tmp_path)
 
 
 def _source_files() -> dict[str, bytes]:
