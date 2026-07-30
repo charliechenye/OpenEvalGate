@@ -14,6 +14,9 @@ compatibility decision.
 
 - Initial product-manager recipe for reviewing a bounded controlled-launch
   decision using the existing V1 artifacts and CLI outputs.
+- Expanded the Golden Eval Set Playbook into a product-manager workflow for
+  stakeholder alignment, risk slices, evidence sources, grading, release
+  gates, ownership, and production learning.
 - Product review checklist added to the decision card for scope, ownership,
   rollback, escalation, and re-review discussion.
 - Incident-ingestion guidance expanded with control-gap classification and

@@ -171,7 +171,8 @@ The implementation order is documented in [Iteration 3: OpenEvalGate 0.2.0, Adop
 
 ### B5.1 Recipe book v1
 
-- [ ] Add role- and lifecycle-oriented recipes for safe boundaries, risk-based golden sets, shadow review, controlled launch, incident investigation, incident-to-regression conversion, behavior-change review, and evidence freshness.
+- [~] Expand the golden-eval-set playbook into a product-manager workflow for stakeholder alignment, risk slices, source mix, grading, gates, ownership, and production learning.
+- [ ] Add role- and lifecycle-oriented recipes for safe boundaries, shadow review, controlled launch, behavior-change review, and evidence freshness.
 - [ ] Link recipes to inputs, commands, report sections, blocker semantics, owners, and next actions.
 - [ ] Separate normative requirements, practitioner guidance, and illustrative examples.
 

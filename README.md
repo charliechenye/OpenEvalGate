@@ -250,6 +250,7 @@ The repository includes local Markdown, YAML, and CSV templates for assistant sc
 Practitioner playbooks include:
 
 - [Golden Eval Set Playbook](docs/playbooks/golden-eval-set-playbook/README.md)
+- [PM Golden Eval Workflow](docs/playbooks/golden-eval-set-playbook/README.md#pm-operating-sequence)
 - [Synthetic Boundary Case Guide](docs/17_synthetic_boundary_case_guide.md)
 - [Incident-to-Regression Recipe](docs/19_incident_to_regression_recipe.md)
 - [Routing Playbook](docs/playbooks/routing/README.md)
