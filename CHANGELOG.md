@@ -7,8 +7,10 @@ the milestone for full product-scope stability and adoption evidence.
 
 ## [Unreleased]
 
-Release work after `0.1.0` is tracked here once it has a documented
-compatibility decision.
+Future release work is tracked here once it has a documented compatibility
+decision.
+
+## [0.1.1] - 2026-07-30
 
 ### Added
 
@@ -26,9 +28,17 @@ compatibility decision.
 
 ### Compatibility
 
-- This work is additive and remains within Core Compatibility v1. It does not
+- This release is additive and remains within Core Compatibility v1. It does not
   change schemas, blocker identifiers, scoring, exit behavior, or authorization
   semantics.
+
+### Limitations
+
+- Playbooks and templates remain experimental practitioner guidance.
+- A decision card or report is not organizational approval, compliance
+  certification, deployment authorization, or a safety guarantee.
+- Complete provenance authorization classification and enriched workflow or
+  handoff validation remain deferred.
 
 ## [0.1.0] - Stable core release
 

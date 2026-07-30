@@ -112,7 +112,7 @@ The `0.2.0` theme is **controlled-launch authorization and product-facing decisi
 - [x] Add a five-minute quickstart from an installed checkout package.
 - [x] Add Linux/macOS and Windows PowerShell instructions.
 - [x] Allow a user to produce a useful first report through a documented copy-and-report path.
-- [ ] Add a role-oriented first path for an AI product manager who owns the release decision but does not operate the eval runner.
+- [x] Add a role-oriented first path for an AI product manager who owns the release decision but does not operate the eval runner.
 
 ### Machine-consumable output
 
@@ -125,7 +125,7 @@ The `0.2.0` theme is **controlled-launch authorization and product-facing decisi
 ### Recipe book v1
 
 - [~] Add the first product-manager controlled-launch review recipe while preserving the V1 contract.
-- [~] Expand the golden-eval-set playbook into a product-manager workflow for stakeholder alignment, risk slices, source mix, grading, gates, ownership, and production learning.
+- [x] Expand the golden-eval-set playbook into a product-manager workflow for stakeholder alignment, risk slices, source mix, grading, gates, ownership, and production learning.
 - [ ] Add recipes for safe-boundary definition, shadow review, controlled launch, behavior-change review, and evidence-freshness review.
 - [~] Add the incident-to-regression investigation recipe and expand the incident intake template with control-gap classification and follow-up disposition.
 - [ ] Link every recipe to the relevant input artifacts, CLI commands, report sections, blocker semantics, and decision owner.

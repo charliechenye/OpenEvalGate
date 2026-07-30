@@ -159,7 +159,7 @@ The implementation order is documented in [Iteration 3: OpenEvalGate 0.2.0, Adop
 - [ ] Keep the initial profile set small; defer speculative profile breadth until user demand is demonstrated.
 - [x] Add a five-minute installed-wheel quickstart for Linux/macOS and Windows PowerShell.
 - [x] Allow a user to produce a useful first report without copying the full customer-support example.
-- [ ] Add an AI-product-manager-oriented onboarding path for reviewing a decision packet without operating the eval runner.
+- [x] Add an AI-product-manager-oriented onboarding path for reviewing a decision packet without operating the eval runner.
 
 ### B4. Add machine-consumable output
 
@@ -171,7 +171,7 @@ The implementation order is documented in [Iteration 3: OpenEvalGate 0.2.0, Adop
 
 ### B5.1 Recipe book v1
 
-- [~] Expand the golden-eval-set playbook into a product-manager workflow for stakeholder alignment, risk slices, source mix, grading, gates, ownership, and production learning.
+- [x] Expand the golden-eval-set playbook into a product-manager workflow for stakeholder alignment, risk slices, source mix, grading, gates, ownership, and production learning.
 - [ ] Add role- and lifecycle-oriented recipes for safe boundaries, shadow review, controlled launch, behavior-change review, and evidence freshness.
 - [ ] Link recipes to inputs, commands, report sections, blocker semantics, owners, and next actions.
 - [ ] Separate normative requirements, practitioner guidance, and illustrative examples.

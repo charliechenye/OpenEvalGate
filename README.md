@@ -19,7 +19,7 @@ It helps teams assemble and review evidence for three questions:
 
 OpenEvalGate does not run the candidate system. Teams run evaluations with their existing tools, record the results locally, and use the CLI to validate the evidence package, identify blockers, and generate a release-assurance report.
 
-> **Stable core:** `0.1.0` provides Core Compatibility v1 for its defined CLI,
+> **Stable core:** `0.1.1` continues Core Compatibility v1 for its defined CLI,
 > JSON, assessment, and V1 evidence surfaces. Templates, playbooks, vendor
 > adapters, and full product-scope stability remain experimental. See the
 > [Core Compatibility v1](docs/contracts/core-compatibility-v1.md) and
