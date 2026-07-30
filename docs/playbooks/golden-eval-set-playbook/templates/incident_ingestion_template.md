@@ -34,6 +34,20 @@ Who was affected and how?
 
 Describe whether the miss came from scoring, threshold, stale context, missing trace data, weak rubric, or unclear ownership.
 
+## Investigation Classification
+
+Select the primary follow-up category. Use a secondary category when the
+incident crossed more than one control boundary.
+
+- [ ] Evidence gap — the required evidence was missing, invalid, stale, or not selected.
+- [ ] Policy gap — the business rule, risk boundary, or expected route was unclear or wrong.
+- [ ] Behavior failure — the agent produced an unacceptable answer, action, or refusal.
+- [ ] Routing or escalation failure — the agent chose the wrong route, destination, or handoff.
+- [ ] Operational failure — a tool, dependency, fallback, resume, or rollback path failed.
+- [ ] Monitoring gap — the failure was not observable or the alert/owner path was ineffective.
+
+What evidence supports this classification?
+
 ## Should This Become A New Eval Case?
 
 - [ ] Yes
@@ -59,6 +73,15 @@ Describe whether the miss came from scoring, threshold, stale context, missing t
 ## Release Gate Impact
 
 Should this case block release, trigger limited rollout, or be monitored?
+
+## Follow-Up Decision
+
+- [ ] Re-evaluate the current candidate.
+- [ ] Re-approve the release scope.
+- [ ] Roll back or pause the release.
+- [ ] Update documentation or ownership only.
+
+What must be true before the follow-up is closed?
 
 ## Follow-Up
 

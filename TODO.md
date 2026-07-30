@@ -147,8 +147,8 @@ The implementation order is documented in [Iteration 3: OpenEvalGate 0.2.0, Adop
 
 ### B3.2 Incident-to-eval investigation loop
 
-- [ ] Add a structured incident intake artifact with impact, expected behavior, observed behavior, coverage, gate outcome, root-cause hypothesis, mitigation, owner, and follow-up date.
-- [ ] Add a recipe for converting an incident into a regression or boundary eval case.
+- [~] Add a structured incident intake artifact with impact, expected behavior, observed behavior, coverage, gate outcome, root-cause hypothesis, mitigation, owner, and follow-up date.
+- [~] Add a recipe for converting an incident into a regression or boundary eval case.
 - [ ] Classify follow-up as evidence, policy, behavior, routing, operations, or monitoring work.
 - [ ] Record whether re-evaluation, re-approval, rollback, or documentation is required.
 

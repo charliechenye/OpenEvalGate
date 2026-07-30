@@ -126,6 +126,7 @@ The `0.2.0` theme is **controlled-launch authorization and product-facing decisi
 
 - [~] Add the first product-manager controlled-launch review recipe while preserving the V1 contract.
 - [ ] Add recipes for safe-boundary definition, risk-based golden sets, shadow review, controlled launch, incident investigation, incident-to-regression conversion, behavior-change review, and evidence-freshness review.
+- [~] Add the incident-to-regression investigation recipe and expand the incident intake template with control-gap classification and follow-up disposition.
 - [ ] Link every recipe to the relevant input artifacts, CLI commands, report sections, blocker semantics, and decision owner.
 - [ ] Label illustrative examples, practitioner guidance, and normative contract requirements separately.
 

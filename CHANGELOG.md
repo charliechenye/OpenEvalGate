@@ -16,6 +16,10 @@ compatibility decision.
   decision using the existing V1 artifacts and CLI outputs.
 - Product review checklist added to the decision card for scope, ownership,
   rollback, escalation, and re-review discussion.
+- Incident-ingestion guidance expanded with control-gap classification and
+  release follow-up disposition.
+- Added an incident-to-regression recipe for turning production failures into
+  traceable eval cases and re-review decisions.
 
 ### Compatibility
 
