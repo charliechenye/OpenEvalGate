@@ -53,7 +53,10 @@ Work should land as small, dependency-ordered commits. Each step should be indep
 7. **Adoption validation:** run the workflow with independent practitioners, record setup friction and decision value outside the repository, and use that evidence to select the first integration or schema improvement.
 8. **`0.2.0` public alpha release:** publish only after the authorization and decision-packet contracts are tested, documented, reproducible, and explicitly labeled alpha. Do not release vendor adapters or SARIF merely to increase feature count.
 
-The first implementation slice is steps 2–4. Steps 5–6 should follow only after the authorization semantics and decision surface are stable enough that recipes can teach the real behavior.
+For `0.2.0`, the first implementation slice is steps 2–4. The `0.1.x`
+patch lane may deliver non-normative recipes and onboarding improvements before
+that contract work, provided they teach the existing behavior and do not add
+required evidence, new authorization claims, or compatibility changes.
 
 ### Patch-release lane before `0.2.0`
 

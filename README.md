@@ -1,29 +1,80 @@
 # OpenEvalGate
 
-Turn evaluation evidence into a bounded launch decision for production AI assistants and agents.
+Know what your evidence supports.
 
 [![CI](https://github.com/charliechenye/OpenEvalGate/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/charliechenye/OpenEvalGate/actions/workflows/ci.yml?query=branch%3Amain)
 [![Python 3.10-3.14](https://img.shields.io/badge/python-3.10--3.14-blue.svg)](https://www.python.org/)
 [![Status: stable core](https://img.shields.io/badge/status-stable%20core-2ea44f.svg)](docs/contracts/core-compatibility-v1.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-OpenEvalGate is an open-source, local evidence-admission layer for enterprise AI product and platform teams. It deterministically assesses declared review evidence and turns it into a bounded recommendation for the requested review stage.
+OpenEvalGate is an open-source, local release-assurance CLI for AI builders and product teams shipping assistants and agents. It turns evaluation results, critical controls, and operational constraints into a bounded recommendation for the release stage a team is requesting.
 
-Use it after your existing eval runner, harness, or manual review has produced evidence. OpenEvalGate validates the evidence package, fails closed on contradictions and missing critical controls, identifies launch blockers, and writes a reproducible Markdown report.
+Use it after an existing eval runner, harness, or manual review has produced results. OpenEvalGate validates the submitted inputs, fails closed on contradictions and missing critical controls, identifies launch blockers, and writes a reproducible decision artifact.
 
-It helps teams assemble and review evidence for three questions:
-
-1. **Expected behavior:** Does observed behavior match a business-owned contract?
-2. **Safe stopping boundaries:** Does autonomy end at the right point, with the right human destination and context?
-3. **Release evidence:** Do eval results, critical controls, mitigations, owners, and rollback plans support the requested review stage?
-
-OpenEvalGate does not run the candidate system. Teams run evaluations with their existing tools, record the results locally, and use the CLI to validate the evidence package, identify blockers, and generate a release-assurance report.
+It does not run the candidate system. Teams run evaluations with the tools they already use, then use OpenEvalGate to make the separate release question explicit: how far does this evidence support the requested review stage?
 
 > **Stable core:** `0.1.1` continues Core Compatibility v1 for its defined CLI,
 > JSON, assessment, and V1 evidence surfaces. Templates, playbooks, vendor
 > adapters, and full product-scope stability remain experimental. See the
 > [Core Compatibility v1](docs/contracts/core-compatibility-v1.md) and
 > [governance](GOVERNANCE.md).
+
+## Run the example
+
+From a checkout of this repository:
+
+```bash
+python -m pip install -e .
+openevalgate check examples/subscription_support_assistant/
+openevalgate report examples/subscription_support_assistant/ --format card
+```
+
+The included subscription-support scenario is synthetic and produces a bounded controlled-launch recommendation. Its decision card makes the following legible:
+
+```text
+Status: Pass
+Recommendation: Ready for bounded controlled launch
+Review mode: controlled_launch
+Critical-control status: Pass
+Blockers: None identified
+```
+
+For a blocked contrast, run `openevalgate report examples/customer_support_assistant/ --format card`
+or open its
+[generated report](examples/customer_support_assistant/generated_launch_report.md).
+
+## Where it fits
+
+```text
+Your eval runner, harness, or manual review
+                    |
+                    v
+      Results, outputs, controls, and review inputs
+                    |
+                    v
+              OpenEvalGate
+                    |
+                    v
+     A bounded recommendation for the requested stage
+```
+
+OpenEvalGate complements evaluation runners, tracing platforms, runtime controls,
+security tooling, and organizational review. It is not a replacement for any of
+them, and it does not certify a deployment or make the release decision for a
+team.
+
+## See the decision
+
+The repository contains synthetic, illustrative scenarios—not external
+deployments or adoption evidence:
+
+| Scenario | Evidence completeness | Critical controls | Hard blockers | Bounded recommendation |
+| --- | ---: | --- | ---: | --- |
+| [Subscription support](examples/subscription_support_assistant/generated_launch_report.md) | 100/100 | Pass | 0 | Ready for bounded controlled launch |
+| [Customer support](examples/customer_support_assistant/generated_launch_report.md) | 90/100 | Fail | 2 | Not ready for controlled launch |
+
+The contrast is intentional: a high completeness score cannot override a
+high-risk behavioral regression or a missing critical control.
 
 ## The Production Problem
 
@@ -58,7 +109,7 @@ These repository-authored scenarios are synthetic and illustrative. They are not
 
 See the [examples index](examples/README.md) for scenario purposes, inputs, and reproduction commands. Start with the [passing subscription-support report](examples/subscription_support_assistant/generated_launch_report.md), then compare it with the [blocked refund-support report](examples/customer_support_assistant/generated_launch_report.md) to see why evidence completeness and launch readiness are separate decisions.
 
-## Quickstart
+## Continue with a project
 
 New to the repository? Start with [Getting Started for Practitioners](docs/00_getting_started_for_practitioners.md).
 
