@@ -124,7 +124,11 @@ Capture these fields in the product decision record:
 ## Follow-up
 
 If a production incident or review failure reveals a missing case, use the
-incident-ingestion template to record the expected behavior, observed behavior,
-impact, coverage gap, and proposed regression case. The next recipe in this
-series will make that investigation-to-eval loop explicit.
+[incident-to-regression recipe](19_incident_to_regression_recipe.md) and its
+[incident-ingestion template](playbooks/golden-eval-set-playbook/templates/incident_ingestion_template.md)
+to record the expected behavior, observed behavior, impact, coverage gap, and
+proposed regression case.
 
+For a planned model, prompt, retrieval, tool, policy, route, or operational
+change, start with the [Agent Change Review Recipe](20_agent_change_review_recipe.md)
+before selecting the rerun scope.

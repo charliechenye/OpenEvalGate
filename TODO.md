@@ -109,7 +109,7 @@ The implementation order is documented in [Iteration 3: OpenEvalGate 0.2.0, Adop
 ### B0. Patch-release lane (`0.1.1`, `0.1.2`, ...)
 
 - [x] Keep patch releases within Core Compatibility v1.
-- [~] Add additive product-manager recipes and onboarding improvements.
+- [x] Add additive product-manager recipes and onboarding improvements.
 - [ ] Fix contract-preserving correctness and reproducibility issues as found.
 - [ ] Do not change required inputs, blocker meaning, scoring, exit behavior, or authorization claims in a patch release.
 - [ ] Release each patch with focused validation, changelog notes, and a clean artifact check.
@@ -172,8 +172,8 @@ The implementation order is documented in [Iteration 3: OpenEvalGate 0.2.0, Adop
 ### B5.1 Recipe book v1
 
 - [x] Expand the golden-eval-set playbook into a product-manager workflow for stakeholder alignment, risk slices, source mix, grading, gates, ownership, and production learning.
-- [ ] Add role- and lifecycle-oriented recipes for safe boundaries, shadow review, controlled launch, behavior-change review, and evidence freshness.
-- [ ] Link recipes to inputs, commands, report sections, blocker semantics, owners, and next actions.
+- [~] Add role- and lifecycle-oriented recipes for safe boundaries, shadow review, controlled launch, behavior-change review, and evidence freshness.
+- [x] Link the current recipes to inputs, commands, report sections, blocker semantics, owners, and next actions.
 - [ ] Separate normative requirements, practitioner guidance, and illustrative examples.
 
 ### B5. Publish `0.2.0`

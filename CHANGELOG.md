@@ -25,6 +25,9 @@ decision.
   release follow-up disposition.
 - Added an incident-to-regression recipe for turning production failures into
   traceable eval cases and re-review decisions.
+- Added an agent-change review recipe connecting planned changes to affected
+  risk slices, evidence selection, investigation categories, and bounded
+  follow-up decisions.
 
 ### Compatibility
 

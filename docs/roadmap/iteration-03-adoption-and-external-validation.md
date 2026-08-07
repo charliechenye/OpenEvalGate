@@ -127,11 +127,11 @@ The `0.2.0` theme is **controlled-launch authorization and product-facing decisi
 
 ### Recipe book v1
 
-- [~] Add the first product-manager controlled-launch review recipe while preserving the V1 contract.
+- [x] Add the first product-manager controlled-launch review recipe while preserving the V1 contract.
 - [x] Expand the golden-eval-set playbook into a product-manager workflow for stakeholder alignment, risk slices, source mix, grading, gates, ownership, and production learning.
-- [ ] Add recipes for safe-boundary definition, shadow review, controlled launch, behavior-change review, and evidence-freshness review.
+- [~] Add recipes for safe-boundary definition, shadow review, controlled launch, behavior-change review, and evidence-freshness review. Controlled-launch and behavior-change recipes are present; safe-boundary, shadow-review, and freshness recipes remain.
 - [~] Add the incident-to-regression investigation recipe and expand the incident intake template with control-gap classification and follow-up disposition.
-- [ ] Link every recipe to the relevant input artifacts, CLI commands, report sections, blocker semantics, and decision owner.
+- [x] Link the current recipes to the relevant input artifacts, CLI commands, blocker semantics, and decision owners.
 - [ ] Label illustrative examples, practitioner guidance, and normative contract requirements separately.
 
 ### Release execution

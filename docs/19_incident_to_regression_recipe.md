@@ -4,6 +4,10 @@ Use this recipe after a production incident, user complaint, human override,
 appeal, policy change, or trace review reveals that an assistant or agent may
 have crossed an unsafe or unacceptable boundary.
 
+For a planned change, use the [Agent Change Review Recipe](20_agent_change_review_recipe.md)
+first. Use this recipe when the change review or production feedback reveals a
+failure that needs investigation and a new regression or boundary case.
+
 The objective is not merely to replay the failure. The objective is to create
 reviewable evidence that explains what happened, whether the existing gate
 should have caught it, what changes, and when the release decision must be
@@ -112,4 +116,3 @@ Compare the new report with the incident record. Confirm that the selected
 scope, blocker status, and next action changed for the intended reason. Keep
 the original incident evidence and the new evaluation evidence separately
 traceable; do not rewrite history by replacing the original result.
-

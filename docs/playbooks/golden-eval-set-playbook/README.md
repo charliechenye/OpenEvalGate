@@ -158,6 +158,11 @@ classify the gap, create a regression or boundary case, assign mitigation, and
 decide whether the release scope needs re-evaluation, re-approval, pause, or
 rollback.
 
+For a planned model, prompt, retrieval, tool, policy, routing, or operational
+change, use the [Agent Change Review Recipe](../../20_agent_change_review_recipe.md)
+to select affected slices, connect the result to the review packet, and define
+the next bounded action.
+
 ## Workflow
 
 1. Align stakeholders on scope, policy, risk, tools, and owners.

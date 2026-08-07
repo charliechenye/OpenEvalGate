@@ -114,6 +114,10 @@ The most important question is:
 
 > Would this assistant help users complete the task now while preserving trust for future interactions?
 
+When a model, prompt, retrieval source, tool, policy, route, or operational
+control changes, use the [Agent Change Review Recipe](20_agent_change_review_recipe.md)
+to select affected cases and connect the result to the product decision.
+
 ## Builder / Engineer Path
 
 If you are an engineer or platform builder, focus on making the launch artifacts testable:

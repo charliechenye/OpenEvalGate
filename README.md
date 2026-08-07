@@ -303,7 +303,9 @@ Practitioner playbooks include:
 - [Golden Eval Set Playbook](docs/playbooks/golden-eval-set-playbook/README.md)
 - [PM Golden Eval Workflow](docs/playbooks/golden-eval-set-playbook/README.md#pm-operating-sequence)
 - [Synthetic Boundary Case Guide](docs/17_synthetic_boundary_case_guide.md)
+- [Product Manager Controlled-Launch Review](docs/18_product_manager_controlled_launch_review.md)
 - [Incident-to-Regression Recipe](docs/19_incident_to_regression_recipe.md)
+- [Agent Change Review Recipe](docs/20_agent_change_review_recipe.md)
 - [Routing Playbook](docs/playbooks/routing/README.md)
 - [Human Escalation Playbook](docs/playbooks/human-escalation-playbook/README.md)
 
