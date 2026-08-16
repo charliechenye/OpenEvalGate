@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/charliechenye/OpenEvalGate/schemas/action-risk-matrix-v1.schema.json",
+  "title": "OpenEvalGate Action Risk Matrix v1 CSV Record",
+  "description": "A JSON representation of each populated action_risk_matrix.csv row. CSV headers are these property names; x_ columns are non-policy extensions.",
+  "type": "object",
+  "additionalProperties": false,
+  "patternProperties": {"^x_": {"type": "string"}},
+  "required": ["schema_version", "action", "risk_tier", "deterministic_gate", "human_review_required"],
+  "properties": {
+    "schema_version": {"const": "1"},
+    "action": {"type": "string"}, "risk_tier": {"enum": ["low", "medium", "high", "prohibited"]}, "deterministic_gate": {"type": "string"}, "human_review_required": {"enum": ["true", "false"]},
+    "possible_harm": {"type": "string"}, "preconditions": {"type": "string"}, "owner": {"type": "string"}
+  }
+}

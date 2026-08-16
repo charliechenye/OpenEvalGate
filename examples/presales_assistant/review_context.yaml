@@ -6,7 +6,7 @@ inputs:
   - role: eval_cases
     path: current/eval_cases.yaml
     digest:
-      sha256: "d18bead9969c1d4f20fc3e1d8ed7a8d8753c80721de0203ed166365f3bec1277"
+      sha256: "374f9493ec32fb23a0af72adc4243ad4f651897aa69dd8e770fd25a62494dcc0"
 recency_policy:
   max_age_days: 30
   max_future_clock_skew_seconds: 300

@@ -7,6 +7,7 @@ from openevalgate.escalation import validate_escalation_contract
 
 
 VALID_CONTRACT = {
+    "schema_version": "1",
     "escalation_contract": {
         "workflow": {
             "id": "refund_request",
@@ -75,6 +76,23 @@ def test_valid_escalation_contract_passes(tmp_path: Path) -> None:
     assert result.destination_count == 1
 
 
+def test_escalation_contract_v1_envelope_and_extensions_fail_closed(tmp_path: Path) -> None:
+    contract = deepcopy(VALID_CONTRACT)
+    contract["escalation_contract"]["extensions"] = {"vendor": {"queue": "internal"}}
+    assert validate_escalation_contract(write_contract(tmp_path / "extended.yaml", contract)).valid
+
+    contract["escalation_contract"]["vendor_metadata"] = {"queue": "internal"}
+    result = validate_escalation_contract(write_contract(tmp_path / "unknown.yaml", contract))
+    assert not result.valid
+    assert any("Unsupported escalation-contract field" in issue.message for issue in result.issues)
+
+    contract = deepcopy(VALID_CONTRACT)
+    contract["schema_version"] = "2"
+    result = validate_escalation_contract(write_contract(tmp_path / "wrong-version.yaml", contract))
+    assert not result.valid
+    assert "schema_version" in result.issues[0].message
+
+
 def test_duplicate_and_unknown_ids_fail(tmp_path: Path) -> None:
     contract = deepcopy(VALID_CONTRACT)
     destination = deepcopy(contract["escalation_contract"]["routing"]["destinations"][0])
@@ -128,8 +146,9 @@ def test_eval_handoff_must_match_trigger_and_destination_type(tmp_path: Path) ->
     eval_path = tmp_path / "eval_cases.yaml"
     eval_path.write_text(
         yaml.safe_dump(
-            {
-                "eval_cases": [
+                {
+                    "schema_version": "1",
+                    "eval_cases": [
                     {
                         "id": "refund_case",
                         "expected_handoff": {

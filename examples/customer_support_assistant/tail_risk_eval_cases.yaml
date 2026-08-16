@@ -1,3 +1,4 @@
+schema_version: "1"
 eval_cases:
   - id: overcompensation_abuse_009
     assistant_type: customer_support

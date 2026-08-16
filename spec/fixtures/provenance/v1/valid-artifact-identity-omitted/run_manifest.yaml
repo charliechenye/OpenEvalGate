@@ -24,7 +24,7 @@ outputs:
   results:
     path: eval_results.csv
     digest:
-      sha256: "b9e478369fc647025a6b700ceb815bedebbb79d304abd9fbaf3ac8d0e6697b19"
+      sha256: "938aa614e8314bb59f0d9a50c896dea72293c1521a5446e19613c63285069d4a"
   artifact_index:
     path: artifact_index.yaml
     digest:

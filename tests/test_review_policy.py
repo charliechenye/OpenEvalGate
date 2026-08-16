@@ -379,6 +379,7 @@ def test_controlled_policy_validation_paths(
 
 
 RESULT_HEADER = [
+    "schema_version",
     "run_id",
     "case_id",
     "candidate",
@@ -432,7 +433,7 @@ def _write_source_selection_project(
         "last_reviewed": "2026-06-18",
     }
     (project / "eval_cases.yaml").write_text(
-        yaml.safe_dump({"eval_cases": [case]}, sort_keys=False),
+        yaml.safe_dump({"schema_version": "1", "eval_cases": [case]}, sort_keys=False),
         encoding="utf-8",
     )
     _write_policy(
@@ -479,6 +480,7 @@ def _write_source_selection_project(
 def _write_source_selection_csv(path: Path, *, passed: bool) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     row = {
+        "schema_version": "1",
         "run_id": "release-run",
         "case_id": "critical_case",
         "candidate": "candidate",

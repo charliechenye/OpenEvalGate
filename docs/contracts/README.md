@@ -4,8 +4,10 @@ This directory contains versioned, implementation-facing contracts for evidence 
 
 ## Available contracts
 
-- [CLI Output Contract v1](cli-output-v1.md) - defines opt-in deterministic JSON,
-  decision-card output, stable identifiers, and exit behavior.
+- [Core Compatibility v1](core-compatibility-v1.md) - defines the stable 0.1
+  core, its limits, compatibility rules, and supported Python versions.
+- [CLI Output Contract v1](cli-output-v1.md) - defines the machine-readable
+  JSON envelope, stable identifiers, and exit behavior.
 - [Eval-Run Provenance Contract v1](eval-run-provenance-v1.md) - defines how a run manifest can wrap an existing OpenEvalGate-compatible `eval_results.csv` with candidate, evaluator, policy, artifact, lifecycle, freshness, recency, assurance, finding, and authorization metadata.
 
 ## Provenance Schemas
@@ -16,6 +18,11 @@ The eval-run provenance contract is paired with four Draft 2020-12 schemas:
 - `schemas/eval-run-artifact-index-v1.schema.json` for `artifact_index.yaml`.
 - `schemas/eval-run-review-context-v1.schema.json` for `review_context.yaml`.
 - `schemas/eval-run-provenance-expected-v1.schema.json` for fixture `expected.yaml` classifications and registered finding IDs.
+- `schemas/eval-cases-v1.schema.json`, `schemas/review-policy-v1.schema.json`,
+  `schemas/routing-policy-v1.schema.json`, and
+  `schemas/escalation-contract-v1.schema.json` for core YAML evidence.
+- `schemas/eval-results-v1.schema.json` and
+  `schemas/action-risk-matrix-v1.schema.json` for populated CSV records.
 
 Fixture expectations under `spec/fixtures/provenance/v1/` are schema-validated and fixture-integrity checked by `tests/test_provenance_contract_fixtures.py`. PR 18 established the contract, schemas, fixture inventory, referenced-file checks, recorded-digest checks, orphan-file hygiene, and selected scenario invariants.
 
@@ -34,4 +41,7 @@ Contracts in this directory are:
 
 A contract may be published before the CLI enforces it. The document, schemas, and fixtures establish intended semantics; implementation status remains documented separately in the roadmap and release notes.
 
-The eval-run provenance contract is proposed as a broader v1 contract. The current runtime implements its local identity, digest, lifecycle, assurance, freshness, and recency subset and does not require new provenance columns in `eval_results.csv`.
+The eval-run provenance contract has a broader experimental authorization
+surface. The stable V1 core implements local identity, digest, lifecycle,
+assurance, freshness, and recency checks; `eval_results.csv` itself requires
+the V1 `schema_version` column.

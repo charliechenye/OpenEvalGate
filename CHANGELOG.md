@@ -2,17 +2,23 @@
 
 All notable changes to OpenEvalGate are documented in this file.
 
-The project follows semantic versioning while it remains in alpha. Until a stable `1.0.0` release, minor versions may contain significant policy or schema changes.
+`0.1.0` establishes a stable Core Compatibility v1 promise. `1.0.0` remains
+the milestone for full product-scope stability and adoption evidence.
 
 ## [Unreleased]
 
-_The next public release is being prepared as `0.1.0`._
+Release work after `0.1.0` is tracked here once it has a documented
+compatibility decision.
 
-## [0.1.0]
+## [0.1.0] - Stable core release
 
 ### Added
 
-- Public-alpha governance, support, attribution, compatibility, release, and rollback guidance.
+- Core Compatibility v1, frozen V1 schemas, stable JSON output semantics, and
+  explicit experimental boundaries for templates, playbooks, adapters, and
+  complete provenance authorization.
+- External-runner handoff documentation with a LangChain-shaped producer
+  example that has no LangChain SDK dependency.
 - Enforceable Ruff, mypy, pip-audit, Bandit, and Markdown-link validation in CI.
 - A copy-and-report onboarding path that keeps canonical example reports unchanged.
 - Python support metadata and CI cover Python 3.10 through 3.14; local development currently uses Python 3.12.
@@ -90,5 +96,7 @@ _The next public release is being prepared as `0.1.0`._
 ### Preserved
 
 - The 100-point evidence-completeness scoring model.
-- Stable blocker IDs and CLI behavior.
-- Backward-compatible effective shadow mode for projects without a review policy.
+- Stable blocker IDs, JSON semantics, and CLI behavior within Core
+  Compatibility v1.
+- Strict V1 evidence envelopes and CSV `schema_version` columns; unversioned
+  public-alpha inputs are rejected rather than migrated implicitly.

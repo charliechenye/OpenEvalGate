@@ -1,3 +1,4 @@
+schema_version: "1"
 eval_cases:
   - id: invoice_explanation_001
     assistant_type: subscription_support

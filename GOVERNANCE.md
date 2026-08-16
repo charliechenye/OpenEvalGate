@@ -1,6 +1,6 @@
 # Governance
 
-OpenEvalGate is maintained as a small, local-first, deterministic open-source project. This document describes how scope, compatibility, releases, and safety-sensitive changes are decided while the project is pre-1.0.
+OpenEvalGate is maintained as a small, local-first, deterministic open-source project. This document describes how scope, compatibility, releases, and safety-sensitive changes are decided.
 
 ## Maintainer authority
 
@@ -20,19 +20,26 @@ Changes should preserve deterministic output and fail-closed behavior. A change 
 
 ## Compatibility and versioning
 
-OpenEvalGate follows a pre-1.0 compatibility policy:
+OpenEvalGate provides a stable Core Compatibility v1 promise from `0.1.0`.
+The full scope of the product is not yet a `1.0.0` stability claim.
 
-- patch releases should fix defects without intentionally changing public semantics;
-- minor `0.x` releases may change schemas, policy defaults, report wording, CLI behavior, or other documented contracts;
-- breaking changes must be called out in `CHANGELOG.md` with migration guidance when migration is practical;
-- deprecated fields or commands should remain documented for at least one release when feasible; and
-- stable compatibility guarantees are reserved for `1.0.0` and later.
+- patch releases fix defects without intentionally changing V1 public semantics;
+- Core Compatibility v1 changes require an explicit compatibility decision,
+  fixture coverage, and a `CHANGELOG.md` entry;
+- a later V2 contract may add new semantics, but must not silently remove or
+  change V1 during its documented support period;
+- JSON is the parseable compatibility surface. Text, cards, and Markdown are
+  deterministic within a release but may change; and
+- only `openevalgate.__version__` is a public Python API.
+
+The exact covered surface, schema requirements, stable blocker IDs, and
+experimental exclusions are defined in [Core Compatibility v1](docs/contracts/core-compatibility-v1.md).
 
 Schema, blocker-ID, exit-code, report, scoring, or public-dataclass changes require focused tests and compatibility review. Checked-in canonical reports are regenerated only when a semantic output change is intentional.
 
 ## Releases and rollback
 
-Releases are created from a reviewed commit with passing CI, clean package-install and CLI smoke checks, and reproducible canonical reports. A release should identify its supported Python versions and known limitations.
+Releases are created from a reviewed commit with passing CI, clean package-install and CLI smoke checks, reproducible canonical reports, and a recorded disclosure audit. A release identifies supported Python versions and known limitations. Tags are immutable release inputs; artifacts and GitHub Releases are created only after the tag's CI passes.
 
 If a release is found to produce unsafe, non-deterministic, or materially broken behavior, the maintainer may withdraw or supersede it, publish a corrective release, and document the impact in `CHANGELOG.md`. Users should pin a known-good version when reproducibility matters.
 

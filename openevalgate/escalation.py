@@ -8,7 +8,7 @@ from typing import Any
 
 import yaml
 
-from openevalgate.schema import RISK_TIERS, ValidationIssue, load_eval_cases
+from openevalgate.schema import CORE_SCHEMA_VERSION, RISK_TIERS, ValidationIssue, load_eval_cases
 
 
 HANDOFF_TYPES = {
@@ -18,6 +18,17 @@ HANDOFF_TYPES = {
     "specialist_routing",
 }
 BOUNDARY_PATHS = {"resolve", "clarify", "escalate", "approval", "refuse"}
+ESCALATION_CONTRACT_KEYS = {
+    "workflow",
+    "boundaries",
+    "triggers",
+    "handoff",
+    "routing",
+    "durable_state",
+    "evaluation",
+    "recertification",
+    "extensions",
+}
 
 
 @dataclass(frozen=True)
@@ -46,11 +57,24 @@ class EscalationContractSummary:
 
 
 def load_escalation_contract(path: str | Path) -> dict[str, Any]:
-    """Load the supported wrapped escalation-contract YAML shape."""
+    """Load the schema-versioned escalation-contract YAML envelope."""
 
     with Path(path).open("r", encoding="utf-8") as handle:
         data = yaml.safe_load(handle)
-    if not isinstance(data, dict) or not isinstance(data.get("escalation_contract"), dict):
+    if not isinstance(data, dict):
+        raise ValueError("Escalation-contract document must be an object.")
+    unknown = sorted(set(data) - {"schema_version", "escalation_contract", "extensions"})
+    if unknown:
+        raise ValueError(
+            f"Escalation-contract document has unsupported field(s): {', '.join(unknown)}."
+        )
+    if data.get("schema_version") != CORE_SCHEMA_VERSION or not isinstance(
+        data.get("schema_version"), str
+    ):
+        raise ValueError('escalation_contract.schema_version must be exactly the string "1".')
+    if "extensions" in data and not isinstance(data["extensions"], dict):
+        raise ValueError("escalation_contract.extensions must be an object.")
+    if not isinstance(data.get("escalation_contract"), dict):
         raise ValueError("YAML must contain an escalation_contract object")
     return data["escalation_contract"]
 
@@ -70,6 +94,16 @@ def validate_escalation_contract(
             False,
             [ValidationIssue(str(contract_path), str(exc))],
         )
+
+    for field in sorted(set(contract) - ESCALATION_CONTRACT_KEYS):
+        issues.append(
+            ValidationIssue(
+                f"escalation_contract.{field}",
+                "Unsupported escalation-contract field. Place non-policy metadata in extensions.",
+            )
+        )
+    if "extensions" in contract and not isinstance(contract["extensions"], dict):
+        issues.append(ValidationIssue("escalation_contract.extensions", "Must be an object."))
 
     workflow = contract.get("workflow")
     if not isinstance(workflow, dict):

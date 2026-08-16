@@ -1,25 +1,29 @@
 # OpenEvalGate Release Milestones
 
-This document defines the dependency order from private development to the first public `0.1.0` release, post-release stabilization, and eventual stable `1.0.0` contracts.
+This document defines the dependency order from public release preparation to
+the stable-core `0.1.0` release, product-scope maturation, and eventual
+`1.0.0` adoption-backed stability.
 
 ## Milestone Sequence
 
 ```text
-Private repository
-  -> Public repository (pre-1.0, no stable-release claim)
-  -> OpenEvalGate 0.1.0 public alpha
-  -> OpenEvalGate 0.2.0 evidence-integrity and adoption hardening
-  -> 0.x adoption and compatibility stabilization
-  -> OpenEvalGate 1.0.0 stable contracts
+Public repository
+  -> OpenEvalGate 0.1.0 stable Core Compatibility v1
+  -> product-scope and adoption hardening
+  -> 1.0.0 full-scope stability and adoption evidence
 ```
 
-These milestones are intentionally separate. Public visibility is a disclosure, governance, and claim-safety decision. `0.1.0` is the first public alpha release, `0.2.0` is the next product-hardening release, and `1.0.0` is a compatibility commitment.
+These milestones are intentionally separate. Public visibility is a disclosure,
+governance, and claim-safety decision. `0.1.0` is a stable promise for the
+defined core, while `1.0.0` is the later commitment for full product scope and
+external adoption evidence.
 
 ## Milestone A: Public Repository
 
 ### Goal
 
-Make the current project safe and credible for public inspection without implying feature completeness, external validation, or stable compatibility.
+Make the defined core safe, credible, versioned, and ready for a public stable
+contract without implying feature completeness or external validation.
 
 ### Required workstreams
 
@@ -33,14 +37,14 @@ Make the current project safe and credible for public inspection without implyin
 
 ### Planned PR order
 
-1. Reposition OpenEvalGate for public alpha and document limitations.
+1. Define Core Compatibility v1 and document limitations.
 2. Validate and recompute behavioral evaluation evidence.
 3. Define and implement the local eval-run provenance contract subset for controlled-launch evidence.
 4. Add passing and blocked public reference scenarios.
 5. Define public governance, support, and compatibility policies.
 6. Add public-repository quality and security gates.
 7. Audit repository contents for safe public disclosure.
-8. Finalize OpenEvalGate public-alpha readiness.
+8. Finalize OpenEvalGate stable-core readiness.
 
 Evidence-integrity work is included before public visibility because it protects the repository's central release-assurance claim. Product-expansion work is not.
 
@@ -52,7 +56,7 @@ Evidence-integrity work is included before public visibility because it protects
 - Required CI and repository protections are enabled.
 - The repository tree and history pass disclosure review.
 - The exact visibility commit passes required checks and clean-wheel reproduction.
-- The project remains explicitly pre-1.0.
+- The stable promise is limited to Core Compatibility v1.
 
 ### Deferred until after the `0.1.0` release
 
@@ -61,13 +65,14 @@ Evidence-integrity work is included before public visibility because it protects
 - vendor adapters;
 - hosted services;
 - external case studies;
-- stable `1.0.0` guarantees.
+- full product-scope `1.0.0` guarantees.
 
-## Milestone B: OpenEvalGate 0.2.0
+## Milestone B: Product-Scope and Adoption Hardening
 
 ### Goal
 
-Ship the next substantive public-alpha release around **evidence integrity and minimal adoption**.
+Extend evidence integrity and gather adoption evidence without silently
+changing Core Compatibility v1.
 
 ### Required capabilities
 
@@ -82,9 +87,11 @@ Ship the next substantive public-alpha release around **evidence integrity and m
 
 ### Release positioning
 
-`0.2.0` is public alpha. It may make documented schema or policy changes in later `0.x` releases. It is not a stable compatibility promise.
+Later releases may introduce a separately versioned contract. They do not
+change V1 semantics, blocker IDs, JSON envelopes, or evidence schemas without
+an explicit compatibility process.
 
-## Milestone C: 0.x Adoption and Stabilization
+## Milestone C: Adoption and Full-Scope Stabilization
 
 ### Goal
 
@@ -112,15 +119,15 @@ Test the framework outside the maintainer's own examples and stabilize contracts
 
 ### Goal
 
-Make a stable public-contract commitment.
+Make a stable full-product-scope commitment.
 
 ### Required stability
 
-- versioned schemas and migration rules;
-- stable CLI commands and exit codes;
-- stable machine-readable output;
-- stable blocker identifiers and recommendation semantics;
-- compatibility fixtures for supported prior schemas;
+- demonstrated V1 compatibility stewardship and any V2 migration rules;
+- stable full-product-scope CLI commands and exit codes;
+- stable machine-readable output across the expanded product;
+- stable blocker identifiers and recommendation semantics across the expanded product;
+- compatibility fixtures for supported contracts;
 - tested deprecation, upgrade, and rollback procedures;
 - operational provenance and freshness rules; the contract may be proposed earlier, but runtime enforcement is required for 1.0;
 - independent adoption and integration evidence.

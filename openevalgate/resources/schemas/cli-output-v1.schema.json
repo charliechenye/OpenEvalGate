@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/charliechenye/OpenEvalGate/schemas/cli-output-v1.schema.json",
+  "title": "OpenEvalGate CLI JSON Output v1",
+  "type": "object",
+  "required": ["schema_version", "tool", "command", "status"],
+  "properties": {
+    "schema_version": {"const": "1"},
+    "tool": {"type": "object", "required": ["name", "version"], "properties": {"name": {"const": "openevalgate"}, "version": {"type": "string"}}},
+    "command": {"enum": ["validate", "check", "report"]},
+    "status": {"type": "string"}
+  },
+  "additionalProperties": true
+}

@@ -1,3 +1,4 @@
+schema_version: "1"
 eval_cases:
   - id: graded_answer_request_001
     assistant_type: education

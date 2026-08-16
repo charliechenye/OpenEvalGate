@@ -37,6 +37,13 @@ VALID_CASE = {
 
 
 def write_yaml(path: Path, data: object) -> Path:
+    if isinstance(data, list):
+        data = {"schema_version": "1", "eval_cases": data}
+    elif isinstance(data, dict) and "schema_version" not in data:
+        data = {
+            "schema_version": "1",
+            "eval_cases": data.get("eval_cases", [data]),
+        }
     path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
     return path
 
@@ -72,14 +79,46 @@ def test_invalid_enum_fails(tmp_path: Path) -> None:
     assert any("risk_tier" in issue.path for issue in result.issues)
 
 
-def test_supported_yaml_shapes_are_accepted(tmp_path: Path) -> None:
-    single = write_yaml(tmp_path / "single.yaml", VALID_CASE)
-    list_shape = write_yaml(tmp_path / "list.yaml", [VALID_CASE])
-    wrapped = write_yaml(tmp_path / "wrapped.yaml", {"eval_cases": [VALID_CASE]})
+def test_only_the_schema_versioned_eval_case_envelope_is_accepted(tmp_path: Path) -> None:
+    valid = write_yaml(tmp_path / "valid.yaml", [VALID_CASE])
+    legacy = tmp_path / "legacy.yaml"
+    legacy.write_text(yaml.safe_dump([VALID_CASE]), encoding="utf-8")
 
-    assert len(load_eval_cases(single)) == 1
-    assert len(load_eval_cases(list_shape)) == 1
-    assert len(load_eval_cases(wrapped)) == 1
+    assert len(load_eval_cases(valid)) == 1
+    result = validate_eval_cases(legacy)
+    assert not result.valid
+    assert "schema_version" in result.issues[0].message or "document" in result.issues[0].message
+
+
+def test_eval_case_extensions_are_isolated_and_unknown_envelope_fields_fail(tmp_path: Path) -> None:
+    extended = {
+        "schema_version": "1",
+        "eval_cases": [VALID_CASE],
+        "extensions": {"runner": {"name": "external"}},
+    }
+    assert validate_eval_cases(write_yaml(tmp_path / "extended.yaml", extended)).valid
+
+    extended["unexpected"] = True
+    result = validate_eval_cases(write_yaml(tmp_path / "unexpected.yaml", extended))
+    assert not result.valid
+    assert "unsupported field" in result.issues[0].message
+
+
+def test_eval_case_schema_version_and_case_extensions_fail_closed(tmp_path: Path) -> None:
+    invalid_version = {"schema_version": "2", "eval_cases": [VALID_CASE]}
+    result = validate_eval_cases(write_yaml(tmp_path / "version.yaml", invalid_version))
+    assert not result.valid
+    assert "schema_version" in result.issues[0].message
+
+    invalid_case = deepcopy(VALID_CASE)
+    invalid_case["runner_metadata"] = {"provider": "external"}
+    result = validate_eval_cases(write_yaml(tmp_path / "case.yaml", [invalid_case]))
+    assert not result.valid
+    assert any("Unsupported eval-case field" in issue.message for issue in result.issues)
+
+    extended_case = deepcopy(VALID_CASE)
+    extended_case["extensions"] = {"runner": {"provider": "external"}}
+    assert validate_eval_cases(write_yaml(tmp_path / "extended-case.yaml", [extended_case])).valid
 
 
 def test_valid_boundary_family_passes(tmp_path: Path) -> None:

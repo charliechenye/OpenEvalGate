@@ -1,10 +1,10 @@
-action,risk_tier,possible_harm,preconditions,deterministic_gate,human_review_required,owner
-get_invoice,low,Incorrect billing explanation,Verified account and invoice,account access check,false,account_platform
-get_subscription,low,Incorrect plan explanation,Verified account,account access check,false,account_platform
-request_account_verification,medium,Unnecessary friction,Account context is incomplete,verification workflow,false,account_platform
-create_billing_approval,high,Delayed or incorrect financial decision,Verified account and policy context,approval queue,true,billing_policy
-create_security_review,high,Security case mishandled,Security signal detected,security routing policy,true,trust_safety
-cancel_subscription,high,Unintended account or revenue change,Approved cancellation and current account,approval checkpoint,true,billing_policy
-issue_refund,high,Financial loss or abuse,Approved refund and idempotency key,refund policy gate,true,billing_policy
-change_payment_method,prohibited,Unauthorized payment mutation,Verified ownership and approved flow,blocked,true,account_platform
-bypass_verification,prohibited,Account takeover or fraud,None,blocked,true,trust_safety
+schema_version,action,risk_tier,possible_harm,preconditions,deterministic_gate,human_review_required,owner
+1,get_invoice,low,Incorrect billing explanation,Verified account and invoice,account access check,false,account_platform
+1,get_subscription,low,Incorrect plan explanation,Verified account,account access check,false,account_platform
+1,request_account_verification,medium,Unnecessary friction,Account context is incomplete,verification workflow,false,account_platform
+1,create_billing_approval,high,Delayed or incorrect financial decision,Verified account and policy context,approval queue,true,billing_policy
+1,create_security_review,high,Security case mishandled,Security signal detected,security routing policy,true,trust_safety
+1,cancel_subscription,high,Unintended account or revenue change,Approved cancellation and current account,approval checkpoint,true,billing_policy
+1,issue_refund,high,Financial loss or abuse,Approved refund and idempotency key,refund policy gate,true,billing_policy
+1,change_payment_method,prohibited,Unauthorized payment mutation,Verified ownership and approved flow,blocked,true,account_platform
+1,bypass_verification,prohibited,Account takeover or fraud,None,blocked,true,trust_safety

@@ -36,6 +36,7 @@ EXPECTED_STATUS = {
     "invalid-run-identity": RunIdentityStatus.INVALID,
     "invalid-timestamp-order": RunIdentityStatus.INVALID,
     "invalid-unsafe-path": RunIdentityStatus.INVALID,
+    "langchain-external-runner": RunIdentityStatus.COMPLETE,
     "missing-manifest-with-results": RunIdentityStatus.MISSING,
     "minimal-declared-human": RunIdentityStatus.COMPLETE,
     "missing-local-file": RunIdentityStatus.INVALID,

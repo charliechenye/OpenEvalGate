@@ -2,17 +2,62 @@
 
 ## Status
 
-**Not started as a public milestone.** This iteration begins after the repository is public. It covers the next substantive public-alpha release, external practitioner validation, ecosystem integration, and the compatibility work required before `1.0.0`.
+**Active after the `0.1.0` release.** This iteration covers the next public-alpha release, external practitioner validation, ecosystem integration, and the compatibility work required before `1.0.0`.
 
 ## Objective
 
-Establish that OpenEvalGate solves a real practitioner problem outside the maintainer's own examples, while stabilizing evidence, onboarding, machine-readable, and migration contracts.
+Make OpenEvalGate useful to AI product managers and cross-functional reviewers, not only to the engineers producing eval artifacts. The product should help a team move through three connected workflows:
+
+1. **Approve:** decide whether a bounded agent change can advance, with explicit scope, evidence freshness, blockers, owners, expiry, and rollback.
+2. **Evaluate:** test expected behavior, safe stopping boundaries, tool and route selection, human escalation, recovery, and tail risk.
+3. **Investigate:** explain failures, identify whether the gate should have caught them, and convert the result into a mitigation or regression case.
+
+The release sequence must preserve the deterministic core: OpenEvalGate consumes evidence and makes bounded recommendations; it does not execute candidate agents or call LLM APIs.
 
 Additional templates are not a substitute for independent use. Public interest is not the same as adoption, and adoption is not the same as stable compatibility.
 
+## Product direction after `0.1.0`
+
+The central practitioner loop is:
+
+```text
+Evidence -> Evaluation -> Investigation -> Mitigation
+    ^                                      |
+    |                                      v
+    +------------- Re-evaluation <- Approval
+```
+
+The current core is strongest at evidence admission and release assessment. The next work should make the approval decision legible to product owners and make investigation a first-class path after a blocked review or production incident.
+
+The recipe book should be organized by decision, not by file type. Every recipe should state:
+
+- when to use it and which review stage it supports;
+- the minimum inputs and accountable roles;
+- the expected evidence and fail-closed conditions;
+- the command or artifact handoff;
+- how to interpret a blocked or incomplete result;
+- the next mitigation, re-evaluation, or approval action.
+
+Initial recipe families are: define a safe operating boundary, build a risk-based golden set, review a shadow launch, approve a bounded controlled launch, investigate a failure, convert an incident into a regression case, review a behavior change, and decide whether evidence is still fresh.
+
+## Commit and release sequence
+
+Work should land as small, dependency-ordered commits. Each step should be independently reviewable and should avoid bundling a schema change, report change, and adoption claim into one release.
+
+1. **Planning alignment (documentation-only):** update the roadmap, backlog, and release notes to reflect the post-`0.1.0` state and the approve/evaluate/investigate model.
+2. **Authorization contract:** define explicit provenance classifications and controlled-launch authorization rules for missing, invalid, failed, incomplete, stale, expired, unknown, declared, and verified evidence. Add contract fixtures and focused tests before changing report wording.
+3. **Authorization enforcement:** connect the classification to assessment and hard-blocker semantics. Preserve existing V1 behavior for documentation and shadow review modes; add canonical blocked cases only where the new controlled-launch semantics intentionally change output.
+4. **Product decision packet:** extend the machine-readable and human-readable decision surface with review scope, evidence status, blockers, accountable owners, expiry or freshness, rollback, and next actions. Keep existing stable IDs and exit behavior compatible.
+5. **Investigation loop:** add an incident-to-eval intake artifact and deterministic links from a failure or evidence gap to a proposed regression case, mitigation owner, and re-evaluation status. Start with local Markdown/YAML artifacts before adding a new service or database.
+6. **Recipe book v1:** add role- and lifecycle-oriented practitioner guides, using the existing templates and examples, and test executable commands and links.
+7. **Adoption validation:** run the workflow with independent practitioners, record setup friction and decision value outside the repository, and use that evidence to select the first integration or schema improvement.
+8. **`0.2.0` public alpha release:** publish only after the authorization and decision-packet contracts are tested, documented, reproducible, and explicitly labeled alpha. Do not release vendor adapters or SARIF merely to increase feature count.
+
+The first implementation slice is steps 2–4. Steps 5–6 should follow only after the authorization semantics and decision surface are stable enough that recipes can teach the real behavior.
+
 ## Phase 1: OpenEvalGate 0.2.0 Public Alpha
 
-The `0.2.0` theme is **evidence integrity and minimal adoption**.
+The `0.2.0` theme is **controlled-launch authorization and product-facing decision clarity**. Adoption validation remains a release input, not a substitute for contract correctness.
 
 ### Evidence integrity
 
@@ -24,7 +69,22 @@ The `0.2.0` theme is **evidence integrity and minimal adoption**.
 - [x] Add explicit run provenance and evaluator type. Runtime identity, local digest verification, freshness, recency, and assurance classification are implemented.
 - [x] Define framework, input, result, and artifact descriptor rules. Runtime identity, local digest verification, and optional artifact-index identity are implemented.
 - [x] Define stale-evidence and recency behavior. Contract and local runtime comparison are implemented.
-- [~] Require versioned, non-stale selected evidence for controlled-launch authorization. Manifest-backed identity, non-failed lifecycle, and local freshness/recency classifications are available; complete authorization enforcement remains deferred.
+- [ ] Require versioned, non-stale, sufficiently assured selected evidence for controlled-launch authorization. The existing identity, lifecycle, freshness, recency, and assurance classifications are inputs; this work defines the complete authorization result and its fail-closed precedence.
+
+### Product-facing decision packet
+
+- [ ] State the requested review stage and bounded release scope in the decision output.
+- [ ] Separate evidence completeness, behavioral readiness, critical-control status, and authorization status.
+- [ ] Show evidence freshness, assurance, accountable owners, approval expiry, rollback readiness, and the smallest next action.
+- [ ] Preserve stable finding IDs, blocker IDs, JSON envelope version, and exit-code behavior.
+- [ ] Add focused passing and blocked fixtures for product-owner review without implying that a recommendation is organizational approval.
+
+### Investigation loop
+
+- [ ] Define the incident-to-eval intake fields: failure, impact, expected behavior, observed behavior, represented coverage, gate outcome, root-cause hypothesis, mitigation, owner, and follow-up date.
+- [ ] Add a deterministic recipe for converting an incident into a regression or boundary case.
+- [ ] Distinguish evidence gaps, policy gaps, behavior failures, routing failures, operational failures, and monitoring gaps.
+- [ ] Record whether the proposed mitigation requires re-evaluation, re-approval, rollback, or only documentation.
 
 ### Minimal onboarding
 
@@ -33,6 +93,7 @@ The `0.2.0` theme is **evidence integrity and minimal adoption**.
 - [x] Add a five-minute quickstart from an installed checkout package.
 - [x] Add Linux/macOS and Windows PowerShell instructions.
 - [x] Allow a user to produce a useful first report through a documented copy-and-report path.
+- [ ] Add a role-oriented first path for an AI product manager who owns the release decision but does not operate the eval runner.
 
 ### Machine-consumable output
 
@@ -41,6 +102,12 @@ The `0.2.0` theme is **evidence integrity and minimal adoption**.
 - [x] Document validation, blocked-launch, and internal-error exit behavior.
 - [x] Add an opt-in CI mode that fails when launch is blocked.
 - [ ] Defer SARIF until the JSON finding contract is stable.
+
+### Recipe book v1
+
+- [ ] Add recipes for safe-boundary definition, risk-based golden sets, shadow review, controlled launch, incident investigation, incident-to-regression conversion, behavior-change review, and evidence-freshness review.
+- [ ] Link every recipe to the relevant input artifacts, CLI commands, report sections, blocker semantics, and decision owner.
+- [ ] Label illustrative examples, practitioner guidance, and normative contract requirements separately.
 
 ### Release execution
 

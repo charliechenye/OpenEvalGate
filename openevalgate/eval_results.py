@@ -23,6 +23,7 @@ from openevalgate.schema import (
 
 
 REQUIRED_EVAL_RESULT_COLUMNS = [
+    "schema_version",
     "run_id",
     "case_id",
     "candidate",
@@ -58,6 +59,8 @@ OPTIONAL_EVAL_RESULT_COLUMNS = [
     "routing_policy_version",
     "routing_reason",
 ]
+
+EVAL_RESULTS_SCHEMA_VERSION = "1"
 
 NONEMPTY_EVAL_RESULT_FIELDS = (
     "run_id",
@@ -187,6 +190,38 @@ def validate_eval_results(
         with results_path.open("r", encoding="utf-8", newline="") as handle:
             reader = csv.DictReader(handle)
             fieldnames = reader.fieldnames or []
+            for index, header in enumerate(fieldnames):
+                if not isinstance(header, str) or not header.strip():
+                    issues.append(
+                        ValidationIssue(
+                            f"{results_path}:header[{index + 1}]",
+                            "Eval-result header name must be nonblank.",
+                        )
+                    )
+            duplicate_headers = sorted(
+                header for header, count in Counter(fieldnames).items() if header and count > 1
+            )
+            for header in duplicate_headers:
+                issues.append(
+                    ValidationIssue(
+                        f"{results_path}:header",
+                        f"Duplicate eval-result header: {header}.",
+                    )
+                )
+            unknown_headers = sorted(
+                header
+                for header in fieldnames
+                if header
+                and header not in {*REQUIRED_EVAL_RESULT_COLUMNS, *OPTIONAL_EVAL_RESULT_COLUMNS}
+                and not header.startswith("x_")
+            )
+            for header in unknown_headers:
+                issues.append(
+                    ValidationIssue(
+                        f"{results_path}:header",
+                        f"Unsupported eval-result header: {header}. Use an x_ extension column.",
+                    )
+                )
             missing_headers = [
                 column for column in REQUIRED_EVAL_RESULT_COLUMNS if column not in fieldnames
             ]
@@ -229,6 +264,20 @@ def validate_eval_results(
     first_identity_rows: dict[tuple[str, str, str, str], int] = {}
     for index, row in enumerate(rows, start=2):
         prefix = f"{results_path}:row[{index}]"
+        if None in row:
+            issues.append(
+                ValidationIssue(
+                    prefix,
+                    "Eval-result row contains more cells than the header.",
+                )
+            )
+        if _cell(row, "schema_version") != EVAL_RESULTS_SCHEMA_VERSION:
+            issues.append(
+                ValidationIssue(
+                    f"{prefix}.schema_version",
+                    'Must be exactly the string "1".',
+                )
+            )
         for field in NONEMPTY_EVAL_RESULT_FIELDS:
             if not _cell(row, field):
                 issues.append(

@@ -1,0 +1,19 @@
+schema_validation:
+  manifest: valid
+  artifact_index: valid
+  review_context: valid
+
+provenance:
+  manifest_presence: present
+  validity: valid
+  freshness: current
+  recency: acceptable
+  assurance: verified
+  lifecycle: complete
+
+authorization:
+  documentation: allowed
+  shadow: allowed
+  controlled_launch: eligible
+
+findings: []

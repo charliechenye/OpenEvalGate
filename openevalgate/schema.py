@@ -38,6 +38,10 @@ HANDOFF_TYPES = {
 }
 
 
+CORE_SCHEMA_VERSION = "1"
+EVAL_CASE_DOCUMENT_KEYS = {"schema_version", "eval_cases", "extensions"}
+
+
 class RiskTier(str, Enum):
     LOW = "low"
     MEDIUM = "medium"
@@ -112,6 +116,17 @@ REQUIRED_FIELDS = [
     "owner",
     "last_reviewed",
 ]
+EVAL_CASE_KEYS = {
+    *REQUIRED_FIELDS,
+    "boundary",
+    "critical",
+    "expected_end_state",
+    "expected_handoff",
+    "expected_trajectory",
+    "expected_workflow_route",
+    "extensions",
+    "release_gate",
+}
 
 
 @dataclass(frozen=True)
@@ -218,23 +233,31 @@ class ChatbotMetricStack:
 
 
 def load_eval_cases(path: str | Path) -> list[dict[str, Any]]:
-    """Load eval cases from a supported YAML shape."""
+    """Load a schema-versioned eval-case document.
+
+    V1 deliberately accepts one canonical envelope only.  The pre-public
+    single-case and bare-list shapes were never released and therefore do not
+    have a compatibility path.
+    """
 
     with Path(path).open("r", encoding="utf-8") as handle:
         data = yaml.safe_load(handle)
 
-    if data is None:
-        return []
-    if isinstance(data, list):
-        return data
-    if isinstance(data, dict) and "eval_cases" in data:
-        cases = data["eval_cases"]
-        if isinstance(cases, list):
-            return cases
+    if not isinstance(data, dict):
+        raise ValueError("Eval-case document must be an object with schema_version and eval_cases.")
+    unknown = sorted(set(data) - EVAL_CASE_DOCUMENT_KEYS)
+    if unknown:
+        raise ValueError(f"Eval-case document has unsupported field(s): {', '.join(unknown)}.")
+    if data.get("schema_version") != CORE_SCHEMA_VERSION or not isinstance(
+        data.get("schema_version"), str
+    ):
+        raise ValueError('eval_cases.schema_version must be exactly the string "1".')
+    if "extensions" in data and not isinstance(data["extensions"], dict):
+        raise ValueError("eval_cases.extensions must be an object.")
+    cases = data.get("eval_cases")
+    if not isinstance(cases, list):
         raise ValueError("eval_cases must be a list")
-    if isinstance(data, dict):
-        return [data]
-    raise ValueError("YAML must be an eval case, a list, or an object with eval_cases")
+    return cases
 
 
 def validate_eval_cases(path: str | Path) -> ValidationResult:
@@ -263,6 +286,17 @@ def validate_eval_cases(path: str | Path) -> ValidationResult:
 
 def _validate_case(case: dict[str, Any], case_path: str) -> list[ValidationIssue]:
     issues: list[ValidationIssue] = []
+
+    unknown = sorted(set(case) - EVAL_CASE_KEYS)
+    for field in unknown:
+        issues.append(
+            ValidationIssue(
+                f"{case_path}.{field}",
+                "Unsupported eval-case field. Place non-policy metadata in extensions.",
+            )
+        )
+    if "extensions" in case and not isinstance(case["extensions"], dict):
+        issues.append(ValidationIssue(f"{case_path}.extensions", "Must be an object."))
 
     for field in REQUIRED_FIELDS:
         if field not in case:
