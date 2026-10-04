@@ -1,29 +1,109 @@
 # OpenEvalGate
 
-Turn evaluation evidence into a bounded launch decision for production AI assistants and agents.
+Review an AI agent release using eval results, rollback, monitoring, and human escalation evidence.
 
 [![CI](https://github.com/charliechenye/OpenEvalGate/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/charliechenye/OpenEvalGate/actions/workflows/ci.yml?query=branch%3Amain)
 [![Python 3.10-3.14](https://img.shields.io/badge/python-3.10--3.14-blue.svg)](https://www.python.org/)
 [![Status: stable core](https://img.shields.io/badge/status-stable%20core-2ea44f.svg)](docs/contracts/core-compatibility-v1.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-OpenEvalGate is an open-source, local evidence-admission layer for enterprise AI product and platform teams. It deterministically assesses declared review evidence and turns it into a bounded recommendation for the requested review stage.
+OpenEvalGate is an open-source, local release-assurance CLI for engineers shipping AI assistants and agents. Feed it existing eval results, a declared candidate/run identity, and release-control evidence. It produces validation findings, named blockers, and a reproducible decision card or JSON report for the requested review stage.
 
-Use it after your existing eval runner, harness, or manual review has produced evidence. OpenEvalGate validates the evidence package, fails closed on contradictions and missing critical controls, identifies launch blockers, and writes a reproducible Markdown report.
+Use it after an existing eval runner, harness, or manual review has produced results. OpenEvalGate validates the submitted inputs, fails closed on contradictions and missing critical controls, identifies launch blockers, and writes a reproducible decision artifact.
 
-It helps teams assemble and review evidence for three questions:
+[Install and run](#quickstart) · [Review Promptfoo results in CI](docs/integrations/promptfoo.md) · [Current limits](#limitations-and-non-claims)
 
-1. **Expected behavior:** Does observed behavior match a business-owned contract?
-2. **Safe stopping boundaries:** Does autonomy end at the right point, with the right human destination and context?
-3. **Release evidence:** Do eval results, critical controls, mitigations, owners, and rollback plans support the requested review stage?
+> **V1 limitation:** freshness and expiry are reported, but `stale` / `expired`
+> classifications do not yet consistently block a recommendation. Verify that
+> evidence matches the current release and is recent enough before acting on it.
 
-OpenEvalGate does not run the candidate system. Teams run evaluations with their existing tools, record the results locally, and use the CLI to validate the evidence package, identify blockers, and generate a release-assurance report.
+It does not run the candidate system. Teams run evaluations with the tools they already use, then use OpenEvalGate to make the separate release question explicit: how far does this evidence support the requested review stage?
 
-> **Stable core:** `0.1.0` provides Core Compatibility v1 for its defined CLI,
+> **Stable core:** the `0.1.1` release candidate continues Core Compatibility v1 for its defined CLI,
 > JSON, assessment, and V1 evidence surfaces. Templates, playbooks, vendor
 > adapters, and full product-scope stability remain experimental. See the
 > [Core Compatibility v1](docs/contracts/core-compatibility-v1.md) and
 > [governance](GOVERNANCE.md).
+
+## Quickstart
+
+Python 3.10–3.14 and Git are required. On macOS or Linux:
+
+```bash
+git clone https://github.com/charliechenye/OpenEvalGate.git
+cd OpenEvalGate
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install .
+openevalgate --version
+openevalgate check examples/subscription_support_assistant/
+openevalgate report examples/subscription_support_assistant/ --format card
+```
+
+On Windows PowerShell, use `python -m venv .venv` and
+`.\.venv\Scripts\Activate.ps1` in place of the two environment commands.
+The example runs locally after installation and needs no model API key.
+For wheel installation and release checksums, see [installation](docs/installation.md).
+
+The included subscription-support scenario is synthetic and produces a bounded controlled-launch recommendation. Its decision card makes the following legible:
+
+```text
+Status: Pass
+Recommendation: Ready for bounded controlled launch
+Review mode: controlled_launch
+Critical-control status: Pass
+Blockers: None identified
+```
+
+For a blocked contrast, run `openevalgate report examples/customer_support_assistant/ --format card`
+or open its
+[generated report](examples/customer_support_assistant/generated_launch_report.md).
+
+Try the experimental Promptfoo handoff with the checked-in export from
+**Promptfoo 0.123.1**, without installing Node or running a model:
+
+```bash
+python scripts/run_promptfoo_demo.py --output /tmp/openevalgate-promptfoo-pass
+python scripts/run_promptfoo_demo.py --output /tmp/openevalgate-promptfoo-blocked --blocked-controls
+```
+
+Use new output directories. The first command exits `0`; the second exits `1`
+with `missing_rollback` and `missing_monitoring`. Both import the same passing
+synthetic eval results. Follow the [Promptfoo tutorial](docs/integrations/promptfoo.md)
+to map your own results and supply your team's controls.
+
+## Where it fits
+
+```text
+Your eval runner, harness, or manual review
+                    |
+                    v
+      Results, outputs, controls, and review inputs
+                    |
+                    v
+              OpenEvalGate
+                    |
+                    v
+     A bounded recommendation for the requested stage
+```
+
+OpenEvalGate complements evaluation runners, tracing platforms, runtime controls,
+security tooling, and organizational review. It is not a replacement for any of
+them, and it does not certify a deployment or make the release decision for a
+team.
+
+## See the decision
+
+The repository contains synthetic, illustrative scenarios—not external
+deployments or adoption evidence:
+
+| Scenario | Evidence completeness | Critical controls | Hard blockers | Bounded recommendation |
+| --- | ---: | --- | ---: | --- |
+| [Subscription support](examples/subscription_support_assistant/generated_launch_report.md) | 100/100 | Pass | 0 | Ready for bounded controlled launch |
+| [Customer support](examples/customer_support_assistant/generated_launch_report.md) | 90/100 | Fail | 2 | Not ready for controlled launch |
+
+The contrast is intentional: a high completeness score cannot override a
+high-risk behavioral regression or a missing critical control.
 
 ## The Production Problem
 
@@ -58,12 +138,14 @@ These repository-authored scenarios are synthetic and illustrative. They are not
 
 See the [examples index](examples/README.md) for scenario purposes, inputs, and reproduction commands. Start with the [passing subscription-support report](examples/subscription_support_assistant/generated_launch_report.md), then compare it with the [blocked refund-support report](examples/customer_support_assistant/generated_launch_report.md) to see why evidence completeness and launch readiness are separate decisions.
 
-## Quickstart
+## Continue with a project
 
 New to the repository? Start with [Getting Started for Practitioners](docs/00_getting_started_for_practitioners.md).
 
+If you own the release decision, start with the [Product Manager Recipe: Review
+a Bounded Controlled Launch](docs/18_product_manager_controlled_launch_review.md).
+
 ```bash
-python -m pip install -e .
 openevalgate --version
 openevalgate validate examples/subscription_support_assistant/eval_cases.yaml
 openevalgate check examples/subscription_support_assistant/
@@ -71,7 +153,11 @@ openevalgate report examples/subscription_support_assistant/ \
   --output /tmp/openevalgate-subscription-report.md
 ```
 
-The quickest path is to copy the [subscription-support scenario](examples/subscription_support_assistant/README.md) into a new project, replace its synthetic evidence with your own artifacts, and rerun the same three commands. The report is written to `/tmp` so the canonical example remains unchanged.
+Inspect the [subscription-support scenario](examples/subscription_support_assistant/README.md)
+as a reference. For your own release, create a review workspace and replace every
+synthetic claim with team-owned evidence. The [Promptfoo tutorial](docs/integrations/promptfoo.md)
+shows how to populate results without copying a synthetic run identity.
+The report above is written to `/tmp` so the canonical example remains unchanged.
 
 For a clean project scaffold, use the deterministic minimal profile:
 
@@ -113,6 +199,18 @@ High evidence completeness cannot override a high-risk case that failed to stop 
 See the [external-runner handoff](docs/integrations/external-runner-handoff-v1.md)
 for a V1 evidence handoff, including a LangChain-shaped producer example that
 does not add an SDK dependency.
+
+## Common release-review questions
+
+- **How do I review Promptfoo results in GitHub Actions?** Run the pinned
+  experimental producer, then `check` and `report --fail-on-blocked`; upload
+  diagnostics even on failure. See the [tested workflow and mapping](docs/integrations/promptfoo.md#how-do-i-review-promptfoo-results-in-github-actions).
+- **Why can passing evals still block a release review?** Passing assertions
+  do not supply rollback, monitoring, or required human paths. See the
+  [same-results control comparison](docs/integrations/promptfoo.md#why-can-passing-evals-still-block-a-release-review).
+- **What does the team still need to verify?** Current evidence, operational
+  control effectiveness, ownership, and release authority remain team duties.
+  See [checks and limits](docs/integrations/promptfoo.md#what-does-openevalgate-check-and-what-must-the-team-verify).
 
 The framework distinguishes:
 
@@ -231,6 +329,11 @@ adoption evidence remain future `1.0` work.
 - It does not replace eval runners, observability systems, runtime guardrails, security controls, or organizational approval.
 - It validates submitted artifacts and declared evidence; it does not independently verify that every claim in those artifacts is true, current, or complete.
 - The current implementation validates core result identities, selected eval-run identity, expected-route consistency, duplicate identities, review timestamps, supplied output references, output identity metadata, artifact-index identity, local provenance digests, evidence freshness and recency, review-context validity, assurance, and basic route-match derivation. It does not yet provide complete authorization classification, enriched workflow-route claims, handoff claims, or every routing-policy and model-policy field.
+- `stale` and `expired` provenance classifications are diagnostics with incomplete
+  authorization enforcement in V1. A `pass` must not be read as proof of freshness.
+- The Promptfoo producer is an experimental repository example supporting only
+  `0.123.1` JSON exports and a documented structured-observation contract. It is
+  not an official Promptfoo integration.
 - A recommendation is only as reliable as the quality, completeness, provenance, and freshness of the supplied evidence.
 - A passing check, high evidence score, or bounded recommendation does not guarantee safe, reliable, compliant, or successful deployment.
 - It does not certify compliance or provide legal, regulatory, security, or risk-management certification.
@@ -247,7 +350,11 @@ The repository includes local Markdown, YAML, and CSV templates for assistant sc
 Practitioner playbooks include:
 
 - [Golden Eval Set Playbook](docs/playbooks/golden-eval-set-playbook/README.md)
+- [PM Golden Eval Workflow](docs/playbooks/golden-eval-set-playbook/README.md#pm-operating-sequence)
 - [Synthetic Boundary Case Guide](docs/17_synthetic_boundary_case_guide.md)
+- [Product Manager Controlled-Launch Review](docs/18_product_manager_controlled_launch_review.md)
+- [Incident-to-Regression Recipe](docs/19_incident_to_regression_recipe.md)
+- [Agent Change Review Recipe](docs/20_agent_change_review_recipe.md)
 - [Routing Playbook](docs/playbooks/routing/README.md)
 - [Human Escalation Playbook](docs/playbooks/human-escalation-playbook/README.md)
 

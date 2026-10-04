@@ -9,7 +9,7 @@ This roadmap separates four distinct milestones that should not be treated as on
 
 OpenEvalGate should be positioned as an **evidence-backed release-assurance framework for production AI assistants and agents**. It is not a complete AI governance platform, eval runner, observability system, runtime guardrail, compliance certification product, or guarantee of safe deployment.
 
-> **Current state:** `0.1.0` is released and tagged. Public positioning and limitations, deterministic review modes, behavioral sufficiency, centralized hard-gate policy, runtime eval-run identity enforcement, package builds, clean-wheel installation, installed CLI execution, and canonical-report reproduction are implemented. The next work is controlled-launch authorization, a product-facing decision packet, the incident-to-eval investigation loop, and a practical recipe book validated with independent practitioners.
+> **Current state:** `0.1.0` is released and tagged. The `0.1.1` patch lane adds product-manager onboarding, decision-card review guidance, and investigation and golden-eval recipes while preserving Core Compatibility v1. The next minor-release work is controlled-launch authorization and a richer product-facing decision packet; independent practitioner validation remains a prerequisite for broader contract and integration work.
 
 See [Release Milestones](docs/roadmap/release-milestones.md) for the milestone definitions and dependency order.
 
@@ -106,6 +106,14 @@ The following are not required merely to make the repository public:
 
 The implementation order is documented in [Iteration 3: OpenEvalGate 0.2.0, Adoption, and Stabilization](docs/roadmap/iteration-03-adoption-and-external-validation.md). The first coherent slice is authorization semantics, enforcement, and the product decision packet; investigation recipes and integrations follow that contract.
 
+### B0. Patch-release lane (`0.1.1`, `0.1.2`, ...)
+
+- [x] Keep patch releases within Core Compatibility v1.
+- [x] Add additive product-manager recipes and onboarding improvements.
+- [ ] Fix contract-preserving correctness and reproducibility issues as found.
+- [ ] Do not change required inputs, blocker meaning, scoring, exit behavior, or authorization claims in a patch release.
+- [ ] Release each patch with focused validation, changelog notes, and a clean artifact check.
+
 ### B1. Strengthen eval-result integrity
 
 - [x] Require non-empty values for mandatory result fields.
@@ -139,8 +147,8 @@ The implementation order is documented in [Iteration 3: OpenEvalGate 0.2.0, Adop
 
 ### B3.2 Incident-to-eval investigation loop
 
-- [ ] Add a structured incident intake artifact with impact, expected behavior, observed behavior, coverage, gate outcome, root-cause hypothesis, mitigation, owner, and follow-up date.
-- [ ] Add a recipe for converting an incident into a regression or boundary eval case.
+- [~] Add a structured incident intake artifact with impact, expected behavior, observed behavior, coverage, gate outcome, root-cause hypothesis, mitigation, owner, and follow-up date.
+- [~] Add a recipe for converting an incident into a regression or boundary eval case.
 - [ ] Classify follow-up as evidence, policy, behavior, routing, operations, or monitoring work.
 - [ ] Record whether re-evaluation, re-approval, rollback, or documentation is required.
 
@@ -151,7 +159,7 @@ The implementation order is documented in [Iteration 3: OpenEvalGate 0.2.0, Adop
 - [ ] Keep the initial profile set small; defer speculative profile breadth until user demand is demonstrated.
 - [x] Add a five-minute installed-wheel quickstart for Linux/macOS and Windows PowerShell.
 - [x] Allow a user to produce a useful first report without copying the full customer-support example.
-- [ ] Add an AI-product-manager-oriented onboarding path for reviewing a decision packet without operating the eval runner.
+- [x] Add an AI-product-manager-oriented onboarding path for reviewing a decision packet without operating the eval runner.
 
 ### B4. Add machine-consumable output
 
@@ -163,8 +171,9 @@ The implementation order is documented in [Iteration 3: OpenEvalGate 0.2.0, Adop
 
 ### B5.1 Recipe book v1
 
-- [ ] Add role- and lifecycle-oriented recipes for safe boundaries, risk-based golden sets, shadow review, controlled launch, incident investigation, incident-to-regression conversion, behavior-change review, and evidence freshness.
-- [ ] Link recipes to inputs, commands, report sections, blocker semantics, owners, and next actions.
+- [x] Expand the golden-eval-set playbook into a product-manager workflow for stakeholder alignment, risk slices, source mix, grading, gates, ownership, and production learning.
+- [~] Add role- and lifecycle-oriented recipes for safe boundaries, shadow review, controlled launch, behavior-change review, and evidence freshness.
+- [x] Link the current recipes to inputs, commands, report sections, blocker semantics, owners, and next actions.
 - [ ] Separate normative requirements, practitioner guidance, and illustrative examples.
 
 ### B5. Publish `0.2.0`

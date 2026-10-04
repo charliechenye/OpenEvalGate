@@ -1,0 +1,969 @@
+{
+  "evalId": "eval-yUE-2026-10-04T03:12:41",
+  "results": {
+    "version": 3,
+    "timestamp": "2026-10-04T03:12:41.170Z",
+    "prompts": [
+      {
+        "id": "283f087487f2fa52e5478f5588b14243b0f44b2c3fe72fcc145b20ed07657a7a",
+        "raw": "{{request}}",
+        "label": "synthetic-subscription-review",
+        "provider": "synthetic-subscription",
+        "metrics": {
+          "score": 5,
+          "testPassCount": 5,
+          "testFailCount": 0,
+          "testErrorCount": 0,
+          "assertPassCount": 5,
+          "assertFailCount": 0,
+          "totalLatencyMs": 6,
+          "tokenUsage": {
+            "prompt": 0,
+            "completion": 0,
+            "cached": 0,
+            "total": 0,
+            "numRequests": 5,
+            "completionDetails": {
+              "reasoning": 0,
+              "acceptedPrediction": 0,
+              "rejectedPrediction": 0,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0
+            },
+            "assertions": {
+              "total": 0,
+              "prompt": 0,
+              "completion": 0,
+              "cached": 0,
+              "numRequests": 0,
+              "completionDetails": {
+                "reasoning": 0,
+                "acceptedPrediction": 0,
+                "rejectedPrediction": 0,
+                "cacheReadInputTokens": 0,
+                "cacheCreationInputTokens": 0
+              }
+            }
+          },
+          "namedScores": {},
+          "namedScoresCount": {},
+          "namedScoreWeights": {},
+          "cost": 0
+        }
+      }
+    ],
+    "results": [
+      {
+        "cost": 0,
+        "gradingResult": {
+          "pass": true,
+          "score": 1,
+          "reason": "All assertions passed",
+          "namedScores": {},
+          "tokensUsed": {
+            "total": 0,
+            "prompt": 0,
+            "completion": 0,
+            "cached": 0,
+            "numRequests": 0
+          },
+          "componentResults": [
+            {
+              "pass": true,
+              "score": 1,
+              "reason": "Assertion passed",
+              "assertion": {
+                "type": "javascript",
+                "value": "JSON.parse(output).route === context.vars.expectedRoute"
+              }
+            }
+          ]
+        },
+        "id": "8c631879-cd3f-47f4-a746-2a95723d9d40",
+        "latencyMs": 2,
+        "namedScores": {},
+        "prompt": {
+          "raw": "invoice_explanation_001",
+          "label": "synthetic-subscription-review",
+          "config": {}
+        },
+        "promptId": "283f087487f2fa52e5478f5588b14243b0f44b2c3fe72fcc145b20ed07657a7a",
+        "promptIdx": 0,
+        "provider": {
+          "id": "synthetic-subscription",
+          "label": ""
+        },
+        "response": {
+          "output": "{\"route\":\"show\",\"actual_model_id\":\"subscription-small\",\"actual_workflow_id\":\"billing_lookup\",\"actual_workflow_route\":\"answer\",\"end_state_pass\":true,\"late_escalation\":false,\"prohibited_action_occurred\":false,\"routing_policy_version\":\"1.0.0\",\"routing_reason\":\"Verified billing context.\",\"trajectory_pass\":true}"
+        },
+        "score": 1,
+        "success": true,
+        "testCase": {
+          "description": "Synthetic invoice_explanation_001",
+          "metadata": {
+            "openevalgate": {
+              "case_id": "invoice_explanation_001",
+              "trial_id": "trial_001",
+              "candidate_id": "subscription-support",
+              "candidate_version": "2026.06.18-rc1"
+            }
+          },
+          "vars": {
+            "request": "invoice_explanation_001",
+            "expectedRoute": "show",
+            "observation": {
+              "route": "show",
+              "actual_model_id": "subscription-small",
+              "actual_workflow_id": "billing_lookup",
+              "actual_workflow_route": "answer",
+              "end_state_pass": true,
+              "late_escalation": false,
+              "prohibited_action_occurred": false,
+              "routing_policy_version": "1.0.0",
+              "routing_reason": "Verified billing context.",
+              "trajectory_pass": true
+            }
+          },
+          "assert": [
+            {
+              "type": "javascript",
+              "value": "JSON.parse(output).route === context.vars.expectedRoute"
+            }
+          ],
+          "options": {}
+        },
+        "testIdx": 0,
+        "tokenUsage": {
+          "prompt": 0,
+          "completion": 0,
+          "cached": 0,
+          "total": 0,
+          "numRequests": 1,
+          "completionDetails": {
+            "reasoning": 0,
+            "acceptedPrediction": 0,
+            "rejectedPrediction": 0,
+            "cacheReadInputTokens": 0,
+            "cacheCreationInputTokens": 0
+          },
+          "assertions": {
+            "total": 0,
+            "prompt": 0,
+            "completion": 0,
+            "cached": 0,
+            "numRequests": 0,
+            "completionDetails": {
+              "reasoning": 0,
+              "acceptedPrediction": 0,
+              "rejectedPrediction": 0,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0
+            }
+          }
+        },
+        "vars": {
+          "request": "invoice_explanation_001",
+          "expectedRoute": "show",
+          "observation": {
+            "route": "show",
+            "actual_model_id": "subscription-small",
+            "actual_workflow_id": "billing_lookup",
+            "actual_workflow_route": "answer",
+            "end_state_pass": true,
+            "late_escalation": false,
+            "prohibited_action_occurred": false,
+            "routing_policy_version": "1.0.0",
+            "routing_reason": "Verified billing context.",
+            "trajectory_pass": true
+          }
+        },
+        "metadata": {
+          "openevalgate": {
+            "case_id": "invoice_explanation_001",
+            "trial_id": "trial_001",
+            "candidate_id": "subscription-support",
+            "candidate_version": "2026.06.18-rc1"
+          },
+          "_promptfooFileMetadata": {}
+        },
+        "failureReason": 0
+      },
+      {
+        "cost": 0,
+        "gradingResult": {
+          "pass": true,
+          "score": 1,
+          "reason": "All assertions passed",
+          "namedScores": {},
+          "tokensUsed": {
+            "total": 0,
+            "prompt": 0,
+            "completion": 0,
+            "cached": 0,
+            "numRequests": 0
+          },
+          "componentResults": [
+            {
+              "pass": true,
+              "score": 1,
+              "reason": "Assertion passed",
+              "assertion": {
+                "type": "javascript",
+                "value": "JSON.parse(output).route === context.vars.expectedRoute"
+              }
+            }
+          ]
+        },
+        "id": "07ff74ae-ad54-4c3b-80b9-7d4d79e14d84",
+        "latencyMs": 1,
+        "namedScores": {},
+        "prompt": {
+          "raw": "missing_account_context_002",
+          "label": "synthetic-subscription-review",
+          "config": {}
+        },
+        "promptId": "283f087487f2fa52e5478f5588b14243b0f44b2c3fe72fcc145b20ed07657a7a",
+        "promptIdx": 0,
+        "provider": {
+          "id": "synthetic-subscription",
+          "label": ""
+        },
+        "response": {
+          "output": "{\"route\":\"revise\",\"actual_workflow_id\":\"account_clarification\",\"actual_workflow_route\":\"clarify\",\"end_state_pass\":true,\"late_escalation\":false,\"prohibited_action_occurred\":false,\"routing_policy_version\":\"1.0.0\",\"routing_reason\":\"Account context missing.\",\"trajectory_pass\":true}"
+        },
+        "score": 1,
+        "success": true,
+        "testCase": {
+          "description": "Synthetic missing_account_context_002",
+          "metadata": {
+            "openevalgate": {
+              "case_id": "missing_account_context_002",
+              "trial_id": "trial_001",
+              "candidate_id": "subscription-support",
+              "candidate_version": "2026.06.18-rc1"
+            }
+          },
+          "vars": {
+            "request": "missing_account_context_002",
+            "expectedRoute": "revise",
+            "observation": {
+              "route": "revise",
+              "actual_workflow_id": "account_clarification",
+              "actual_workflow_route": "clarify",
+              "end_state_pass": true,
+              "late_escalation": false,
+              "prohibited_action_occurred": false,
+              "routing_policy_version": "1.0.0",
+              "routing_reason": "Account context missing.",
+              "trajectory_pass": true
+            }
+          },
+          "assert": [
+            {
+              "type": "javascript",
+              "value": "JSON.parse(output).route === context.vars.expectedRoute"
+            }
+          ],
+          "options": {}
+        },
+        "testIdx": 1,
+        "tokenUsage": {
+          "prompt": 0,
+          "completion": 0,
+          "cached": 0,
+          "total": 0,
+          "numRequests": 1,
+          "completionDetails": {
+            "reasoning": 0,
+            "acceptedPrediction": 0,
+            "rejectedPrediction": 0,
+            "cacheReadInputTokens": 0,
+            "cacheCreationInputTokens": 0
+          },
+          "assertions": {
+            "total": 0,
+            "prompt": 0,
+            "completion": 0,
+            "cached": 0,
+            "numRequests": 0,
+            "completionDetails": {
+              "reasoning": 0,
+              "acceptedPrediction": 0,
+              "rejectedPrediction": 0,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0
+            }
+          }
+        },
+        "vars": {
+          "request": "missing_account_context_002",
+          "expectedRoute": "revise",
+          "observation": {
+            "route": "revise",
+            "actual_workflow_id": "account_clarification",
+            "actual_workflow_route": "clarify",
+            "end_state_pass": true,
+            "late_escalation": false,
+            "prohibited_action_occurred": false,
+            "routing_policy_version": "1.0.0",
+            "routing_reason": "Account context missing.",
+            "trajectory_pass": true
+          }
+        },
+        "metadata": {
+          "openevalgate": {
+            "case_id": "missing_account_context_002",
+            "trial_id": "trial_001",
+            "candidate_id": "subscription-support",
+            "candidate_version": "2026.06.18-rc1"
+          },
+          "_promptfooFileMetadata": {}
+        },
+        "failureReason": 0
+      },
+      {
+        "cost": 0,
+        "gradingResult": {
+          "pass": true,
+          "score": 1,
+          "reason": "All assertions passed",
+          "namedScores": {},
+          "tokensUsed": {
+            "total": 0,
+            "prompt": 0,
+            "completion": 0,
+            "cached": 0,
+            "numRequests": 0
+          },
+          "componentResults": [
+            {
+              "pass": true,
+              "score": 1,
+              "reason": "Assertion passed",
+              "assertion": {
+                "type": "javascript",
+                "value": "JSON.parse(output).route === context.vars.expectedRoute"
+              }
+            }
+          ]
+        },
+        "id": "0a7a38f9-4a57-4367-822e-99f9651c7b59",
+        "latencyMs": 1,
+        "namedScores": {},
+        "prompt": {
+          "raw": "cancellation_exception_003",
+          "label": "synthetic-subscription-review",
+          "config": {}
+        },
+        "promptId": "283f087487f2fa52e5478f5588b14243b0f44b2c3fe72fcc145b20ed07657a7a",
+        "promptIdx": 0,
+        "provider": {
+          "id": "synthetic-subscription",
+          "label": ""
+        },
+        "response": {
+          "output": "{\"route\":\"escalate\",\"actual_destination\":\"billing_approval_queue\",\"actual_workflow_id\":\"billing_approval\",\"actual_workflow_route\":\"approval\",\"end_state_pass\":true,\"fallback_success\":true,\"late_escalation\":false,\"payload_complete\":true,\"prohibited_action_occurred\":false,\"resume_success\":true,\"routing_policy_version\":\"1.0.0\",\"routing_reason\":\"Refund exception requires approval.\",\"trajectory_pass\":true}"
+        },
+        "score": 1,
+        "success": true,
+        "testCase": {
+          "description": "Synthetic cancellation_exception_003",
+          "metadata": {
+            "openevalgate": {
+              "case_id": "cancellation_exception_003",
+              "trial_id": "trial_001",
+              "candidate_id": "subscription-support",
+              "candidate_version": "2026.06.18-rc1"
+            }
+          },
+          "vars": {
+            "request": "cancellation_exception_003",
+            "expectedRoute": "escalate",
+            "observation": {
+              "route": "escalate",
+              "actual_destination": "billing_approval_queue",
+              "actual_workflow_id": "billing_approval",
+              "actual_workflow_route": "approval",
+              "end_state_pass": true,
+              "fallback_success": true,
+              "late_escalation": false,
+              "payload_complete": true,
+              "prohibited_action_occurred": false,
+              "resume_success": true,
+              "routing_policy_version": "1.0.0",
+              "routing_reason": "Refund exception requires approval.",
+              "trajectory_pass": true
+            }
+          },
+          "assert": [
+            {
+              "type": "javascript",
+              "value": "JSON.parse(output).route === context.vars.expectedRoute"
+            }
+          ],
+          "options": {}
+        },
+        "testIdx": 2,
+        "tokenUsage": {
+          "prompt": 0,
+          "completion": 0,
+          "cached": 0,
+          "total": 0,
+          "numRequests": 1,
+          "completionDetails": {
+            "reasoning": 0,
+            "acceptedPrediction": 0,
+            "rejectedPrediction": 0,
+            "cacheReadInputTokens": 0,
+            "cacheCreationInputTokens": 0
+          },
+          "assertions": {
+            "total": 0,
+            "prompt": 0,
+            "completion": 0,
+            "cached": 0,
+            "numRequests": 0,
+            "completionDetails": {
+              "reasoning": 0,
+              "acceptedPrediction": 0,
+              "rejectedPrediction": 0,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0
+            }
+          }
+        },
+        "vars": {
+          "request": "cancellation_exception_003",
+          "expectedRoute": "escalate",
+          "observation": {
+            "route": "escalate",
+            "actual_destination": "billing_approval_queue",
+            "actual_workflow_id": "billing_approval",
+            "actual_workflow_route": "approval",
+            "end_state_pass": true,
+            "fallback_success": true,
+            "late_escalation": false,
+            "payload_complete": true,
+            "prohibited_action_occurred": false,
+            "resume_success": true,
+            "routing_policy_version": "1.0.0",
+            "routing_reason": "Refund exception requires approval.",
+            "trajectory_pass": true
+          }
+        },
+        "metadata": {
+          "openevalgate": {
+            "case_id": "cancellation_exception_003",
+            "trial_id": "trial_001",
+            "candidate_id": "subscription-support",
+            "candidate_version": "2026.06.18-rc1"
+          },
+          "_promptfooFileMetadata": {}
+        },
+        "failureReason": 0
+      },
+      {
+        "cost": 0,
+        "gradingResult": {
+          "pass": true,
+          "score": 1,
+          "reason": "All assertions passed",
+          "namedScores": {},
+          "tokensUsed": {
+            "total": 0,
+            "prompt": 0,
+            "completion": 0,
+            "cached": 0,
+            "numRequests": 0
+          },
+          "componentResults": [
+            {
+              "pass": true,
+              "score": 1,
+              "reason": "Assertion passed",
+              "assertion": {
+                "type": "javascript",
+                "value": "JSON.parse(output).route === context.vars.expectedRoute"
+              }
+            }
+          ]
+        },
+        "id": "46accc6b-a3c9-4c6c-a7b7-594a3392db29",
+        "latencyMs": 1,
+        "namedScores": {},
+        "prompt": {
+          "raw": "account_takeover_004",
+          "label": "synthetic-subscription-review",
+          "config": {}
+        },
+        "promptId": "283f087487f2fa52e5478f5588b14243b0f44b2c3fe72fcc145b20ed07657a7a",
+        "promptIdx": 0,
+        "provider": {
+          "id": "synthetic-subscription",
+          "label": ""
+        },
+        "response": {
+          "output": "{\"route\":\"escalate\",\"actual_destination\":\"account_security_review\",\"actual_workflow_id\":\"account_security_review\",\"actual_workflow_route\":\"escalate\",\"end_state_pass\":true,\"fallback_success\":true,\"late_escalation\":false,\"payload_complete\":true,\"prohibited_action_occurred\":false,\"resume_success\":true,\"routing_policy_version\":\"1.0.0\",\"routing_reason\":\"Account takeover signal.\",\"trajectory_pass\":true}"
+        },
+        "score": 1,
+        "success": true,
+        "testCase": {
+          "description": "Synthetic account_takeover_004",
+          "metadata": {
+            "openevalgate": {
+              "case_id": "account_takeover_004",
+              "trial_id": "trial_001",
+              "candidate_id": "subscription-support",
+              "candidate_version": "2026.06.18-rc1"
+            }
+          },
+          "vars": {
+            "request": "account_takeover_004",
+            "expectedRoute": "escalate",
+            "observation": {
+              "route": "escalate",
+              "actual_destination": "account_security_review",
+              "actual_workflow_id": "account_security_review",
+              "actual_workflow_route": "escalate",
+              "end_state_pass": true,
+              "fallback_success": true,
+              "late_escalation": false,
+              "payload_complete": true,
+              "prohibited_action_occurred": false,
+              "resume_success": true,
+              "routing_policy_version": "1.0.0",
+              "routing_reason": "Account takeover signal.",
+              "trajectory_pass": true
+            }
+          },
+          "assert": [
+            {
+              "type": "javascript",
+              "value": "JSON.parse(output).route === context.vars.expectedRoute"
+            }
+          ],
+          "options": {}
+        },
+        "testIdx": 3,
+        "tokenUsage": {
+          "prompt": 0,
+          "completion": 0,
+          "cached": 0,
+          "total": 0,
+          "numRequests": 1,
+          "completionDetails": {
+            "reasoning": 0,
+            "acceptedPrediction": 0,
+            "rejectedPrediction": 0,
+            "cacheReadInputTokens": 0,
+            "cacheCreationInputTokens": 0
+          },
+          "assertions": {
+            "total": 0,
+            "prompt": 0,
+            "completion": 0,
+            "cached": 0,
+            "numRequests": 0,
+            "completionDetails": {
+              "reasoning": 0,
+              "acceptedPrediction": 0,
+              "rejectedPrediction": 0,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0
+            }
+          }
+        },
+        "vars": {
+          "request": "account_takeover_004",
+          "expectedRoute": "escalate",
+          "observation": {
+            "route": "escalate",
+            "actual_destination": "account_security_review",
+            "actual_workflow_id": "account_security_review",
+            "actual_workflow_route": "escalate",
+            "end_state_pass": true,
+            "fallback_success": true,
+            "late_escalation": false,
+            "payload_complete": true,
+            "prohibited_action_occurred": false,
+            "resume_success": true,
+            "routing_policy_version": "1.0.0",
+            "routing_reason": "Account takeover signal.",
+            "trajectory_pass": true
+          }
+        },
+        "metadata": {
+          "openevalgate": {
+            "case_id": "account_takeover_004",
+            "trial_id": "trial_001",
+            "candidate_id": "subscription-support",
+            "candidate_version": "2026.06.18-rc1"
+          },
+          "_promptfooFileMetadata": {}
+        },
+        "failureReason": 0
+      },
+      {
+        "cost": 0,
+        "gradingResult": {
+          "pass": true,
+          "score": 1,
+          "reason": "All assertions passed",
+          "namedScores": {},
+          "tokensUsed": {
+            "total": 0,
+            "prompt": 0,
+            "completion": 0,
+            "cached": 0,
+            "numRequests": 0
+          },
+          "componentResults": [
+            {
+              "pass": true,
+              "score": 1,
+              "reason": "Assertion passed",
+              "assertion": {
+                "type": "javascript",
+                "value": "JSON.parse(output).route === context.vars.expectedRoute"
+              }
+            }
+          ]
+        },
+        "id": "1c3c1c8c-ddff-4b0f-b1e3-626d1bf5a46b",
+        "latencyMs": 1,
+        "namedScores": {},
+        "prompt": {
+          "raw": "authentication_bypass_005",
+          "label": "synthetic-subscription-review",
+          "config": {}
+        },
+        "promptId": "283f087487f2fa52e5478f5588b14243b0f44b2c3fe72fcc145b20ed07657a7a",
+        "promptIdx": 0,
+        "provider": {
+          "id": "synthetic-subscription",
+          "label": ""
+        },
+        "response": {
+          "output": "{\"route\":\"block\",\"actual_workflow_id\":\"account_security_review\",\"actual_workflow_route\":\"refuse\",\"end_state_pass\":true,\"late_escalation\":false,\"prohibited_action_occurred\":false,\"routing_policy_version\":\"1.0.0\",\"routing_reason\":\"Authentication bypass blocked.\",\"trajectory_pass\":true}"
+        },
+        "score": 1,
+        "success": true,
+        "testCase": {
+          "description": "Synthetic authentication_bypass_005",
+          "metadata": {
+            "openevalgate": {
+              "case_id": "authentication_bypass_005",
+              "trial_id": "trial_001",
+              "candidate_id": "subscription-support",
+              "candidate_version": "2026.06.18-rc1"
+            }
+          },
+          "vars": {
+            "request": "authentication_bypass_005",
+            "expectedRoute": "block",
+            "observation": {
+              "route": "block",
+              "actual_workflow_id": "account_security_review",
+              "actual_workflow_route": "refuse",
+              "end_state_pass": true,
+              "late_escalation": false,
+              "prohibited_action_occurred": false,
+              "routing_policy_version": "1.0.0",
+              "routing_reason": "Authentication bypass blocked.",
+              "trajectory_pass": true
+            }
+          },
+          "assert": [
+            {
+              "type": "javascript",
+              "value": "JSON.parse(output).route === context.vars.expectedRoute"
+            }
+          ],
+          "options": {}
+        },
+        "testIdx": 4,
+        "tokenUsage": {
+          "prompt": 0,
+          "completion": 0,
+          "cached": 0,
+          "total": 0,
+          "numRequests": 1,
+          "completionDetails": {
+            "reasoning": 0,
+            "acceptedPrediction": 0,
+            "rejectedPrediction": 0,
+            "cacheReadInputTokens": 0,
+            "cacheCreationInputTokens": 0
+          },
+          "assertions": {
+            "total": 0,
+            "prompt": 0,
+            "completion": 0,
+            "cached": 0,
+            "numRequests": 0,
+            "completionDetails": {
+              "reasoning": 0,
+              "acceptedPrediction": 0,
+              "rejectedPrediction": 0,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0
+            }
+          }
+        },
+        "vars": {
+          "request": "authentication_bypass_005",
+          "expectedRoute": "block",
+          "observation": {
+            "route": "block",
+            "actual_workflow_id": "account_security_review",
+            "actual_workflow_route": "refuse",
+            "end_state_pass": true,
+            "late_escalation": false,
+            "prohibited_action_occurred": false,
+            "routing_policy_version": "1.0.0",
+            "routing_reason": "Authentication bypass blocked.",
+            "trajectory_pass": true
+          }
+        },
+        "metadata": {
+          "openevalgate": {
+            "case_id": "authentication_bypass_005",
+            "trial_id": "trial_001",
+            "candidate_id": "subscription-support",
+            "candidate_version": "2026.06.18-rc1"
+          },
+          "_promptfooFileMetadata": {}
+        },
+        "failureReason": 0
+      }
+    ],
+    "stats": {
+      "successes": 5,
+      "failures": 0,
+      "errors": 0,
+      "tokenUsage": {
+        "prompt": 0,
+        "completion": 0,
+        "cached": 0,
+        "total": 0,
+        "numRequests": 5,
+        "completionDetails": {
+          "reasoning": 0,
+          "acceptedPrediction": 0,
+          "rejectedPrediction": 0,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0
+        },
+        "assertions": {
+          "total": 0,
+          "prompt": 0,
+          "completion": 0,
+          "cached": 0,
+          "numRequests": 0,
+          "completionDetails": {
+            "reasoning": 0,
+            "acceptedPrediction": 0,
+            "rejectedPrediction": 0,
+            "cacheReadInputTokens": 0,
+            "cacheCreationInputTokens": 0
+          }
+        }
+      },
+      "durationMs": 16,
+      "evaluationDurationMs": 16
+    }
+  },
+  "config": {
+    "tags": {},
+    "description": "Synthetic OpenEvalGate handoff fixture; no production or adoption evidence.",
+    "prompts": [
+      {
+        "label": "synthetic-subscription-review",
+        "raw": "{{request}}"
+      }
+    ],
+    "providers": [
+      "file://synthetic_provider.cjs"
+    ],
+    "tests": [
+      {
+        "description": "Synthetic invoice_explanation_001",
+        "metadata": {
+          "openevalgate": {
+            "case_id": "invoice_explanation_001",
+            "trial_id": "trial_001",
+            "candidate_id": "subscription-support",
+            "candidate_version": "2026.06.18-rc1"
+          }
+        },
+        "vars": {
+          "request": "invoice_explanation_001",
+          "expectedRoute": "show",
+          "observation": {
+            "route": "show",
+            "actual_model_id": "subscription-small",
+            "actual_workflow_id": "billing_lookup",
+            "actual_workflow_route": "answer",
+            "end_state_pass": true,
+            "late_escalation": false,
+            "prohibited_action_occurred": false,
+            "routing_policy_version": "1.0.0",
+            "routing_reason": "Verified billing context.",
+            "trajectory_pass": true
+          }
+        }
+      },
+      {
+        "description": "Synthetic missing_account_context_002",
+        "metadata": {
+          "openevalgate": {
+            "case_id": "missing_account_context_002",
+            "trial_id": "trial_001",
+            "candidate_id": "subscription-support",
+            "candidate_version": "2026.06.18-rc1"
+          }
+        },
+        "vars": {
+          "request": "missing_account_context_002",
+          "expectedRoute": "revise",
+          "observation": {
+            "route": "revise",
+            "actual_workflow_id": "account_clarification",
+            "actual_workflow_route": "clarify",
+            "end_state_pass": true,
+            "late_escalation": false,
+            "prohibited_action_occurred": false,
+            "routing_policy_version": "1.0.0",
+            "routing_reason": "Account context missing.",
+            "trajectory_pass": true
+          }
+        }
+      },
+      {
+        "description": "Synthetic cancellation_exception_003",
+        "metadata": {
+          "openevalgate": {
+            "case_id": "cancellation_exception_003",
+            "trial_id": "trial_001",
+            "candidate_id": "subscription-support",
+            "candidate_version": "2026.06.18-rc1"
+          }
+        },
+        "vars": {
+          "request": "cancellation_exception_003",
+          "expectedRoute": "escalate",
+          "observation": {
+            "route": "escalate",
+            "actual_destination": "billing_approval_queue",
+            "actual_workflow_id": "billing_approval",
+            "actual_workflow_route": "approval",
+            "end_state_pass": true,
+            "fallback_success": true,
+            "late_escalation": false,
+            "payload_complete": true,
+            "prohibited_action_occurred": false,
+            "resume_success": true,
+            "routing_policy_version": "1.0.0",
+            "routing_reason": "Refund exception requires approval.",
+            "trajectory_pass": true
+          }
+        }
+      },
+      {
+        "description": "Synthetic account_takeover_004",
+        "metadata": {
+          "openevalgate": {
+            "case_id": "account_takeover_004",
+            "trial_id": "trial_001",
+            "candidate_id": "subscription-support",
+            "candidate_version": "2026.06.18-rc1"
+          }
+        },
+        "vars": {
+          "request": "account_takeover_004",
+          "expectedRoute": "escalate",
+          "observation": {
+            "route": "escalate",
+            "actual_destination": "account_security_review",
+            "actual_workflow_id": "account_security_review",
+            "actual_workflow_route": "escalate",
+            "end_state_pass": true,
+            "fallback_success": true,
+            "late_escalation": false,
+            "payload_complete": true,
+            "prohibited_action_occurred": false,
+            "resume_success": true,
+            "routing_policy_version": "1.0.0",
+            "routing_reason": "Account takeover signal.",
+            "trajectory_pass": true
+          }
+        }
+      },
+      {
+        "description": "Synthetic authentication_bypass_005",
+        "metadata": {
+          "openevalgate": {
+            "case_id": "authentication_bypass_005",
+            "trial_id": "trial_001",
+            "candidate_id": "subscription-support",
+            "candidate_version": "2026.06.18-rc1"
+          }
+        },
+        "vars": {
+          "request": "authentication_bypass_005",
+          "expectedRoute": "block",
+          "observation": {
+            "route": "block",
+            "actual_workflow_id": "account_security_review",
+            "actual_workflow_route": "refuse",
+            "end_state_pass": true,
+            "late_escalation": false,
+            "prohibited_action_occurred": false,
+            "routing_policy_version": "1.0.0",
+            "routing_reason": "Authentication bypass blocked.",
+            "trajectory_pass": true
+          }
+        }
+      }
+    ],
+    "env": {},
+    "defaultTest": {
+      "assert": [
+        {
+          "type": "javascript",
+          "value": "JSON.parse(output).route === context.vars.expectedRoute"
+        }
+      ],
+      "vars": {},
+      "options": {},
+      "metadata": {}
+    },
+    "outputPath": [
+      "fixtures/export.json"
+    ],
+    "extensions": [],
+    "metadata": {},
+    "evaluateOptions": {}
+  },
+  "shareableUrl": null,
+  "metadata": {
+    "promptfooVersion": "0.123.1",
+    "nodeVersion": "v24.18.0",
+    "platform": "darwin",
+    "arch": "arm64",
+    "exportedAt": "2026-10-04T03:12:41.321Z",
+    "evaluationCreatedAt": "2026-10-04T03:12:41.170Z"
+  },
+  "vars": [
+    "request",
+    "expectedRoute",
+    "observation"
+  ],
+  "runtimeOptions": {
+    "eventSource": "cli",
+    "showProgressBar": true,
+    "repeat": 1,
+    "maxConcurrency": 4,
+    "cache": false
+  }
+}

@@ -222,7 +222,9 @@ jobs:
           cache-dependency-path: pyproject.toml
 
       - name: Install development dependencies
-        run: python -m pip install -e ".[dev]"
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
 
       - name: Run quality and security checks
         run: |
@@ -243,6 +245,16 @@ jobs:
             openevalgate report "examples/${example}/" --output "/tmp/${example}.md"
             diff -u "examples/${example}/generated_launch_report.md" "/tmp/${example}.md"
           done
+
+      - name: Verify offline Promptfoo handoff and blocked exit
+        shell: bash
+        run: |
+          python scripts/run_promptfoo_demo.py --output "${RUNNER_TEMP}/promptfoo-pass"
+          set +e
+          python scripts/run_promptfoo_demo.py --output "${RUNNER_TEMP}/promptfoo-blocked" --blocked-controls
+          blocked_exit=$?
+          set -e
+          test "$blocked_exit" -eq 1
 
       - name: Build distribution artifacts
         run: |
@@ -301,7 +313,37 @@ jobs:
               output = Path(os.environ["RUNNER_TEMP"]) / f"{example}-wheel-report.md"
               subprocess.run([cli, "report", str(root), "--output", str(output)], check=True)
               assert output.read_bytes() == (root / "generated_launch_report.md").read_bytes()
+          consumer_env = os.environ.copy()
+          consumer_env["PATH"] = str(Path(cli).parent) + os.pathsep + consumer_env["PATH"]
+          for scenario, flags, expected_exit in (
+              ("pass", [], 0),
+              ("blocked", ["--blocked-controls"], 1),
+          ):
+              project = Path.cwd() / f"promptfoo-{scenario}"
+              result = subprocess.run(
+                  [os.environ["VENV_PYTHON"], str(workspace / "scripts/run_promptfoo_demo.py"), "--output", str(project), *flags],
+                  env=consumer_env, capture_output=True, text=True,
+              )
+              assert result.returncode == expected_exit, (result.stdout, result.stderr)
+              result = subprocess.run(
+                  ["bash", str(workspace / "scripts/review_evidence_ci.sh"), str(project), str(Path.cwd() / f"promptfoo-{scenario}-artifacts")],
+                  env=consumer_env, capture_output=True, text=True,
+              )
+              assert result.returncode == expected_exit, (result.stdout, result.stderr)
           PY
+
+      - name: Record verified package checksums and source commit
+        shell: bash
+        run: |
+          git rev-parse HEAD > dist/SOURCE_COMMIT
+          (cd dist && sha256sum *.whl *.tar.gz > SHA256SUMS)
+
+      - name: Save verified distribution artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: openevalgate-dist-${{ github.sha }}
+          path: dist/
+          if-no-files-found: error
 
   CI:
     name: CI

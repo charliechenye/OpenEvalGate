@@ -53,7 +53,29 @@ Work should land as small, dependency-ordered commits. Each step should be indep
 7. **Adoption validation:** run the workflow with independent practitioners, record setup friction and decision value outside the repository, and use that evidence to select the first integration or schema improvement.
 8. **`0.2.0` public alpha release:** publish only after the authorization and decision-packet contracts are tested, documented, reproducible, and explicitly labeled alpha. Do not release vendor adapters or SARIF merely to increase feature count.
 
-The first implementation slice is steps 2–4. Steps 5–6 should follow only after the authorization semantics and decision surface are stable enough that recipes can teach the real behavior.
+For `0.2.0`, the first implementation slice is steps 2–4. The `0.1.x`
+patch lane may deliver non-normative recipes and onboarding improvements before
+that contract work, provided they teach the existing behavior and do not add
+required evidence, new authorization claims, or compatibility changes.
+
+### Patch-release lane before `0.2.0`
+
+The `0.1.x` releases remain within Core Compatibility v1. They may include:
+
+- correctness fixes that preserve the documented contract;
+- clearer diagnostics, decision-card wording, and practitioner guidance;
+- additive documentation, templates, recipes, and onboarding improvements;
+- test coverage and reproducibility improvements;
+- packaging and supported-platform fixes.
+
+They should not introduce new required input fields, change blocker meaning,
+change scoring or exit behavior, or make a new authorization claim. Those
+changes require an explicit compatibility decision and belong in `0.2.0` or a
+later minor release.
+
+The first `0.1.x` batch is the product-manager controlled-launch review recipe.
+It teaches the existing behavior and evidence boundaries without pretending
+that the recipe itself grants organizational approval.
 
 ## Phase 1: OpenEvalGate 0.2.0 Public Alpha
 
@@ -93,7 +115,7 @@ The `0.2.0` theme is **controlled-launch authorization and product-facing decisi
 - [x] Add a five-minute quickstart from an installed checkout package.
 - [x] Add Linux/macOS and Windows PowerShell instructions.
 - [x] Allow a user to produce a useful first report through a documented copy-and-report path.
-- [ ] Add a role-oriented first path for an AI product manager who owns the release decision but does not operate the eval runner.
+- [x] Add a role-oriented first path for an AI product manager who owns the release decision but does not operate the eval runner.
 
 ### Machine-consumable output
 
@@ -105,8 +127,11 @@ The `0.2.0` theme is **controlled-launch authorization and product-facing decisi
 
 ### Recipe book v1
 
-- [ ] Add recipes for safe-boundary definition, risk-based golden sets, shadow review, controlled launch, incident investigation, incident-to-regression conversion, behavior-change review, and evidence-freshness review.
-- [ ] Link every recipe to the relevant input artifacts, CLI commands, report sections, blocker semantics, and decision owner.
+- [x] Add the first product-manager controlled-launch review recipe while preserving the V1 contract.
+- [x] Expand the golden-eval-set playbook into a product-manager workflow for stakeholder alignment, risk slices, source mix, grading, gates, ownership, and production learning.
+- [~] Add recipes for safe-boundary definition, shadow review, controlled launch, behavior-change review, and evidence-freshness review. Controlled-launch and behavior-change recipes are present; safe-boundary, shadow-review, and freshness recipes remain.
+- [~] Add the incident-to-regression investigation recipe and expand the incident intake template with control-gap classification and follow-up disposition.
+- [x] Link the current recipes to the relevant input artifacts, CLI commands, blocker semantics, and decision owners.
 - [ ] Label illustrative examples, practitioner guidance, and normative contract requirements separately.
 
 ### Release execution
