@@ -1,0 +1,240 @@
+{
+  "observed_at_utc": "2026-10-04T03:32:23Z",
+  "day": 1,
+  "day_14_target_utc": "2026-10-17",
+  "source_head": "5ccac23a8ddb0b30ae60cfdf696026dba4e06e2d",
+  "change_published": false,
+  "search_method": {
+    "tool": "web search",
+    "queries_per_call": 1,
+    "domain_filter": null,
+    "recency_filter": null,
+    "scope": "returned result URLs, not exhaustive ranking or traffic attribution"
+  },
+  "queries": [
+    {
+      "query": "AI agent release readiness review",
+      "repository_returned": false,
+      "repository_urls": [],
+      "first_results": [
+        {
+          "title": "AgentReady // The open standard for agent readiness",
+          "url": "https://www.agentready.org/"
+        },
+        {
+          "title": "Review agent readiness before launch | Interlinked Docs",
+          "url": "https://interlinked-ai.com/en/resources/docs/review-agent-readiness"
+        },
+        {
+          "title": "Agent Release Readiness Review | Softlander",
+          "url": "https://softlander.co/services/agent-release-readiness-review/"
+        }
+      ],
+      "returned_entries": 30
+    },
+    {
+      "query": "Promptfoo release review GitHub Actions",
+      "repository_returned": false,
+      "repository_urls": [],
+      "first_results": [
+        {
+          "title": "Releases · promptfoo/promptfoo-action · GitHub",
+          "url": "https://github.com/promptfoo/promptfoo-action/releases"
+        },
+        {
+          "title": "Releases · promptfoo/promptfoo · GitHub",
+          "url": "https://github.com/promptfoo/promptfoo/releases"
+        },
+        {
+          "title": "Release Notes | Promptfoo",
+          "url": "https://www.promptfoo.dev/docs/releases/"
+        }
+      ],
+      "returned_entries": 29
+    },
+    {
+      "query": "passing LLM evals release blocked rollback monitoring",
+      "repository_returned": false,
+      "repository_urls": [],
+      "first_results": [
+        {
+          "title": "LLM release checklist: evidence before traffic | Lumina",
+          "url": "https://lumytics.com/en/blog/llm-application-release-checklist/"
+        },
+        {
+          "title": "Prompt Registry, Datasets, and Eval-Gated Releases | Cloptima",
+          "url": "https://dev.cloptima.com/platform/llm-finops/prompt-eval-registry"
+        },
+        {
+          "title": "Implementing and Evaluating a Basic Per-Action Monitor for Safer Evals - METR",
+          "url": "https://evals.alignment.org/notes/2026-09-27-implementing-a-basic-blocking-action-monitor/"
+        }
+      ],
+      "returned_entries": 18
+    },
+    {
+      "query": "AI agent rollback evidence release gate",
+      "repository_returned": false,
+      "repository_urls": [],
+      "first_results": [
+        {
+          "title": "Automated Self-Testing as a Quality Gate: Evidence-Driven Release Management for LLM Applications",
+          "url": "https://arxiv.org/abs/2603.15676"
+        },
+        {
+          "title": "Turn AI Agent Evaluations into a Release Gate | Signal Studio",
+          "url": "https://signalstudio.cc/guides/turn-agent-evaluation-results-into-a-production-quality-gate/"
+        },
+        {
+          "title": "AI Agent Rollback Plans: Approval Gates That Keep Production Recoverable",
+          "url": "https://www.aiprogrammingmanual.com/articles/ai-agent-rollback-approval-gates.html"
+        }
+      ],
+      "returned_entries": 20
+    },
+    {
+      "query": "AI agent human escalation release checklist",
+      "repository_returned": false,
+      "repository_urls": [],
+      "first_results": [
+        {
+          "title": "CIO Checklist for Production AI Agents | KoderClub",
+          "url": "https://koderclub.com/blog/ai-agents-cio-checklist"
+        },
+        {
+          "title": "AI Automation Escalation Checklist · Dee Agency",
+          "url": "https://www.dee.agency/articles/ai-automation-escalation-checklist/"
+        },
+        {
+          "title": "AI Agent Release Checklist for CX Teams",
+          "url": "https://www.oversai.com/news/ai-agent-release-checklist-cx-teams-2026"
+        }
+      ],
+      "returned_entries": 26
+    },
+    {
+      "query": "deterministic local AI release assurance CLI",
+      "repository_returned": false,
+      "repository_urls": [],
+      "first_results": [
+        {
+          "title": "CLI | Deterministic Docs",
+          "url": "https://deterministic.sh/docs/cli/"
+        },
+        {
+          "title": "GitHub - CodeTruss/codetruss-cli: The deterministic first-pass verification gate for AI-written code. Local-first CLI: scope, 15 analyzers, a local security pass, your checks, signed receipts. · GitHub",
+          "url": "https://github.com/CodeTruss/codetruss-cli"
+        },
+        {
+          "title": "Prooflane Command Deck — CLI for AI Release Assurance",
+          "url": "https://prooflane.ai/command-deck.html"
+        }
+      ],
+      "returned_entries": 20
+    },
+    {
+      "query": "OpenEvalGate",
+      "repository_returned": true,
+      "repository_urls": [
+        "https://github.com/charliechenye/OpenEvalGate"
+      ],
+      "first_results": [
+        {
+          "title": "GitHub - charliechenye/OpenEvalGate: GenAI governance and AI agent launch-readiness framework with golden evals, risk gates, automation boundaries, human escalation, and local readiness reports. · GitHub",
+          "url": "https://github.com/charliechenye/OpenEvalGate"
+        },
+        {
+          "title": "OpenEvalGate: Know What Your Evals Authorize",
+          "url": "https://chenyezhu.com/projects/openevalgate/"
+        },
+        {
+          "title": "GitHub - edmontecristo/openeval: CLI-first LLM evaluation framework — like Pytest for AI agents. 7 built-in scorers, CI/CD native, works with Ollama. · GitHub",
+          "url": "https://github.com/edmontecristo/openeval"
+        }
+      ],
+      "returned_entries": 17
+    },
+    {
+      "query": "OpenEvalGate Promptfoo",
+      "repository_returned": false,
+      "repository_urls": [],
+      "first_results": [
+        {
+          "title": "evalport/docs/migration-guides/promptfoo-to-openeval.md at main · adhabnr-ux/evalport · GitHub",
+          "url": "https://github.com/adhabnr-ux/evalport/blob/main/docs/migration-guides/promptfoo-to-openeval.md"
+        },
+        {
+          "title": "GitHub - promptfoo/promptfoo: Test your prompts, agents, and RAGs. Red teaming/pentesting/vulnerability scanning for AI. Compare performance of GPT, Claude, Gemini, DeepSeek, and more. Simple declarative configs with command line and CI/CD integration. Used by OpenAI and Anthropic. · GitHub",
+          "url": "https://github.com/promptfoo/promptfoo"
+        },
+        {
+          "title": "Command Line | Promptfoo",
+          "url": "https://www.promptfoo.dev/docs/usage/command-line/"
+        }
+      ],
+      "returned_entries": 20
+    },
+    {
+      "query": "OpenEvalGate install",
+      "repository_returned": true,
+      "repository_urls": [
+        "https://github.com/charliechenye/OpenEvalGate"
+      ],
+      "first_results": [
+        {
+          "title": "GitHub - charliechenye/OpenEvalGate: GenAI governance and AI agent launch-readiness framework with golden evals, risk gates, automation boundaries, human escalation, and local readiness reports. · GitHub",
+          "url": "https://github.com/charliechenye/OpenEvalGate"
+        },
+        {
+          "title": "1. Installation Guide V9.4.2 — GATE documentation",
+          "url": "https://opengate.readthedocs.io/en/latest/installation.html"
+        },
+        {
+          "title": "2. Installation Guide V8.2 — GATE documentation",
+          "url": "https://opengate.readthedocs.io/en/v9.0/installation.html"
+        }
+      ],
+      "returned_entries": 14
+    },
+    {
+      "query": "OpenEvalGate evidence freshness",
+      "repository_returned": true,
+      "repository_urls": [
+        "https://github.com/charliechenye/OpenEvalGate"
+      ],
+      "first_results": [
+        {
+          "title": "GitHub - charliechenye/OpenEvalGate: GenAI governance and AI agent launch-readiness framework with golden evals, risk gates, automation boundaries, human escalation, and local readiness reports. · GitHub",
+          "url": "https://github.com/charliechenye/OpenEvalGate"
+        },
+        {
+          "title": "OpenEvalGate: Know What Your Evals Authorize",
+          "url": "https://www.chenyezhu.com/projects/openevalgate/"
+        },
+        {
+          "title": "@evalgate/sdk - npm",
+          "url": "https://www.npmjs.com/package/%40evalgate/sdk"
+        }
+      ],
+      "returned_entries": 19
+    }
+  ],
+  "independent_ai_search_citations": {
+    "status": "not_measured",
+    "reason": "No independent AI-search surface measured in this run."
+  },
+  "github_traffic": {
+    "source": "GitHub repository traffic API",
+    "observed_window_first_day": "2026-09-19",
+    "observed_window_last_day": "2026-10-02",
+    "views": {
+      "count": 3,
+      "uniques": 3
+    },
+    "clones": {
+      "count": 11,
+      "uniques": 8
+    },
+    "attribution": "Unknown; may include maintainer and automated activity. Not independent adoption."
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "description": "Local AI agent release review: eval results, rollback, monitoring, and human escalation evidence become blockers and bounded recommendations. Experimental Promptfoo CI example.",
+  "topics": [
+    "ai-agents",
+    "release-assurance",
+    "promptfoo",
+    "github-actions",
+    "llm-evaluation",
+    "launch-readiness",
+    "rollback",
+    "human-escalation",
+    "evidence-review"
+  ]
+}

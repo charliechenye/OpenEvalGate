@@ -12,7 +12,20 @@ Use it to answer:
 
 ## The Fastest Path
 
-For a new review project, start with a minimal deterministic scaffold:
+Start with [installation](installation.md), then run the passing synthetic
+subscription-support example from the repository root:
+
+```bash
+openevalgate check examples/subscription_support_assistant/
+openevalgate report examples/subscription_support_assistant/ --format card
+```
+
+Expect `Ready for bounded controlled launch`. This is an illustrative review
+package, not production or independent adoption evidence. For the same passing
+Promptfoo results with missing rollback/monitoring controls, follow the
+[offline integration demo](integrations/promptfoo.md#why-can-passing-evals-still-block-a-release-review).
+
+For your own review project, create a minimal deterministic scaffold:
 
 ```bash
 openevalgate init my_assistant --profile minimal
@@ -22,29 +35,10 @@ openevalgate check .
 openevalgate report . --format card
 ```
 
-The scaffold contains synthetic placeholders, not production evidence. Replace
-them before using the result in a release decision. The existing flagship
-scenario remains useful when you want a complete reference package:
-
-Start with the flagship example:
-
-```text
-examples/customer_support_assistant/
-```
-
-Copy it into a new project folder:
-
-```bash
-cp -r examples/customer_support_assistant examples/my_assistant
-```
-
-Then edit the copied files for your assistant.
-
-On Windows PowerShell:
-
-```powershell
-Copy-Item -Recurse examples/customer_support_assistant examples/my_assistant
-```
+The scaffold starts incomplete and contains synthetic placeholders. Replace
+them before using the result in a release decision. Do not inherit a synthetic
+run's candidate identity, control claims, or approval. Use the
+[Promptfoo tutorial](integrations/promptfoo.md) when that is your existing runner.
 
 ## What To Fill Out First
 
@@ -144,34 +138,32 @@ routing_policy.yaml
 
 Use it to record each bounded workflow or subagent, its approved fixed or adaptive model assignment, deterministic or human no-model paths, mandatory controls, eval evidence, fallbacks, observability, and rollback. `openevalgate check` validates the policy when present.
 
-Install locally:
+From the new `my_assistant` directory, validate the golden eval set:
 
 ```bash
-python -m pip install -e ".[dev]"
-```
-
-Validate the golden eval set:
-
-```bash
-openevalgate validate examples/my_assistant/eval_cases.yaml
+openevalgate validate eval_cases.yaml
 ```
 
 Check the project structure:
 
 ```bash
-openevalgate check examples/my_assistant/
+openevalgate check .
 ```
 
 Generate a launch readiness report:
 
 ```bash
-openevalgate report examples/my_assistant/ --output examples/my_assistant/generated_launch_report.md
+openevalgate report . --output generated_launch_report.md
 ```
 
 Use `openevalgate report . --format json` for CI or internal tooling. Add
 `--fail-on-blocked` when the report command should return exit code `1` for a
 blocked recommendation. The default report command continues to generate a
 report without changing its existing exit behavior.
+
+V1 reports freshness and expiry but does not yet consistently turn `stale` or
+`expired` into launch blockers. Review these diagnostics and compare evidence
+with the current candidate and controls yourself.
 
 ## Where Eval Outputs Feed Back
 

@@ -1,0 +1,89 @@
+# Copy to .github/workflows/release-review.yml in YOUR repository.
+# First set repository variable OPEN_EVAL_GATE_COMMIT to a reviewed 40-character
+# commit that includes the producer/helper. See docs/integrations/promptfoo.md.
+name: Promptfoo release evidence review
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    env:
+      # Edit these to match your eval metadata and review/review_policy.yaml.
+      RUN_ID: promptfoo_ci
+      CANDIDATE_ID: support-agent
+      CANDIDATE_VERSION: release-candidate-1
+      EVALUATOR_ID: route-contract
+      EVALUATOR_VERSION: "1"
+      PROVIDER_ID: your-provider-id
+      PROMPT_INDEX: "0"
+      PROMPTFOO_DISABLE_TELEMETRY: "1"
+      PROMPTFOO_DISABLE_UPDATE: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - name: Require a pinned OpenEvalGate commit
+        shell: bash
+        env:
+          OPEN_EVAL_GATE_COMMIT: ${{ vars.OPEN_EVAL_GATE_COMMIT }}
+        run: |
+          [[ "$OPEN_EVAL_GATE_COMMIT" =~ ^[0-9a-f]{40}$ ]] || {
+            echo 'Set OPEN_EVAL_GATE_COMMIT to a reviewed full commit SHA.' >&2
+            exit 1
+          }
+      - uses: actions/checkout@v7
+        with:
+          repository: charliechenye/OpenEvalGate
+          ref: ${{ vars.OPEN_EVAL_GATE_COMMIT }}
+          path: .openevalgate
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install the pinned reviewer and your application dependencies
+        run: |
+          python -m pip install ./.openevalgate
+          npm ci
+      - name: Evaluate, convert, and review
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          # Capture each command and tee exit status; keep logs on every failure.
+          set +e
+          npm exec --yes --package=promptfoo@0.123.1 -- \
+            promptfoo eval --config promptfooconfig.yaml \
+            --output artifacts/promptfoo.json --no-cache 2>&1 | tee artifacts/promptfoo.log
+          eval_pipeline=("${PIPESTATUS[@]}")
+          eval_exit=${eval_pipeline[0]}
+          if (( eval_pipeline[1] != 0 )); then eval_exit=1; fi
+
+          python .openevalgate/scripts/export_promptfoo_v1.py \
+            --input artifacts/promptfoo.json --project review \
+            --run-id "$RUN_ID" --candidate-id "$CANDIDATE_ID" \
+            --candidate-version "$CANDIDATE_VERSION" \
+            --evaluator-id "$EVALUATOR_ID" --evaluator-version "$EVALUATOR_VERSION" \
+            --evaluation-kind deterministic \
+            --reviewed-by "ci:${GITHUB_ACTOR}" --reviewed-at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --provider-id "$PROVIDER_ID" --prompt-index "$PROMPT_INDEX" \
+            2>&1 | tee artifacts/export.log
+          export_pipeline=("${PIPESTATUS[@]}")
+          export_exit=${export_pipeline[0]}
+          if (( export_pipeline[1] != 0 )); then export_exit=1; fi
+
+          bash .openevalgate/scripts/review_evidence_ci.sh \
+            review artifacts "$eval_exit" "$export_exit"
+      - name: Save review evidence and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: openevalgate-review-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            artifacts/
+            review/
+          if-no-files-found: warn

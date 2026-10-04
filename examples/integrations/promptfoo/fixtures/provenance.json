@@ -1,0 +1,50 @@
+{
+  "synthetic": true,
+  "purpose": "Offline format fixture; no model, service, production evidence or independent adoption.",
+  "promptfoo_version": "0.123.1",
+  "summary_version": 3,
+  "generated_at": "2026-10-04T03:12:41.321Z",
+  "generation_command": "PROMPTFOO_DISABLE_TELEMETRY=1 PROMPTFOO_DISABLE_UPDATE=1 promptfoo eval --config promptfooconfig.yaml --output fixtures/export.json --no-cache",
+  "generation_working_directory": "examples/integrations/promptfoo",
+  "generation_exit_code": 0,
+  "assertions": {
+    "successes": 5,
+    "failures": 0,
+    "errors": 0,
+    "tokenUsage": {
+      "prompt": 0,
+      "completion": 0,
+      "cached": 0,
+      "total": 0,
+      "numRequests": 5,
+      "completionDetails": {
+        "reasoning": 0,
+        "acceptedPrediction": 0,
+        "rejectedPrediction": 0,
+        "cacheReadInputTokens": 0,
+        "cacheCreationInputTokens": 0
+      },
+      "assertions": {
+        "total": 0,
+        "prompt": 0,
+        "completion": 0,
+        "cached": 0,
+        "numRequests": 0,
+        "completionDetails": {
+          "reasoning": 0,
+          "acceptedPrediction": 0,
+          "rejectedPrediction": 0,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0
+        }
+      }
+    },
+    "durationMs": 16,
+    "evaluationDurationMs": 16
+  },
+  "sha256": {
+    "promptfooconfig.yaml": "872911a13e9347c984f9759e09f8b9c98b7077cdb9b1e170e003bfb44a70f832",
+    "synthetic_provider.cjs": "acb12ee5897b1e1e67f54c13e941c675d2b6f178b2ae7a0887912571d7bcaf27",
+    "fixtures/export.json": "bc025e8ca7df872ef6bba39aeb78ca7164f7c0916faf027b8b6c3c2301d2b884"
+  }
+}

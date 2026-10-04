@@ -1,0 +1,46 @@
+name: Adoption feedback
+description: Record an engineer's installation, evidence mapping, report, or real CI trial.
+title: "[Adoption]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use your own project or a clearly labeled synthetic reproduction. Link shareable evidence; do not include credentials or private traces. A demo run does not count as independent adoption.
+  - type: input
+    id: revision
+    attributes:
+      label: OpenEvalGate commit and installed version
+      placeholder: full SHA, openevalgate --version, Python/OS, Promptfoo version
+    validations:
+      required: true
+  - type: dropdown
+    id: stage
+    attributes:
+      label: Furthest completed step
+      options:
+        - Installation only
+        - Synthetic offline demo
+        - Own-project evidence converted
+        - Own-project report generated
+        - Real CI job reviewed a project change
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Traceable outcome
+      description: Link a redacted report, artifact, CI run, or reproducible failure. State whether you are a maintainer and whether the project is your own.
+    validations:
+      required: true
+  - type: textarea
+    id: friction
+    attributes:
+      label: What blocked or confused you?
+      description: Record time to first card; installation, case/trial mapping, controls, and report interpretation. Include the failing command, exit code, and expected next action.
+    validations:
+      required: true
+  - type: textarea
+    id: decision
+    attributes:
+      label: What decision did the report help you make?
+      description: Explain a blocker or bounded recommendation in your words, and what you would change before the next run.
