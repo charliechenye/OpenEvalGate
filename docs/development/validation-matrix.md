@@ -1,7 +1,9 @@
 # Validation Matrix
 
 Use this table to choose the smallest validation that proves a change. `.github/workflows/ci.yml` remains the source of truth for required CI behavior.
-The workflow runs documentation-link validation, full pytest on Python 3.10 and
+The workflow always runs documentation-link validation and the lightweight
+`tests/test_playbook_examples.py` V1 validator/schema checks, including on
+documentation-only changes. It also runs full pytest on Python 3.10 and
 3.13, compatibility smoke checks on Python 3.11, 3.12, and 3.14, and a Python
 3.13 quality/package job in parallel. A final aggregate `CI` job is the stable
 required check; intentionally skipped expensive jobs are accepted for
@@ -47,6 +49,7 @@ git diff --check
 | --- | --- | --- | --- |
 | Prose-only documentation | `git diff --check`; inspect rendered links/paths when changed | `git diff --check` and file existence/link checks relevant to the edit | None; do not read or regenerate canonical reports. |
 | Executable documentation or command examples | Run the documented command or the narrowest equivalent smoke check | Relevant focused tests plus `git diff --check`; run broader Python validation if executable behavior changed | Regenerate only if command output intentionally changes report bytes. |
+| Golden / Human Escalation playbook input examples or templates | `python -m pytest tests/test_playbook_examples.py -q`; run promised commands; complete blank templates for a smoke check when edited | Relevant schema/escalation/example tests, `python scripts/check_markdown_links.py`, and `git diff --check`; the documentation CI job always runs the lightweight playbook check | Keep canonical reports unchanged unless report semantics intentionally change. |
 | Schema/parser/validator changes | `python -m pytest tests/test_schema.py -q` or `tests/test_validator.py -q` | CI pytest command once, `python -m compileall -q openevalgate`, `git diff --check` | Regenerate affected reports when accepted inputs or validation summaries change. |
 | Eval-result integrity changes | `python -m pytest tests/test_eval_results.py -q` | CI pytest command once, `python -m compileall -q openevalgate`, `git diff --check` | Reproduce affected example reports if summaries, blockers, or report wording change. |
 | Review-policy or behavioral-sufficiency changes | `python -m pytest tests/test_review_policy.py tests/test_assessment.py -q` | CI pytest command once, `python -m compileall -q openevalgate`, `git diff --check` | Reproduce affected controlled/shadow examples; all examples if shared semantics changed. |

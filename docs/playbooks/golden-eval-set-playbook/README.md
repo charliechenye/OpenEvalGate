@@ -1,205 +1,122 @@
 # Golden Eval Set Playbook
 
-A practical product-manager workflow for turning expected GenAI behavior into
-launch-ready eval cases. Use it before model comparisons, prompt rewrites,
-tool launches, or rollout decisions.
+Companion to [Golden Eval Set Playbook for PMs](https://chenyezhu.com/playbooks/golden-eval-set-playbook-for-pms/).
+This repository maintains the article's templates and examples. Start with one
+workflow and one review decision.
 
-OpenEvalGate treats a golden eval set as a product-specific behavioral
-contract. The cases define what an assistant or agent should do, where it must
-stop, and what evidence a release review needs. They do not replace the
-business behavior contract, human judgment, or the organizational release
-decision.
+A golden set defines expected and prohibited behavior across prompt, retrieval,
+tools, policy, workflow, handoff, and recovery. OpenEvalGate validates local
+evidence after an **external runner** executes the system and grades it. The
+deterministic core does not call an LLM or make an organizational release decision.
 
-## What A Golden Eval Set Is
+Every filled policy, threshold, frequency, date, trial count, and outcome here
+is a **synthetic teaching example**, not a product default, production
+measurement, or proof that a real deployment is safe.
 
-A golden eval set is a curated set of cases that defines what the system should do, must not do, when it should call tools, when it should avoid tools, when it should escalate, and when it should block or refuse.
+## Choose the right file
 
-It is not a generic benchmark. It is product-specific launch evidence.
-
-The product is more than the model. A useful eval set covers the prompt,
-retrieval, tools, policy, workflow, human handoff, and recovery behavior that
-users actually experience.
-
-## Who Should Use This
-
-- AI product managers defining assistant behavior.
-- Domain owners who know policy, operations, edge cases, and business tradeoffs.
-- ML/AI engineers building eval harnesses.
-- Platform teams standardizing release gates.
-- Trust, safety, legal, and compliance reviewers.
-
-## How This Fits OpenEvalGate
-
-Use this playbook to create and review `eval_cases.yaml`. Then use the broader OpenEvalGate project to connect those cases to:
-
-- business behavior contracts,
-- action risk matrices,
-- output critic rubrics,
-- automation boundaries,
-- human escalation design,
-- eval results,
-- launch gate reviews,
-- launch readiness reports.
-
-The deterministic core validates the local evidence package after an external
-runner or manual review produces results. It does not execute an LLM, choose a
-model, or make an organizational approval decision.
-
-## PM Operating Sequence
-
-| Phase | Product question | OpenEvalGate artifact or output |
+| Classification | Maintained entry | What it can do |
 | --- | --- | --- |
-| 0. Align | What is in scope, prohibited, high risk, and owned? | [Stakeholder alignment brief](templates/stakeholder_alignment_brief.md), assistant scope, behavior contract |
-| 1. Map | Which intents, actions, and risk slices need different behavior? | `eval_cases.yaml`, action-risk matrix, automation boundary |
-| 2. Collect | Which production, boundary, incident, and drift cases prove the boundary? | Golden eval cases, [incident intake](templates/incident_ingestion_template.md) |
-| 3. Grade | What can be checked deterministically, reviewed with a rubric, or adjudicated by a human? | Eval runner output, output-critic rubric, trace evidence |
-| 4. Gate | Which slices block, limit, or monitor a release? | [Release-gate template](templates/release_gate_template.yaml), review policy, launch-gate review |
-| 5. Learn | Who owns updates, and how does production evidence reopen a decision? | [Review agenda](templates/eval_review_agenda.md), incident-to-regression recipe, report |
+| CLI input template, incomplete until filled | [Golden case template](../../../templates/golden_eval_case.yaml), [fill-in requirements](../../../templates/README.md) | Copy to `eval_cases.yaml`; complete IDs, context, policy, owner/date, behavior, tools, routes, and implemented assertions. |
+| Complete V1 input examples, directly validatable | [Refund](examples/refund_agent_eval_cases.yaml), [education](examples/education_assistant_eval_cases.yaml), [presales](examples/presales_assistant_eval_cases.yaml) | Validate expected-behavior documents; they supply no observed run results. |
+| Human design/review worksheets, not CLI input | [Worksheet catalog](templates/README.md), [grading/gate design notes](examples/design-notes.md) | Design comparisons, graders, gates, incidents, and decisions; the CLI does not read these papers or their YAML. |
+| Complete synthetic evidence project | [Subscription support assistant](../../../examples/subscription_support_assistant/) | Run `validate`, `check`, and `report --format card` on maintained manifest-bound evidence. |
 
-### 0. Align Before Writing Cases
+Maintain the generic case template at the repository root. The
+[formal V1 JSON schema](../../../schemas/eval-cases-v1.schema.json) and
+[actual validator](../../../openevalgate/schema.py) govern CLI inputs.
+The old duplicated YAML design schema's `schema_version: 0.1.0` described a
+reference revision, not a CLI version; see the [schema entry](schemas/README.md).
+Inputs require exactly `schema_version: "1"` and an `eval_cases` list.
+No blank template is promised to pass out of the box.
 
-The PM leads this phase because expected behavior and acceptable tradeoffs are
-product decisions. Complete the stakeholder alignment brief before collecting
-prompts. Establish the in- and out-of-scope intents; allowed, prohibited,
-approval-required, escalation-required, and refusal behavior; policy sources
-of truth; tool boundaries; high-impact failure modes; and decision owners.
+## Article steps to evidence and checks
 
-Do not continue when stakeholders disagree about a high-risk expected
-behavior. That is a product-specification gap, not a model-selection problem.
+Commands below are CLI subcommands. The runnable commands follow the table;
+replace project placeholders when applying it to your own package.
 
-### 1. Map Behavior and Risk Slices
+| Article step | Repository file | Who executes the check | CLI command / report output |
+| --- | --- | --- | --- |
+| 0. Align scope, policy, and owners | [Alignment brief](templates/stakeholder_alignment_brief.md); project behavior contract and action-risk matrix | PM, policy/domain owner, operations | `check <project>` checks required artifacts; humans resolve disputed authority and scope. |
+| 1–3. Map slices, collect cases, write behavior | [Case template](../../../templates/golden_eval_case.yaml) → project `eval_cases.yaml`; [incident intake](templates/incident_ingestion_template.md) | PM/domain owner defines behavior; core checks V1 structure and case relationships | `validate <project>/eval_cases.yaml`; issues and case count. |
+| 4. Freeze versions, run independent trials, grade | [Comparison worksheet](templates/comparison-and-grading.md); [result CSV](../../../examples/subscription_support_assistant/eval_results.csv); [manifest](../../../examples/subscription_support_assistant/run_manifest.yaml) | External harness executes trace/state checks; human adjudicates required qualitative judgments; core checks submitted identity/digests | `check <project>`; `report` shows evidence, selected coverage, depth, thresholds, and provenance. |
+| 5. Apply supported policy and control gates | [Gate design](templates/release_gate_template.yaml); [review policy](../../../examples/subscription_support_assistant/review_policy.yaml); [launch-gate review](../../../examples/subscription_support_assistant/launch_gate_review.md) | Core applies supported policy and hard-control rules; harness/humans check additional slice rules | `report <project> --format card`; recommendation, blockers, maximum stage, next actions. |
+| Decide the full rollout scope | [Decision record](templates/decision_record_template.yaml) | Named organizational owner with engineering, operations, policy/risk | Store scope, missing evidence, sign-off, stop conditions, and rollback separately; report/card is advice. |
+| 6. Operate and learn | [Review agenda](templates/eval_review_agenda.md), [incident intake](templates/incident_ingestion_template.md), [change-review recipe](../../20_agent_change_review_recipe.md) | Operations/domain owner, external harness, PM | Re-run `validate`, `check`, and `report` on new bound evidence; retain earlier decisions. |
 
-Start with principal user intents, then define the expected path for each:
-answer, clarify, act, require approval, escalate, refuse, or block. Group
-cases into slices that can reveal a dangerous regression hidden by an average:
+## Evidence responsibilities and capability limits
 
-- high-volume, low-risk interactions;
-- critical tool eligibility and prohibited actions;
-- policy, privacy, authorization, or financial boundaries;
-- missing, stale, or contradictory context;
-- required escalation, approval, refusal, fallback, and resume behavior;
-- known incidents and historical failures; and
-- fresh production samples that may indicate drift.
+`eval_cases.yaml` defines **expected behavior**. Put `must_do` requirements in
+`expected_behavior`, prohibitions in `unacceptable_behavior`, tools in
+`expected_tool_behavior`, trace rules in `expected_trajectory`, and final-state
+checks in `expected_end_state`. The external runner must implement the
+assertions, retain trace/final-state evidence, and fail required checks; core
+validation does not execute these declarations.
 
-Use contrast families when a small context, permission, or risk change should
-change the expected outcome. See the [Synthetic Boundary Case Guide](../../17_synthetic_boundary_case_guide.md).
+`expected_route` is response admission (`show`, `revise`, `escalate`, `block`).
+`expected_workflow_route` is the product path (`answer`, `clarify`, `act`,
+`approval`, `escalate`, `refuse`). Refusing a graded answer while offering safe
+learning help can have admission `revise` and workflow `refuse`. A discount
+negotiation goes to sales (`escalate`) until a permitted proposed action is
+fully specified for approval. Use `expected_handoff` only on workflow
+`approval` or `escalate`, with IDs matching the project contract. Only non-policy
+metadata belongs in `extensions`.
 
-### 2. Collect Cases From Four Sources
+The **external runner** produces `eval_results.csv`. A valid
+`run_manifest.yaml` must bind its selected run, candidate, evaluator, and
+results; an unbound CSV is not usable launch evidence. Record baseline and
+candidate in separate bound runs; freeze case, fixture, grader, and policy
+versions; reset fixtures before every independent trial; and use distinct
+`trial_id` values. Report **distinct cases** separately from **total trials**.
+The core checks identities and supported consistency/digests, not trial
+isolation or grader quality. See the [V1 provenance contract](../../contracts/eval-run-provenance-v1.md)
+and [comparison protocol](templates/comparison-and-grading.md).
 
-Build the initial set from four complementary sources:
+`review_policy.yaml` is a **core policy input**: review mode, selected
+run/candidate, case/critical coverage, minimum trials per case, and supported
+`pass_rate`/`route_match_rate` thresholds. Controlled review also applies fixed
+critical-case, prohibited-action, and required-escalation invariants. A
+necessary business slice omitted from the declared case set cannot be
+inferred by the core. Other qualitative/slice and baseline regression rules
+remain external; diagnostic summaries do not automatically become policy.
 
-1. **Production-shaped distribution:** representative logs, tickets,
-   transcripts, operator workflows, or a safe proxy when the product is new.
-2. **Synthetic boundaries:** rare but costly conditions, adversarial requests,
-   policy edges, and contrast families that production volume may not expose.
-3. **Known failures:** incidents, appeals, overrides, support complaints, and
-   prior regressions that must not recur.
-4. **Fresh samples:** a rolling, reviewable sample of current behavior used to
-   discover drift and gaps in the stable regression set.
+`launch_gate_review.md` records required control-gate statuses and meaningful
+evidence for hard-gate checks. It is not organizational sign-off. Design-only
+`release_gate_template.yaml` and per-case string `release_gate` labels do not
+install executable thresholds. Translate supported controls into
+`review_policy.yaml`; retain other blocking rules in the external review.
 
-Keep source provenance in the case metadata where possible. Synthetic cases
-must remain labeled as synthetic; they are not external production evidence.
+Missing necessary slices, invalid traces, or unknown necessary judgments block
+**complete release review**. CSV booleans accept `true`/`false`, not an invented
+`unknown` value: preserve unknown/incomplete checks in external evidence and the
+decision record; do not silently count or discard them as passes. A repair may
+pass its executed tests while release review remains blocked. Preserve scope,
+missing evidence, owners, stop conditions, and rollback in the
+[decision worksheet](templates/decision_record_template.yaml). Humans also
+confirm operational readiness, uncertainty, monitoring, and rollout approval.
+The current core can still recommend controlled launch for evidence classified
+`stale` or `expired`. External release review must block that use. See the
+[minimal reproduction and separate core follow-up](../evidence-freshness-follow-up.md);
+this playbook update does not change provenance authorization semantics.
 
-### 3. Write a Behavioral Contract
+## Example categories
 
-Each case needs more than a prompt and a preferred answer. Record user and
-relevant policy or retrieved context, expected and unacceptable behavior,
-expected route, tool use or non-use, human destination and fallback where
-relevant, risk tier, policy reference, source, owner, and required grading.
+| Example | What it demonstrates |
+| --- | --- |
+| [Refund cases](examples/refund_agent_eval_cases.yaml) | Eligibility, compensation pressure, missing context, policy bypass, and a synthetic USD 50 contrast family. |
+| [Education cases](examples/education_assistant_eval_cases.yaml) | Integrity refusal, grounded help, conflicting material, learner support. |
+| [Presales cases](examples/presales_assistant_eval_cases.yaml) | Roadmap commitments, sales negotiations, unsupported comparisons, specialist security review. |
+| [Approval/recovery pack](../human-escalation-playbook/examples/approval-recovery/README.md) | Ten V1 callback, trigger-conflict, operation-reconciliation, and autonomous recovery cases. |
 
-Use the included examples as structural references, then validate the project
-case file before asking an external runner to produce result evidence.
+The Human Escalation refund contract uses a separate synthetic USD 25 limit.
+These are separate fixtures; adapt and bind matching cases/contracts before
+reviewing a real project. For contrast design, see the
+[Synthetic Boundary Case Guide](../../17_synthetic_boundary_case_guide.md).
 
-### 4. Choose the Weakest Sufficient Grader
+## Run the examples
 
-Use deterministic checks whenever the behavior is observable from structured
-evidence: tool calls, prohibited actions, route selection, destinations,
-required fields, status transitions, and calculated values. Use a rubric for
-qualitative communication or policy interpretation that cannot be reduced to a
-reliable deterministic check. Reserve human review for ambiguous,
-high-impact, or launch-blocking cases.
-
-An LLM judge may be an external evidence producer, but it is not part of the
-OpenEvalGate deterministic core. Calibrate any model-based grading against
-human review and do not let it replace a check that can be derived from a
-trace or structured result.
-
-### 5. Define Slice-Based Release Gates
-
-Use the [release-gate template](templates/release_gate_template.yaml) to make
-the decision rules explicit. A slice that cannot affect advancement is a
-dashboard metric, not a launch gate. For every blocking slice, define the
-threshold, unacceptable failure, exception owner, and resulting action.
-
-Then connect the evidence to an OpenEvalGate review mode:
-
-- **Documentation review:** controls and intended behavior are present, but
-  empirical evidence may be absent.
-- **Shadow launch:** evidence is being gathered without authorizing the
-  requested controlled scope.
-- **Controlled launch:** selected, valid behavioral evidence and hard controls
-  support a bounded recommendation; this remains distinct from organizational
-  approval.
-
-See [Review Modes and Behavioral Sufficiency](../../review-modes.md) and the
-[PM controlled-launch review recipe](../../18_product_manager_controlled_launch_review.md).
-
-### 6. Operate the Set
-
-Assign product ownership for expected behavior, engineering ownership for eval
-execution, policy or domain ownership for ambiguous adjudication, and
-operations ownership for production learning. Review the set after material
-model, prompt, retrieval, tool, policy, or workflow changes, and on a regular
-cadence for fresh samples and drift.
-
-After an incident, use the
-[incident-to-regression recipe](../../19_incident_to_regression_recipe.md) to
-classify the gap, create a regression or boundary case, assign mitigation, and
-decide whether the release scope needs re-evaluation, re-approval, pause, or
-rollback.
-
-For a planned model, prompt, retrieval, tool, policy, routing, or operational
-change, use the [Agent Change Review Recipe](../../20_agent_change_review_recipe.md)
-to select affected slices, connect the result to the review packet, and define
-the next bounded action.
-
-## Workflow
-
-1. Align stakeholders on scope, policy, risk, tools, and owners.
-2. Define behavior categories and risk slices.
-3. Draft cases from historical production, synthetic boundary, known failure, adversarial, regression, and fresh drift sources.
-4. Write each case as a behavioral contract.
-5. Choose deterministic checks, rubric checks, and human review where appropriate.
-6. Define release gates by slice, not only aggregate score.
-7. Review the eval set with product, engineering, operations, policy, and domain owners.
-8. Feed production incidents and drift samples back into the set.
-
-For consequence-weighted coverage, group synthetic cases into contrast families and grade workflow route, execution trajectory, and final state. See the [Synthetic Boundary Case Guide](../../17_synthetic_boundary_case_guide.md).
-
-## Files In This Playbook
-
-```text
-schemas/golden_eval_case_schema.yaml
-examples/refund_agent_eval_cases.yaml
-examples/education_assistant_eval_cases.yaml
-examples/presales_assistant_eval_cases.yaml
-templates/stakeholder_alignment_brief.md
-templates/release_gate_template.yaml
-templates/incident_ingestion_template.md
-templates/eval_review_agenda.md
-```
-
-## Example Categories
-
-| Example file | Assistant category | What it demonstrates |
-| --- | --- | --- |
-| `examples/refund_agent_eval_cases.yaml` | Customer support assistant | Refund eligibility, compensation abuse, missing context, and policy bypass. |
-| `examples/education_assistant_eval_cases.yaml` | Education assistant | Academic integrity, grounded concept explanation, weak grounding, and learner-support escalation. |
-| `examples/presales_assistant_eval_cases.yaml` | Presales assistant | Roadmap overpromise, discount boundaries, competitor claims, and security/compliance escalation. |
-
-## Validate The Examples
-
-From the repo root:
+From the repository root in an environment with this checkout installed,
+following [installation](../../../CONTRIBUTING.md#development-setup):
 
 ```bash
 python -m openevalgate.cli validate docs/playbooks/golden-eval-set-playbook/examples/refund_agent_eval_cases.yaml
@@ -207,36 +124,21 @@ python -m openevalgate.cli validate docs/playbooks/golden-eval-set-playbook/exam
 python -m openevalgate.cli validate docs/playbooks/golden-eval-set-playbook/examples/presales_assistant_eval_cases.yaml
 ```
 
-For a complete project review, run:
+For a complete project, use the maintained entry:
 
 ```bash
-openevalgate validate eval_cases.yaml
-openevalgate check .
-openevalgate report . --format card
+python -m openevalgate.cli validate examples/subscription_support_assistant/eval_cases.yaml
+python -m openevalgate.cli check examples/subscription_support_assistant/
+python -m openevalgate.cli report examples/subscription_support_assistant/ --format card
 ```
 
-Use JSON for automation and the card for a review agenda. A card summarizes
-evidence; it does not grant approval.
+`validate` checks cases; `check` checks artifacts and evidence consistency,
+not a launch recommendation. The card separates evidence, behavior, controls,
+provenance, blockers, and recommended stage. `report --format json` provides
+the existing automation contract. A successful report process exit is not
+organizational approval. See [review modes](../../review-modes.md).
 
-## PM Review Checklist
-
-- [ ] Stakeholders agree on in-scope, out-of-scope, prohibited, and
-  escalation-required behavior.
-- [ ] High-impact slices have cases, explicit expected routes, and named
-  owners.
-- [ ] The set combines production-shaped, synthetic, incident, and fresh
-  sample evidence without mislabeling synthetic cases as production evidence.
-- [ ] Deterministic checks are used where available; qualitative grading has a
-  rubric and calibration plan.
-- [ ] Blocking slices, exception owners, rollback triggers, and re-review
-  conditions are explicit.
-- [ ] Incidents and material changes produce new evidence rather than informal
-  exceptions.
-
-## Practitioner Rule
-
-Do not start with “which model is best?”
-
-Start with:
-
-> What behavior must this GenAI product demonstrate before we trust it with users?
+The lightweight [regression check](../../../tests/test_playbook_examples.py)
+uses formal validators and V1 schemas, protects metadata boundaries, and
+checks the linked recovery contract. It runs in the documentation CI job even
+when expensive pytest jobs are skipped.
