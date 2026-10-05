@@ -1,5 +1,7 @@
 # Eval Case Intake From Production Incident
 
+**Human intake worksheet; the CLI does not read this file.**
+
 Use this when a production issue, complaint, escalation, trace review, or human override should become a golden eval case.
 
 ## Incident Summary
@@ -73,6 +75,12 @@ What evidence supports this classification?
 ## Release Gate Impact
 
 Should this case block release, trigger limited rollout, or be monitored?
+
+Record the previous and new case/fixture/grader/policy versions, failing trace
+and final state, required independent trials, and any missing required slice.
+Write behavior into V1 fields and implement assertions in the external runner.
+Keep acceptance of the repair separate from release authorization in a
+[decision record](decision_record_template.yaml).
 
 ## Follow-Up Decision
 

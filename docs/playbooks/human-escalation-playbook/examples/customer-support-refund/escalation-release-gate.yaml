@@ -1,3 +1,5 @@
+# Filled human gate-design worksheet; not CLI input or executable core policy.
+# All policies, rates, limits, versions, and outcomes are synthetic examples.
 release_gate:
   workflow_id: refund_request
   candidate_version: refund_agent_2026_06
@@ -33,7 +35,7 @@ release_gate:
   rollback:
     supported: true
     owner: support_platform
-    procedure: "Disable candidate refund workflow policy and route all refund exceptions to baseline support workflow."
+    procedure: "Disable candidate policy for new work and route exceptions to baseline; retain in-flight approvals, operation identities, and completed-action records."
 
   approvals:
     product_owner: ai_product_team

@@ -1,64 +1,41 @@
+# Incomplete CLI input template; fill every placeholder before validation.
+# See templates/README.md. Enum selections below are illustrative, not defaults.
 schema_version: "1"
 escalation_contract:
   workflow:
     id: ""
     name: ""
     owner: ""
-    version: "1.0.0"
+    version: ""
     risk_tier: medium
     policy_version: ""
-
   boundaries:
-    resolve_when:
-      - ""
-    clarify_when:
-      - ""
-    escalate_when:
-      - ""
-    approval_required_when:
-      - ""
-    refuse_or_block_when:
-      - ""
-
+    resolve_when: []
+    clarify_when: []
+    escalate_when: []
+    approval_required_when: []
+    refuse_or_block_when: []
   triggers:
     - id: ""
       condition: ""
       path: escalate
       destination: ""
-
   handoff:
     minimum_sufficient_context: true
-    required_fields:
-      - user_goal
-      - workflow_state
-      - actions_attempted
-      - policy_check_results
-      - escalation_reason
-      - recommended_next_step
-      - workflow_version
-      - policy_version
-
+    required_fields: []
   routing:
     destinations:
       - id: ""
         handoff_type: conversation_handoff
-        sla_minutes: 15
+        sla_minutes: 0
         fallback: ""
         owner: ""
-
   durable_state:
     checkpoint_required: true
     idempotency_key_required: true
-    resume_behavior: "Revalidate policy and context, then resume from the last safe checkpoint."
-    approval_timeout_minutes: 60
-
+    resume_behavior: ""
   evaluation:
-    required_eval_slices:
-      - ""
-
+    required_eval_slices: []
   recertification:
-    cadence_days: 90
-    required_reviewers:
-      - product_owner
-      - engineering_owner
-      - operations_owner
+    cadence_days: 0
+    required_reviewers: []

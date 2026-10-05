@@ -1,5 +1,8 @@
 # Human Escalation Recertification Checklist
 
+**Human review worksheet; the CLI does not read this file.** All suggested
+cadences and reviewer sets below are synthetic planning examples.
+
 High-risk escalation contracts should be recertified as policies, tools, queue capacity, and user behavior change.
 
 | Review area | Questions to answer | Pass / fail | Notes |
@@ -15,11 +18,15 @@ High-risk escalation contracts should be recertified as policies, tools, queue c
 | Privacy | Are unrelated sensitive fields excluded? |  |  |
 | Durable state | Can workflows pause and resume safely? |  |  |
 | Idempotency | Are duplicate actions prevented? |  |  |
+| Approval callbacks | Are rejected, edited, expired, late, duplicate, and mismatched reviews blocked from granting unintended authority? |  |  |
+| Autonomous recovery | Can an ordinary permitted action resume under current authority without unnecessary approval? |  |  |
+| Unknown outcomes | Is reconciliation tied to the original operation identity before retry? |  |  |
+| Trigger composition | Are all execution blocks and required specialist routes preserved? |  |  |
 | Metrics | Are dashboards and alerts still meaningful? |  |  |
 | Eval slices | Do evals cover recent incidents and emerging failure modes? |  |  |
 | Release gates | Are thresholds still appropriate? |  |  |
 | Ownership | Are owners and reviewers still current? |  |  |
-| Rollback | Can the team revert policy and routing changes quickly? |  |  |
+| Rollback | Can configuration revert while retaining pending approvals and completed-action records? |  |  |
 
 | Risk tier | Suggested cadence | Minimum reviewers |
 | --- | --- | --- |

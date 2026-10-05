@@ -1,5 +1,7 @@
 # Golden Eval Set Review Agenda
 
+**Human review worksheet; the CLI does not read this file.**
+
 Use this agenda before the first launch gate and after major model, prompt, retrieval, tool, policy, or workflow changes.
 
 ## 1. Product Scope Recap
@@ -30,6 +32,9 @@ Use this agenda before the first launch gate and after major model, prompt, retr
 
 ## 4. Scoring Review
 
+- Are baseline, candidate, case, fixture, grader, and policy versions frozen and linked to the run evidence?
+- Were fixtures reset for each independent trial, and are case counts separate from trial counts?
+- Are invalid, unavailable, or unknown required results retained as incomplete evidence?
 - Which checks are deterministic?
 - Which checks are rubric-based?
 - Which checks use human review?
@@ -38,6 +43,9 @@ Use this agenda before the first launch gate and after major model, prompt, retr
 
 ## 5. Release Gate Review
 
+- Is every necessary slice present, including slices outside the available repair-test subset?
+- Does the decision record separate a passed repair from rollout authorization?
+- Are scope, missing evidence, decision owner, stop conditions, and rollback owner/procedure recorded?
 - Which slices block launch?
 - Which slices can ship with monitoring?
 - What thresholds are acceptable?

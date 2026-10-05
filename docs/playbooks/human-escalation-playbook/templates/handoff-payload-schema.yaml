@@ -1,12 +1,14 @@
-# Minimum-sufficient-context schema for human handoff.
+# Human runtime-payload design worksheet; not a formal OpenEvalGate schema or CLI input.
+# Filled IDs, revisions, limits, and values are synthetic teaching examples.
 handoff_payload:
-  schema_version: "1.0"
+  payload_revision: "design-v1"
 
   workflow:
     workflow_id: ""
     workflow_version: ""
     policy_version: ""
     checkpoint_id: ""
+    checkpoint_version: 0
     correlation_id: ""
 
   user_request:
@@ -39,7 +41,11 @@ handoff_payload:
     attempted: []
     completed: []
     failed: []
-    proposed_action: ""
+    proposed_action:
+      tool: ""
+      parameters: {}
+      action_digest: ""
+    operation_identity: ""
 
   policy_checks:
     passed: []
@@ -53,10 +59,22 @@ handoff_payload:
 
   escalation:
     trigger_id: ""
+    matched_trigger_ids: []
+    execution_blocks: []
     reason: ""
     destination: ""
     sla_minutes: 0
     fallback_destination: ""
+
+  approval:
+    review_id: ""
+    workflow_id: ""
+    action_digest: ""
+    checkpoint_version: 0
+    policy_version: ""
+    authorized_reviewer: ""
+    expires_at: ""
+    # Populate only for an approval path; never transfer credentials.
 
   recommendation:
     next_step: ""

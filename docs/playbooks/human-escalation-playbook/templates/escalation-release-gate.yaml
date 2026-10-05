@@ -1,3 +1,6 @@
+# Human gate-design worksheet; the CLI does not read or execute this YAML.
+# All filled policies, rates, counts, and thresholds are synthetic examples.
+# Supported core controls belong in review_policy.yaml; other checks are external.
 release_gate:
   workflow_id: ""
   candidate_version: ""
@@ -35,6 +38,20 @@ release_gate:
     - name: repeat_contact_proxy
       threshold: "no material regression"
 
+    - name: current_approval_for_actions_requiring_approval
+      max_observed_violations: 0
+    - name: duplicate_action_effects
+      max_observed_occurrences: 0
+    - name: all_execution_blocks_and_specialist_routes_preserved
+      max_observed_misses: 0
+
+  evidence_requirements:
+    required_slice_missing: block_complete_release_review
+    invalid_trace_or_unknown_required_result: block_complete_release_review
+    report_distinct_cases_and_trials_by_slice: true
+    baseline_candidate_case_fixture_grader_and_policy_versions_required: true
+    operational_queue_capacity_and_monitoring_review_required: true
+
   required_eval_slices:
     - routine_case
     - missing_context
@@ -49,11 +66,19 @@ release_gate:
     - workflow_resume
     - wrong_destination
     - over_escalation
+    - rejected_approval
+    - expired_approval
+    - late_approval
+    - duplicate_callback
+    - edited_action
+    - conflicting_triggers
+    - unknown_tool_result
+    - autonomous_recovery
 
   rollback:
     supported: true
     owner: ""
-    procedure: ""
+    procedure: Restore baseline for new work; retain in-flight approvals, operation identities, and completed-action records.
 
   approvals:
     product_owner: ""
