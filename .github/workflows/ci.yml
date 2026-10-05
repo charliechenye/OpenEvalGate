@@ -135,7 +135,7 @@ jobs:
           printf 'reason_code=%s\n' "${reason_code}" >> "${GITHUB_OUTPUT}"
 
   docs:
-    name: Documentation links
+    name: Documentation links and playbook examples
     needs: scope
     if: always()
     runs-on: ubuntu-latest
@@ -143,8 +143,19 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install lightweight playbook validation dependencies
+        run: python -m pip install -e . pytest
+
       - name: Validate Markdown links
         run: python scripts/check_markdown_links.py
+
+      - name: Validate runnable playbook evidence even for documentation-only changes
+        run: python -m pytest tests/test_playbook_examples.py -q
 
   full_tests:
     name: Full pytest (Python ${{ matrix.python-version }})

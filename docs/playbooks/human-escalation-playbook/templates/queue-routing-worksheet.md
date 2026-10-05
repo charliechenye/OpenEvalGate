@@ -1,5 +1,7 @@
 # Queue Routing Worksheet
 
+**Human routing worksheet; the CLI does not execute it.**
+
 Use this worksheet to prove the human system on the other side of the agent is real, owned, and observable.
 
 | Escalation reason | Destination | Response model | SLA | Priority | Required payload | Fallback path | Owner | Eval coverage |
@@ -21,3 +23,12 @@ Use this worksheet to prove the human system on the other side of the agent is r
 - Can the system offer a callback or visible response-time promise?
 - Which routes require language, regional, policy, safety, legal, fraud, or senior-review expertise?
 - Which queues need escalation-to-escalation behavior?
+
+## Simultaneous Triggers
+
+Record all matched trigger IDs, every execution block, required specialist
+routes, selected user-facing path, and the owner of unresolved precedence.
+Refusal must preserve a required fraud/safety case; an approval queue must not
+override a prohibition. Missing authorization or risk checks keep execution
+paused. Review these combinations in the
+[approval/recovery worksheet](approval-and-recovery.md).

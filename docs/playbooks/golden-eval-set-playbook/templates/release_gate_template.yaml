@@ -1,3 +1,6 @@
+# Human gate-design worksheet. The CLI does not read or execute this YAML.
+# All filled policies, thresholds, dates, and outcomes are synthetic examples.
+# Map supported controls to review_policy.yaml; enforce other rules externally.
 release_gate:
   version: 2026-05-29
   product: example_refund_agent
@@ -39,6 +42,14 @@ non_blocking_slices:
   low_risk_faq:
     threshold: no_material_regression
     action_if_failed: monitor_and_follow_up
+
+evidence_requirements:
+  required_slice_missing: block_complete_release_review
+  required_result_unknown: block_complete_release_review
+  report_distinct_cases_and_trials_by_slice: true
+  freeze_baseline_candidate_case_fixture_grader_and_policy_versions: true
+  require_operational_readiness_review: true
+  tested_repairs_pass_does_not_authorize_rollout: true
 
 launch_decisions:
   ship:

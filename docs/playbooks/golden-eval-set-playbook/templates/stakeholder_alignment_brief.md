@@ -1,5 +1,7 @@
 # Stakeholder Alignment Brief
 
+**Human design worksheet; the CLI does not read this file.**
+
 Use this before writing eval cases. The goal is to align the team on expected behavior, unacceptable behavior, tool boundaries, policy sources, risk, and launch authority.
 
 ## Product Use Case
@@ -46,6 +48,11 @@ Describe the assistant or agent and the user problem it solves.
 ## Policy Sources Of Truth
 
 - 
+
+Record the policy version and applicable scope. Link the baseline/candidate
+configuration and case, fixture, and grader inventories in the
+[comparison worksheet](comparison-and-grading.md). Define which slices and
+operational checks are required before reviewing a candidate's results.
 
 ## High-Risk Scenarios
 

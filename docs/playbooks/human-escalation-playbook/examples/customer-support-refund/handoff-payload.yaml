@@ -1,5 +1,7 @@
+# Filled runtime-payload design worksheet; the CLI does not read it.
+# All policies, IDs, timings, counts, and results are synthetic teaching examples.
 handoff_payload:
-  schema_version: "1.0"
+  payload_revision: "design-v1"
   workflow:
     workflow_id: refund_request
     workflow_version: "1.0.0"

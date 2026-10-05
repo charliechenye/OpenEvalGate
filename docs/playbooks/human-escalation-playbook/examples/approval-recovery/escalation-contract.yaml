@@ -1,0 +1,100 @@
+# Complete synthetic V1 teaching contract; the core does not execute its prose rules.
+# All limits, SLAs, cadences, IDs, and policies require replacement for real use.
+schema_version: "1"
+escalation_contract:
+  workflow:
+    id: refund_recovery_teaching_demo
+    name: Synthetic approval and refund recovery
+    owner: synthetic_runtime_review_owner
+    version: teaching-v1
+    risk_tier: high
+    policy_version: synthetic_refund_recovery_v1
+  boundaries:
+    resolve_when:
+      - Authenticated, eligible, fully checked refunds up to synthetic USD 25 may resume autonomously.
+      - Refunds above that limit may execute only after a valid current bound approval and revalidation.
+    clarify_when:
+      - A recoverable required context field is missing and no higher-priority block applies.
+    escalate_when:
+      - Review expires, tool outcome remains unknown after reconciliation, or a specialist route is required.
+    approval_required_when:
+      - An otherwise permitted, fully specified refund exceeds synthetic USD 25.
+      - An edited action requires a new bound review.
+    refuse_or_block_when:
+      - Fraud override is prohibited; retain required fraud routing even when refusing.
+      - Rejected, expired, late, duplicate, superseded, or mismatched callbacks cannot grant execution
+        authority.
+  triggers:
+    - id: review_expired
+      condition: Required review expired; execution remains paused.
+      path: escalate
+      destination: operations_case
+    - id: action_edited
+      condition: Review parameters changed; old approval is invalid.
+      path: approval
+      destination: approval_queue
+    - id: unresolved_tool_result
+      condition: Original operation lookup still has unknown outcome.
+      path: escalate
+      destination: operations_case
+    - id: suspected_account_takeover
+      condition: Fraud specialist handling required; preserve all execution blocks.
+      path: escalate
+      destination: fraud_operations
+    - id: prohibited_override
+      condition: Requested action overrides a fraud hold.
+      path: refuse
+      destination: ''
+    - id: high_value_action
+      condition: Fully specified eligible refund exceeds synthetic USD 25.
+      path: approval
+      destination: approval_queue
+  handoff:
+    minimum_sufficient_context: true
+    required_fields:
+      - user_goal
+      - workflow_id
+      - action_digest
+      - checkpoint_version
+      - policy_version
+      - operation_identity
+  routing:
+    destinations:
+      - id: operations_case
+        handoff_type: async_case
+        sla_minutes: 60
+        fallback: hold_action_and_notify_owner
+        owner: synthetic_operations_owner
+      - id: approval_queue
+        handoff_type: approval
+        sla_minutes: 30
+        fallback: hold_action_and_notify_owner
+        owner: synthetic_policy_owner
+      - id: fraud_operations
+        handoff_type: specialist_routing
+        sla_minutes: 5
+        fallback: hold_action_and_notify_owner
+        owner: synthetic_risk_owner
+  durable_state:
+    checkpoint_required: true
+    idempotency_key_required: true
+    resume_behavior: Autonomous recovery needs current autonomous authority; approval recovery needs a
+      valid current bound review. Preserve all blocks and reconcile original operations before retry.
+  evaluation:
+    required_eval_slices:
+      - rejected_approval
+      - expired_approval
+      - late_approval
+      - duplicate_callback
+      - edited_action
+      - conflicting_triggers
+      - unknown_tool_result
+      - autonomous_recovery
+      - mismatched_approval_binding
+      - valid_approval_resume
+  recertification:
+    cadence_days: 90
+    required_reviewers:
+      - synthetic_product_owner
+      - synthetic_runtime_owner
+      - synthetic_policy_owner

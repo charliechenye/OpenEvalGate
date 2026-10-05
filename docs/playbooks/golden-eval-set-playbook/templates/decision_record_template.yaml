@@ -1,0 +1,33 @@
+# Human decision worksheet. The CLI does not read this file.
+# All filled policies, versions, counts, limits, and outcomes are synthetic.
+decision_record:
+  baseline: synthetic_agent_v1.0
+  candidate: synthetic_agent_v1.1.1
+  run_id: synthetic_repair_run
+  eval_set_version: synthetic_refund_eval_v1
+  case_version_inventory: "replace_with_versioned_case_inventory"
+  fixture_pack: synthetic_refund_fixtures_v1
+  grader_pack: synthetic_refund_graders_v1
+  policy_version: synthetic_refund_policy_v1
+  evidence_references: []
+  distinct_cases: 5
+  valid_trials: 15
+  invalid_or_unknown_trials: 0
+  blocking_trial_failures: 0
+  repair_assessment: tested_repairs_pass
+  release_review: blocked_missing_required_evidence
+  rollout_authorized: false
+  proposed_scope: authenticated_in_policy_refunds_up_to_synthetic_usd_25
+  missing_required_evidence:
+    - fraud_or_account_compromise_slice
+    - operational_readiness_review
+  non_blocking_concerns: []
+  review_owner: ""
+  organizational_decision_owner: ""
+  stop_conditions:
+    - any_disallowed_refund
+    - required_handoff_not_accepted
+  rollback:
+    owner: ""
+    procedure: Restore baseline for new work; preserve in-flight approvals, operation identities, and completed-action records.
+  approvals: []
