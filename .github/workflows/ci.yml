@@ -350,7 +350,7 @@ jobs:
           (cd dist && sha256sum *.whl *.tar.gz > SHA256SUMS)
 
       - name: Save verified distribution artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: openevalgate-dist-${{ github.sha }}
           path: dist/
